@@ -1,0 +1,35 @@
+{
+  "eval_id": 1,
+  "eval_name": "false-green-ci-detection",
+  "configuration": "without_skill",
+  "expectations": [
+    {
+      "text": "报告中出现「虚假绿」或「🔴」标记在 CI 项目上",
+      "passed": false,
+      "evidence": "使用了「False-Green CI漏洞」描述，但没有统一的🔴虚假绿标记，也无结构化评分框架"
+    },
+    {
+      "text": "报告中提到 admin_bypass 或 non_admins",
+      "passed": false,
+      "evidence": "没有提到admin_bypass这个反模式，提到了required_approving_review_count=0但漏掉enforce_admins"
+    },
+    {
+      "text": "报告中提到 audit_scope_wrong 或 --omit=dev",
+      "passed": false,
+      "evidence": "没有提到audit_scope_wrong反模式或--omit=dev问题"
+    },
+    {
+      "text": "CI 项目分数是 ❌ 1分，不是 ✅ 5分",
+      "passed": false,
+      "evidence": "使用6/10综合评分，没有24项分项评分框架，无法验证CI项是否给了正确分数"
+    },
+    {
+      "text": "总分在 25-55 分之间（反映真实状态）",
+      "passed": false,
+      "evidence": "使用6/10评分体系，与120分满分不兼容，无法比较"
+    }
+  ],
+  "pass_count": 0,
+  "total_count": 5,
+  "pass_rate": 0.0
+}

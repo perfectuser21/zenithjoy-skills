@@ -1,0 +1,6 @@
+{
+  "eval_id": 2,
+  "eval_name": "small-change-add-priority-field",
+  "prompt": "给 journey_features 表加个 priority 字段，P0/P1/P2，默认 P1",
+  "assertions": []
+}

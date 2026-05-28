@@ -1,0 +1,102 @@
+{
+  "metadata": {
+    "skill_name": "dev",
+    "skill_path": "~/.claude/skills/dev",
+    "timestamp": "2026-05-26T06:15:00Z",
+    "evals_run": ["bug-path-cookie-error", "small-change-add-priority-field", "big-feature-kuaishou-publish"],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "config": "with_skill",
+      "eval_name": "bug-path-cookie-error",
+      "eval_id": 1,
+      "pass_rate": 0.857,
+      "pass_count": 6,
+      "total": 7,
+      "time_seconds": 182.6,
+      "total_tokens": 57842,
+      "failed_assertions": ["writes-decision-bug-fix: 用了 type:bug_fix 而非 category:bug-fix"]
+    },
+    {
+      "config": "without_skill",
+      "eval_name": "bug-path-cookie-error",
+      "eval_id": 1,
+      "pass_rate": 0.286,
+      "pass_count": 2,
+      "total": 7,
+      "time_seconds": 977.5,
+      "total_tokens": 121958,
+      "failed_assertions": ["queries-brain-db", "preprd-has-symptom", "preprd-has-regression-test", "routes-to-systematic-debugging", "writes-decision-bug-fix"]
+    },
+    {
+      "config": "with_skill",
+      "eval_name": "small-change-add-priority-field",
+      "eval_id": 2,
+      "pass_rate": 0.833,
+      "pass_count": 5,
+      "total": 6,
+      "time_seconds": 179.0,
+      "total_tokens": 25830,
+      "failed_assertions": ["writes-decision-small-change: 有 decision 内容但无 category 字段"]
+    },
+    {
+      "config": "without_skill",
+      "eval_name": "small-change-add-priority-field",
+      "eval_id": 2,
+      "pass_rate": 0.333,
+      "pass_count": 2,
+      "total": 6,
+      "time_seconds": 364.5,
+      "total_tokens": 42438,
+      "failed_assertions": ["queries-brain-db", "preprd-format-correct", "routes-to-engine-worktree", "writes-decision-small-change"],
+      "side_effects": "直接创建了真实 migration 文件（284_journey_features_priority.sql），已清理"
+    },
+    {
+      "config": "with_skill",
+      "eval_name": "big-feature-kuaishou-publish",
+      "eval_id": 3,
+      "pass_rate": 0.9,
+      "pass_count": 9,
+      "total": 10,
+      "time_seconds": 219.2,
+      "total_tokens": 54082,
+      "failed_assertions": ["writes-decision-feature: 无 category 字段"]
+    },
+    {
+      "config": "without_skill",
+      "eval_name": "big-feature-kuaishou-publish",
+      "eval_id": 3,
+      "pass_rate": 0.1,
+      "pass_count": 1,
+      "total": 10,
+      "time_seconds": 125.2,
+      "total_tokens": 59923,
+      "failed_assertions": ["queries-brain-db", "classifies-as-big-feature", "multi-role-check-done", "semantic-dedup-done", "preprd-has-journey-status", "preprd-has-preconditions", "base-repo-is-github-url", "fires-harness", "writes-decision-feature"]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "mean_pass_rate": 0.863,
+      "mean_time_seconds": 193.6,
+      "mean_tokens": 45918
+    },
+    "without_skill": {
+      "mean_pass_rate": 0.24,
+      "mean_time_seconds": 489.1,
+      "mean_tokens": 74773
+    },
+    "delta": {
+      "pass_rate": "+0.623",
+      "time_seconds": "-295.5 (with_skill 快 60%)",
+      "tokens": "-28855 (with_skill 省 39%)"
+    }
+  },
+  "analyst_notes": [
+    "唯一系统性失败 assertion：writes-decision-*（3/3 eval 都失败）。skill 要求 POST /api/brain/decisions 使用 category 字段，但 3 个 subagent 都用了其他字段名（type/rationale 等）。需改进：skill 里应提供完整 curl 命令示例",
+    "baseline 在 eval-2 产生了真实副作用（创建了 migration 文件），说明没有 PrepPRD 确认门的危险性",
+    "without_skill 在 eval-1 用了 156 个 tool calls、977s，比 with_skill 慢 5 倍，且仍然找不到 TypeError 的精确根因",
+    "with_skill 在 eval-3 正确识别了 base_repo 必须 GitHub URL 规则，without_skill 完全没有这个概念",
+    "writes-decision-* 是非歧视性 assertion（只有 with_skill 才可能通过），without_skill 全失败符合预期"
+  ]
+}

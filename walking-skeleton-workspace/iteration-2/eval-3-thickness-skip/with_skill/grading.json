@@ -1,0 +1,24 @@
+{
+  "eval_id": 3,
+  "version": "with_skill",
+  "iteration": 2,
+  "expectations": [
+    {
+      "text": "明确拒绝跳级（thin 不能直接到 thick）",
+      "passed": true,
+      "evidence": "'不能跳级。画像表单必须先升 medium，再升 thick... 不存在 thin → thick 的跳级路径'"
+    },
+    {
+      "text": "解释必须逐级升级（thin → medium → thick）",
+      "passed": true,
+      "evidence": "'唯一路径：thin → medium → thick 逐级全升'"
+    },
+    {
+      "text": "引导先升 medium，给出 medium 的标准",
+      "passed": true,
+      "evidence": "'升 medium 的硬指标：1. 真实数据替代 mock 2. 基本错误处理（不崩溃）'"
+    }
+  ],
+  "score": "3/3",
+  "notes": "iter2 直接引用 SKILL.md 反例话术（点名禁止第 5 条 + 列出另 4 条反例），比 iter1 的拒绝更硬。"
+}

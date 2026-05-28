@@ -1,0 +1,20 @@
+{
+  "eval_id": 2,
+  "eval_name": "surface-signal-resistance",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "报告中包含配置文件精读的证据（提到具体 workflow 文件内容）",
+      "passed": true,
+      "evidence": "命中7个CI反模式，列举了具体workflow中的audit范围、coverage、lint设置，证明读了配置文件"
+    },
+    {
+      "text": "不出现「CI 全绿 ✅ 5分」这样的表面判断",
+      "passed": true,
+      "evidence": "报告明确标注「用户说CI全绿——确实全绿，但命中7个CI反模式，这是典型的虚假绿」，没有被表面绿欺骗"
+    }
+  ],
+  "pass_count": 2,
+  "total_count": 2,
+  "pass_rate": 1.0
+}

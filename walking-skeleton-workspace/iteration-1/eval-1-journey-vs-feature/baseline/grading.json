@@ -1,0 +1,21 @@
+{
+  "eval_id": 1,
+  "version": "baseline",
+  "expectations": [
+    {
+      "text": "判断该需求为 Feature（不是 Journey）",
+      "passed": true,
+      "evidence": "'挂 feature。这件事应该作为现有合同管理流程上的一个增强功能加入，而不是另起一条 walking skeleton'"
+    },
+    {
+      "text": "反问要挂在哪条 Journey 的哪一步",
+      "passed": false,
+      "evidence": "未反问；直接给出落地建议（'在合同编辑页加一个 AI 起草入口'），没有要求用户确认挂哪条 Journey/哪一步"
+    },
+    {
+      "text": "解释判断依据（用价值闭环 / 端到端 / 不能独立 demo 等概念）",
+      "passed": true,
+      "evidence": "'是不是开辟了一条新的端到端用户旅程？... 它能不能独立交付价值，且不依赖核心流程？'"
+    }
+  ]
+}

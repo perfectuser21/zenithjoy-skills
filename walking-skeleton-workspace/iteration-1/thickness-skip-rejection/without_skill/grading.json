@@ -1,0 +1,22 @@
+{
+  "eval_id": 3,
+  "eval_name": "thickness-skip-rejection",
+  "config": "without_skill",
+  "expectations": [
+    {
+      "text": "明确拒绝跳级（thin 不能直接到 thick）",
+      "passed": true,
+      "evidence": "'不建议直接从 thin 跳到 thick，中间应该先经过 medium'"
+    },
+    {
+      "text": "解释必须逐级升级（thin → medium → thick）",
+      "passed": true,
+      "evidence": "解释了 thin→medium→thick 的路径，并说明 medium 存在的意义"
+    },
+    {
+      "text": "引导先升 medium，给出 medium 的标准",
+      "passed": false,
+      "evidence": "描述了 medium 的价值（验证设计方向），但未给出技术硬指标（真实数据替代 mock + 基本错误处理）"
+    }
+  ]
+}

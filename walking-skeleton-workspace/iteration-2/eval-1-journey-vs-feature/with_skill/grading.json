@@ -1,0 +1,23 @@
+{
+  "eval_id": 1,
+  "version": "with_skill",
+  "iteration": 2,
+  "expectations": [
+    {
+      "text": "判断该需求为 Feature（不是 Journey）",
+      "passed": true,
+      "evidence": "'判断：这是一个 Feature，不是新 Journey... 挂到现有的独立咨询师管理客户合同主 Journey 上'"
+    },
+    {
+      "text": "反问要挂在哪条 Journey 的哪一步",
+      "passed": true,
+      "evidence": "'确认主 Journey 是否存在... AI 生成条款挂在填条款那一步，作为该步的一个 Feature 实现'"
+    },
+    {
+      "text": "解释判断依据（用价值闭环 / 端到端 / 不能独立 demo 等概念）",
+      "passed": true,
+      "evidence": "'AI 自动生成合同条款本身不构成完整价值闭环... 同一个角色、同一个价值闭环... 入口/出口没变'"
+    }
+  ],
+  "score": "3/3"
+}

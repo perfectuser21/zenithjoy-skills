@@ -1,0 +1,26 @@
+{
+  "eval_id": 5,
+  "version": "with_skill",
+  "expectations": [
+    {
+      "text": "拦截/反问要确认本 sprint 推进哪条 Journey",
+      "passed": true,
+      "evidence": "'拦截：本 Sprint 不允许直接调 sprint-planner... 本 Sprint 推进哪一条 Journey？（客户 license 路径 / admin 运营路径 / license 部署 pipeline，三选一）'"
+    },
+    {
+      "text": "提到 Feature 0 / 端到端 smoke / 端到端验证",
+      "passed": true,
+      "evidence": "'Feature 0 必须存在，不可省... sprint-prd.md 第一个 Feature 必须是 Feature 0 = Journey 端到端 smoke'"
+    },
+    {
+      "text": "指出 admin 后台和客户面板可能是不同 Journey（不同角色）",
+      "passed": true,
+      "evidence": "'Dashboard 客户面板 → user_facing Journey... admin 后台 → 独立的 user_facing Journey，因为管理员是独立角色'"
+    },
+    {
+      "text": "提到不允许 sprint-planner 在没 Journey 上下文时启动",
+      "passed": true,
+      "evidence": "'直接调 sprint-planner 是反模式 1，明确禁止... 在调 sprint-planner 之前，必须先把下面这几件事弄清楚，否则不开 sprint'"
+    }
+  ]
+}

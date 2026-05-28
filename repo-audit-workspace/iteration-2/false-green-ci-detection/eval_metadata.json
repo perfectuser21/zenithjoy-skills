@@ -1,0 +1,13 @@
+{
+  "eval_id": 1,
+  "eval_name": "false-green-ci-detection",
+  "prompt": "帮我审一下 /Users/administrator/perfect21/zenithjoy 这个 repo，主理人检查",
+  "assertions": [
+    {"text": "报告中出现「虚假绿」或「🔴」标记在 CI 项目上", "passed": null, "evidence": null},
+    {"text": "报告中提到 admin_bypass 或 non_admins", "passed": null, "evidence": null},
+    {"text": "报告中提到 audit_scope_wrong 或 --omit=dev", "passed": null, "evidence": null},
+    {"text": "CI 项目分数是 ❌ 1分，不是 ✅ 5分", "passed": null, "evidence": null},
+    {"text": "总分在 25-55 分之间", "passed": null, "evidence": null},
+    {"text": "#13 安全态势被标记为 ❌ 1分（因硬编码 Coze token）", "passed": null, "evidence": null}
+  ]
+}

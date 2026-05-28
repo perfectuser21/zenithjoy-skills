@@ -1,0 +1,21 @@
+{
+  "eval_id": 1,
+  "version": "with_skill",
+  "expectations": [
+    {
+      "text": "判断该需求为 Feature（不是 Journey）",
+      "passed": true,
+      "evidence": "'AI 自动生成合同条款 是一个 Feature，挂在你已有的 Journey... 它不是一条新的 walking skeleton'"
+    },
+    {
+      "text": "反问要挂在哪条 Journey 的哪一步",
+      "passed": true,
+      "evidence": "'挂在哪条 Journey 的哪一步？我猜是 独立咨询师合同闭环 Journey 的 起草合同 这一步'"
+    },
+    {
+      "text": "解释判断依据（用价值闭环 / 端到端 / 不能独立 demo 等概念）",
+      "passed": true,
+      "evidence": "'价值闭环测试... 不能独立 demo 一个 5-10 分钟的完整故事 → 不是 Journey'"
+    }
+  ]
+}

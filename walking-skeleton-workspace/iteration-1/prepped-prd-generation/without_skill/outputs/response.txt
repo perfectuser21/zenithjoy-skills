@@ -1,0 +1,183 @@
+好的，我已经把现有代码库和 Journey 结构摸清楚了。以下是完整的点火材料。
+
+---
+
+## 现状摘要（点火前的事实基础）
+
+**Journey**: `path-zj-publish`（ZenithJoy 智能发布路径）
+**已有 Steps**:
+- Step 4：抖音内容发布（`publish-douyin-image.cjs` ✅ thin，CDP 方案，端口 19222）
+- Step 5：小红书内容发布（`publish-xiaohongshu-image.cjs` ✅ thin，CDP 方案，端口 19225）
+
+**快手现状**:
+- Skill 文档存在：`packages/workflows/skills/kuaishou-publisher/SKILL.md`（v1.4.0）
+- 脚本已存在：`/Users/administrator/perfect21/zenithjoy/services/agent/publishers/kuaishou-publisher/`
+  - `publish-kuaishou-image.cjs` — ✅ 脚本已写，**未经生产测试**（publisher-system.md 标注"未测"）
+  - `publish-kuaishou-api.cjs` — ✅ API 方案（Cookie + HTTP 直调），**未经生产测试**
+  - `publish-kuaishou-image-dryrun.cjs` — ✅ dry-run 版本存在
+  - `check-kuaishou-session.cjs` — ✅ 会话检查脚本
+- CDP 端口：19223（快手专用）
+- 发布页面：`https://cp.kuaishou.com/article/publish/photo-video`
+- 内容目录格式：`~/.kuaishou-queue/{date}/image-{id}/`（content.txt 可选 + image.jpg 必需）
+
+**关键信息**：快手图文发布脚本**已经写好**，只是从未真实运行过。这个 Step 的核心工作是：
+1. 端到端真实验证 `publish-kuaishou-image.cjs`（或推荐的 API 方案 `publish-kuaishou-api.cjs`）能跑通
+2. 把它接入 Brain 的 `content_publish` 任务调度链路（与抖音/小红书同等级别）
+
+---
+
+## 点火材料
+
+### 1. Journey Step 定义（新增 Step 6）
+
+```
+Journey ID: path-zj-publish
+Step 编号: Step 6
+Step 名称: 快手图文发布
+Step 描述: 将图文内容（文案 + 图片）通过 CDP 或 API 方案自动发布到快手创作者平台
+当前骨架厚度: thin
+对标参照: Step 4（抖音图文）/ Step 5（小红书图文）
+```
+
+> 注：由于脚本已经存在（只是未测），本 Step 可以直接从"thin 验证"开始，而非从零编写脚本。
+
+---
+
+### 2. PrepPRD（Sprint PRD 草稿）
+
+```markdown
+# Sprint PRD — path-zj-publish Step 6：快手图文发布（thin → 首次生产验证）
+
+## OKR 对齐
+
+- **对应 KR**：ZenithJoy 产品全线上线 — 内容生产自动化（当前 77%）
+- **当前进度**：抖音(Step 4) + 小红书(Step 5) 图文发布链路已 thin；快手脚本已存在但未生产测试
+- **本次推进预期**：完成快手图文发布首次生产验证，证明端到端链路可通（Brain 派单 → CDP → 快手真发布 → platform_post_id 回写）
+
+## 背景
+
+`publish-kuaishou-image.cjs`（CDP UI 方案）和 `publish-kuaishou-api.cjs`（Cookie+HTTP API 方案）均已在
+`/Users/administrator/perfect21/zenithjoy/services/agent/publishers/kuaishou-publisher/` 存在，
+但 publisher-system.md 明确标注"未测"。
+
+本 Sprint 目标：选择推荐方案（API 方案优先，因更稳定），进行端到端真实发布测试，
+打通 Brain content_publish 任务 → 快手发布脚本 → platform_post_id 回写 Brain 的完整链路，
+与已验证的抖音/小红书保持同等规范。
+
+## Golden Path（核心场景）
+
+从 [Brain 派发 content_publish 任务（platform=kuaishou）] →
+经过 [executor.js 调用 kuaishou-publisher skill，脚本连接 Windows CDP 19223 端口，通过 Cookie+HTTP API 上传图片并发布图文] →
+到达 [快手 CP 收到发布请求，返回作品 ID；脚本输出 JSON `{"ok":true,"platform":"kuaishou","platform_post_id":"<ID>"}`；Brain executor 将 platform_post_id 写回任务 result 并写入 publish_logs]
+
+## 范围
+
+**在范围内**:
+- 端到端测试 `publish-kuaishou-api.cjs`（推荐），用真实内容目录（`~/.kuaishou-queue/`）验证图文发布成功
+- 确认 `check-kuaishou-session.cjs` 能正确检测会话状态（SESSION_OK / SESSION_EXPIRED / CDP_ERROR）
+- 确认 Brain executor.js 的 `platform=kuaishou` 路由正确指向 kuaishou-publisher skill
+- 验证 platform_post_id 从脚本输出提取并写入 publish_logs（与抖音/小红书保持一致）
+- 如 API 方案有问题降级验证 `publish-kuaishou-image.cjs`（CDP UI 方案）
+
+**不在范围内**:
+- 快手视频发布（`publish-kuaishou-video.cjs` 已存在，是独立后续 Sprint）
+- 批量发布调度（`batch-publish-kuaishou.sh`）
+- 快手账号管理 / 登录自动化
+- Dashboard UI 展示
+
+## 成功标准
+
+1. `check-kuaishou-session.cjs` 在 Windows CDP 19223 可达时输出 `[SESSION_OK]`，exit 0
+2. 向 `~/.kuaishou-queue/<date>/image-1/` 放入 content.txt + image.jpg 后，运行 `publish-kuaishou-api.cjs` exit 0，stdout 最后一行输出合法 JSON `{"ok":true,"platform":"kuaishou","platform_post_id":"<非空字符串>"}`
+3. Brain 的 content_publish 任务（platform=kuaishou）完成后，`zenithjoy.publish_logs` 表中对应行的 `platform_post_id` 字段非 null
+4. 快手 CP 后台（cp.kuaishou.com）能看到对应图文作品
+
+## 预期受影响文件
+
+- `packages/workflows/skills/kuaishou-publisher/SKILL.md` — 更新测试状态（"未测" → "✅ 生产验证通过"）+ 补充 Brain 任务路由说明
+- `packages/brain/src/executor.js` — 确认/补充 `platform=kuaishou` 分支（对比抖音/小红书分支）
+- `packages/brain/src/task-router.js` — 确认 kuaishou 路由配置
+- 可能需要在 Brain 的 LOCATION_MAP 中确认 kuaishou-publisher 的映射
+
+## 假设
+
+- [ASSUMPTION: Windows PC（100.97.242.124）Tailscale 可达，CDP 端口 19223 已开放]
+- [ASSUMPTION: 快手账号 Cookie 未过期（check-kuaishou-session 验证）]
+- [ASSUMPTION: 推荐使用 publish-kuaishou-api.cjs（API 方案），CDP 端口 19223 用于提取 Cookie]
+- [ASSUMPTION: 参照抖音图文的 Brain executor 接入方式，快手的 platform_post_id 从脚本 JSON 输出中提取]
+```
+
+---
+
+### 3. Feature 定义（供 Walking Skeleton DB 写入）
+
+```
+Journey ID: path-zj-publish
+Step 编号: Step 6（新增）
+Feature 名称: 快手图文发布（thin 首次生产验证）
+Feature 描述: 验证 publish-kuaishou-api.cjs 能端到端发布图文到快手，接入 Brain content_publish 任务链路，platform_post_id 正确回写
+骨架层级: thin（验证脚本能跑通 + Brain 链路接通）
+下一步加厚方向: medium = 稳定性 + 批量调度 + 会话自动续期告警
+```
+
+---
+
+### 4. 技术栈速查（给 /dev Agent 用）
+
+| 项目 | 值 |
+|------|-----|
+| 脚本路径（推荐） | `/Users/administrator/perfect21/zenithjoy/services/agent/publishers/kuaishou-publisher/publish-kuaishou-api.cjs` |
+| 脚本路径（备用） | `/Users/administrator/perfect21/zenithjoy/services/agent/publishers/kuaishou-publisher/publish-kuaishou-image.cjs` |
+| 会话检查 | `check-kuaishou-session.cjs` |
+| NODE_PATH | `/Users/administrator/perfect21/zenithjoy/services/agent/publishers/node_modules` |
+| CDP 端口 | 19223（Windows PC 100.97.242.124） |
+| 内容队列目录 | `~/.kuaishou-queue/{date}/image-{id}/`（content.txt 可选 + image.jpg 必需） |
+| JSON 输出格式 | `{"ok":true,"platform":"kuaishou","platform_post_id":"<作品ID>","postUrl":"<管理链接>"}` |
+| Brain 任务 platform | `kuaishou` |
+| 对标参照 skill | `douyin-publisher`（抖音图文，端口 19222，同架构） |
+
+---
+
+### 5. 点火命令建议
+
+```bash
+# 点火前：确认 CDP 连接
+curl http://100.97.242.124:19223/json
+
+# 点火前：确认会话状态
+NODE_PATH=/Users/administrator/perfect21/zenithjoy/services/agent/publishers/node_modules \
+  node /Users/administrator/perfect21/zenithjoy/services/agent/publishers/kuaishou-publisher/check-kuaishou-session.cjs
+
+# 点火（单条图文发布验证）
+mkdir -p ~/.kuaishou-queue/$(date +%Y-%m-%d)/image-1
+echo "测试图文文案 #日常 #分享" > ~/.kuaishou-queue/$(date +%Y-%m-%d)/image-1/content.txt
+# （手动放一张 image.jpg 到该目录）
+NODE_PATH=/Users/administrator/perfect21/zenithjoy/services/agent/publishers/node_modules \
+  node /Users/administrator/perfect21/zenithjoy/services/agent/publishers/kuaishou-publisher/publish-kuaishou-api.cjs \
+  --content ~/.kuaishou-queue/$(date +%Y-%m-%d)/image-1/
+```
+
+---
+
+### 6. 注意事项（风险提示）
+
+1. **脚本未测警告**：`publish-kuaishou-image.cjs` 和 `publish-kuaishou-api.cjs` 都是"未测"状态，初次运行很可能有 bug，需要 systematic-debugging 支持
+2. **API 方案优先**：推荐先跑 `publish-kuaishou-api.cjs`（Cookie+HTTP 直调，比 UI 自动化稳定）；如 API 端点 404，参照 SKILL.md 故障排查章节用 Chrome DevTools 抓包更新 URL
+3. **会话 Cookie 可能过期**：快手 CP 的 `kuaishou.web.cp.api_st` / `kuaishou.web.cp.api_ph` 需要人工扫码续期；check-kuaishou-session 会提前检测
+4. **CDP 端口复用**：19223 是快手专用端口，与抖音(19222)/小红书(19225) 互不冲突，但 Windows PC 重启后需 schtasks 重启浏览器
+
+---
+
+## 下一步行动
+
+**直接 /dev 点火**，Sprint 目标：
+1. 运行会话检查，确认 CDP 连通
+2. 准备测试内容目录（1张图 + 文案）
+3. 跑 `publish-kuaishou-api.cjs` 验证端到端发布
+4. 确认 Brain executor 的 `platform=kuaishou` 路由配置
+5. 验证 platform_post_id 回写 publish_logs
+6. 更新 SKILL.md 测试状态
+
+**Notion 写入建议**：
+- Journey `path-zj-publish` 新增 Step 6（快手图文发布）
+- Feature：快手图文发布 thin 验证

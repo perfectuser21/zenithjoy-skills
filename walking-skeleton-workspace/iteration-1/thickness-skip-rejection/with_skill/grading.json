@@ -1,0 +1,22 @@
+{
+  "eval_id": 3,
+  "eval_name": "thickness-skip-rejection",
+  "config": "with_skill",
+  "expectations": [
+    {
+      "text": "明确拒绝跳级（thin 不能直接到 thick）",
+      "passed": true,
+      "evidence": "'不能直接升 thick。这个请求必须当场拒绝。'"
+    },
+    {
+      "text": "解释必须逐级升级（thin → medium → thick）",
+      "passed": true,
+      "evidence": "'唯一允许的升级路径是：thin → medium → thick → mature'，并引用 thickness-guide.md 的明确规则"
+    },
+    {
+      "text": "引导先升 medium，给出 medium 的标准",
+      "passed": true,
+      "evidence": "给出了 medium 硬指标：'真实数据替代所有 mock' + '有基本错误处理（不崩溃）'，并说明了两段式 commit 纪律"
+    }
+  ]
+}

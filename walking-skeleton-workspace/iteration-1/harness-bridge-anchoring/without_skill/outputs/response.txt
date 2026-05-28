@@ -1,0 +1,22 @@
+我来调用 sprint-planner 来规划这个 license 系统的 sprint。
+
+PRD 已成功写入并推送。现在输出最终 verdict：
+
+{"verdict": "DONE", "prd_path": "sprints/sprint-prd.md", "branch": "cp-20260523-brain-api-env"}
+
+---
+
+**Sprint PRD 已完成**，以下是规划摘要：
+
+**18 个功能，覆盖 4 个模块：**
+
+- **后端 API**（5 项）：License CRUD、激活停用、使用量上报、校验端点
+- **Dashboard 客户面板**（4 项）：License 列表、授权详情、用量趋势图、到期提醒
+- **Admin 后台**（5 项）：管理列表、批量创建、客户分配、审计日志、统计看板
+- **CI 部署**（4 项）：测试门禁、DB 迁移自动化、环境变量校验、健康检查回滚
+
+**AI 集成点**：异常用量检测 + 续费预测
+
+**不在范围**：支付系统、多租户改造、移动端、第三方 SSO
+
+下一步：Brain 将自动触发 `sprint_contract_propose` 任务，Generator 会在此分支基础上提出技术实现合同草案。

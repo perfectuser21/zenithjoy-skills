@@ -1,0 +1,31 @@
+{
+  "eval_id": 2,
+  "version": "with_skill",
+  "expectations": [
+    {
+      "text": "提到字段数量限制（3-5 个或'最少'）",
+      "passed": true,
+      "evidence": "'3 个字段，仅此而已：行业、目标受众、内容风格'"
+    },
+    {
+      "text": "明确允许 UI 丑陋 / 简陋 / 无样式",
+      "passed": true,
+      "evidence": "'一个最丑的表单页... 不做自定义样式，不做响应式优化'；'难看到工程师本能想优化才是合格 thin'"
+    },
+    {
+      "text": "明确说不做错误处理或边界覆盖",
+      "passed": true,
+      "evidence": "'不做错误处理：API 500、网络断开、DB 写失败 — try/catch 一个不写'"
+    },
+    {
+      "text": "提到 smoke 验证 / 端到端测试",
+      "passed": true,
+      "evidence": "'写一个 smoke 脚本 .github/workflows/scripts/smoke/profile-step3-smoke.sh：用 curl 模拟登录 → POST 画像 → 查 DB 验证'"
+    },
+    {
+      "text": "明确列出'不做什么'清单（防止 scope creep）",
+      "passed": true,
+      "evidence": "'不做什么（Don't）' 章节列出 6 条：不做字段校验/不做错误处理/不做 UI 美化/不做 AI 推荐字段/不做历史记录/不写 unit test 边界 case"
+    }
+  ]
+}

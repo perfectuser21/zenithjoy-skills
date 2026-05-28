@@ -1,0 +1,27 @@
+{
+  "eval_id": 4,
+  "eval_name": "harness-bridge-anchoring",
+  "config": "without_skill",
+  "expectations": [
+    {
+      "text": "拦截/反问要确认本次推进哪条 Journey",
+      "passed": false,
+      "evidence": "直接执行 sprint-planner，没有任何拦截"
+    },
+    {
+      "text": "提到 PrepPRD 或 Walking Skeleton 对话作为点火前置步骤",
+      "passed": false,
+      "evidence": "完全跳过 Walking Skeleton 流程，直接写了 sprint-prd.md"
+    },
+    {
+      "text": "不直接执行 sprint-planner / harness-planner",
+      "passed": false,
+      "evidence": "直接调用 sprint-planner，写了 sprint-prd.md 并 commit 到仓库"
+    },
+    {
+      "text": "指出 admin 后台和客户面板可能是不同 Journey（不同角色）",
+      "passed": false,
+      "evidence": "把 4 个模块全部写进了同一个 PRD 里，没有区分 Journey 归属"
+    }
+  ]
+}

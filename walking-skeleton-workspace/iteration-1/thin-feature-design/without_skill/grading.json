@@ -1,0 +1,32 @@
+{
+  "eval_id": 2,
+  "eval_name": "thin-feature-design",
+  "config": "without_skill",
+  "expectations": [
+    {
+      "text": "提到字段数量限制（3-5 个或'最少'）",
+      "passed": true,
+      "evidence": "说明了'3 字段全必填（行业/受众/风格）'"
+    },
+    {
+      "text": "明确允许 UI 丑陋 / 简陋 / 无样式",
+      "passed": false,
+      "evidence": "没有说 UI 可以丑，直接说'三个文本输入框'，没有强调 thin 原则允许粗糙"
+    },
+    {
+      "text": "明确说不做错误处理或边界覆盖",
+      "passed": false,
+      "evidence": "反而加入了错误处理：'401 → 跳登录页，其他错误 toast'，违反 thin 原则"
+    },
+    {
+      "text": "提到 smoke 验证 / 端到端测试",
+      "passed": false,
+      "evidence": "提到写 .test.tsx 单元测试，但没有提 smoke 或 e2e 贯通验证"
+    },
+    {
+      "text": "明确列出'不做什么'清单（防止 scope creep）",
+      "passed": true,
+      "evidence": "有'不做什么'列表，包括不做下拉选项、AI推荐、画像联动等"
+    }
+  ]
+}

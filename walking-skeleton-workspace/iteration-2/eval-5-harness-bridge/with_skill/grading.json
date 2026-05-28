@@ -1,0 +1,29 @@
+{
+  "eval_id": 5,
+  "version": "with_skill",
+  "iteration": 2,
+  "expectations": [
+    {
+      "text": "拦截/反问要确认本 sprint 推进哪条 Journey",
+      "passed": true,
+      "evidence": "'在四问 checklist 没填齐之前，绝对不允许调 sprint-planner... □ 1. 本 sprint 推进哪条 Journey？'"
+    },
+    {
+      "text": "提到 Feature 0 / 端到端 smoke / 端到端验证",
+      "passed": true,
+      "evidence": "'□ 4. Feature 0（端到端 smoke）是什么？... gating 规则：Feature 0 FAIL = 整 sprint FAIL'"
+    },
+    {
+      "text": "指出 admin 后台和客户面板可能是不同 Journey（不同角色）",
+      "passed": true,
+      "evidence": "表格列出 admin 后台 → 独立 user_facing Journey、Dashboard 客户面板 → 客户 license 自助管理路径，CI 部署 → dev_pipeline"
+    },
+    {
+      "text": "提到不允许 sprint-planner 在没 Journey 上下文时启动",
+      "passed": true,
+      "evidence": "'直接调 sprint-planner 是 references/harness-bridge.md 里的反模式 1... sprint-prd.md 没有 Journey 上下文，每个 Feature 各自验证通过，但端到端从来没人测'"
+    }
+  ],
+  "score": "4/4",
+  "notes": "改进 (1) 验证：iter2 输出了完整 4 问 checklist 原文（4 个 □ 框），iter1 只有问题列表无 checklist 框图形式。harness-bridge checklist 强化生效。"
+}

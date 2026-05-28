@@ -1,0 +1,31 @@
+{
+  "eval_id": 2,
+  "version": "baseline",
+  "expectations": [
+    {
+      "text": "提到字段数量限制（3-5 个或'最少'）",
+      "passed": true,
+      "evidence": "'5–8 个字段就够' 以及 '一份最少字段的画像表单'（数量稍宽于 3-5 但仍属最少字段约束）"
+    },
+    {
+      "text": "明确允许 UI 丑陋 / 简陋 / 无样式",
+      "passed": true,
+      "evidence": "'不做精美的诊断结果设计。卡片 + 一段文字 + 一个 下一步 按钮，纯文本就行'；'不做多步骤分页表单 / 进度条 / 动画'"
+    },
+    {
+      "text": "明确说不做错误处理或边界覆盖",
+      "passed": false,
+      "evidence": "未明确说不做错误处理；只提到 '连 form validation 都只做必填校验'，没有禁止错误处理"
+    },
+    {
+      "text": "提到 smoke 验证 / 端到端测试",
+      "passed": true,
+      "evidence": "'一条 smoke test：curl 模拟整条链路（登录 → POST 表单 → GET 诊断页 → 确认 DB 落库）'"
+    },
+    {
+      "text": "明确列出'不做什么'清单（防止 scope creep）",
+      "passed": true,
+      "evidence": "'不做什么（Don't）' 章节列出多条：不做 LLM 智能诊断/不做多步骤分页/不做画像编辑历史/不做 A/B 测试等"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "eval_id": 3,
+  "version": "with_skill",
+  "expectations": [
+    {
+      "text": "明确拒绝跳级（thin 不能直接到 thick）",
+      "passed": true,
+      "evidence": "'不行，不能从 thin 直接跳到 thick。这是 walking skeleton 方法论里的硬纪律之一'"
+    },
+    {
+      "text": "解释必须逐级升级（thin → medium → thick）",
+      "passed": true,
+      "evidence": "'Thickness 4 阶段（thin → medium → thick → mature）的设计本意... 每一级都有独立的升级标准，必须全部满足才能进下一级'"
+    },
+    {
+      "text": "引导先升 medium，给出 medium 的标准",
+      "passed": true,
+      "evidence": "'先升 medium。需要做两件事：1. 真实数据替代 mock... 2. 基本错误处理 — 至少保证：输入非法不崩溃、提交失败有提示'"
+    }
+  ]
+}

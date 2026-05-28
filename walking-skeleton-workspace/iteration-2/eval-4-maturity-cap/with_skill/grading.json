@@ -1,0 +1,24 @@
+{
+  "eval_id": 4,
+  "version": "with_skill",
+  "iteration": 2,
+  "expectations": [
+    {
+      "text": "明确拒绝 thick",
+      "passed": true,
+      "evidence": "'不行，这个请求必须拒绝... 不能这样干'"
+    },
+    {
+      "text": "解释 Maturity not_started 时 Feature 上限是 thin",
+      "passed": true,
+      "evidence": "引用 1.5 节 Maturity 表格原文（含 not_started → thin 上限），并引用纪律原文 'Feature thickness 不能超过 Journey Maturity 对应上限'"
+    },
+    {
+      "text": "建议先做 thin Feature 推进 Journey 进 skeleton",
+      "passed": true,
+      "evidence": "'先把整条 Journey 的所有 step 都挂上 thin Feature... 跑通 E2E smoke 让 Journey 升到 skeleton'"
+    }
+  ],
+  "score": "3/3",
+  "notes": "maturity-cap 章节虽精简，仍保持 PASS。iter2 比 iter1 更直接引用表格原文。"
+}

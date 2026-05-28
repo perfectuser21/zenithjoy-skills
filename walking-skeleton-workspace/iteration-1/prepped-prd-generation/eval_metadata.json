@@ -1,0 +1,14 @@
+{
+  "eval_id": 5,
+  "eval_name": "prepped-prd-generation",
+  "prompt": "我今天想在智能发布 Journey 里加快手图文发布。这个 Journey 的 journey_id 是 path-zj-publish，已有的 Steps 包括：Step 4（抖音内容发布）、Step 5（小红书内容发布）。目前抖音有图文发布脚本（thin），小红书有图文发布脚本（thin）。快手这边一个脚本都没有。帮我准备好点火的材料。",
+  "assertions": [
+    {"text": "生成了 PrepPRD 文档（含 '# PrepPRD' 标题）"},
+    {"text": "PrepPRD 包含 Journey 当前状态章节"},
+    {"text": "PrepPRD 包含'完成后用户能'章节"},
+    {"text": "PrepPRD 包含'不包含'章节（防止 scope 蔓延）"},
+    {"text": "提示用户确认 PrepPRD（作为唯一人工确认点）"},
+    {"text": "没有询问'目标 repo 是哪个'（应从 ZenithJoy 上下文推断）"},
+    {"text": "提到语义查重（检查'快手内容发布'是否已存在于 journey_steps）"}
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "eval_id": 2,
+  "config": "with_skill",
+  "expectations": [
+    {"text": "queries-brain-db: 包含 Brain DB 查询", "passed": true, "evidence": "明确说 'Brain API 不可达 (Connection refused)'，尝试查询 4 张表"},
+    {"text": "classifies-as-small-change: 判断为小改动路径", "passed": true, "evidence": "输出 '小改动路径（Small Change）'"},
+    {"text": "preprd-format-correct: 包含改什么和影响范围段", "passed": true, "evidence": "有 Why/What/Files/影响范围评估/完成标准（DoD）各段"},
+    {"text": "preprd-mentions-migration: 提到 DB migration", "passed": true, "evidence": "有完整 migration 284 SQL 草稿"},
+    {"text": "routes-to-engine-worktree: 提到路由到 engine-worktree", "passed": true, "evidence": "'路由到：engine-worktree skill' 明确写出"},
+    {"text": "writes-decision-small-change: 包含 POST decisions 且 category=small-change", "passed": false, "evidence": "有 decision JSON 但无 category 字段，格式不完整"}
+  ],
+  "pass_count": 5,
+  "total": 6,
+  "pass_rate": 0.833
+}

@@ -1,0 +1,21 @@
+{
+  "eval_id": 4,
+  "version": "baseline",
+  "expectations": [
+    {
+      "text": "明确拒绝 thick",
+      "passed": true,
+      "evidence": "'不可以——这违反了 Walking Skeleton 的成熟度封顶原则'"
+    },
+    {
+      "text": "解释 Maturity not_started 时 Feature 上限是 thin",
+      "passed": true,
+      "evidence": "'你现在是 not_started，封顶就是 thin' + 表格 'not_started → thin'"
+    },
+    {
+      "text": "建议先做 thin Feature 推进 Journey 进 skeleton",
+      "passed": true,
+      "evidence": "'Iteration 1（thin）：写死一个 prompt、不做风格控制、不做 A/B... 把整条 user_facing path 从 not_started 推进到 thin'"
+    }
+  ]
+}

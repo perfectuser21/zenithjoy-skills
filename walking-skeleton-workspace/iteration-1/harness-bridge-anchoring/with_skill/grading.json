@@ -1,0 +1,27 @@
+{
+  "eval_id": 4,
+  "eval_name": "harness-bridge-anchoring",
+  "config": "with_skill",
+  "expectations": [
+    {
+      "text": "拦截/反问要确认本次推进哪条 Journey",
+      "passed": true,
+      "evidence": "'在点火之前，我需要先和你做一轮 Walking Skeleton 对话，把这个 license 系统挂到正确的 Journey 上'"
+    },
+    {
+      "text": "提到 PrepPRD 或 Walking Skeleton 对话作为点火前置步骤",
+      "passed": true,
+      "evidence": "'生成 PrepPRD，你确认后再点火'，明确说明了 PrepPRD 是唯一人工确认点"
+    },
+    {
+      "text": "不直接执行 sprint-planner / harness-planner",
+      "passed": true,
+      "evidence": "完全拦截，开始 WS 对话，没有执行任何 planner"
+    },
+    {
+      "text": "指出 admin 后台和客户面板可能是不同 Journey（不同角色）",
+      "passed": false,
+      "evidence": "把客户面板和 admin 后台都归入'user_facing Journey'，只把 CI 部署单独拆出来。未明确指出 admin 和 customer 可能是不同 Journey"
+    }
+  ]
+}

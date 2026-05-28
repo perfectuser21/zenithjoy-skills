@@ -1,0 +1,26 @@
+{
+  "eval_id": 5,
+  "version": "baseline",
+  "expectations": [
+    {
+      "text": "拦截/反问要确认本 sprint 推进哪条 Journey",
+      "passed": false,
+      "evidence": "拦截了直接调 sprint-planner 但未反问要确认推进哪条 Journey；直接进入 'license 系统先做 walking skeleton' 的方案，没要求用户回答 Journey 选择"
+    },
+    {
+      "text": "提到 Feature 0 / 端到端 smoke / 端到端验证",
+      "passed": true,
+      "evidence": "'一个 smoke.sh：注册 → 拿 license → 卡片渲染 → admin 可见'，提到 smoke 端到端验证（但未使用 'Feature 0' 术语）"
+    },
+    {
+      "text": "指出 admin 后台和客户面板可能是不同 Journey（不同角色）",
+      "passed": false,
+      "evidence": "未指出 admin 后台和客户面板是不同 Journey（不同角色）；反而把它们都纳入同一条 license skeleton"
+    },
+    {
+      "text": "提到不允许 sprint-planner 在没 Journey 上下文时启动",
+      "passed": false,
+      "evidence": "未明确说 sprint-planner 需要 Journey 上下文；只是说 'skeleton 落地后再 sprint-planner'，理由是集成基线，不是 Journey 锚定"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "eval_id": 5,
+  "eval_name": "prepped-prd-generation",
+  "config": "with_skill",
+  "expectations": [
+    {
+      "text": "生成了 PrepPRD 文档（含 '# PrepPRD' 标题）",
+      "passed": true,
+      "evidence": "生成了 '# PrepPRD：智能发布 Journey — 新增快手图文发布（骨架补全）'"
+    },
+    {
+      "text": "PrepPRD 包含 Journey 当前状态章节",
+      "passed": true,
+      "evidence": "包含 '## Journey 当前状态' 章节，并有表格展示 Step 4/5/6 状态"
+    },
+    {
+      "text": "PrepPRD 包含'完成后用户能'章节",
+      "passed": true,
+      "evidence": "从 agent 摘要确认包含此章节"
+    },
+    {
+      "text": "PrepPRD 包含'不包含'章节（防止 scope 蔓延）",
+      "passed": true,
+      "evidence": "从 agent 摘要确认包含'## 不包含'章节"
+    },
+    {
+      "text": "提示用户确认 PrepPRD（作为唯一人工确认点）",
+      "passed": true,
+      "evidence": "'这是唯一的人工确认点。请确认 PrepPRD 方向是否正确，确认后我会存入 Notion 并点火'"
+    },
+    {
+      "text": "没有询问'目标 repo 是哪个'（应从 ZenithJoy 上下文推断）",
+      "passed": true,
+      "evidence": "直接推断：'话题 = ZenithJoy 智能发布 → 推断 target_repo = zenithjoy'，未询问用户"
+    },
+    {
+      "text": "提到语义查重（检查'快手内容发布'是否已存在于 journey_steps）",
+      "passed": true,
+      "evidence": "有完整的'【第二步：语义对齐检查（Semantic Dedup）】'章节"
+    }
+  ]
+}

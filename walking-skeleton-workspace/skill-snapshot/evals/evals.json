@@ -1,0 +1,63 @@
+{
+  "skill_name": "walking-skeleton",
+  "evals": [
+    {
+      "id": 1,
+      "name": "journey-vs-feature-boundary",
+      "prompt": "我想给我的 SaaS 产品（独立咨询师管理客户合同的工具）加一个 AI 自动生成合同条款的功能。这件事是新建一条 walking skeleton 还是挂个 feature？",
+      "expected_output": "判断为 Feature（不是 Journey），反问要挂哪条 Journey，解释判断依据（不是独立价值闭环）",
+      "assertions": [
+        {"text": "判断该需求为 Feature（不是 Journey）"},
+        {"text": "反问要挂在哪条 Journey 的哪一步"},
+        {"text": "解释判断依据（用价值闭环 / 端到端 / 不能独立 demo 等概念）"}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "thin-feature-design",
+      "prompt": "我们的 user_facing path 第 3 步是'用户填画像诊断'。我要做这一步的第一版，应该做什么？告诉我具体做什么不做什么。",
+      "expected_output": "给出 thin Feature 的 4 条标准应用：少字段（3-5）+ 丑 UI + 0 错误处理 + smoke 通过 + 端到端不依赖未做 Feature。明确说不做什么（AI 推荐、美化、校验）。",
+      "assertions": [
+        {"text": "提到字段数量限制（3-5 个或'最少'）"},
+        {"text": "明确允许 UI 丑陋 / 简陋 / 无样式"},
+        {"text": "明确说不做错误处理或边界覆盖"},
+        {"text": "提到 smoke 验证 / 端到端测试"},
+        {"text": "明确列出'不做什么'清单（防止 scope creep）"}
+      ]
+    },
+    {
+      "id": 3,
+      "name": "thickness-skip-rejection",
+      "prompt": "我们的画像表单是 thin Feature，10 个客户在用，没出过 bug。我能直接升 thick 吗？",
+      "expected_output": "拒绝跳级，解释必须先升 medium 再升 thick，引导逐级升级。",
+      "assertions": [
+        {"text": "明确拒绝跳级（thin 不能直接到 thick）"},
+        {"text": "解释必须逐级升级（thin → medium → thick）"},
+        {"text": "引导先升 medium，给出 medium 的标准"}
+      ]
+    },
+    {
+      "id": 4,
+      "name": "maturity-cap-violation",
+      "prompt": "我们 user_facing path 现在是 not_started 状态（还没有 Feature），但我想直接把'AI 生成'这个 Feature 做成 thick（含 prompt 工程 + 风格控制 + A/B），可以吗？",
+      "expected_output": "拒绝。解释 Journey not_started 时 Feature 上限是 thin。给出正确做法：先做 thin Feature 让 Journey 升 skeleton，再考虑升 thick。",
+      "assertions": [
+        {"text": "明确拒绝 thick"},
+        {"text": "解释 Maturity not_started 时 Feature 上限是 thin"},
+        {"text": "建议先做 thin Feature 推进 Journey 进 skeleton"}
+      ]
+    },
+    {
+      "id": 5,
+      "name": "harness-bridge-anchoring",
+      "prompt": "我们要开个 sprint 推进 license 系统，包括 4 个 ws：后端 API、Dashboard 客户面板、admin 后台、CI 部署。直接调 sprint-planner 吧。",
+      "expected_output": "拦截：必须先确认本 sprint 推进哪条 Journey，列出每个 ws 推进的 Feature 是哪条 Journey 的哪一步。强制 Feature 0（端到端 smoke）作为 sprint 一部分。",
+      "assertions": [
+        {"text": "拦截/反问要确认本 sprint 推进哪条 Journey"},
+        {"text": "提到 Feature 0 / 端到端 smoke / 端到端验证"},
+        {"text": "指出 admin 后台和客户面板可能是不同 Journey（不同角色）"},
+        {"text": "提到不允许 sprint-planner 在没 Journey 上下文时启动"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+===== Walking Skeleton 动作 5：harness-bridge 流程记录 =====
+
+【第一步：查现有状态】
+Brain API 部分端点不可用（/api/brain/journeys、/api/brain/journey_steps 返回 404 / 无效 UUID）。
+已有信息来自用户提供的上下文：
+- Journey：智能发布，journey_id = path-zj-publish
+- 现有 Step：Step 4（抖音内容发布）、Step 5（小红书内容发布）
+- 现有 Feature 状态：
+  - 抖音图文发布脚本 [thin]
+  - 小红书图文发布脚本 [thin]
+  - 快手：0 个脚本
+
+【第二步：语义对齐检查（Semantic Dedup）】
+用户意图：在智能发布 Journey 里加快手图文发布。
+
+判断逻辑：
+- "快手图文发布" → 属于 Phase "发布" 下的新 Step "快手内容发布"
+- 与 Step 4（抖音内容发布）：不同平台，无语义重叠 ✅
+- 与 Step 5（小红书内容发布）：不同平台，无语义重叠 ✅
+- 结论：需新建 Step 6（快手内容发布），并在其下挂第一个 Feature "快手图文发布脚本 [thin]"
+
+【第三步：目标 repo 推断】
+话题 = ZenithJoy 智能发布（抖音/小红书/快手平台发布脚本）
+推断 target_repo = zenithjoy（非 Cecelia 系统本身）
+
+【Sizing Check 预估】
+本次 PRD 涉及：
+- 建 Step 6（快手内容发布）的 Notion + Brain 记录
+- 开发快手图文发布脚本（thin）
+- 预计 WS 数：2 个（WS1: 快手账号/平台对接基础层 + WS2: 快手图文发布脚本实现）
+→ 落在 2-5 WS 甜点区，适合走 Harness Pipeline ✅
+
+========================================
+PrepPRD 文档（唯一人工确认点）
+========================================
+
+# PrepPRD：智能发布 Journey — 新增快手图文发布（骨架补全）
+
+## Journey 当前状态
+
+**智能发布 Journey**（path-zj-publish）：
+
+| Step | 状态 | 已有脚本 |
+|------|------|---------|
+| Step 4：抖音内容发布 | ✅ 已有骨架 | 抖音图文发布脚本 [thin] |
+| Step 5：小红书内容发布 | ✅ 已有骨架 | 小红书图文发布脚本 [thin] |
+| Step 6：快手内容发布 | ⬜ 待建立 | 0 个脚本 |
+
+## 本次要做的
+
+在智能发布 Journey 的"发布"阶段，补全快手平台的第一个发布能力：
+- 新增 **Step 6：快手内容发布**（骨架节点）
+- 在该 Step 下创建并实现 **快手图文发布脚本**（thin 级别）
+- 快手这边目前一个脚本都没有，本次从零开始贯穿骨架
+
+## 完成后用户能
+
+用户可以通过 ZenithJoy 系统，将图文内容（标题 + 文字 + 图片）一键发布到快手平台。这样"智能发布 Journey"的发布阶段在抖音、小红书、快手三个主流平台上都有了最薄但端到端可跑的骨架。
+
+## 涉及的脚本（Feature）
+
+- **快手图文发布脚本**（新增，thin 级别）
+  - 挂载在：Step 6（快手内容发布）
+  - 目标：实现最简路径——传入标题+文字+图片 → 成功发布到快手 → 返回发布结果
+
+## 不包含
+
+- 快手视频发布（下一个 Feature，本次只做图文）
+- 快手账号绑定 UI 流程（属于更早期 Step，本次不处理）
+- 快手数据回取（属于 Phase"数据回取"，不在本次 Run 范围内）
+- 快手图文脚本加厚（thin→medium 留到用户真实用过后再升）
+- 其他平台（抖音/小红书）的脚本加厚
+
+## 用户确认的成功标准
+
+1. 调用快手图文发布脚本，传入一张测试图片和文字，能成功在快手平台上发出帖子
+2. Step 6（快手内容发布）在智能发布 Journey 的 Notion 视图中可见
+3. 脚本在出错时（如账号未登录、网络异常）有基本的错误提示，不静默失败
+
+========================================
+点火参数（用户确认 PrepPRD 后自动填写）
+========================================
+
+| 参数 | 值 |
+|------|---|
+| feature_name | 快手图文发布脚本 |
+| thin_prd | 实现快手图文发布的最简路径：传入标题+文字+图片，通过 ZenithJoy 平台发布到快手，返回发布结果 |
+| target_repo | zenithjoy |
+| sprint_dir | sprints/zj7-kuaishou-image-text-publish |
+| journey_id | path-zj-publish |
+| step | Step 6（快手内容发布）— 新建 |
+| thickness | thin |
+
+========================================
+点火命令（用户确认后执行）
+========================================
+
+# Step 1: 在 Notion 注册 Feature
+node ~/.claude/skills/walking-skeleton/scripts/add-feature.js \
+  --name "快手图文发布脚本" \
+  --journey-id "path-zj-publish" \
+  --thickness "thin" \
+  --area "ZenithJoy"
+
+# Step 2: 创建 Brain harness_initiative 任务（点火）
+curl -s -X POST localhost:5221/api/brain/tasks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task_type": "harness_initiative",
+    "title": "快手图文发布脚本",
+    "description": "实现快手图文发布的最简路径：传入标题+文字+图片，通过 ZenithJoy 平台发布到快手，返回发布结果",
+    "priority": "P1",
+    "payload": {
+      "sprint_dir": "sprints/zj7-kuaishou-image-text-publish",
+      "thin_prd": "实现快手图文发布的最简路径：传入标题+文字+图片，通过 ZenithJoy 平台发布到快手，返回发布结果",
+      "journey_id": "path-zj-publish",
+      "base_repo": "zenithjoy"
+    }
+  }'

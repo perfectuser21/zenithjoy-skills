@@ -1,0 +1,106 @@
+{
+  "skill_name": "walking-skeleton",
+  "iteration": 1,
+  "configs": [
+    {
+      "name": "with_skill",
+      "evals": [
+        {
+          "eval_id": 2,
+          "eval_name": "thin-feature-design",
+          "pass_rate": 1.0,
+          "passed": 5,
+          "total": 5,
+          "duration_ms": 123595,
+          "total_tokens": 41148
+        },
+        {
+          "eval_id": 3,
+          "eval_name": "thickness-skip-rejection",
+          "pass_rate": 1.0,
+          "passed": 3,
+          "total": 3,
+          "duration_ms": 48789,
+          "total_tokens": 31277
+        },
+        {
+          "eval_id": 4,
+          "eval_name": "harness-bridge-anchoring",
+          "pass_rate": 0.75,
+          "passed": 3,
+          "total": 4,
+          "duration_ms": 83503,
+          "total_tokens": 32791
+        },
+        {
+          "eval_id": 5,
+          "eval_name": "prepped-prd-generation",
+          "pass_rate": 1.0,
+          "passed": 7,
+          "total": 7,
+          "duration_ms": 88157,
+          "total_tokens": 32019
+        }
+      ],
+      "summary": {
+        "mean_pass_rate": 0.947,
+        "total_passed": 18,
+        "total_assertions": 19,
+        "mean_duration_ms": 86011,
+        "mean_tokens": 34309
+      }
+    },
+    {
+      "name": "without_skill",
+      "evals": [
+        {
+          "eval_id": 2,
+          "eval_name": "thin-feature-design",
+          "pass_rate": 0.4,
+          "passed": 2,
+          "total": 5,
+          "duration_ms": 426766,
+          "total_tokens": 71853
+        },
+        {
+          "eval_id": 3,
+          "eval_name": "thickness-skip-rejection",
+          "pass_rate": 0.667,
+          "passed": 2,
+          "total": 3,
+          "duration_ms": 34936,
+          "total_tokens": 21178
+        },
+        {
+          "eval_id": 4,
+          "eval_name": "harness-bridge-anchoring",
+          "pass_rate": 0.0,
+          "passed": 0,
+          "total": 4,
+          "duration_ms": 162389,
+          "total_tokens": 30727
+        },
+        {
+          "eval_id": 5,
+          "eval_name": "prepped-prd-generation",
+          "pass_rate": 0.143,
+          "passed": 1,
+          "total": 7,
+          "duration_ms": 256804,
+          "total_tokens": 66824
+        }
+      ],
+      "summary": {
+        "mean_pass_rate": 0.263,
+        "total_passed": 5,
+        "total_assertions": 19,
+        "mean_duration_ms": 220224,
+        "mean_tokens": 47646
+      }
+    }
+  ],
+  "delta": {
+    "pass_rate": 0.684,
+    "description": "with_skill vs without_skill: +68.4 pp improvement"
+  }
+}

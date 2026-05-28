@@ -1,0 +1,33 @@
+{
+  "eval_id": 2,
+  "version": "with_skill",
+  "iteration": 2,
+  "expectations": [
+    {
+      "text": "提到字段数量限制（3-5 个或'最少'）",
+      "passed": true,
+      "evidence": "'3 个字段，就 3 个（不要 4 个，不要 5 个）'"
+    },
+    {
+      "text": "明确允许 UI 丑陋 / 简陋 / 无样式",
+      "passed": true,
+      "evidence": "'不做美化 UI：不自定义组件、不画图标、不做 hover 动效... input + button 即可'"
+    },
+    {
+      "text": "明确说不做错误处理或边界覆盖",
+      "passed": true,
+      "evidence": "'不做错误处理：DB 写失败就让它崩，不 try/catch、不 toast、不重试'"
+    },
+    {
+      "text": "提到 smoke 验证 / 端到端测试",
+      "passed": true,
+      "evidence": "'Smoke 验证：写一个 .github/workflows/scripts/smoke/profile-setup-smoke.sh... 5 行以上实质内容'"
+    },
+    {
+      "text": "明确列出'不做什么'清单（防止 scope creep）",
+      "passed": true,
+      "evidence": "10 条不做清单：不做表单校验/不做错误处理/不做 AI 推荐/不做美化 UI/不做编辑/不做画像预览/不做字段联动/不做埋点/不做 unit test 边界/不做等待"
+    }
+  ],
+  "score": "5/5"
+}

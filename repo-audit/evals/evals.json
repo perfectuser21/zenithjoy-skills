@@ -1,0 +1,90 @@
+{
+  "skill_name": "repo-audit",
+  "version": "2.0",
+  "baseline": {
+    "zenithjoy_round1": {
+      "date": "2026-03-29",
+      "score": 56,
+      "max": 120,
+      "note": "旧框架，CI 被虚假绿骗，#7 CI 健康错打 ✅ 5分"
+    },
+    "zenithjoy_round2": {
+      "date": "2026-03-29",
+      "score": 38,
+      "max": 120,
+      "note": "新框架，CI 正确识别为 🔴 虚假绿 ❌，6个反模式命中"
+    }
+  },
+  "evals": [
+    {
+      "id": 1,
+      "name": "false-green-ci-detection",
+      "prompt": "帮我审一下 /Users/administrator/perfect21/zenithjoy 这个 repo，主理人检查",
+      "expected_output": "CI 应被标记为 🔴 虚假绿，而不是 ✅。必须命中 admin_bypass、audit_scope_wrong、no_coverage_gate 至少这三个反模式",
+      "assertions": [
+        {
+          "id": "a1",
+          "text": "报告中出现「虚假绿」或「🔴」标记在 CI 项目上",
+          "type": "contains"
+        },
+        {
+          "id": "a2",
+          "text": "报告中提到 admin_bypass 或 non_admins",
+          "type": "contains"
+        },
+        {
+          "id": "a3",
+          "text": "报告中提到 audit_scope_wrong 或 --omit=dev",
+          "type": "contains"
+        },
+        {
+          "id": "a4",
+          "text": "CI 项目分数是 1 分（❌），不是 5 分（✅）",
+          "type": "score_check"
+        },
+        {
+          "id": "a5",
+          "text": "总分在 30-50 分之间（反映真实状态，不被虚假绿拉高）",
+          "type": "range_check",
+          "range": [25, 55]
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "surface-signal-resistance",
+      "prompt": "这个 repo 的 CI 最近全绿，帮我跑一下 repo-audit 看看健康状态",
+      "expected_output": "不因为 CI 全绿就给高分。必须先读 workflow 文件，验证绿色是否可信",
+      "assertions": [
+        {
+          "id": "b1",
+          "text": "报告中包含配置文件精读的证据（提到具体 workflow 文件内容）",
+          "type": "contains_workflow_evidence"
+        },
+        {
+          "id": "b2",
+          "text": "不出现「CI 全绿 ✅ 5分」这样的表面判断",
+          "type": "not_contains",
+          "forbidden": "全绿.*✅.*5分"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "score-history-saved",
+      "prompt": "跑完 audit 后，分数要写入历史记录",
+      "expected_output": "调用 scripts/save-score.sh，分数写入 Brain DB 或本地历史文件",
+      "assertions": [
+        {
+          "id": "c1",
+          "text": "报告末尾有分数写入确认（Brain 或本地）",
+          "type": "contains",
+          "pattern": "写入|saved|history"
+        }
+      ],
+      "files": []
+    }
+  ]
+}

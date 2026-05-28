@@ -1,0 +1,42 @@
+{
+  "eval_id": 5,
+  "eval_name": "prepped-prd-generation",
+  "config": "without_skill",
+  "expectations": [
+    {
+      "text": "生成了 PrepPRD 文档（含 '# PrepPRD' 标题）",
+      "passed": false,
+      "evidence": "生成了'## 现状摘要'和'## 点火材料'，没有 PrepPRD 格式或标题"
+    },
+    {
+      "text": "PrepPRD 包含 Journey 当前状态章节",
+      "passed": false,
+      "evidence": "没有按 PrepPRD 格式生成 Journey 当前状态章节"
+    },
+    {
+      "text": "PrepPRD 包含'完成后用户能'章节",
+      "passed": false,
+      "evidence": "没有此章节，给的是技术实现分析而非用户视角描述"
+    },
+    {
+      "text": "PrepPRD 包含'不包含'章节（防止 scope 蔓延）",
+      "passed": false,
+      "evidence": "没有明确的'不包含'章节"
+    },
+    {
+      "text": "提示用户确认 PrepPRD（作为唯一人工确认点）",
+      "passed": false,
+      "evidence": "没有人工确认点，直接给出技术结论和推荐方案"
+    },
+    {
+      "text": "没有询问'目标 repo 是哪个'（应从 ZenithJoy 上下文推断）",
+      "passed": true,
+      "evidence": "通过读取代码库文件发现了 zenithjoy 路径下的 kuaishou-publisher，隐式推断了 repo"
+    },
+    {
+      "text": "提到语义查重（检查'快手内容发布'是否已存在于 journey_steps）",
+      "passed": false,
+      "evidence": "没有做 journey_steps 语义查重，直接进入技术调研"
+    }
+  ]
+}

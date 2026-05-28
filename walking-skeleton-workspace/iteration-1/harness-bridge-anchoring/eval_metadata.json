@@ -1,0 +1,11 @@
+{
+  "eval_id": 4,
+  "eval_name": "harness-bridge-anchoring",
+  "prompt": "我们要开个 sprint 推进 license 系统，包括 4 个模块：后端 API、Dashboard 客户面板、admin 后台、CI 部署。直接调 sprint-planner 吧。",
+  "assertions": [
+    {"text": "拦截/反问要确认本次推进哪条 Journey"},
+    {"text": "提到 PrepPRD 或 Walking Skeleton 对话作为点火前置步骤"},
+    {"text": "不直接执行 sprint-planner / harness-planner"},
+    {"text": "指出 admin 后台和客户面板可能是不同 Journey（不同角色）"}
+  ]
+}

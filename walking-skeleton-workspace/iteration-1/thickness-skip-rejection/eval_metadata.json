@@ -1,0 +1,10 @@
+{
+  "eval_id": 3,
+  "eval_name": "thickness-skip-rejection",
+  "prompt": "我们的画像表单是 thin Feature，10 个客户在用，没出过 bug。我能直接升 thick 吗？",
+  "assertions": [
+    {"text": "明确拒绝跳级（thin 不能直接到 thick）"},
+    {"text": "解释必须逐级升级（thin → medium → thick）"},
+    {"text": "引导先升 medium，给出 medium 的标准"}
+  ]
+}

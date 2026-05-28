@@ -1,0 +1,32 @@
+{
+  "eval_id": 2,
+  "eval_name": "thin-feature-design",
+  "config": "with_skill",
+  "expectations": [
+    {
+      "text": "提到字段数量限制（3-5 个或'最少'）",
+      "passed": true,
+      "evidence": "明确说'3 个字段足够：行业（文本或下拉）、目标受众（文本）、内容风格（文本或下拉）'"
+    },
+    {
+      "text": "明确允许 UI 丑陋 / 简陋 / 无样式",
+      "passed": true,
+      "evidence": "'UI 丑没关系，能填能提交就行'"
+    },
+    {
+      "text": "明确说不做错误处理或边界覆盖",
+      "passed": true,
+      "evidence": "不做清单中明确：'不做错误处理（网络失败、重复提交）'，以及'不需要校验逻辑，不需要错误提示'"
+    },
+    {
+      "text": "提到 smoke 验证 / 端到端测试",
+      "passed": true,
+      "evidence": "明确提到'smoke 验证：有一条命令能证明贯通：填画像 → 存 DB → 读出来'"
+    },
+    {
+      "text": "明确列出'不做什么'清单（防止 scope creep）",
+      "passed": true,
+      "evidence": "有完整的'第一版不做什么'章节，列出 7 条不做事项"
+    }
+  ]
+}

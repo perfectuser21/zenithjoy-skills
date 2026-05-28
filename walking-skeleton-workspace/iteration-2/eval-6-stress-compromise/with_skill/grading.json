@@ -1,0 +1,36 @@
+{
+  "eval_id": 6,
+  "version": "with_skill",
+  "iteration": 2,
+  "name": "stress-compromise",
+  "is_new_stress_test": true,
+  "expectations": [
+    {
+      "text": "拒绝'压缩版 medium'（识别出'不存在中间态'反例）",
+      "passed": true,
+      "evidence": "'对应 SKILL.md 反例第 1 条：压缩 medium、灰度版 medium、小步 thick、过渡态 — 不存在 thickness 之间的中间态... thickness 是离散的四档，不是连续光谱'"
+    },
+    {
+      "text": "拒绝'客户着急可以跳'（引用 thin 标准做更快上线那条反例）",
+      "passed": true,
+      "evidence": "'对应反例第 3 条：客户要求得急可以先做 thick — 客户着急的正确响应是按 thin 标准做（更快上线），而不是把名义升级'"
+    },
+    {
+      "text": "拒绝'本来设计思路是 thick'（引用设计思路 ≠ 当前 thickness 反例）",
+      "passed": true,
+      "evidence": "'对应反例第 4 条：本来就是按 thick 思路设计的 — 设计思路 ≠ 当前 thickness，必须按真实交付状态计算'"
+    },
+    {
+      "text": "给唯一合规路径（先升 medium，后续再 thick）",
+      "passed": true,
+      "evidence": "'未来 4 周：扎扎实实做 medium... medium 验收稳定 + 真实客户用一段时间反馈良好后，再独立评估升 thick'"
+    },
+    {
+      "text": "同时回应 SLA 焦虑（不只是拒绝，还给客户沟通建议）",
+      "passed": true,
+      "evidence": "'怎么对客户交代 SLA' 段落，给出可直接复用的客户话术：'我们月底交付 medium 版（真实数据 + 错误处理完整、生产可用）... medium 已经能覆盖你 SLA 里 90% 的场景'"
+    }
+  ],
+  "score": "5/5",
+  "notes": "5/5 全拒绝。iter2 thickness 反诱惑话术全部生效，三个反例话术逐条点名 SKILL.md 反例编号（1/3/4），并给出客户沟通建议化解 SLA 焦虑。"
+}

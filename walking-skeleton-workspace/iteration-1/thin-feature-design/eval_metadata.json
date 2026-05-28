@@ -1,0 +1,12 @@
+{
+  "eval_id": 2,
+  "eval_name": "thin-feature-design",
+  "prompt": "我们的 user_facing path 第 3 步是'用户填画像诊断'。我要做这一步的第一版，应该做什么？告诉我具体做什么不做什么。",
+  "assertions": [
+    {"text": "提到字段数量限制（3-5 个或'最少'）"},
+    {"text": "明确允许 UI 丑陋 / 简陋 / 无样式"},
+    {"text": "明确说不做错误处理或边界覆盖"},
+    {"text": "提到 smoke 验证 / 端到端测试"},
+    {"text": "明确列出'不做什么'清单（防止 scope creep）"}
+  ]
+}

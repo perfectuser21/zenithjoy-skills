@@ -1,0 +1,21 @@
+{
+  "eval_id": 4,
+  "version": "with_skill",
+  "expectations": [
+    {
+      "text": "明确拒绝 thick",
+      "passed": true,
+      "evidence": "'不行，必须拒绝。... 上限只能是 thin，不允许越界做 medium / thick / mature'"
+    },
+    {
+      "text": "解释 Maturity not_started 时 Feature 上限是 thin",
+      "passed": true,
+      "evidence": "'当前 Journey Maturity = not_started，按 walking-skeleton 方法论的硬纪律，此时挂上去的任何 Feature 上限只能是 thin'"
+    },
+    {
+      "text": "建议先做 thin Feature 推进 Journey 进 skeleton",
+      "passed": true,
+      "evidence": "'把 AI 生成 先做成合格 thin... 等所有 step 都有 thin Feature 通过 + E2E smoke 全绿 → Journey 自动升 skeleton'"
+    }
+  ]
+}

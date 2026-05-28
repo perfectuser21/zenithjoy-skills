@@ -1,0 +1,281 @@
+---
+name: arch-review
+version: 1.0.0
+created: 2026-03-10
+updated: 2026-03-10
+changelog:
+  - 1.0.0: 初始版本 - 从 /architect Mode 3 迁移 + 新增 Mode 4 架构巡检
+description: |
+  架构审查官。负责验证、巡检、发现偏离与结构退化，不承担新架构设计职责（那是 /architect 的事）。
+
+  两个模式：
+  - verify：Initiative 完成后验收（Brain 自动触发 task_type=initiative_verify）
+  - review：每日架构健康巡检（Brain 定时触发 task_type=arch_review）
+
+  触发词：验收 initiative、架构巡检、检查架构漂移、arch-review、检查结构健康、/arch-review
+---
+
+# /arch-review - 架构审查官
+
+**角色定位**：审查而非设计。发现问题、记录发现、决定是否升级到 /architect。
+
+**模型**：Sonnet（评估型任务，不需要 Opus 的创造力）
+
+**核心分工**：
+```
+/architect   → 提出设计、产出架构方案
+/arch-review → 验收成果、巡检健康、守住边界
+```
+
+---
+
+## 触发方式
+
+```bash
+/arch-review verify --initiative-id <id>   # Mode 3: Initiative 验收
+/arch-review review                        # Mode 4: 每日巡检（默认）
+/arch-review review --full                 # Mode 4: 完整版（每周）
+/arch-review review --scope=drift          # 仅漂移检查
+/arch-review review --scope=health         # 仅结构健康
+/arch-review --task-id <id>               # Brain 自动派发
+```
+
+---
+
+## Mode 3：Initiative 验收（verify）
+
+### 目标
+
+Initiative 所有 dev tasks 完成、code_review PASS 后，验收功能 DoD + 架构对齐 + 标记完成。
+
+Brain 自动触发：`task_type = 'initiative_verify'`
+
+### Phase 1：前置条件检查
+
+```bash
+INITIATIVE_ID="<id>"
+PENDING=$(curl -s "http://localhost:5221/api/brain/tasks?project_id=$INITIATIVE_ID" | \
+  jq '[.[] | select(.task_type=="dev" and (.status | IN("queued","in_progress","blocked")))] | length')
+[ "$PENDING" -gt 0 ] && echo "BLOCK: $PENDING dev tasks 未完成" && exit 1
+
+CR=$(curl -s "http://localhost:5221/api/brain/tasks?project_id=$INITIATIVE_ID" | \
+  jq -r '[.[] | select(.task_type=="code_review" and .payload.scope=="initiative")] | last | .status')
+[ "$CR" != "completed" ] && echo "BLOCK: initiative code_review 未通过" && exit 1
+```
+
+### Phase 2：功能 DoD 验收
+
+读取 `initiative-dod.md`，逐条验证 F1/F2/... 条件，记录 PASS / FAIL。
+
+### Phase 3：架构对齐校验
+
+对照 `architecture.md` 逐条验证：
+- **数据模型**：查询实际 DB schema，确认新增字段/表存在
+- **API 端点**：grep routes.js 确认新增端点存在
+- **关键决策**：代码是否符合选定方案（不可自动校验的标注"需人工确认"）
+
+### Phase 4：输出验收报告
+
+```markdown
+## Initiative 验收报告
+
+### 功能 DoD
+- ✅/❌ F1: ...
+
+### 架构对齐
+- ✅/❌ 数据模型 — [字段] 存在
+- ✅/❌ API — [端点] 存在
+- ⚠️  需人工确认 — [决策描述]
+
+### 总体裁决：APPROVED / NEEDS_REVISION / REJECTED
+```
+
+### Phase 5：标记完成（仅 APPROVED）
+
+```bash
+curl -s -X PATCH http://localhost:5221/api/brain/projects/$INITIATIVE_ID \
+  -H "Content-Type: application/json" \
+  -d '{"status": "completed"}'
+```
+
+### Machine-Readable Verdict
+
+```json
+{
+  "verdict": "APPROVED",
+  "summary": "Initiative 验收通过",
+  "dod_results": [{"id": "F1", "status": "PASS", "note": "..."}],
+  "architecture_alignment": "aligned"
+}
+```
+
+| verdict | Brain 行为 |
+|---------|-----------|
+| `APPROVED` | project status → completed |
+| `NEEDS_REVISION` | 创建修订 dev task（最多 3 轮） |
+| `REJECTED` | cecelia_events P0 告警 |
+
+完成后创建 `.arch-review-verify-done`。
+
+---
+
+## Mode 4：架构巡检（review）
+
+### 前置检查
+
+若 `packages/brain/src/` 不存在，跳过架构巡检并返回 HEALTHY（该仓库无 Cecelia Brain 模块）。
+
+```bash
+[ ! -d "packages/brain/src" ] && echo '{"verdict":"HEALTHY","summary":"无 Cecelia Brain 模块，跳过巡检"}' && exit 0
+```
+
+### 执行节奏
+
+| 模式 | 频率 | 4A Drift | 4B Health |
+|------|------|---------|----------|
+| 默认（daily） | 每日 | 完整 6 项 | 轻量（core modules 只） |
+| `--full` | 每周 | 完整 | 完整全库扫描 |
+| `--scope=drift` | 按需 | 完整 | 跳过 |
+| `--scope=health` | 按需 | 跳过 | 完整 |
+
+---
+
+### 4A：Architecture Drift Review（防漂移）
+
+检查实现是否偏离 `architecture.md` / ADR / SYSTEM_MAP。
+
+**每日 6 项检查**：
+
+**1. Boundary Drift**
+L0/L1/L2/Planner/Skill 职责边界是否被侵蚀，有无跨层直接调用。
+
+**2. Undocumented Architectural Changes**
+```bash
+git log --since="24 hours ago" --name-only --pretty=format:"" | sort -u
+```
+近期结构性改动是否同步到 architecture.md / SYSTEM_MAP。
+
+**3. Routing Integrity**
+task_type → skill 映射是否清晰；fallback 是否被滥用（如 dev→talk 静默降级）。
+
+**4. Core Module Complexity**
+```bash
+wc -l packages/brain/src/{tick,executor,planner,thalamus,cortex}.js
+```
+5 个核心文件行数趋势，是否有大块新增逻辑没有对应测试。
+
+**5. Concurrency & State Safety**
+近期改动是否涉及 task 状态机、worktree 管理、cleanup 逻辑，是否引入新竞态。
+
+**6. Temp Patch 永久化**
+```bash
+grep -rn "TODO\|FIXME\|HACK\|temp\|temporary" packages/brain/src/ --include="*.js" | \
+  grep -v node_modules | grep -v ".test."
+```
+超过 7 天的 TODO 标记为结构债。
+
+---
+
+### 4B：Structural Health Review（防腐化）
+
+**轻量模式（每日，仅 core modules）**：
+- packages/brain/src/ 文件数量变化
+- 核心 5 文件 import 数量（依赖是否增加）
+- 新文件是否有对应测试文件
+
+**完整模式（`--full`，每周）**：
+
+```bash
+# 孤岛/僵尸模块
+for f in packages/brain/src/*.js; do
+  name=$(basename $f)
+  count=$(grep -rl "$name" packages/brain/src/ --include="*.js" | grep -v "$name" | wc -l)
+  [ "$count" -eq 0 ] && echo "ORPHAN: $name"
+done
+
+# God Module（>500行 且 import>10）
+for f in packages/brain/src/*.js; do
+  lines=$(wc -l < $f)
+  imports=$(grep -c "^import" $f 2>/dev/null || echo 0)
+  [ "$lines" -gt 500 ] && [ "$imports" -gt 10 ] && echo "GOD: $(basename $f) (${lines}L, ${imports}imports)"
+done
+
+# 近 30 天热点文件
+git log --since="30 days ago" --name-only --pretty=format:"" | \
+  grep "packages/brain/src/" | sort | uniq -c | sort -rn | head -10
+```
+
+---
+
+### 输出格式（固定）
+
+```markdown
+## Architecture Review — {日期} {daily|weekly}
+
+### Executive Summary
+[2-3 句总体判断]
+
+### 4A Drift Findings
+| 检查项 | 状态 | 发现 |
+|--------|------|------|
+| Boundary Drift | ✅/⚠️/🔴 | ... |
+| Undocumented Changes | ✅/⚠️/🔴 | ... |
+| Routing Integrity | ✅/⚠️/🔴 | ... |
+| Core Module Complexity | ✅/⚠️/🔴 | ... |
+| Concurrency Safety | ✅/⚠️/🔴 | ... |
+| Temp Patch Accumulation | ✅/⚠️/🔴 | ... |
+
+### 4B Structural Health Findings
+[轻量/完整] — 孤岛、God Module、结构债信号
+
+### Severity
+- 🔴 High: N 项
+- ⚠️  Medium: N 项
+- ✅ Clean: N 项
+
+### Required Actions
+- [ ] [具体行动，带优先级]
+
+### ADR Needed? [是/否]
+### Escalate to /architect? [是/否 + 理由]
+```
+
+### execution-callback 输出
+
+```json
+{
+  "verdict": "HEALTHY|NEEDS_ATTENTION|CRITICAL",
+  "drift_findings": 0,
+  "health_findings": 1,
+  "high_severity": 0,
+  "escalate_to_architect": false,
+  "summary": "6 项检查通过 5 项，发现 1 项 temp patch 积累"
+}
+```
+
+| verdict | Brain 行为 |
+|---------|-----------|
+| `HEALTHY` | 记录日志，继续正常运转 |
+| `NEEDS_ATTENTION` | 创建 `arch_review_followup` task |
+| `CRITICAL` | 创建 P0 followup + cecelia_events 告警 |
+
+完成后创建 `.arch-review-review-done`。
+
+---
+
+## Brain 注册
+
+| task_type | skill 参数 | 触发方式 |
+|-----------|-----------|---------|
+| `initiative_verify` | `/arch-review verify --initiative-id <id>` | Initiative 完成后自动 |
+| `arch_review` | `/arch-review review` | 每日 recurring_task |
+| `arch_review` | `/arch-review review --full` | 每周 recurring_task |
+
+---
+
+## 禁止行为
+
+- 不主动修改代码（发现问题 → 记录 → 创建 followup task，让 /dev 去改）
+- 每条发现必须有具体文件/行号/证据，不写泛泛结论
+- `CRITICAL` 时不自动标记任何 initiative completed
+- 不替代 /architect 做架构设计决策

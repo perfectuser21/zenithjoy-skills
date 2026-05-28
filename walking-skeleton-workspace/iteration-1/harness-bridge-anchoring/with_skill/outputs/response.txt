@@ -1,0 +1,76 @@
+先等一下，不能直接调 sprint-planner。
+
+根据 Walking Skeleton 规范，sprint 启动的唯一正确入口是 `harness-bridge`，直接调 `/harness-planner` 是明确禁止的行为（绕过了调度层，违反 zero-human-gate 原则）。
+
+在点火之前，我需要先和你做一轮 Walking Skeleton 对话，把这个 license 系统挂到正确的 Journey 上，生成 PrepPRD，你确认后再点火。
+
+---
+
+## Walking Skeleton 对话：License 系统 Sprint
+
+### 第一步：厘清这是哪条 Journey
+
+你说的 license 系统包含 4 个模块：
+- 后端 API
+- Dashboard 客户面板
+- Admin 后台
+- CI 部署
+
+这 4 个模块横跨两种类型：
+
+**用户面（user_facing）**：客户面板（Dashboard）+ Admin 后台 → 应属于某条面向客户/管理员的 Journey
+**基建面（dev_pipeline）**：CI 部署 → 应属于一条独立的 dev_pipeline Journey
+
+按 Walking Skeleton 铁律：基建（CI/CD/部署）是 `dev_pipeline` 类型的**独立 Journey**，不能混进 user_facing path。
+
+所以这次 sprint 很可能需要跨两条 Journey，或者我们先聚焦用户侧。
+
+**我需要确认两件事（能从上下文推断的我会自动填，以下是推断不出来的）：**
+
+1. **这个 license 系统属于哪个 Area？**
+   - ZenithJoy（面向 ZenithJoy 客户的许可证管理）？
+   - Cecelia（平台自身的 license 授权机制）？
+   - 还是全新 Area？
+
+2. **"license 系统"的端到端路径是什么？**
+   - 用户从哪里开始？（注册？购买？管理员配置？）
+   - 拿到什么价值就算走通了？（能登录使用功能？激活 agent？显示到期日？）
+
+---
+
+### 为什么不能直接调 sprint-planner
+
+如果跳过这步直接调 sprint-planner，会发生以下问题：
+
+1. **4 个模块估出来 WS 数可能 > 6** → Sizing Check 会打回，说 PRD 太大，要拆成多个 Run
+2. **CI 部署混入 user_facing Journey** → 违反 Journey Type 隔离原则，Planner 不知道把它挂哪
+3. **没有 Journey 归属** → Feature 无主，无法写入 `journey_features` 表，Run 完成后状态无处回写
+4. **没有 PrepPRD** → 你没有人工确认点，harness 跑的是什么你不知道，出错也不知道对标哪个目标
+
+---
+
+### 我的建议：拆成 2 个 Run
+
+**Run A（user_facing，甜点区 3-4 WS）：**
+- WS1: 后端 API — license CRUD + 激活/校验端点
+- WS2: Dashboard 客户面板 — 查看 license 状态、到期提醒
+- WS3: Admin 后台 — 颁发/吊销/续期 license
+
+**Run B（dev_pipeline，1-2 WS）：**
+- WS1: CI 部署流水线 — license 服务的自动化部署
+- 注意：如果只有 1 个 WS，Sizing Check 会降级到 /dev，不启动 Harness
+
+---
+
+### 下一步
+
+请告诉我：
+1. 这个 license 系统属于哪个 Area（ZenithJoy / Cecelia / 其他）？
+2. 用户侧的端到端路径大概是？（一句话描述从哪到哪）
+
+我拿到这两个信息后，会：
+- 查 Brain journey_steps 做语义比对，看有没有可复用的已有 Step
+- 生成 PrepPRD 给你确认
+- 确认后执行 `harness-bridge` 正式点火
+
+不需要你写任何技术文档，对话就够了。

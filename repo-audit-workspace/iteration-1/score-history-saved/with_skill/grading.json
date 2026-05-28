@@ -1,0 +1,15 @@
+{
+  "eval_id": 3,
+  "eval_name": "score-history-saved",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "报告末尾有分数写入确认（Brain 或本地）",
+      "passed": true,
+      "evidence": "「分数已通过save-score.sh写入本地历史 (~/.claude/repo-audit-history.jsonl)」"
+    }
+  ],
+  "pass_count": 1,
+  "total_count": 1,
+  "pass_rate": 1.0
+}
