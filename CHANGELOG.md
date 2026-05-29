@@ -1,3 +1,6 @@
+## [2026-05-29] harness-contract-proposer + harness-generator — updated
+移除 Workstream 拆分概念，对齐 Anthropic 官方 v2 Harness 设计（一个 Sprint = 一个 Generator = 一个 PR）
+
 ## [2026-05-29] hooks/ — created
 全局 Claude Code hooks 迁移到 zenithjoy-skills/hooks/，统一版本控制。
 
