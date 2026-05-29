@@ -1,38 +1,41 @@
 ---
 name: engine-pr-watchdog
-version: 2.0.0
-updated: 2026-05-27
-description: PR 合并守卫。engine-ship 完成后调用，阻塞轮询 CI + 合并状态，CI 失败自动修复，直到 PR 合并才退出。不使用 ScheduleWakeup，不提前 exit。
-trigger: engine-ship 完成后（step_4_ship: done），下一 tool call 必须是 engine-pr-watchdog
+version: 3.0.0
+updated: 2026-05-29
+description: PR 合并守卫。任何 PR 开完后立刻调用，监控所有 repo 的 open PR，阻塞轮询 CI + 合并状态，CI 失败自动修复，直到全部 PR 合并才退出。不使用 ScheduleWakeup，不提前 exit。
+trigger: 任何 PR 开完之后（gh pr create 之后），立刻调用本 skill。engine-ship 完成后也调用。
 ---
 
 > **CRITICAL LANGUAGE RULE**: 所有输出简体中文。
 
 ## 职责
 
-本 Skill 是 PR 合并的唯一自动保障机制，**全程阻塞不退出**：
+监控所有 repo 的 open PR，**全程阻塞不退出**：
 - CI 失败 → 自动诊断修复 → 继续轮询
-- CI 通过但未 merge → 确认 auto-merge + 检查 BEHIND → 继续轮询
-- 已 merge → 清理 worktree → 退出
-- **禁止使用 ScheduleWakeup。禁止提前 exit。轮询直到合并。**
+- CI 通过但未 merge → 确认 auto-merge 已启用 → 继续轮询
+- 分支 BEHIND → rebase → 继续轮询
+- 已 merge → 清理 → 继续看下一个 PR
+- 全部合并 → 退出
+- **禁止使用 ScheduleWakeup。禁止提前 exit。**
 
 ---
 
 ## Step 1: 确定监控目标
 
-优先从调用上下文拿 PR 号和 worktree 路径。没有的话扫描：
+优先从调用上下文拿 PR 号和 REPO。没有的话，直接查所有 repo 的 open PR：
 
 ```bash
-WTBASE="/Users/administrator/perfect21/cecelia/.claude/worktrees"
-find "$WTBASE" -maxdepth 2 -name ".dev-mode.*" 2>/dev/null | while read f; do
-  branch=$(basename "$f" | sed 's/^\.dev-mode\.//')
-  ship=$(grep "^step_4_ship:" "$f" 2>/dev/null | awk '{print $2}')
-  echo "$branch | ship=$ship | $f"
+WATCH_REPOS="perfectuser21/cecelia perfectuser21/zenithjoy-workspace perfectuser21/zenithjoy-skills"
+for REPO in $WATCH_REPOS; do
+  gh pr list --repo "$REPO" --json number,headRefName,title \
+    --jq '.[] | "\(.number) \(.headRefName)"' 2>/dev/null \
+    | while read num branch; do
+      echo "REPO=$REPO PR=$num BRANCH=$branch"
+    done
 done
 ```
 
-对每个 `step_4_ship: done` 的分支执行后续步骤。
-若没有活跃分支 → **直接退出，不调度**。
+对每个找到的 PR 执行 Step 2。若没有任何 open PR → 直接退出。
 
 ---
 
