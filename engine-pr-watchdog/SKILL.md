@@ -38,8 +38,15 @@ done
 
 ## Step 2: 阻塞轮询主循环
 
-**用单个 Bash 工具调用跑完整轮询，timeout 设 600000（10 分钟）。**
-若 10 分钟内未合并，结束后立即再发起一次 Bash 调用继续轮询，直到合并为止。
+> **工具限制**：Bash 工具 timeout 硬上限为 600000ms（10 分钟）。这不是轮询时长，只是单次调用上限。
+>
+> **核心规则**：每次 Bash 调用结束后（无论是超时、CI 失败还是 BEHIND），Claude 必须立刻检查退出码并决定下一步。**只要 PR 未合并/关闭，就必须立刻发起下一次 Bash 调用，不得输出文字给用户，不得结束 turn。** Stop Hook 只在 turn 结束时触发——只要 Claude 一直在发 tool call，session 就不会中断。
+
+**退出码：**
+- `0` = PR 已合并或关闭 → 执行 Step 5 清理，然后结束
+- `10` = CI 失败 → 执行 Step 3 修复，修完后**立刻重新进入 Step 2**
+- `11` = 分支 BEHIND → 执行 Step 4 rebase，完成后**立刻重新进入 Step 2**
+- 超时（Bash call 到 10 分钟）→ **立刻重新发起 Step 2 的 Bash 调用，不输出任何文字**
 
 ```bash
 PR_NUMBER=<PR号>
@@ -64,26 +71,24 @@ while true; do
   fi
 
   # ── 检查 CI ──────────────────────────────────────
-  FAILED=$(gh pr checks "$PR_NUMBER" --repo "$REPO" 2>/dev/null | grep -c "fail" || echo 0)
-  PENDING=$(gh pr checks "$PR_NUMBER" --repo "$REPO" 2>/dev/null | grep -cE "pending|in_progress|queued" || echo 0)
+  CHECKS=$(gh pr checks "$PR_NUMBER" --repo "$REPO" 2>/dev/null)
+  FAILED=$(echo "$CHECKS" | grep -c "fail" || echo 0)
+  PENDING=$(echo "$CHECKS" | grep -cE "pending|in_progress|queued" || echo 0)
 
   if [ "$FAILED" -gt 0 ]; then
-    echo "❌ CI 有 $FAILED 个失败，准备修复（第 $((FIX_COUNT+1)) 次）"
     if [ "$FIX_COUNT" -ge "$MAX_FIXES" ]; then
       echo "🚨 连续修复 $MAX_FIXES 次仍失败，需要人工介入"
-      break
+      exit 10
     fi
-    # 退出 bash loop，让 Claude 读日志并修复（见 Step 3）
-    echo "NEED_FIX:$PR_NUMBER"
-    exit 10   # 特殊退出码，Claude 识别后执行 Step 3
+    echo "❌ CI 有 $FAILED 个失败（第 $((FIX_COUNT+1)) 次）"
+    exit 10
   fi
 
   # ── 检查 BEHIND ───────────────────────────────────
   MERGE_STATE=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json mergeStateStatus --jq '.mergeStateStatus' 2>/dev/null)
   if [ "$MERGE_STATE" = "BEHIND" ]; then
     echo "📦 分支落后 main，需要 rebase"
-    echo "NEED_REBASE:$WORKTREE_PATH"
-    exit 11   # 特殊退出码，Claude 识别后执行 Step 4
+    exit 11
   fi
 
   # ── 确认 auto-merge ──────────────────────────────
@@ -92,15 +97,10 @@ while true; do
     gh pr merge "$PR_NUMBER" --repo "$REPO" --auto --squash 2>/dev/null && echo "✅ auto-merge 已启用"
   fi
 
-  echo "$(date '+%H:%M:%S') OPEN | CI: ${PENDING} pending ${FAILED} fail | merge_state: $MERGE_STATE"
-  sleep 20
+  echo "$(TZ=Asia/Shanghai date '+%H:%M:%S') OPEN | CI: pending=$PENDING fail=$FAILED | merge=$MERGE_STATE"
+  sleep 30
 done
 ```
-
-**退出码说明：**
-- `0` = 正常退出（合并或关闭）
-- `10` = CI 失败，需要执行 Step 3 修复
-- `11` = 分支 BEHIND，需要执行 Step 4 rebase
 
 ---
 
