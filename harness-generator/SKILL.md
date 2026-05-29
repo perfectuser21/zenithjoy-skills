@@ -396,16 +396,63 @@ PRBODY
 echo "PR created: $PR_URL"
 ```
 
-### Step 8: 输出 verdict JSON（⚠️ Brain 通过此提取 pr_url）
+### Step 7.5: 轮询 CI + 等待合并（PR 创建后立刻执行，不退出）
+
+PR 创建完不退出，原地轮询直到合并。合并后才进 Step 8。
+
+```bash
+# 从 PR_URL 提取 PR 号
+PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
+REPO=$(echo "$PR_URL" | grep -oE 'github\.com/[^/]+/[^/]+' | sed 's|github.com/||')
+FIX_COUNT=0
+MAX_FIXES=3
+
+# 先启用 auto-merge
+gh pr merge "$PR_NUMBER" --repo "$REPO" --auto --squash 2>/dev/null && echo "auto-merge enabled"
+
+while true; do
+  STATE=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json state --jq '.state' 2>/dev/null)
+  [ "$STATE" = "MERGED" ] && { echo "PR #$PR_NUMBER merged"; break; }
+  [ "$STATE" = "CLOSED" ] && { echo "PR #$PR_NUMBER closed"; break; }
+
+  CHECKS=$(gh pr checks "$PR_NUMBER" --repo "$REPO" 2>/dev/null)
+  FAILED=$(echo "$CHECKS" | grep -c "fail" 2>/dev/null || echo 0)
+  PENDING=$(echo "$CHECKS" | grep -cE "pending|in_progress|queued" 2>/dev/null || echo 0)
+  MERGE_STATE=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json mergeStateStatus --jq '.mergeStateStatus' 2>/dev/null)
+
+  if [ "$FAILED" -gt 0 ]; then
+    if [ "$FIX_COUNT" -ge "$MAX_FIXES" ]; then
+      echo "CI failed $MAX_FIXES times, giving up"
+      break
+    fi
+    FIX_COUNT=$((FIX_COUNT+1))
+    # CI 失败 → 读日志修复
+    RUN_ID=$(gh pr checks "$PR_NUMBER" --repo "$REPO" --json name,conclusion,databaseId 2>/dev/null \
+      | jq -r '[.[] | select(.conclusion=="failure")] | sort_by(.databaseId) | last | .databaseId // empty')
+    echo "CI failed (attempt $FIX_COUNT), reading logs..."
+    gh run view "$RUN_ID" --repo "$REPO" --log-failed 2>/dev/null | tail -100
+    # 分析日志 → 在 worktree 里修复 → git commit + push
+    # （根据日志内容直接修复，此处为 Claude 的内联操作，不另起 session）
+    continue
+  fi
+
+  [ "$MERGE_STATE" = "BEHIND" ] && {
+    echo "branch behind main, rebasing..."
+    git fetch origin main && git rebase origin/main && git push origin HEAD --force-with-lease
+    continue
+  }
+
+  echo "$(TZ=Asia/Shanghai date '+%H:%M:%S') OPEN | pending=$PENDING fail=$FAILED | $MERGE_STATE"
+  sleep 30
+done
+```
+
+> **说明**：Bash 工具单次 timeout 上限 600000ms（10 分钟）。超时后立刻重新发 Bash 调用继续轮询，不输出任何文字，不结束 turn。直到合并为止。
+
+### Step 8: 输出 verdict JSON（⚠️ Brain 通过此提取 pr_url，合并后才执行）
 
 > **CRITICAL**: 最后一条消息必须是**纯 JSON**，禁止任何其他文字（不加 markdown、不加说明）。
-> Brain 的 execution.js 依赖此 JSON 提取 pr_url 并创建 harness_ci_watch。
-
-```
-{"verdict": "DONE", "pr_url": "https://github.com/perfectuser21/cecelia/pull/xxxx"}
-```
-
-实际执行：
+> Brain 的 execution.js 依赖此 JSON 提取 pr_url。
 
 ```bash
 echo "{\"verdict\": \"DONE\", \"pr_url\": \"$PR_URL\"}"

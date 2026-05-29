@@ -1,3 +1,6 @@
+## [2026-05-29] harness-generator — updated
+Step 7.5：PR 创建后轮询 CI 直到合并，不再立刻退出。
+
 ## [2026-05-29] engine-pr-watchdog — updated v3.0.0
 修复 WTBASE 路径错、scope 太窄、trigger 受限三个问题，改为查所有 repo 的 open PR。
 
