@@ -29,6 +29,28 @@ Then after the skill is done (but again, the order is flexible), you can also ru
 
 Cool? Cool.
 
+---
+
+## ⚠️ ZenithJoy 强制规则（必读）
+
+**所有 skill 创建和修改，必须通过 skill-creator 进行。禁止直接手动编辑 skill 文件跳过 skill-creator 流程。**
+
+### Skills 架构
+
+**唯一 source of truth：`~/perfect21/zenithjoy-skills/`（GitHub: `perfectuser21/zenithjoy-skills`）**
+
+`~/.claude/skills/` 里的每个条目都是指向 `zenithjoy-skills/` 对应目录的**符号链接**。
+两者指向同一个物理文件，不存在"同步"问题——改一个等于改另一个。
+`~/.claude/skills/` 的 git 只跟踪 symlink 指针，不跟踪文件内容。
+
+所有改动走 zenithjoy-skills 的 feature branch → PR 流程（main 分支有保护）。
+
+### 语言规则
+
+所有输出使用简体中文。
+
+---
+
 ## Communicating with the user
 
 The skill creator is liable to be used by people across a wide range of familiarity with coding jargon. If you haven't heard (and how could you, it's only very recently that it started), there's a trend now where the power of Claude is inspiring plumbers to open up their terminals, parents and grandparents to google "how to install npm". On the other hand, the bulk of users are probably fairly computer-literate.
@@ -484,55 +506,96 @@ Please add steps to your TodoList, if you have such a thing, to make sure you do
 
 ---
 
-## ZenithJoy: Post-Creation Mandatory Steps
+## ZenithJoy: Post-Creation Mandatory Steps（每次必做，顺序不变）
 
-**These steps are REQUIRED after every skill creation or update. Do not skip.**
+**每次 skill 创建或更新后，以下步骤必须按顺序执行，不能跳过，不能调换。**
 
-### Step 1: Snapshot version before overwriting (update only)
+> **架构说明**：`~/.claude/skills/<name>` 是指向 `~/perfect21/zenithjoy-skills/<name>` 的符号链接。
+> 两者是同一个物理文件。直接编辑任意一个路径效果相同，无需 `cp` 同步。
+> zenithjoy-skills 是唯一 source of truth。
 
-When updating an existing skill, first commit the old version so customizations are never silently lost:
+---
 
-```bash
-git -C ~/.claude/skills add -A && \
-git -C ~/.claude/skills commit -m "snapshot: <skill-name> before update $(date +%Y-%m-%d)" 2>/dev/null || true
-```
+### Step 1: 跑 Eval 验证（PR 前必须完成）
 
-Then install/overwrite. After overwriting, `git -C ~/.claude/skills diff HEAD` shows exactly what changed.
+Skill 写完后，**必须先跑 eval，eval 通过才能继续后续步骤**。
 
-### Step 2: Sync to Notion Skill Registry + Brain DB
+按本 skill 上方「Running and evaluating test cases」章节执行 iteration 1：
+- 跑 with-skill 和 baseline 对照
+- 生成 grading.json（pass rate）
+- 打开 eval viewer 让用户确认结果
 
-After the skill is packaged and installed at `~/.claude/skills/<name>/`:
+记录 pass rate，格式：`N/M (X%)`，后续步骤会用到。
+
+---
+
+### Step 2: 更新本地 Brain DB（skill_registry）
+
+Eval 通过后，先写本地：
 
 ```bash
 python3 ~/.claude/skills/skill-creator/scripts/sync-skill-to-notion.py \
   --name "<skill-name>" \
-  --description "<one-line description from frontmatter>" \
-  --action "created"   # or "updated"
-  [--eval-score "8/10 (80%)"]   # from grading.json pass rate if eval was run
-  [--eval-file "/path/to/grading.json"]   # alternative: parse from file
+  --description "<frontmatter 里的 description 字段>" \
+  --action "created"   # 或 "updated"
+  --eval-score "<N/M (X%)>"   # 从 Step 1 的 grading.json 读取
 ```
 
-This writes to:
-- **Notion Skill Registry** (`353c40c2-ba63-81bf-ae3e-f0e6fa3753d7`): name, description, status=active, source=skill-creator, plus a log block with timestamp + eval score
-- **Brain DB `skill_registry`**: same metadata via `localhost:5221/api/brain/skills`
+这会写入 Brain DB `skill_registry` 表（`localhost:5221/api/brain/skills`）。
 
-### Step 3: Report to user
+---
 
-After running the sync, tell the user:
-- Skill name + installed path
-- Creation/update timestamp
-- Eval pass rate (if eval was run, format: `N/M (X%)`) — if no eval was run, say "eval 未跑"
-- Notion Skill Registry URL (from sync script output)
-- Git snapshot SHA (run `git -C ~/.claude/skills log --oneline -1`)
+### Step 3: 同步 Notion Skill Registry
 
-**Example report:**
+同一个脚本已同时写入 Notion（`353c40c2-ba63-81bf-ae3e-f0e6fa3753d7`）。
+确认脚本输出里有 Notion URL，记下来备用。
+
+---
+
+### Step 4: PR 到 zenithjoy-skills
+
+Brain DB + Notion 都写完后，开 PR：
+
+```bash
+cd ~/perfect21/zenithjoy-skills
+SKILL_NAME="<name>"
+BRANCH="feat/skill-${SKILL_NAME}-$(TZ=Asia/Shanghai date '+%m%d%H%M')"
+git checkout -b "$BRANCH"
+
+# skill 文件
+git add "$SKILL_NAME/"
+
+# CHANGELOG（顶部追加一条）
+# 格式：## [YYYY-MM-DD] <skill-name> — <created|updated>\n<一句话描述>
+git add CHANGELOG.md
+
+git commit -m "<created|updated>: ${SKILL_NAME} — <改动一句话摘要>
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+
+git push origin "$BRANCH"
+gh pr create \
+  --title "<created|updated>: <skill-name> — <改动一句话摘要>" \
+  --body "Eval: <N/M (X%)>"
 ```
-✅ skill-creator 已更新
-   安装路径: ~/.claude/skills/skill-creator/
-   时间: 2026-05-27 10:30
-   Eval: 8/10 (80%)
-   Notion: https://www.notion.so/353c40c2...
-   Git: cc31348 snapshot: skill-creator before update 2026-05-27
+
+> PR 不走 cecelia CI（无 DoD 格式检查、无 Engine version bump、无 L1/L2/L3）。
+> main 分支有保护，必须走 PR，不能直推。
+
+---
+
+### Step 5: 汇报给用户
+
 ```
+✅ <skill-name> 已<创建|更新>
+   路径: ~/perfect21/zenithjoy-skills/<name>/
+   Eval: <N/M (X%)>
+   Brain DB: 已写入
+   Notion: <URL>
+   PR: <GitHub PR URL>
+   CHANGELOG: 已更新
+```
+
+---
 
 Good luck!
