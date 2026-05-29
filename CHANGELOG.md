@@ -1,3 +1,6 @@
+## [2026-05-29] engine-pr-watchdog — updated
+禁止 run_in_background：Step 4 rebase/push 必须同步执行，防止 push 后台化导致 turn 结束、Stop Hook 触发、轮询循环断裂
+
 ## [2026-05-29] harness-contract-reviewer + harness-report — updated
 移除 WS 拆分残留：reviewer 删第 7/8 维（依赖多 WS 前提），report 改单 Sprint Task 创建
 
