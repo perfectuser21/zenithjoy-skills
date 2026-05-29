@@ -1,3 +1,6 @@
+## [2026-05-29] harness-contract-reviewer + harness-report — updated
+移除 WS 拆分残留：reviewer 删第 7/8 维（依赖多 WS 前提），report 改单 Sprint Task 创建
+
 ## [2026-05-29] harness-contract-proposer + harness-generator — updated
 移除 Workstream 拆分概念，对齐 Anthropic 官方 v2 Harness 设计（一个 Sprint = 一个 Generator = 一个 PR）
 

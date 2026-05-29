@@ -4,10 +4,11 @@ description: |
   Harness Report — Harness v5.0 最终步骤：6步完整交付。
   1.回写Brain任务状态 2.更新中台Dashboard 3.写Notion AI Notes（含GAN标注表+截图链接）
   4.更新Notion Feature Registry（status→done）5.飞书通知（含PR+截图）6.写本地harness-report.md备份。
-version: 5.0.0
+version: 5.1.0
 created: 2026-04-08
-updated: 2026-05-23
+updated: 2026-05-29
 changelog:
+  - 5.1.0: 移除 Step 2.5b 多 WS 扫描逻辑 — 改为单 Sprint 直接创建 Notion Task（harness-contract-proposer v8.0+ 单 Sprint 单 PR 模式，不再有 tests/ws*/ 子目录）
   - 5.0.0: 6步完整交付 — 回写Brain任务状态 + 更新中台Dashboard + 写Notion AI Notes（GAN标注表+截图链接+DoD结果）+ 更新Notion Feature Registry + 飞书通知（含PR+截图） + 写本地harness-report.md
   - 4.0.0: Harness v4.0 Report（独立 skill，新增 CI/Deploy watch 状态）
 ---
@@ -101,34 +102,18 @@ curl -s -X POST "localhost:5221/api/brain/notion/project" \
   -d "$PROJECT_PAYLOAD" 2>/dev/null || echo "WARN: Notion Project 创建失败（非阻断）"
 echo "✅ Step 2.5a: Notion Project 已创建（Run 级，status=Done，journey_id=${JOURNEY_ID:-null}）"
 
-# 2.5b — 遍历 WS 列表，逐个创建 Notion Task
-# 标题格式：WS{n} — {PR_TITLE}（n 为 workstream 编号，PR_TITLE 为该 WS 的 PR 标题）
-if [ -z "$SPRINT_WS_LIST" ]; then
-  # 从 sprint_dir 扫描 tests/ws* 目录推断 WS 编号
-  SPRINT_WS_LIST=""
-  for ws_dir in "${SPRINT_DIR}"/tests/ws*/; do
-    [ -d "$ws_dir" ] || continue
-    ws_num=$(basename "$ws_dir" | sed 's/ws//')
-    SPRINT_WS_LIST="${SPRINT_WS_LIST}WS${ws_num}:${FEATURE_NAME} "
-  done
-fi
-
-for WS_ENTRY in $SPRINT_WS_LIST; do
-  WS_LABEL="${WS_ENTRY%%:*}"
-  WS_PR_TITLE="${WS_ENTRY##*:}"
-  [ "$WS_PR_TITLE" = "$WS_LABEL" ] && WS_PR_TITLE="$FEATURE_NAME"
-  TASK_TITLE="${WS_LABEL} — ${WS_PR_TITLE}"
-  TASK_PAYLOAD=$(jq -n \
-    --arg title "$TASK_TITLE" \
-    --arg status "Done" \
-    --arg sprint_dir "$SPRINT_DIR" \
-    '{title:$title, status:$status, sprint_dir:$sprint_dir}')
-  curl -s -X POST "localhost:5221/api/brain/notion/task" \
-    -H "Content-Type: application/json" \
-    -d "$TASK_PAYLOAD" 2>/dev/null || echo "WARN: Notion Task 创建失败（${TASK_TITLE}，非阻断）"
-  echo "  ✅ Notion Task: $TASK_TITLE"
-done
-echo "✅ Step 2.5b: Notion Task 遍历完成（格式：WS{n} — {PR_TITLE}，status=Done）"
+# 2.5b — 创建单个 Notion Task（单 Sprint = 单 PR，harness-contract-proposer v8.0+）
+TASK_TITLE="${FEATURE_NAME}"
+TASK_PAYLOAD=$(jq -n \
+  --arg title "$TASK_TITLE" \
+  --arg status "Done" \
+  --arg sprint_dir "$SPRINT_DIR" \
+  --arg pr_url "${PR_URL:-}" \
+  '{title:$title, status:$status, sprint_dir:$sprint_dir, pr_url:$pr_url}')
+curl -s -X POST "localhost:5221/api/brain/notion/task" \
+  -H "Content-Type: application/json" \
+  -d "$TASK_PAYLOAD" 2>/dev/null || echo "WARN: Notion Task 创建失败（${TASK_TITLE}，非阻断）"
+echo "✅ Step 2.5b: Notion Task 已创建（${TASK_TITLE}，status=Done）"
 ```
 
 ---
