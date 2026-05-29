@@ -37,12 +37,13 @@ Cool? Cool.
 
 ### Skills 架构
 
-| 路径 | 作用 |
-|---|---|
-| `~/.claude/skills/` | Claude Code 加载 skill 的本地工作副本（有独立 git repo） |
-| `~/perfect21/zenithjoy-skills/` | 权威 canonical repo（GitHub: `perfectuser21/zenithjoy-skills`），所有人从这里同步 |
+**唯一 source of truth：`~/perfect21/zenithjoy-skills/`（GitHub: `perfectuser21/zenithjoy-skills`）**
 
-两个路径内容必须保持同步。每次修改走完本 skill 的 Post-Creation 步骤后，自动同步到两处。
+`~/.claude/skills/` 里的每个条目都是指向 `zenithjoy-skills/` 对应目录的**符号链接**。
+两者指向同一个物理文件，不存在"同步"问题——改一个等于改另一个。
+`~/.claude/skills/` 的 git 只跟踪 symlink 指针，不跟踪文件内容。
+
+所有改动走 zenithjoy-skills 的 feature branch → PR 流程（main 分支有保护）。
 
 ### 语言规则
 
@@ -509,49 +510,32 @@ Please add steps to your TodoList, if you have such a thing, to make sure you do
 
 **每次 skill 创建或更新后，以下步骤全部必须执行，不能跳过。**
 
----
-
-### Step 1: 写入本地副本并 snapshot
-
-**更新时**先 snapshot 旧版本（防止丢失历史）：
-
-```bash
-git -C ~/.claude/skills add -A && \
-git -C ~/.claude/skills commit -m "snapshot: <skill-name> before update $(TZ=Asia/Shanghai date '+%Y-%m-%d')" 2>/dev/null || true
-```
-
-写入 / 覆盖 `~/.claude/skills/<name>/SKILL.md`，然后 commit：
-
-```bash
-git -C ~/.claude/skills add <name>/
-git -C ~/.claude/skills commit -m "feat: <skill-name> — <改动一句话摘要>"
-```
+> **架构说明**：`~/.claude/skills/<name>` 是指向 `~/perfect21/zenithjoy-skills/<name>` 的符号链接。
+> 两者指向同一个物理文件。`zenithjoy-skills/` 是唯一的 source of truth，无需 `cp` 同步。
+> `~/.claude/skills/` 的 git 只跟踪 symlink 指针本身，不跟踪文件内容，不需要在那里 commit。
 
 ---
 
-### Step 2: 同步到 zenithjoy-skills（权威 repo）
+### Step 1: 在 zenithjoy-skills 创建 feature 分支并 commit
 
-```bash
-SKILL_NAME="<name>"
-SRC=~/.claude/skills/$SKILL_NAME
-DEST=~/perfect21/zenithjoy-skills/$SKILL_NAME
-mkdir -p "$DEST"
-cp -r "$SRC/." "$DEST/"
-```
+直接编辑 `~/perfect21/zenithjoy-skills/<name>/SKILL.md`（或等价地通过 `~/.claude/skills/<name>/SKILL.md`）。
 
-commit + push：
+编辑完成后：
 
 ```bash
 cd ~/perfect21/zenithjoy-skills
+SKILL_NAME="<name>"
+BRANCH="feat/skill-${SKILL_NAME}-$(TZ=Asia/Shanghai date '+%m%d%H%M')"
+git checkout -b "$BRANCH"
 git add "$SKILL_NAME/"
-ACTION="<created|updated>"
-git commit -m "${ACTION}: ${SKILL_NAME} — <改动一句话摘要>"
-git push origin main
+git commit -m "<created|updated>: ${SKILL_NAME} — <改动一句话摘要>
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
 ```
 
 ---
 
-### Step 3: 更新 CHANGELOG.md
+### Step 2: 更新 CHANGELOG.md，一起 commit
 
 在 `~/perfect21/zenithjoy-skills/CHANGELOG.md` **顶部**追加一条新条目：
 
@@ -560,13 +544,20 @@ git push origin main
 <一句话：改了什么，为什么>
 ```
 
-然后 commit + push：
+```bash
+git add CHANGELOG.md
+git commit -m "chore(changelog): ${SKILL_NAME} <created|updated>"
+```
+
+---
+
+### Step 3: Push + 开 PR（main 有分支保护，不能直推）
 
 ```bash
-cd ~/perfect21/zenithjoy-skills
-git add CHANGELOG.md
-git commit -m "chore(changelog): <skill-name> <created|updated>"
-git push origin main
+git push origin "$BRANCH"
+gh pr create \
+  --title "<created|updated>: <skill-name> — <改动一句话摘要>" \
+  --body "改了什么、为什么"
 ```
 
 ---
@@ -593,12 +584,11 @@ python3 ~/.claude/skills/skill-creator/scripts/sync-skill-to-notion.py \
 格式：
 ```
 ✅ <skill-name> 已<创建|更新>
-   本地路径:  ~/.claude/skills/<name>/
-   权威 repo: ~/perfect21/zenithjoy-skills/<name>/
+   路径: ~/perfect21/zenithjoy-skills/<name>/
+   PR: <GitHub PR URL>
    时间: <YYYY-MM-DD HH:MM> 上海时间
    Eval: <N/M (X%)> 或「eval 未跑」
    Notion: <sync 脚本输出的 URL>
-   Git SHA: <git -C ~/.claude/skills log --oneline -1>
    CHANGELOG: 已更新
 ```
 
