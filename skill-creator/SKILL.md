@@ -29,6 +29,27 @@ Then after the skill is done (but again, the order is flexible), you can also ru
 
 Cool? Cool.
 
+---
+
+## ⚠️ ZenithJoy 强制规则（必读）
+
+**所有 skill 创建和修改，必须通过 skill-creator 进行。禁止直接手动编辑 skill 文件跳过 skill-creator 流程。**
+
+### Skills 架构
+
+| 路径 | 作用 |
+|---|---|
+| `~/.claude/skills/` | Claude Code 加载 skill 的本地工作副本（有独立 git repo） |
+| `~/perfect21/zenithjoy-skills/` | 权威 canonical repo（GitHub: `perfectuser21/zenithjoy-skills`），所有人从这里同步 |
+
+两个路径内容必须保持同步。每次修改走完本 skill 的 Post-Creation 步骤后，自动同步到两处。
+
+### 语言规则
+
+所有输出使用简体中文。
+
+---
+
 ## Communicating with the user
 
 The skill creator is liable to be used by people across a wide range of familiarity with coding jargon. If you haven't heard (and how could you, it's only very recently that it started), there's a trend now where the power of Claude is inspiring plumbers to open up their terminals, parents and grandparents to google "how to install npm". On the other hand, the bulk of users are probably fairly computer-literate.
@@ -484,55 +505,103 @@ Please add steps to your TodoList, if you have such a thing, to make sure you do
 
 ---
 
-## ZenithJoy: Post-Creation Mandatory Steps
+## ZenithJoy: Post-Creation Mandatory Steps（每次必做，顺序不变）
 
-**These steps are REQUIRED after every skill creation or update. Do not skip.**
+**每次 skill 创建或更新后，以下步骤全部必须执行，不能跳过。**
 
-### Step 1: Snapshot version before overwriting (update only)
+---
 
-When updating an existing skill, first commit the old version so customizations are never silently lost:
+### Step 1: 写入本地副本并 snapshot
+
+**更新时**先 snapshot 旧版本（防止丢失历史）：
 
 ```bash
 git -C ~/.claude/skills add -A && \
-git -C ~/.claude/skills commit -m "snapshot: <skill-name> before update $(date +%Y-%m-%d)" 2>/dev/null || true
+git -C ~/.claude/skills commit -m "snapshot: <skill-name> before update $(TZ=Asia/Shanghai date '+%Y-%m-%d')" 2>/dev/null || true
 ```
 
-Then install/overwrite. After overwriting, `git -C ~/.claude/skills diff HEAD` shows exactly what changed.
+写入 / 覆盖 `~/.claude/skills/<name>/SKILL.md`，然后 commit：
 
-### Step 2: Sync to Notion Skill Registry + Brain DB
+```bash
+git -C ~/.claude/skills add <name>/
+git -C ~/.claude/skills commit -m "feat: <skill-name> — <改动一句话摘要>"
+```
 
-After the skill is packaged and installed at `~/.claude/skills/<name>/`:
+---
+
+### Step 2: 同步到 zenithjoy-skills（权威 repo）
+
+```bash
+SKILL_NAME="<name>"
+SRC=~/.claude/skills/$SKILL_NAME
+DEST=~/perfect21/zenithjoy-skills/$SKILL_NAME
+mkdir -p "$DEST"
+cp -r "$SRC/." "$DEST/"
+```
+
+commit + push：
+
+```bash
+cd ~/perfect21/zenithjoy-skills
+git add "$SKILL_NAME/"
+ACTION="<created|updated>"
+git commit -m "${ACTION}: ${SKILL_NAME} — <改动一句话摘要>"
+git push origin main
+```
+
+---
+
+### Step 3: 更新 CHANGELOG.md
+
+在 `~/perfect21/zenithjoy-skills/CHANGELOG.md` **顶部**追加一条新条目：
+
+```markdown
+## [YYYY-MM-DD] <skill-name> — <created|updated>
+<一句话：改了什么，为什么>
+```
+
+然后 commit + push：
+
+```bash
+cd ~/perfect21/zenithjoy-skills
+git add CHANGELOG.md
+git commit -m "chore(changelog): <skill-name> <created|updated>"
+git push origin main
+```
+
+---
+
+### Step 4: Sync to Notion Skill Registry + Brain DB
 
 ```bash
 python3 ~/.claude/skills/skill-creator/scripts/sync-skill-to-notion.py \
   --name "<skill-name>" \
-  --description "<one-line description from frontmatter>" \
-  --action "created"   # or "updated"
-  [--eval-score "8/10 (80%)"]   # from grading.json pass rate if eval was run
-  [--eval-file "/path/to/grading.json"]   # alternative: parse from file
+  --description "<frontmatter 里的 description>" \
+  --action "created"   # 或 "updated"
+  [--eval-score "8/10 (80%)"]   # 如果跑了 eval
+  [--eval-file "/path/to/grading.json"]
 ```
 
-This writes to:
-- **Notion Skill Registry** (`353c40c2-ba63-81bf-ae3e-f0e6fa3753d7`): name, description, status=active, source=skill-creator, plus a log block with timestamp + eval score
-- **Brain DB `skill_registry`**: same metadata via `localhost:5221/api/brain/skills`
+写入：
+- **Notion Skill Registry** (`353c40c2-ba63-81bf-ae3e-f0e6fa3753d7`): name, description, status=active, source=skill-creator
+- **Brain DB `skill_registry`**: 同一份数据，via `localhost:5221/api/brain/skills`
 
-### Step 3: Report to user
+---
 
-After running the sync, tell the user:
-- Skill name + installed path
-- Creation/update timestamp
-- Eval pass rate (if eval was run, format: `N/M (X%)`) — if no eval was run, say "eval 未跑"
-- Notion Skill Registry URL (from sync script output)
-- Git snapshot SHA (run `git -C ~/.claude/skills log --oneline -1`)
+### Step 5: 汇报给用户
 
-**Example report:**
+格式：
 ```
-✅ skill-creator 已更新
-   安装路径: ~/.claude/skills/skill-creator/
-   时间: 2026-05-27 10:30
-   Eval: 8/10 (80%)
-   Notion: https://www.notion.so/353c40c2...
-   Git: cc31348 snapshot: skill-creator before update 2026-05-27
+✅ <skill-name> 已<创建|更新>
+   本地路径:  ~/.claude/skills/<name>/
+   权威 repo: ~/perfect21/zenithjoy-skills/<name>/
+   时间: <YYYY-MM-DD HH:MM> 上海时间
+   Eval: <N/M (X%)> 或「eval 未跑」
+   Notion: <sync 脚本输出的 URL>
+   Git SHA: <git -C ~/.claude/skills log --oneline -1>
+   CHANGELOG: 已更新
 ```
+
+---
 
 Good luck!
