@@ -1,3 +1,6 @@
+## [2026-05-29] engine-pr-watchdog — updated v3.0.0
+修复 WTBASE 路径错、scope 太窄、trigger 受限三个问题，改为查所有 repo 的 open PR。
+
 ## [2026-05-29] engine-pr-watchdog — updated
 超时立刻重新 Bash 调用，不得输出文字或结束 turn，PR 不合并就不停。
 
