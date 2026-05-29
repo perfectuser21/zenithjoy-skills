@@ -1,6 +1,6 @@
 ---
 name: engine-pr-watchdog
-version: 3.0.0
+version: 3.1.0
 updated: 2026-05-29
 description: PR 合并守卫。任何 PR 开完后立刻调用，监控所有 repo 的 open PR，阻塞轮询 CI + 合并状态，CI 失败自动修复，直到全部 PR 合并才退出。不使用 ScheduleWakeup，不提前 exit。
 trigger: 任何 PR 开完之后（gh pr create 之后），立刻调用本 skill。engine-ship 完成后也调用。
@@ -44,6 +44,8 @@ done
 > **工具限制**：Bash 工具 timeout 硬上限为 600000ms（10 分钟）。这不是轮询时长，只是单次调用上限。
 >
 > **核心规则**：每次 Bash 调用结束后（无论是超时、CI 失败还是 BEHIND），Claude 必须立刻检查退出码并决定下一步。**只要 PR 未合并/关闭，就必须立刻发起下一次 Bash 调用，不得输出文字给用户，不得结束 turn。** Stop Hook 只在 turn 结束时触发——只要 Claude 一直在发 tool call，session 就不会中断。
+>
+> **禁止 run_in_background**：本 skill 的所有 Bash 调用（包括 git push、git rebase）必须**同步执行**，绝不使用 `run_in_background: true`。后台执行会导致 turn 结束，Stop Hook 触发，轮询循环断裂。
 
 **退出码：**
 - `0` = PR 已合并或关闭 → 执行 Step 5 清理，然后结束
@@ -141,14 +143,17 @@ Skill({"skill":"superpowers:systematic-debugging"})
 
 ## Step 4: 分支 BEHIND 处理（退出码 11 时执行）
 
+> **绝对禁止 run_in_background**：本 Step 所有命令必须**同步执行**（不设 `run_in_background: true`）。push 命令返回后，必须**立刻在同一个 turn 内**重新进入 Step 2，不得输出任何文字，不得结束 turn。
+
 ```bash
 cd "$WORKTREE_PATH"
 git fetch origin main
 git rebase origin/main
 git push origin HEAD --force-with-lease
+echo "rebase+push 完成，立刻重新进入 Step 2 轮询"
 ```
 
-rebase 成功后**重新进入 Step 2 主循环**（不退出）。
+push **同步返回**后，**不输出任何文字，立刻发起下一次 Step 2 的 Bash 调用**（不退出，不结束 turn）。
 
 ---
 
