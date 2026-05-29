@@ -1,3 +1,6 @@
+## [2026-05-29] hooks/ — created
+全局 Claude Code hooks 迁移到 zenithjoy-skills/hooks/，统一版本控制。
+
 ## [2026-05-29] harness-generator — updated
 Step 7.5：PR 创建后轮询 CI 直到合并，不再立刻退出。
 
