@@ -1,3 +1,6 @@
+## [2026-05-29] engine-pr-watchdog — updated
+超时立刻重新 Bash 调用，不得输出文字或结束 turn，PR 不合并就不停。
+
 # ZenithJoy Skills Changelog
 
 每次通过 skill-creator 创建或更新 skill 后，在此文件顶部追加一条记录。
