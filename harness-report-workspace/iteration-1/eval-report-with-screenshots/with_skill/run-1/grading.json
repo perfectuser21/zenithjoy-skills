@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "harness-report-created: harness-report.md exists",
+      "passed": true,
+      "evidence": "file at outputs/harness-report.md confirmed"
+    },
+    {
+      "text": "all-6-steps-mentioned: transcript mentions all 6 steps",
+      "passed": true,
+      "evidence": "Step 1-6 all present in transcript"
+    },
+    {
+      "text": "report-has-screenshot: harness-report.md contains screenshot URL or section",
+      "passed": true,
+      "evidence": "screenshot/截图 found in report"
+    },
+    {
+      "text": "report-has-cost: harness-report.md contains total cost (1.23)",
+      "passed": true,
+      "evidence": "1.23 found in report"
+    },
+    {
+      "text": "gan-table-attempted: transcript mentions FROM_PRD/AI_ADDED extraction",
+      "passed": true,
+      "evidence": "FROM_PRD/AI_ADDED extraction present in transcript"
+    }
+  ],
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 5,
+    "failed": 0,
+    "total": 5
+  }
+}

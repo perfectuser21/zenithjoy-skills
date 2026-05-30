@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "contract-only: states it will only implement the button color change",
+      "passed": true,
+      "evidence": "Baseline also focused on #1677ff color change"
+    },
+    {
+      "text": "contract-is-law-accessibility: explicitly states accessibility will NOT be implemented",
+      "passed": true,
+      "evidence": "Baseline correctly excluded accessibility from scope"
+    },
+    {
+      "text": "pr-description-mention: states accessibility issue will be mentioned in PR description",
+      "passed": false,
+      "evidence": "grep -iE 'PR.*descri|PR.*body|PR.*description|描述' not matched in baseline"
+    },
+    {
+      "text": "two-commit-discipline: follows commit-1 Red / commit-2 Green structure",
+      "passed": false,
+      "evidence": "Baseline plan had single implementation approach, no Red/Green commit structure"
+    }
+  ],
+  "summary": {
+    "pass_rate": 0.5,
+    "passed": 2,
+    "failed": 2,
+    "total": 4
+  }
+}

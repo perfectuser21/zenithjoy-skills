@@ -1,27 +1,10 @@
----
-id: harness-sprint-state-skill
-description: |
-  Harness Sprint State Sync — Harness pipeline 完成后先写本地 Brain DB，再同步系统现状到 8 个 Notion DB + 本地 state 文件。
-  由 harness-evaluator Mode B PASS 后调用，也可独立手动触发。
-  8 个 DB：AI Journey / AI Feature / Skill Registry / API Registry / DB Schema Registry / Tests Registry / AI Notes（Decisions）/ AI Steps / Journey-Step 连接表。
-  本地写入：sprint-states/<journey_id>/state.md（累积更新）+ sprints/<id>/sprint-state-delta.md（本次归档）。
-  Brain 8 张独立表：journeys / journey_steps / journey_step_links / journey_features / skill_registry / api_registry / db_schema_registry / test_registry。
-version: 1.2.0
-created: 2026-05-20
-updated: 2026-05-26
-changelog:
-  - 1.0.0: 初版 — 从 harness-evaluator Step B-4 拆出，成为独立 skill；支持 6 个 Notion DB 同步 + 本地 state 文件写入 + git commit
-  - 1.1.0: 新增 Step 0 写本地 Brain DB（sprint_states / journey_steps）；新增 Step 5b/5c 同步 AI Steps + Journey-Step 连接表；共 8 个 Notion DB
-  - 1.2.0: 8 张表统一架构 — skill_registry 独立表（从 system_registry type=skill 迁出）+ journey_step_links 连接表；修正端点路径（journey_steps 下划线）；新增 GET /api/brain/skills、GET /api/brain/journey_step_links 端点说明
----
+# Sprint State Sync — Phase B 参考文档
 
-> **语言规则: 所有输出必须使用简体中文。严禁日语、韩语或其他语言。**
-> **执行规则: 严格按照下面列出的步骤执行。**
+> 本文档由 `harness-report/SKILL.md` Phase B 引用。
+> 原 `harness-sprint-state` skill 已合并入 `harness-report`（v6.0.0）。
 
-# /harness-sprint-state — Sprint State Sync
-
-**角色**：Sprint 状态同步器  
-**调用时机**：harness-evaluator Mode B PASS 后；或手动触发补同步
+**前置变量**（由调用方注入）：`SPRINT_DIR`、`SPRINT_ID`、`TASK_ID`  
+`JOURNEY_ID` 和 `JOURNEY_NOTION_ID` 从 `$SPRINT_DIR/sprint-prd.md` 读取
 
 ---
 

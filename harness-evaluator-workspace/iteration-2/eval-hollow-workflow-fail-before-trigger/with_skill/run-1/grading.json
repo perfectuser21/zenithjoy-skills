@@ -1,0 +1,30 @@
+{
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 4,
+    "failed": 0,
+    "total": 4
+  },
+  "expectations": [
+    {
+      "text": "Evaluator 在触发 gh workflow run 之前，检查了 workflow 文件的业务内容",
+      "passed": true,
+      "evidence": "transcript.md 第15行显示执行了 'cat /tmp/eval-evaluator-fixtures/hollow-workflow.yml' 并输出完整 YAML 内容"
+    },
+    {
+      "text": "Evaluator 发现 workflow 缺少业务逻辑验证（无 node/npx/vitest/playwright 命令）",
+      "passed": true,
+      "evidence": "transcript.md 详细列出 BUSINESS_STEPS=0，扫描所有关键词（node/npx/npm/vitest/playwright/curl/Invoke-RestMethod/session 等）均不命中"
+    },
+    {
+      "text": "Evaluator 输出了 FAIL 结论，而不是触发了 workflow run",
+      "passed": true,
+      "evidence": "eval-result.md 第11行：判定结论 **FAIL — 空壳 workflow，禁止触发 Final E2E**"
+    },
+    {
+      "text": "FAIL 原因明确说明 workflow 是空壳/hollow，只有文件存在/大小检查",
+      "passed": true,
+      "evidence": "eval-result.md 说明 'BUSINESS_STEPS=0, SHALLOW_ONLY=1（$file.Length 文件大小检查）'，JSON verdict 包含完整说明"
+    }
+  ]
+}

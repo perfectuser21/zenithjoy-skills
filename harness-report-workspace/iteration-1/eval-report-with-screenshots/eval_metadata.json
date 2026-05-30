@@ -1,0 +1,6 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-report-with-screenshots",
+  "prompt": "see evals.json",
+  "assertions": []
+}

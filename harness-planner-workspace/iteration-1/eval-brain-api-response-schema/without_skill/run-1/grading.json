@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "response-schema-present: sprint-prd.md has Response Schema section",
+      "passed": false,
+      "evidence": "grep 'Response Schema' not found in baseline prd"
+    },
+    {
+      "text": "response-fields-correct: Response Schema mentions 'created' and 'failed' fields",
+      "passed": true,
+      "evidence": "baseline agent inferred created/failed from thin_prd"
+    },
+    {
+      "text": "target-environment-local-api: target_environment=local_api",
+      "passed": false,
+      "evidence": "grep found no target_environment line in baseline prd"
+    },
+    {
+      "text": "journey-type-autonomous: journey_type=autonomous",
+      "passed": false,
+      "evidence": "grep found no journey_type line in baseline prd"
+    }
+  ],
+  "summary": {
+    "pass_rate": 0.25,
+    "passed": 1,
+    "failed": 3,
+    "total": 4
+  }
+}

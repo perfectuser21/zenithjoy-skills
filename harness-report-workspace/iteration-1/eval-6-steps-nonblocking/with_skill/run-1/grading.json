@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "harness-report-created: harness-report.md exists",
+      "passed": false,
+      "evidence": "Agent executed all 6 steps but subagent output was truncated; /tmp files not written (execution issue, not skill issue)"
+    },
+    {
+      "text": "all-6-steps-mentioned: transcript mentions all 6 steps",
+      "passed": true,
+      "evidence": "Agent summary confirms Step 1-6 all covered including Step 3.5"
+    },
+    {
+      "text": "nonblocking-warn: WARN messages on API failure",
+      "passed": true,
+      "evidence": "Agent summary shows Step 1 non-blocking WARN pattern"
+    },
+    {
+      "text": "report-contains-pr-url: harness-report.md contains the PR URL",
+      "passed": false,
+      "evidence": "File not produced due to subagent truncation"
+    },
+    {
+      "text": "report-contains-feature-name: harness-report.md contains feature name",
+      "passed": false,
+      "evidence": "File not produced due to subagent truncation"
+    }
+  ],
+  "summary": {
+    "pass_rate": 0.4,
+    "passed": 2,
+    "failed": 3,
+    "total": 5
+  }
+}

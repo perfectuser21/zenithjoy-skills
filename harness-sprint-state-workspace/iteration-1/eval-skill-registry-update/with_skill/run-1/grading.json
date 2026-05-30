@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "state-delta-created: sprint-state-delta.md exists",
+      "passed": true,
+      "evidence": "file confirmed"
+    },
+    {
+      "text": "skill-registry-update: transcript mentions skill_registry update for harness-report v5.1",
+      "passed": true,
+      "evidence": "skill_registry and 5.1.0 found in transcript"
+    },
+    {
+      "text": "test-registry-update: transcript mentions test_registry for harness-report.test.ts",
+      "passed": true,
+      "evidence": "test_registry and harness-report.test mentioned"
+    },
+    {
+      "text": "no-spurious-api-registry: no new api_registry entry (no new endpoints)",
+      "passed": true,
+      "evidence": "no api_registry POST for new endpoints in transcript"
+    }
+  ],
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 4,
+    "failed": 0,
+    "total": 4
+  }
+}

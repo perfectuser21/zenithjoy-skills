@@ -1,0 +1,11 @@
+{
+  "eval_id": 1,
+  "eval_name": "hollow-workflow-fail-before-trigger",
+  "prompt": "请评估 /tmp/eval-evaluator-fixtures/hollow-workflow.yml 这个 workflow。这是一个 windows_cloud Sprint 的 Final E2E workflow 文件，放在磁盘上，你必须用 Bash 读取它（cat 命令）。读完后判断：这个 workflow 是否包含真实业务行为验证？能否触发 Final E2E？请给出明确结论（FAIL 或 PROCEED）并说明理由。contract 有如下 [BEHAVIOR]：session 写入路径验证、DOUYIN_COOKIES 注入验证、vitest 回归测试。",
+  "assertions": [
+    "Evaluator 在触发 gh workflow run 之前，检查了 workflow 文件的业务内容",
+    "Evaluator 发现 workflow 缺少业务逻辑验证（无 node/npx/vitest/playwright 命令）",
+    "Evaluator 输出了 FAIL 结论，而不是触发了 workflow run",
+    "FAIL 原因明确说明 workflow 是空壳/hollow，只有文件存在/大小检查"
+  ]
+}

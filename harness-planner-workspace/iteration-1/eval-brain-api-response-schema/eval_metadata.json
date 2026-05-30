@@ -1,0 +1,6 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-brain-api-response-schema",
+  "prompt": "see evals.json",
+  "assertions": []
+}

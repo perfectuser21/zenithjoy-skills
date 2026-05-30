@@ -1,6 +1,6 @@
 ---
 name: dev
-version: 19.3.0
+version: 19.4.0
 updated: 2026-05-30
 description: 统一开发点火入口。查 12 张 Brain DB 表拿上下文 → 判断类型（bug / 小改动 / 大功能）→ 生成 PrepPRD → 用户确认 → 路由执行。
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
@@ -215,12 +215,13 @@ PrepPRD 确认后，**立即执行**这条 bash 命令写 decision（不要生�
 
 ```bash
 # 把方括号内容换成实际值后执行
+# ⚠️ 字段名必须严格照搬：category（不能写 type），made_by（不能写 author 替代 made_by）
 curl -s -X POST localhost:5221/api/brain/decisions \
   -H "Content-Type: application/json" \
   -d "{\"decision\":\"[修法摘要，如：修复 DOUYIN_COOKIES storageState 格式兼容]\",\"reason\":\"[根因，如：addCookies 期望数组但收到 storageState 对象]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"bug-fix\"}"
 ```
 
-> 必填字段：`decision`（修法）、`reason`（根因）、`made_by="user"`、`category="bug-fix"`。
+> **必填字段（名称不可改）**：`decision`、`reason`、`made_by="user"`、**`category="bug-fix"`**（Brain API 只认 `category`，写 `type` 会被忽略）。
 > Brain API 不可用时跳过，继续执行。
 
 然后 **下一 tool call 必须是**：
@@ -238,12 +239,13 @@ PrepPRD 确认后，**立即执行**这条 bash 命令写 decision（不要生�
 
 ```bash
 # 把方括号内容换成实际值后执行
+# ⚠️ 字段名必须严格照搬：category（不能写 type），made_by（不能写 author 替代 made_by）
 curl -s -X POST localhost:5221/api/brain/decisions \
   -H "Content-Type: application/json" \
   -d "{\"decision\":\"[改动摘要，如：给 journey_features 加 priority 字段 P0/P1/P2 默认 P1]\",\"reason\":\"[原因，如：harness 需要按优先级筛选 feature]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"small-change\"}"
 ```
 
-> 必填字段：`decision`（做什么）、`reason`（为什么）、`made_by="user"`、`category="small-change"`。
+> **必填字段（名称不可改）**：`decision`、`reason`、`made_by="user"`、**`category="small-change"`**（Brain API 只认 `category`，写 `type` 会被忽略）。
 > Brain API 不可用时跳过，继续执行。
 
 然后 **下一 tool call 必须是**：
@@ -285,12 +287,13 @@ PrepPRD 确认后，**立即执行**这条 bash 命令写 decision（不要生�
 
 ```bash
 # 把方括号内容换成实际值后执行
+# ⚠️ 字段名必须严格照搬：category（不能写 type），made_by（不能写 author 替代 made_by）
 curl -s -X POST localhost:5221/api/brain/decisions \
   -H "Content-Type: application/json" \
   -d "{\"decision\":\"[功能方向摘要，如：立项快手图文+视频发布功能，2 WS dryrun 优先]\",\"reason\":\"[为什么做，如：快手 handler 只支持 image，video 无 dryrun 路径，与抖音对称设计]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"feature\"}"
 ```
 
-> 必填字段：`decision`（功能方向）、`reason`（动机）、`made_by="user"`、`category="feature"`。
+> **必填字段（名称不可改）**：`decision`、`reason`、`made_by="user"`、**`category="feature"`**（Brain API 只认 `category`，写 `type` 会被忽略）。
 > Brain API 不可用时跳过，继续执行。
 
 在 Notion 注册 Feature（如还没有）：

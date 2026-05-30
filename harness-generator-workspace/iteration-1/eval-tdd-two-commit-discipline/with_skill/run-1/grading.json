@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "two-commit-plan: describes commit-1 (tests/Red) before commit-2",
+      "passed": true,
+      "evidence": "Commit 1 RED and Commit 2 GREEN explicitly planned"
+    },
+    {
+      "text": "test-first: commit-1 contains test code (ping.test.js)",
+      "passed": true,
+      "evidence": "ping.test.js in commit-1 shown"
+    },
+    {
+      "text": "implementation-second: commit-2 contains ping.js implementation",
+      "passed": true,
+      "evidence": "routes/ping.js in commit-2"
+    },
+    {
+      "text": "contract-is-law: no extra features beyond 2 BEHAVIOR items",
+      "passed": true,
+      "evidence": "Agent listed 'health check 数据库连接 | 合同未要求' — correctly documenting what NOT to implement, not actually adding it"
+    }
+  ],
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 4,
+    "failed": 0,
+    "total": 4
+  }
+}

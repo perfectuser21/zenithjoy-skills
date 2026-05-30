@@ -1,0 +1,57 @@
+{
+  "skill_name": "harness-sprint-state",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "You are acting as the harness-sprint-state node in a Harness Pipeline. Execute the harness-sprint-state skill.\n\nContext: A sprint has just completed successfully. The following context is available:\n\nSPRINT_DIR: /tmp/sprint-eval-ss-001\nJOURNEY_ID: journey-path1-001\nFEATURE_ID: feat-agent-connect-001\nFEATURE_NAME: Agent 自动连中台\nPR_URL: https://github.com/perfectuser21/zenithjoy-workspace/pull/777\nJOURNEY_TYPE: agent_remote\nTARGET_ENVIRONMENT: windows_cloud\nSTEP_NAME: 装客户端 + Agent 自动连中台\nSTEP_ID: step-path1-002\n\nThe sprint implemented a new Brain API endpoint: POST /api/brain/agent/connect\nNew DB table: agent_sessions (columns: id, journey_id, session_token, created_at)\nNew test file: packages/brain/tests/agent-connect.test.js\n\nIMPORTANT: This is a dry-run eval. Brain API at localhost:5221 is UNAVAILABLE. Notion API is UNAVAILABLE.\n\nExecute the harness-sprint-state skill steps:\n1. Attempt to write to Brain DB (show the curl commands you would run)\n2. Attempt to sync all 8 Notion tables\n3. Write the local state file to /tmp/sprint-eval-ss-001/sprint-state-delta.md\n4. Save a transcript to /tmp/sprint-eval-ss-001/transcript.md\n\nFor unavailable APIs, print the command you would run, note it as unavailable, and continue.",
+      "expected_output": "sprint-state-delta.md created. Transcript shows Brain DB write attempt for api_registry + db_schema_registry + test_registry, and attempts to sync all 8 Notion tables.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "state-delta-created: sprint-state-delta.md exists",
+          "check": "test -f /tmp/sprint-eval-ss-001/sprint-state-delta.md"
+        },
+        {
+          "text": "brain-db-api-registry: transcript mentions api_registry write (new endpoint POST /api/brain/agent/connect)",
+          "check": "grep -i 'api_registry\\|api.registry' /tmp/sprint-eval-ss-001/transcript.md"
+        },
+        {
+          "text": "brain-db-schema-registry: transcript mentions db_schema_registry write (new table agent_sessions)",
+          "check": "grep -i 'db_schema_registry\\|schema.registry\\|agent_sessions' /tmp/sprint-eval-ss-001/transcript.md"
+        },
+        {
+          "text": "notion-sync-8-tables: transcript mentions syncing AI Journey or AI Feature or Skill Registry (8-table sync)",
+          "check": "grep -iE 'AI Journey|AI Feature|Skill Registry|journey_steps|journey_features|skill_registry' /tmp/sprint-eval-ss-001/transcript.md"
+        },
+        {
+          "text": "state-delta-has-feature: sprint-state-delta.md contains feature name or PR reference",
+          "check": "grep -iE 'Agent|agent.connect|pull/777' /tmp/sprint-eval-ss-001/sprint-state-delta.md"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "You are acting as the harness-sprint-state node in a Harness Pipeline. Execute the harness-sprint-state skill.\n\nContext: A sprint has completed for a Cecelia Brain feature.\n\nSPRINT_DIR: /tmp/sprint-eval-ss-002\nJOURNEY_ID: journey-cecelia-harness-001\nFEATURE_ID: feat-brain-harness-report-002\nFEATURE_NAME: harness-report Step 3.5 文档归档\nPR_URL: https://github.com/perfectuser21/cecelia/pull/555\nJOURNEY_TYPE: autonomous\nTARGET_ENVIRONMENT: local_api\nSTEP_NAME: Harness Pipeline Report\nSTEP_ID: step-harness-005\n\nThe sprint updated an existing skill: harness-report, now at v5.1.0\nNo new API endpoints added.\nNo new DB tables.\nNew/modified test file: packages/engine/tests/harness-report.test.ts\n\nIMPORTANT: Brain API and Notion API unavailable. Print commands, continue.\n\nExecute the skill. Pay attention to the fact that this sprint updates a SKILL (not a new API endpoint), so skill_registry should be updated.\n\nWrite:\n1. /tmp/sprint-eval-ss-002/sprint-state-delta.md\n2. /tmp/sprint-eval-ss-002/transcript.md",
+      "expected_output": "Transcript shows skill_registry update attempt for harness-report v5.1.0. No api_registry write needed (no new endpoints). test_registry write attempted for harness-report.test.ts.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "state-delta-created: sprint-state-delta.md exists",
+          "check": "test -f /tmp/sprint-eval-ss-002/sprint-state-delta.md"
+        },
+        {
+          "text": "skill-registry-update: transcript mentions skill_registry update for harness-report",
+          "check": "grep -iE 'skill_registry|skill.registry|harness.report.*5.1|5\\.1\\.0' /tmp/sprint-eval-ss-002/transcript.md"
+        },
+        {
+          "text": "test-registry-update: transcript mentions test_registry update for the test file",
+          "check": "grep -iE 'test_registry|test.registry|harness.report.test' /tmp/sprint-eval-ss-002/transcript.md"
+        },
+        {
+          "text": "no-spurious-api-registry: transcript does NOT create api_registry entry (no new endpoints in this sprint)",
+          "check": "! grep -iE 'api_registry.*POST|api_registry.*新增|new.*endpoint.*api_registry' /tmp/sprint-eval-ss-002/transcript.md"
+        }
+      ]
+    }
+  ]
+}

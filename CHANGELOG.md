@@ -12,6 +12,16 @@
 
 ---
 
+## [2026-05-30] dev + harness-planner — updated (eval 修复)
+**症状**: (1) dev eval：三条路径（Bug/小改动/大功能）写 decision 时用 `type: bug_fix` 而非 `category: bug-fix`，Brain API 只认 category 字段，数据写入失效；(2) harness-planner eval：thin-slice-size 断言以 ≤50 行为标准，但含 smoke script 的真实 PRD 常见 80-110 行，eval 持续误报
+**根因**: (1) dev SKILL.md bash snippet 注释说"换成实际值后执行"，Claude 自行重写 JSON 时忽略 category 写成 type；(2) ≤50 行限制是 2026-05-12 防 254 行 PRD 临时设的，未考虑 smoke script 正常占 20-40 行
+**修改**: (1) dev v19.4.0: 三条路径 decision bash snippet 加 ⚠️ 注释 + 加粗强调 `category` 不能写 `type`；(2) harness-planner v8.7.0: ≤50 行改为 ≤100 行，evals.json thin-slice-size 断言同步更新为 <=100
+
+## [2026-05-30] harness-report — updated (v6.0.0, merged harness-sprint-state)
+**症状**: harness-report 和 harness-sprint-state 是两个独立 skill 但职责重叠（都是 Sprint 完成后的收尾工作），造成混乱
+**根因**: 历史上 sprint-state 从 evaluator 拆出后未与 report 合并
+**修改**: 将 harness-sprint-state 全部内容合并入 harness-report（Phase A=交付报告 6步，Phase B=Sprint状态同步8个DB）；harness-sprint-state 目录和 symlink 已删除；sprint-state 详细实现移入 harness-report/references/sprint-state-sync.md
+
 ## [2026-05-30] harness-evaluator + harness-contract-proposer + harness-contract-reviewer — updated + eval iteration-1
 **症状**: (1) harness-evaluator v1.11.0 的空壳 workflow 检测正则漏掉 `npm test`/`npm ci` 和 PowerShell 业务命令，导致真实 `agent-qr-windows-verify.yml`（含 `npm test`）会被误判为空壳，Evaluator 提前 FAIL 而不触发 workflow；(2) harness-contract-proposer 没有 windows_cloud workflow 内容审查规则，直接按假设写 BEHAVIOR 不验证 CI 真实内容；(3) harness-contract-reviewer 缺少 ci_workflow_alignment 维度评审
 **根因**: (1) 正则只覆盖 `npm run` 未覆盖 `npm test`/`npm ci`，PowerShell 命令完全未收录；(2)(3) v8.0 上线时只更新了 proposer 描述未添加强制读取 workflow 文件规则，reviewer 未对应增加第 7 维评分

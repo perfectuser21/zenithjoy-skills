@@ -1,0 +1,65 @@
+{
+  "eval_id": 3,
+  "config": "without_skill",
+  "expectations": [
+    {
+      "text": "queries-brain-db: 包含 journeys 或 journey_features 查询",
+      "passed": false,
+      "evidence": "没有查询 Brain DB，直接搜索 codebase"
+    },
+    {
+      "text": "classifies-as-big-feature: 判断为大功能路径",
+      "passed": false,
+      "evidence": "没有显式分类，直接进入代码分析"
+    },
+    {
+      "text": "multi-role-check-done: 做了多角色检测",
+      "passed": false,
+      "evidence": "无多角色检测"
+    },
+    {
+      "text": "semantic-dedup-done: 做了语义查重",
+      "passed": false,
+      "evidence": "无语义查重（直接认为快手是新功能）"
+    },
+    {
+      "text": "preprd-has-journey-status: PrepPRD 包含 Journey 当前状态",
+      "passed": false,
+      "evidence": "无 PrepPRD 格式"
+    },
+    {
+      "text": "preprd-has-features-list: PrepPRD 包含涉及的脚本列表",
+      "passed": true,
+      "evidence": "有精确的 publisher_matrix 对比表格（但是代码视角不是产品视角）"
+    },
+    {
+      "text": "preprd-has-preconditions: PrepPRD 包含执行前提条件",
+      "passed": false,
+      "evidence": "无前提条件概念"
+    },
+    {
+      "text": "base-repo-is-github-url: base_repo 使用 GitHub URL",
+      "passed": false,
+      "evidence": "无 base_repo 概念"
+    },
+    {
+      "text": "fires-harness: 输出包含 harness_initiative",
+      "passed": false,
+      "evidence": "无 Harness 概念，直接列实现步骤"
+    },
+    {
+      "text": "writes-decision-feature: 包含 POST decisions 且 category=feature",
+      "passed": false,
+      "evidence": "无 decision 写入"
+    }
+  ],
+  "pass_count": 1,
+  "total": 10,
+  "pass_rate": 0.1,
+  "summary": {
+    "pass_rate": 0.1,
+    "passed": 1,
+    "failed": 9,
+    "total": 10
+  }
+}

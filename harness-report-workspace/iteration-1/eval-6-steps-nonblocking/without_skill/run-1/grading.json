@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "harness-report-created: harness-report.md exists",
+      "passed": true,
+      "evidence": "file exists at /tmp/sprint-eval-report-001-baseline/harness-report.md"
+    },
+    {
+      "text": "all-6-steps-mentioned: transcript mentions all 6 steps",
+      "passed": false,
+      "evidence": "baseline transcript only had 5 phases, no explicit Step numbering"
+    },
+    {
+      "text": "nonblocking-warn: WARN messages on API failure",
+      "passed": false,
+      "evidence": "baseline noted APIs unavailable but did not use WARN non-blocking pattern"
+    },
+    {
+      "text": "report-contains-pr-url: harness-report.md contains the PR URL",
+      "passed": true,
+      "evidence": "pull/999 present in report"
+    },
+    {
+      "text": "report-contains-feature-name: harness-report.md contains feature name",
+      "passed": true,
+      "evidence": "Brain /ping endpoint in report"
+    }
+  ],
+  "summary": {
+    "pass_rate": 0.6,
+    "passed": 3,
+    "failed": 2,
+    "total": 5
+  }
+}

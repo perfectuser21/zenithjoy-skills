@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "topic-lock: sprint-prd.md contains '/ping' keyword",
+      "passed": true,
+      "evidence": "grep '/ping' confirms /ping present throughout PRD"
+    },
+    {
+      "text": "location-word: sprint-prd.md references playground",
+      "passed": true,
+      "evidence": "playground/server.js referenced as implementation location"
+    },
+    {
+      "text": "target-environment: target_environment=playground",
+      "passed": true,
+      "evidence": "agent verdict JSON confirms target_environment: playground"
+    },
+    {
+      "text": "no-task-title-pollution: topic is NOT 'B42' or '测试演练'",
+      "passed": true,
+      "evidence": "grep shows no B42 or 测试演练 in prd"
+    },
+    {
+      "text": "thin-slice-size: sprint-prd.md is <=50 lines",
+      "passed": false,
+      "evidence": "wc -l shows 110 lines; skill says ≤50 but planner produced longer PRD with smoke script"
+    }
+  ],
+  "summary": {
+    "pass_rate": 0.8,
+    "passed": 4,
+    "failed": 1,
+    "total": 5
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 4,
+    "failed": 0,
+    "total": 4
+  },
+  "expectations": [
+    {
+      "text": "Evaluator 检查了 workflow 文件内容",
+      "passed": true,
+      "evidence": "transcript.md: 'Read /tmp/eval-evaluator-fixtures/real-workflow.yml (46 lines)' — 明确标注了文件行数"
+    },
+    {
+      "text": "Evaluator 确认 workflow 包含业务逻辑（node/npx/vitest 命令）",
+      "passed": true,
+      "evidence": "eval-result.md 识别了 npm ci, npm test, Invoke-RestMethod, session JSON 写入/读取/注入等业务步骤"
+    },
+    {
+      "text": "Evaluator 没有因为 hollow workflow 检测而直接 FAIL",
+      "passed": true,
+      "evidence": "eval-result.md: 'Decision: YES — contains real business logic testing. PROCEED.'"
+    },
+    {
+      "text": "Evaluator 尝试触发 gh workflow run（或等待 workflow 结果）",
+      "passed": true,
+      "evidence": "eval-result.md 结论 PROCEED 表示允许触发，虽无实际 gh 命令但判定等价"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "skill_name": "harness-report",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "You are acting as the harness-report node in a Harness Pipeline. Execute the harness-report skill.\n\nContext injected by Brain:\nTASK_ID: eval-report-001\nSPRINT_DIR: /tmp/sprint-eval-report-001\nPR_URL: https://github.com/perfectuser21/cecelia/pull/999\nFEATURE_NAME: Brain /ping endpoint\nFEATURE_ID: feat-ping-001\nSUB_AREA: brain\nTOTAL_COST: 0.42\nJOURNEY_ID: journey-test-001\nSCREENSHOTS: []\n\nIMPORTANT: This is a dry-run eval. The Brain API at localhost:5221 is UNAVAILABLE. Notion API is UNAVAILABLE. Feishu webhook is UNAVAILABLE.\n\nYou should:\n1. Attempt each of the 6 steps\n2. When an API call fails, print WARN and continue (non-blocking behavior)\n3. For Step 6, actually create the harness-report.md file at /tmp/sprint-eval-report-001/harness-report.md\n4. Save a transcript of all 6 steps to /tmp/sprint-eval-report-001/transcript.md\n\nThe sprint-prd.md does NOT exist (skip it gracefully).",
+      "expected_output": "harness-report.md created at the correct path. Transcript shows all 6 steps attempted. API failures produce WARN messages but do not abort execution.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "harness-report-created: harness-report.md exists at /tmp/sprint-eval-report-001/",
+          "check": "test -f /tmp/sprint-eval-report-001/harness-report.md"
+        },
+        {
+          "text": "all-6-steps-mentioned: transcript mentions all 6 steps",
+          "check": "grep -c 'Step [1-6]\\|Step[1-6]' /tmp/sprint-eval-report-001/transcript.md | grep -v '^0$'"
+        },
+        {
+          "text": "nonblocking-warn: transcript contains WARN messages (not aborted on API failure)",
+          "check": "grep -i 'WARN\\|warn\\|失败.*非阻断\\|非阻断' /tmp/sprint-eval-report-001/transcript.md"
+        },
+        {
+          "text": "report-contains-pr-url: harness-report.md contains the PR URL",
+          "check": "grep 'pull/999' /tmp/sprint-eval-report-001/harness-report.md"
+        },
+        {
+          "text": "report-contains-feature-name: harness-report.md contains feature name",
+          "check": "grep -i 'ping\\|Brain' /tmp/sprint-eval-report-001/harness-report.md"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "You are acting as the harness-report node in a Harness Pipeline. Execute the harness-report skill.\n\nContext injected by Brain:\nTASK_ID: eval-report-002\nSPRINT_DIR: /tmp/sprint-eval-report-002\nPR_URL: https://github.com/perfectuser21/zenithjoy-workspace/pull/888\nFEATURE_NAME: 用户头像上传功能\nFEATURE_ID: feat-avatar-001\nSUB_AREA: dashboard\nTOTAL_COST: 1.23\nJOURNEY_ID: journey-path1-001\nSCREENSHOTS: [\"http://example.com/screenshot1.png\", \"http://example.com/screenshot2.png\"]\n\nThe following files exist in SPRINT_DIR (create them as needed for the report):\n- /tmp/sprint-eval-report-002/sprint-prd.md (you can create a minimal one)\n- /tmp/sprint-eval-report-002/contract-draft.md (contains one [FROM_PRD] step and one [AI_ADDED] step)\n\nIMPORTANT: This is a dry-run eval. All APIs unavailable — print WARN and continue.\n\nCreate the files:\n1. /tmp/sprint-eval-report-002/sprint-prd.md (minimal: just '# Sprint PRD — 用户头像上传功能')\n2. /tmp/sprint-eval-report-002/contract-draft.md (minimal: one [FROM_PRD] line, one [AI_ADDED] line)\n3. /tmp/sprint-eval-report-002/harness-report.md (the actual report output)\n4. /tmp/sprint-eval-report-002/transcript.md",
+      "expected_output": "harness-report.md contains PR URL, feature name, screenshots section, total cost. transcript shows GAN table extraction attempted from contract-draft.md.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "harness-report-created: harness-report.md exists",
+          "check": "test -f /tmp/sprint-eval-report-002/harness-report.md"
+        },
+        {
+          "text": "report-has-screenshot: harness-report.md contains screenshot URL or section",
+          "check": "grep -i 'screenshot\\|截图' /tmp/sprint-eval-report-002/harness-report.md"
+        },
+        {
+          "text": "report-has-cost: harness-report.md contains total cost (1.23)",
+          "check": "grep '1.23' /tmp/sprint-eval-report-002/harness-report.md"
+        },
+        {
+          "text": "gan-table-attempted: transcript mentions GAN 来源标注表 or FROM_PRD/AI_ADDED extraction",
+          "check": "grep -iE 'FROM_PRD|AI_ADDED|GAN.*table|GAN.*标注' /tmp/sprint-eval-report-002/transcript.md"
+        }
+      ]
+    }
+  ]
+}

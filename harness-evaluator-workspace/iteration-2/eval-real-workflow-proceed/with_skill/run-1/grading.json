@@ -1,0 +1,30 @@
+{
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 4,
+    "failed": 0,
+    "total": 4
+  },
+  "expectations": [
+    {
+      "text": "Evaluator 检查了 workflow 文件内容",
+      "passed": true,
+      "evidence": "transcript.md 显示读取了 /tmp/eval-evaluator-fixtures/real-workflow.yml 并详细分析 2 个 jobs"
+    },
+    {
+      "text": "Evaluator 确认 workflow 包含业务逻辑（node/npx/vitest 命令）",
+      "passed": true,
+      "evidence": "eval-result.md BUSINESS_STEPS 命中：npm test, npm ci, Invoke-RestMethod, session, Set-Content, New-Item, ConvertTo-Json, Write-Host.*PASS"
+    },
+    {
+      "text": "Evaluator 没有因为 hollow workflow 检测而直接 FAIL",
+      "passed": true,
+      "evidence": "eval-result.md: 'BUSINESS_STEPS > 0 && SHALLOW_ONLY == 0 → 非空壳 → 不触发 FAIL'，最终判定 PROCEED"
+    },
+    {
+      "text": "Evaluator 尝试触发 gh workflow run（或等待 workflow 结果）",
+      "passed": true,
+      "evidence": "eval-result.md: 'action: 可触发最终 E2E 运行'（eval 环境无实际 CI，PROCEED 即表示允许触发）"
+    }
+  ]
+}
