@@ -2,13 +2,14 @@
 id: harness-generator-skill
 description: |
   Harness Generator — Harness v7.0 严格合同执行者 × Superpowers 融合。
-  读取 GAN 对抗已批准的 sprint-contract.md + tests/*.test.ts + contract-dod.md，按 TDD 纪律两次 commit（commit 1 = 测试 Red / commit 2 = 实现 Green）。
+  读取 GAN 对抗已批准的 contract-draft.md + tests/*.test.ts + contract-dod.md，按 TDD 纪律两次 commit（commit 1 = 测试 Red / commit 2 = 实现 Green）。
   融入 4 个 superpowers：test-driven-development / verification-before-completion / systematic-debugging / requesting-code-review。
   CONTRACT IS LAW：合同里有的全实现，合同外一字不加；测试文件从合同原样复制，commit 1 后不可修改（CI 强校验）。一个 Sprint = 一个 Generator = 一个 PR。
-version: 7.1.0
+version: 7.2.0
 created: 2026-04-08
 updated: 2026-05-30
 changelog:
+  - 7.2.0: 修 Bug 5 — 读合同文件名从 sprint-contract.md 改为 contract-draft.md（v8.x reviewer 不再做 cp 步骤）
   - 7.1.0: Step 6.5 补 windows_cloud 例外说明 — [BEHAVIOR] 必须 bash-executable；PowerShell 只在 contract-draft.md ## E2E 验收 区块
   - 7.0.0: 移除 Workstream 拆分 — 对齐 Anthropic 官方 v2 Harness 设计（一个 Sprint = 一个 Generator = 一个 PR）。删除 WORKSTREAM_INDEX/WORKSTREAM_COUNT 必要参数约束；测试目录从 tests/ws1/ 改为 tests/；DoD 文件从 contract-dod-ws1.md 改为 contract-dod.md；分支命名去掉 ws 后缀；移除多 ws 并行 rebase 说明
   - 6.3.0: 修字段名协议矛盾 — workstreams[].scope_files → tasks[].files（proposer SKILL v7.6+ 实际输出 schema 是 tasks[]，v6.2 段写错）
@@ -132,8 +133,8 @@ git merge-base --is-ancestor origin/main HEAD || {
 ```bash
 git fetch origin "${CONTRACT_BRANCH}" 2>/dev/null || true
 
-# 读合同
-git show "origin/${CONTRACT_BRANCH}:${SPRINT_DIR}/sprint-contract.md"
+# 读合同（⚠️ harness::contract-filename 接口约定：文件名是 contract-draft.md，不是 sprint-contract.md）
+git show "origin/${CONTRACT_BRANCH}:${SPRINT_DIR}/contract-draft.md"
 
 # 读 DoD（[ARTIFACT] + [BEHAVIOR]）
 git show "origin/${CONTRACT_BRANCH}:${SPRINT_DIR}/contract-dod.md"
@@ -142,7 +143,7 @@ git show "origin/${CONTRACT_BRANCH}:${SPRINT_DIR}/contract-dod.md"
 git ls-tree -r "origin/${CONTRACT_BRANCH}" -- "${SPRINT_DIR}/tests/"
 ```
 
-**只读 sprint-contract.md，CONTRACT IS LAW。**
+**只读 contract-draft.md，CONTRACT IS LAW。**
 
 
 ### Step 2: 创建 cp-* 分支（强制仓库命名规约）
@@ -486,7 +487,7 @@ commit 2: feat(harness): skeleton implementation (Skeleton Green)
 
 ## 禁止事项（严格）
 
-1. **禁止自写 sprint-contract.md** —— 合同是上游 GAN 阶段产出，Generator 只读
+1. **禁止自写 contract-draft.md** —— 合同是上游 GAN 阶段产出，Generator 只读
 2. **禁止加合同外内容** —— 安全阀/额外测试/顺手修复全不加；测试文件也是合同一部分
 3. **禁止修改从合同 checkout 的测试文件** —— 测试一旦 commit 1 Red，就**不可改**（CI 强校验 git log：测试文件 diff 在 commit 2+ 里必须为空）
 4. **禁止自判 PASS** —— Evaluator / CI 才是判官
