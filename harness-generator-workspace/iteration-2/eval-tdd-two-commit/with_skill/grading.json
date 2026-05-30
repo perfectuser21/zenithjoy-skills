@@ -1,0 +1,28 @@
+{
+  "summary": {
+    "passed": 4,
+    "total": 4
+  },
+  "expectations": [
+    {
+      "text": "two-commit-plan: describes commit-1 (tests/Red) before commit-2 (implementation/Green)",
+      "passed": true,
+      "evidence": "execution-plan.md 明确分为「Commit 1 — RED（仅测试文件 + DoD，禁含实现）」和「Commit 2 — GREEN（实现代码 + ARTIFACT 产物）」两段，顺序正确，Red 阶段预期输出 3 failed，Green 阶段预期 3 passed"
+    },
+    {
+      "text": "test-first: commit-1 contains test code (ping.test.js), not implementation",
+      "passed": true,
+      "evidence": "Commit 1 staging 文件列：tests/ping.test.js（从合同 checkout，原样复制）+ DoD.md。包含完整 vitest 测试代码（describe/it/expect，3 个 it 块覆盖 2 条 BEHAVIOR）。packages/brain/src/routes/ping.js 不在 commit 1 内"
+    },
+    {
+      "text": "implementation-second: commit-2 contains ping.js implementation",
+      "passed": true,
+      "evidence": "Commit 2 staging：packages/brain/src/routes/ping.js（完整 express Router 实现，pong:true + ts:Math.floor(Date.now()/1000)）+ packages/brain/src/server.js（追加路由注册）。commit 2 严格禁止修改 tests/ping.test.js"
+    },
+    {
+      "text": "contract-is-law: does NOT mention adding features beyond the 2 BEHAVIOR items",
+      "passed": true,
+      "evidence": "表格「合同外内容：一字未加」明确列出 6 项不加原因（message/version/auth/rate-limit/extra tests/health check），均注明「合同未要求」。实现代码极简：仅 pong:true + ts 两个字段，无任何合同外字段。注意：health check 和 middleware 字符串出现在该排除表格中（负面列举），而非实现代码中"
+    }
+  ]
+}

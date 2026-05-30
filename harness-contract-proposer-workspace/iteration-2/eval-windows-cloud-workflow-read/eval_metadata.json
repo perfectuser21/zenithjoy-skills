@@ -1,0 +1,11 @@
+{
+  "eval_id": 1,
+  "eval_name": "windows-cloud-workflow-read",
+  "prompt": "我需要写一个 Harness Sprint Contract，针对 ZenithJoy Agent 的抖音 QR 扫码绑定功能。target_environment 是 windows_cloud，workflow 文件是 .github/workflows/agent-qr-windows-verify.yml。请用 harness-contract-proposer skill 写出完整 contract-dod.md，包含正确的 [BEHAVIOR] 断言。核心需要验证的用户路径：用户扫码后 session 写入 ~/.zenithjoy-agent/sessions/douyin/default.json，handler 能读到，DOUYIN_COOKIES 能注入发布进程。",
+  "assertions": [
+    "Proposer 在写 BEHAVIOR 前使用了 Bash 工具执行 cat 命令读取 workflow 文件内容",
+    "contract-dod.md 里至少有 4 条 [BEHAVIOR] 标签（含真实 node/npx/PowerShell 验证命令）",
+    "contract-dod.md 里没有把文件存在检查（Test-Path、.Length、-lt 1000000）标记为 BEHAVIOR 验证",
+    "如果 workflow 有不足或未覆盖的业务步骤，Proposer 标注了 [CI_GAP] 说明"
+  ]
+}

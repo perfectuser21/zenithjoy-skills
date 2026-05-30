@@ -1,0 +1,149 @@
+{
+  "metadata": {
+    "skill_name": "harness-contract-proposer",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-05-30T09:23:49Z",
+    "evals_run": [
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Proposer \u4f7f\u7528 Bash \u5de5\u5177 cat .github/workflows/agent-e2e-video.yml \u8bfb\u53d6\u4e86 workflow \u5185\u5bb9",
+          "passed": true,
+          "evidence": "transcript Step 2 \u8bb0\u5f55\uff1a\u300c\u6267\u884c\u547d\u4ee4\uff1acat .github/workflows/agent-e2e-video.yml\uff0c\u7ed3\u679c\uff1a\u6587\u4ef6\u5b58\u5728\uff0c\u5171 284 \u884c\u300d\uff1bcontract-dod.md \u6620\u5c04\u8868\u6ce8\u660e\u300ccat .github/workflows/agent-e2e-video.yml \u8bfb\u53d6\u7ed3\u679c\u6458\u8981\u300d"
+        },
+        {
+          "text": "contract-dod.md \u91cc\u6709\u9488\u5bf9 dryrun \u53d1\u5e03\u8def\u5f84\u7684 [BEHAVIOR] \u65ad\u8a00",
+          "passed": true,
+          "evidence": "BEHAVIOR 1 \u9a8c\u8bc1 resolveDouyinScriptPath({type:'article'}) \u8fd4\u56de\u542b publish-douyin-article-dryrun\uff1bBEHAVIOR 2 \u9a8c\u8bc1 dryrun \u811a\u672c stdout \u542b ok:true dryRun:true\uff1bBEHAVIOR 3 \u9a8c\u8bc1 ok+dryRun \u5b57\u6bb5\u5b8c\u6574\u6027\uff1bBEHAVIOR 4 \u9a8c\u8bc1\u65e0\u7981\u7528\u5b57\u6bb5 published:true\uff1bBEHAVIOR 5 \u9a8c\u8bc1 error path\uff08\u5c01\u9762\u4e0d\u5b58\u5728\uff09"
+        },
+        {
+          "text": "\u5982\u679c workflow \u7f3a\u5c11 dryrun \u8986\u76d6\uff0cProposer \u6807\u6ce8\u4e86 [CI_GAP]",
+          "passed": true,
+          "evidence": "\u6620\u5c04\u8868\u6807\u6ce8 4 \u4e2a CI_GAP\uff1a[CI_GAP: article-task-dispatch]\uff08\u65e0 curl/Playwright \u4e0b\u53d1 article task\uff09\u3001[CI_GAP: agent-type-route]\uff08\u65e0\u9a8c\u8bc1 handler \u8def\u7531\uff09\u3001[CI_GAP: dryrun-receipt-verify]\uff08ffprobe step \u9a8c\u7684\u662f mp4 \u800c\u975e JSON \u56de\u6267\uff09\u3001[CI_GAP: douyin-cookies-inject]\uff08workflow \u65e0 DOUYIN_COOKIES \u6ce8\u5165\uff09"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "contract-dod.md \u91cc\u6709\u81f3\u5c11 4 \u6761 [BEHAVIOR] \u6807\u7b7e\uff0c\u4f7f\u7528 Playwright \u547d\u4ee4\uff08playwright/npx playwright\uff09",
+          "passed": true,
+          "evidence": "\u5408\u540c\u5305\u542b 4 \u6761 [BEHAVIOR]\uff08curl API \u68c0\u67e5\uff09+ 2 \u6761 [BEHAVIOR:E2E]\uff08\u4f7f\u7528 npx playwright test\uff09= 6 \u6761\u603b\u8ba1 \u2265 4\u3002[BEHAVIOR:E2E] \u6761\u76ee\u5185\u5d4c Playwright \u811a\u672c\uff08apps/dashboard/e2e/login-interaction.spec.ts\uff09\uff0c4 \u4e2a\u6d4b\u8bd5\u8986\u76d6\u767b\u5f55/\u9000\u51fa/\u91cd\u65b0\u767b\u5f55/error path"
+        },
+        {
+          "text": "Proposer \u6ca1\u6709\u8bd5\u56fe\u8bfb\u53d6 .github/workflows/*.yml \u6587\u4ef6\uff08mac_web \u4e0d\u9700\u8981 GHA workflow \u68c0\u67e5\uff09",
+          "passed": true,
+          "evidence": "transcript \u4e2d Step 1 \u4ee3\u7801\u63a2\u7d22\u8def\u5f84\u5217\u51fa\u4e86 8 \u4e2a\u8bfb\u53d6\u6587\u4ef6\uff1aSKILL.md\u3001apps/dashboard/e2e/\u3001playwright.config.ts\u3001SignIn.tsx\u3001better-auth.api.ts\u3001AuthContext.tsx\u3001App.tsx\u3001Dashboard.tsx\uff0c\u65e0\u4efb\u4f55 .github/workflows/ \u8bfb\u53d6\u8bb0\u5f55"
+        },
+        {
+          "text": "BEHAVIOR \u547d\u4ee4\u9488\u5bf9\u771f\u5b9e URL\uff08localhost:5174 \u6216\u7c7b\u4f3c\u672c\u5730\u5730\u5740\uff09",
+          "passed": true,
+          "evidence": "BEHAVIOR \u6761\u76ee\u4e2d\u7684 curl \u547d\u4ee4\u5747\u6307\u5411 http://localhost:5174\uff08\u4f8b\uff1acurl -sf -X GET http://localhost:5174/api/auth/get-session\uff1bcurl -sf -X POST http://localhost:5174/api/auth/sign-in/email\uff09"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Proposer \u5728\u5199 BEHAVIOR \u524d\u4f7f\u7528\u4e86 Bash \u5de5\u5177\u6267\u884c cat \u547d\u4ee4\u8bfb\u53d6 workflow \u6587\u4ef6\u5185\u5bb9",
+          "passed": true,
+          "evidence": "contract-dod.md CI_GAP \u5206\u6790\u8282\u5199\uff1a\u300cProposer \u5df2\u6267\u884c cat .github/workflows/agent-qr-windows-verify.yml \u8bfb\u53d6 workflow \u5b9e\u9645\u5185\u5bb9\uff0c\u4ee5\u4e0b\u4e3a\u7528\u6237\u8def\u5f84\u5bf9\u6bd4\u7ed3\u679c\u300d\uff1btranscript \u4e5f\u8bb0\u5f55\u4e86 Step 2 \u8bfb\u53d6 workflow"
+        },
+        {
+          "text": "contract-dod.md \u91cc\u81f3\u5c11\u6709 4 \u6761 [BEHAVIOR] \u6807\u7b7e\uff08\u542b\u771f\u5b9e node/npx/PowerShell \u9a8c\u8bc1\u547d\u4ee4\uff09",
+          "passed": true,
+          "evidence": "\u5408\u540c\u5305\u542b 6 \u6761 [BEHAVIOR]\uff1a\u626b\u7801\u540e session \u6587\u4ef6\u5199\u5165\u9a8c\u8bc1\uff08node -e\uff09\u3001readLocalDouyinSession \u8bfb\u53d6\u6d4b\u8bd5\uff08node -e\uff09\u3001DOUYIN_COOKIES \u6ce8\u5165\u9a8c\u8bc1\uff08node -e grep\uff09\u3001getSessionPath \u8def\u5f84\u8ba1\u7b97\uff08node -e\uff09\u3001unit tests \u5b8c\u6574\u6027\uff08node -e\uff09\u3001error path \u4fdd\u62a4\u903b\u8f91\uff08node -e\uff09\u3002\u81ea\u67e5 checklist \u786e\u8ba4 BEHAVIOR \u6570\u91cf \u2265 4 \u2705"
+        },
+        {
+          "text": "contract-dod.md \u91cc\u6ca1\u6709\u628a\u6587\u4ef6\u5b58\u5728\u68c0\u67e5\uff08Test-Path\u3001.Length\u3001-lt 1000000\uff09\u6807\u8bb0\u4e3a BEHAVIOR \u9a8c\u8bc1",
+          "passed": true,
+          "evidence": "\u6240\u6709 6 \u6761 [BEHAVIOR] \u4f7f\u7528 node -e \u6267\u884c\u771f\u5b9e\u4e1a\u52a1\u9a8c\u8bc1\uff08session cookie \u5185\u5bb9\u68c0\u67e5\u3001handler \u8bfb\u53d6\u903b\u8f91\u3001DOUYIN_COOKIES \u6ce8\u5165\u3001\u8def\u5f84\u8ba1\u7b97\uff09\u3002\u6ca1\u6709\u4efb\u4f55 Test-Path\u3001.Length\u3001-lt 1000000 \u5f0f\u7684\u6d45\u5c42\u6587\u4ef6\u68c0\u67e5\u51fa\u73b0\u5728 BEHAVIOR \u6761\u76ee\u4e2d"
+        },
+        {
+          "text": "\u5982\u679c workflow \u6709\u4e0d\u8db3\u6216\u672a\u8986\u76d6\u7684\u4e1a\u52a1\u6b65\u9aa4\uff0cProposer \u6807\u6ce8\u4e86 [CI_GAP] \u8bf4\u660e",
+          "passed": true,
+          "evidence": "CI_GAP \u5206\u6790\u8868\u5217\u51fa 3 \u4e2a\u7f3a\u53e3\uff1a[CI_GAP: QR_SESSION_WRITE]\uff08\u626b\u7801\u540e session \u5199\u5165\uff09\u3001[CI_GAP: SESSION_READ_BY_HANDLER]\uff08handler \u8bfb\u53d6\uff09\u3001[CI_GAP: DOUYIN_COOKIES_INJECT]\uff08DOUYIN_COOKIES \u6ce8\u5165\uff09\uff1bGenerator \u8865\u5199\u8981\u6c42\u8bf4\u660e"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "delta": {
+      "pass_rate": "+1.00",
+      "time_seconds": "+0.0",
+      "tokens": "+0"
+    }
+  },
+  "notes": []
+}

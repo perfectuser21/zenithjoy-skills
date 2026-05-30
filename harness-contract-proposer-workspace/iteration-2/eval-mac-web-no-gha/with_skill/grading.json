@@ -1,0 +1,23 @@
+{
+  "summary": {
+    "passed": 3,
+    "total": 3
+  },
+  "expectations": [
+    {
+      "text": "contract-dod.md 里有至少 4 条 [BEHAVIOR] 标签，使用 Playwright 命令（playwright/npx playwright）",
+      "passed": true,
+      "evidence": "合同包含 4 条 [BEHAVIOR]（curl API 检查）+ 2 条 [BEHAVIOR:E2E]（使用 npx playwright test）= 6 条总计 ≥ 4。[BEHAVIOR:E2E] 条目内嵌 Playwright 脚本（apps/dashboard/e2e/login-interaction.spec.ts），4 个测试覆盖登录/退出/重新登录/error path"
+    },
+    {
+      "text": "Proposer 没有试图读取 .github/workflows/*.yml 文件（mac_web 不需要 GHA workflow 检查）",
+      "passed": true,
+      "evidence": "transcript 中 Step 1 代码探索路径列出了 8 个读取文件：SKILL.md、apps/dashboard/e2e/、playwright.config.ts、SignIn.tsx、better-auth.api.ts、AuthContext.tsx、App.tsx、Dashboard.tsx，无任何 .github/workflows/ 读取记录"
+    },
+    {
+      "text": "BEHAVIOR 命令针对真实 URL（localhost:5174 或类似本地地址）",
+      "passed": true,
+      "evidence": "BEHAVIOR 条目中的 curl 命令均指向 http://localhost:5174（例：curl -sf -X GET http://localhost:5174/api/auth/get-session；curl -sf -X POST http://localhost:5174/api/auth/sign-in/email）"
+    }
+  ]
+}
