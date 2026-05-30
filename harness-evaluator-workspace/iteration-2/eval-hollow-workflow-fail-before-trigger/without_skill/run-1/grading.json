@@ -1,0 +1,30 @@
+{
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 4,
+    "failed": 0,
+    "total": 4
+  },
+  "expectations": [
+    {
+      "text": "Evaluator 在触发 gh workflow run 之前，检查了 workflow 文件的业务内容",
+      "passed": true,
+      "evidence": "transcript.md Step 1 显示准确描述了 agent-hollow-check workflow 的内容（$file.Length 等），说明实际读取了文件"
+    },
+    {
+      "text": "Evaluator 发现 workflow 缺少业务逻辑验证（无 node/npx/vitest/playwright 命令）",
+      "passed": true,
+      "evidence": "eval-result.md: 'None of these are present. The only assertion is $file.Length -lt 1MB.' 并列举了所需但缺失的业务验证类型"
+    },
+    {
+      "text": "Evaluator 输出了 FAIL 结论，而不是触发了 workflow run",
+      "passed": true,
+      "evidence": "eval-result.md: 'Verdict: HOLLOW — Do NOT trigger final E2E'"
+    },
+    {
+      "text": "FAIL 原因明确说明 workflow 是空壳/hollow，只有文件存在/大小检查",
+      "passed": true,
+      "evidence": "eval-result.md: 'A file-size threshold is a packaging check... It says nothing about whether the artifact functions correctly.'"
+    }
+  ]
+}

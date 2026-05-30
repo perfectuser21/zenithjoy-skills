@@ -1,0 +1,53 @@
+{
+  "skill_name": "harness-generator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "You are acting as the harness-generator in a Harness Pipeline. Execute the harness-generator skill.\n\nContext injected by Brain:\nTASK_ID: eval-gen-001\nSPRINT_DIR: /tmp/sprint-eval-gen-001\nCONTRACT_BRANCH: contract/eval-gen-001\nPLANNER_BRANCH: planner/eval-gen-001\n\nThe contract-dod.md content is below (pretend you read it from SPRINT_DIR/contract-dod.md):\n\n---\n# contract-dod.md — Sprint: Brain /ping endpoint\n\n## ARTIFACT\n- [ ] [ARTIFACT] `packages/brain/src/routes/ping.js` exists — `test -f packages/brain/src/routes/ping.js`\n- [ ] [ARTIFACT] `tests/ping.test.js` exists — `test -f tests/ping.test.js`\n\n## BEHAVIOR\n- [ ] [BEHAVIOR] GET /api/brain/ping returns HTTP 200 — `curl -sf localhost:5221/api/brain/ping | jq -e '.pong == true'`\n- [ ] [BEHAVIOR] Response contains ts field (unix timestamp) — `curl -sf localhost:5221/api/brain/ping | jq -e '.ts > 0'`\n---\n\nIMPORTANT: This is a dry-run eval. Do NOT write actual files or make git commits. Instead:\n1. Describe your exact two-commit plan (what goes in commit-1 RED and commit-2 GREEN)\n2. Show the test code you would put in tests/ping.test.js (commit-1)\n3. Show the implementation code you would put in packages/brain/src/routes/ping.js (commit-2)\n4. Confirm you would NOT add anything beyond the 2 ARTIFACT + 2 BEHAVIOR items in the contract\n\nSave your output to /tmp/sprint-eval-gen-001/execution-plan.md",
+      "expected_output": "execution-plan.md showing two-commit TDD discipline: commit-1 has test code (ping.test.js), commit-2 has implementation. Only implements the 2 BEHAVIOR items from contract, nothing extra.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "two-commit-plan: describes commit-1 (tests/Red) before commit-2 (implementation/Green)",
+          "check": "grep -i 'commit.*1\\|commit 1\\|Red\\|red' /tmp/sprint-eval-gen-001/execution-plan.md"
+        },
+        {
+          "text": "test-first: commit-1 contains test code (ping.test.js), not implementation",
+          "check": "grep -i 'ping.test.js' /tmp/sprint-eval-gen-001/execution-plan.md"
+        },
+        {
+          "text": "implementation-second: commit-2 contains ping.js implementation",
+          "check": "grep -i 'ping.js\\|routes/ping' /tmp/sprint-eval-gen-001/execution-plan.md"
+        },
+        {
+          "text": "contract-is-law: does NOT mention adding features beyond the 2 BEHAVIOR items",
+          "check": "! grep -iE 'health.*check|error.*handling|logging|middleware|authentication' /tmp/sprint-eval-gen-001/execution-plan.md"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "You are acting as the harness-generator in a Harness Pipeline. Execute the harness-generator skill.\n\nContext injected by Brain:\nTASK_ID: eval-gen-002\nSPRINT_DIR: /tmp/sprint-eval-gen-002\nCONTRACT_BRANCH: contract/eval-gen-002\n\nThe contract-dod.md content is below:\n\n---\n# contract-dod.md — Sprint: Dashboard login page button color\n\n## ARTIFACT\n- [ ] [ARTIFACT] `apps/dashboard/src/pages/Login.tsx` modified — file exists and has been changed\n\n## BEHAVIOR\n- [ ] [BEHAVIOR] Login button background-color is #1677ff — `grep -r '#1677ff' apps/dashboard/src/pages/Login.tsx`\n---\n\nDuring your analysis, you notice that the login form also has poor accessibility (no aria-label on inputs). The contract does NOT mention accessibility.\n\nIMPORTANT: This is a dry-run eval. Do NOT write actual files. Instead:\n1. State what you will implement (contract items only)\n2. State what you will NOT implement (the accessibility issue)\n3. State where you would mention the accessibility issue (PR description)\n4. Show the two-commit plan\n\nSave to /tmp/sprint-eval-gen-002/execution-plan.md",
+      "expected_output": "execution-plan.md confirms: (1) implements ONLY the button color change, (2) explicitly states accessibility will NOT be implemented, (3) states it will mention accessibility in PR description only",
+      "files": [],
+      "assertions": [
+        {
+          "text": "contract-only: states it will only implement the button color change",
+          "check": "grep -i '1677ff\\|button.*color\\|color.*button' /tmp/sprint-eval-gen-002/execution-plan.md"
+        },
+        {
+          "text": "contract-is-law-accessibility: explicitly states accessibility will NOT be implemented (contract doesn't cover it)",
+          "check": "grep -iE 'not implement|PR description|PR body|合同外|不实现|不加' /tmp/sprint-eval-gen-002/execution-plan.md"
+        },
+        {
+          "text": "pr-description-mention: states accessibility issue will be mentioned in PR description",
+          "check": "grep -iE 'PR.*descri|PR.*body|PR.*description|描述' /tmp/sprint-eval-gen-002/execution-plan.md"
+        },
+        {
+          "text": "two-commit-discipline: still follows commit-1 Red / commit-2 Green structure",
+          "check": "grep -iE 'commit.*1|commit 1|Red|red|test first' /tmp/sprint-eval-gen-002/execution-plan.md"
+        }
+      ]
+    }
+  ]
+}

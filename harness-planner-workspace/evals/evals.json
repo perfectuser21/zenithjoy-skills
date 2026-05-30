@@ -1,0 +1,57 @@
+{
+  "skill_name": "harness-planner",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "You are acting as the harness-planner node in a Harness Pipeline. Execute the harness-planner skill with this task context:\n\nTASK_ID: eval-planner-001\nSPRINT_DIR: /tmp/sprint-eval-planner-001\nthin_prd: 'playground 加 GET /ping 路由，返回 JSON: {pong: true, ts: <unix timestamp>}'\ntask_title: '测试演练 B42'\n\nIMPORTANT: this is a dry-run eval. Instead of pushing to git, write sprint-prd.md to SPRINT_DIR and output your final verdict JSON. Also note: the Brain API is unavailable, skip the curl step. Focus on producing the correct sprint-prd.md content.\n\nSave sprint-prd.md to /tmp/sprint-eval-planner-001/sprint-prd.md\nAlso save a transcript of your work to /tmp/sprint-eval-planner-001/transcript.md",
+      "expected_output": "sprint-prd.md containing /ping keyword (not /health or other variants), target_environment=playground, PRD <=50 lines, does NOT use task_title 'B42' as topic",
+      "files": [],
+      "assertions": [
+        {
+          "text": "topic-lock: sprint-prd.md contains '/ping' keyword from thin_prd (not renamed to /health or /status)",
+          "check": "grep -i '/ping' /tmp/sprint-eval-planner-001/sprint-prd.md"
+        },
+        {
+          "text": "location-word: sprint-prd.md references playground (not packages/brain/src)",
+          "check": "grep -i 'playground' /tmp/sprint-eval-planner-001/sprint-prd.md"
+        },
+        {
+          "text": "target-environment: sprint-prd.md contains target_environment=playground",
+          "check": "grep 'target_environment.*playground' /tmp/sprint-eval-planner-001/sprint-prd.md"
+        },
+        {
+          "text": "no-task-title-pollution: sprint-prd.md topic is NOT 'B42' or '测试演练'",
+          "check": "! grep -i 'B42\\|测试演练' /tmp/sprint-eval-planner-001/sprint-prd.md"
+        },
+        {
+          "text": "thin-slice-size: sprint-prd.md is <=100 lines",
+          "check": "[ $(wc -l < /tmp/sprint-eval-planner-001/sprint-prd.md) -le 100 ]"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "You are acting as the harness-planner node in a Harness Pipeline. Execute the harness-planner skill with this task context:\n\nTASK_ID: eval-planner-002\nSPRINT_DIR: /tmp/sprint-eval-planner-002\nthin_prd: 'Brain API 加 POST /api/brain/decisions/bulk 端点，接收 decisions 数组（最多 10 条），批量写入 decisions 表，返回 {created: number, failed: number, errors: string[]}'\ntask_title: 'W55 Brain 批量端点'\n\nIMPORTANT: this is a dry-run eval. Brain API unavailable, skip curl. Write sprint-prd.md to SPRINT_DIR.\n\nSave sprint-prd.md to /tmp/sprint-eval-planner-002/sprint-prd.md\nAlso save transcript to /tmp/sprint-eval-planner-002/transcript.md",
+      "expected_output": "sprint-prd.md with Response Schema section showing {created, failed, errors} fields, target_environment=local_api, journey_type=autonomous",
+      "files": [],
+      "assertions": [
+        {
+          "text": "response-schema-present: sprint-prd.md has Response Schema section with field definitions",
+          "check": "grep -i 'Response Schema\\|response schema' /tmp/sprint-eval-planner-002/sprint-prd.md"
+        },
+        {
+          "text": "response-fields-correct: Response Schema mentions 'created' and 'failed' fields from thin_prd",
+          "check": "grep 'created' /tmp/sprint-eval-planner-002/sprint-prd.md && grep 'failed' /tmp/sprint-eval-planner-002/sprint-prd.md"
+        },
+        {
+          "text": "target-environment-local-api: target_environment=local_api (Brain API = local_api, not windows_cloud)",
+          "check": "grep 'target_environment.*local_api' /tmp/sprint-eval-planner-002/sprint-prd.md"
+        },
+        {
+          "text": "journey-type-autonomous: journey_type=autonomous (Brain API = autonomous, not user_facing)",
+          "check": "grep 'journey_type.*autonomous' /tmp/sprint-eval-planner-002/sprint-prd.md"
+        }
+      ]
+    }
+  ]
+}

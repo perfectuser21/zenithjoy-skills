@@ -1,0 +1,6 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-skill-registry-update",
+  "prompt": "see evals.json",
+  "assertions": []
+}

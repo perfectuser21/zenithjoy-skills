@@ -1,0 +1,236 @@
+{
+  "metadata": {
+    "skill_name": "harness-report",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-05-30T07:01:03Z",
+    "evals_run": [
+      1,
+      2
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.4,
+        "passed": 2,
+        "failed": 3,
+        "total": 5,
+        "time_seconds": 57.4,
+        "tokens": 27320,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "harness-report-created: harness-report.md exists",
+          "passed": false,
+          "evidence": "Agent executed all 6 steps but subagent output was truncated; /tmp files not written (execution issue, not skill issue)"
+        },
+        {
+          "text": "all-6-steps-mentioned: transcript mentions all 6 steps",
+          "passed": true,
+          "evidence": "Agent summary confirms Step 1-6 all covered including Step 3.5"
+        },
+        {
+          "text": "nonblocking-warn: WARN messages on API failure",
+          "passed": true,
+          "evidence": "Agent summary shows Step 1 non-blocking WARN pattern"
+        },
+        {
+          "text": "report-contains-pr-url: harness-report.md contains the PR URL",
+          "passed": false,
+          "evidence": "File not produced due to subagent truncation"
+        },
+        {
+          "text": "report-contains-feature-name: harness-report.md contains feature name",
+          "passed": false,
+          "evidence": "File not produced due to subagent truncation"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 133.6,
+        "tokens": 32553,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "harness-report-created: harness-report.md exists",
+          "passed": true,
+          "evidence": "file at outputs/harness-report.md confirmed"
+        },
+        {
+          "text": "all-6-steps-mentioned: transcript mentions all 6 steps",
+          "passed": true,
+          "evidence": "Step 1-6 all present in transcript"
+        },
+        {
+          "text": "report-has-screenshot: harness-report.md contains screenshot URL or section",
+          "passed": true,
+          "evidence": "screenshot/\u622a\u56fe found in report"
+        },
+        {
+          "text": "report-has-cost: harness-report.md contains total cost (1.23)",
+          "passed": true,
+          "evidence": "1.23 found in report"
+        },
+        {
+          "text": "gan-table-attempted: transcript mentions FROM_PRD/AI_ADDED extraction",
+          "passed": true,
+          "evidence": "FROM_PRD/AI_ADDED extraction present in transcript"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 33.0,
+        "tokens": 21622,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "harness-report-created: harness-report.md exists",
+          "passed": true,
+          "evidence": "file exists at /tmp/sprint-eval-report-001-baseline/harness-report.md"
+        },
+        {
+          "text": "all-6-steps-mentioned: transcript mentions all 6 steps",
+          "passed": false,
+          "evidence": "baseline transcript only had 5 phases, no explicit Step numbering"
+        },
+        {
+          "text": "nonblocking-warn: WARN messages on API failure",
+          "passed": false,
+          "evidence": "baseline noted APIs unavailable but did not use WARN non-blocking pattern"
+        },
+        {
+          "text": "report-contains-pr-url: harness-report.md contains the PR URL",
+          "passed": true,
+          "evidence": "pull/999 present in report"
+        },
+        {
+          "text": "report-contains-feature-name: harness-report.md contains feature name",
+          "passed": true,
+          "evidence": "Brain /ping endpoint in report"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 29.7,
+        "tokens": 21449,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "harness-report-created: harness-report.md exists",
+          "passed": true,
+          "evidence": "file exists"
+        },
+        {
+          "text": "all-6-steps-mentioned: transcript mentions all 6 steps",
+          "passed": false,
+          "evidence": "baseline transcript had 4 phases, no Step 1-6 numbering"
+        },
+        {
+          "text": "report-has-screenshot: harness-report.md contains screenshot URL or section",
+          "passed": true,
+          "evidence": "screenshot URLs present in baseline report"
+        },
+        {
+          "text": "report-has-cost: harness-report.md contains total cost (1.23)",
+          "passed": true,
+          "evidence": "1.23 present in baseline report"
+        },
+        {
+          "text": "gan-table-attempted: transcript mentions FROM_PRD/AI_ADDED extraction",
+          "passed": false,
+          "evidence": "baseline did not attempt GAN table extraction"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.7,
+        "stddev": 0.4243,
+        "min": 0.4,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 95.5,
+        "stddev": 53.8815,
+        "min": 57.4,
+        "max": 133.6
+      },
+      "tokens": {
+        "mean": 29936.5,
+        "stddev": 3700.2898,
+        "min": 27320,
+        "max": 32553
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.6,
+        "stddev": 0.0,
+        "min": 0.6,
+        "max": 0.6
+      },
+      "time_seconds": {
+        "mean": 31.35,
+        "stddev": 2.3335,
+        "min": 29.7,
+        "max": 33.0
+      },
+      "tokens": {
+        "mean": 21535.5,
+        "stddev": 122.3295,
+        "min": 21449,
+        "max": 21622
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.10",
+      "time_seconds": "+64.2",
+      "tokens": "+8401"
+    }
+  },
+  "notes": []
+}

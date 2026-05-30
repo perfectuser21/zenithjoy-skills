@@ -1,0 +1,226 @@
+{
+  "metadata": {
+    "skill_name": "harness-planner",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-05-30T07:01:03Z",
+    "evals_run": [
+      1,
+      2
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 106.5,
+        "tokens": 30815,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "response-schema-present: sprint-prd.md has Response Schema section",
+          "passed": true,
+          "evidence": "grep 'Response Schema' found in prd"
+        },
+        {
+          "text": "response-fields-correct: Response Schema mentions 'created' and 'failed' fields",
+          "passed": true,
+          "evidence": "both 'created' and 'failed' found in prd"
+        },
+        {
+          "text": "target-environment-local-api: target_environment=local_api",
+          "passed": true,
+          "evidence": "agent verdict confirms target_environment: local_api"
+        },
+        {
+          "text": "journey-type-autonomous: journey_type=autonomous",
+          "passed": true,
+          "evidence": "agent verdict confirms journey_type: autonomous"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 110.6,
+        "tokens": 31017,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "topic-lock: sprint-prd.md contains '/ping' keyword",
+          "passed": true,
+          "evidence": "grep '/ping' confirms /ping present throughout PRD"
+        },
+        {
+          "text": "location-word: sprint-prd.md references playground",
+          "passed": true,
+          "evidence": "playground/server.js referenced as implementation location"
+        },
+        {
+          "text": "target-environment: target_environment=playground",
+          "passed": true,
+          "evidence": "agent verdict JSON confirms target_environment: playground"
+        },
+        {
+          "text": "no-task-title-pollution: topic is NOT 'B42' or '\u6d4b\u8bd5\u6f14\u7ec3'",
+          "passed": true,
+          "evidence": "grep shows no B42 or \u6d4b\u8bd5\u6f14\u7ec3 in prd"
+        },
+        {
+          "text": "thin-slice-size: sprint-prd.md is <=50 lines",
+          "passed": false,
+          "evidence": "wc -l shows 110 lines; skill says \u226450 but planner produced longer PRD with smoke script"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.25,
+        "passed": 1,
+        "failed": 3,
+        "total": 4,
+        "time_seconds": 182.2,
+        "tokens": 49878,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "response-schema-present: sprint-prd.md has Response Schema section",
+          "passed": false,
+          "evidence": "grep 'Response Schema' not found in baseline prd"
+        },
+        {
+          "text": "response-fields-correct: Response Schema mentions 'created' and 'failed' fields",
+          "passed": true,
+          "evidence": "baseline agent inferred created/failed from thin_prd"
+        },
+        {
+          "text": "target-environment-local-api: target_environment=local_api",
+          "passed": false,
+          "evidence": "grep found no target_environment line in baseline prd"
+        },
+        {
+          "text": "journey-type-autonomous: journey_type=autonomous",
+          "passed": false,
+          "evidence": "grep found no journey_type line in baseline prd"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.4,
+        "passed": 2,
+        "failed": 3,
+        "total": 5,
+        "time_seconds": 67.2,
+        "tokens": 22874,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "topic-lock: sprint-prd.md contains '/ping' keyword",
+          "passed": true,
+          "evidence": "grep '/ping' confirms present"
+        },
+        {
+          "text": "location-word: sprint-prd.md references playground",
+          "passed": true,
+          "evidence": "agent mentioned playground"
+        },
+        {
+          "text": "target-environment: target_environment=playground",
+          "passed": false,
+          "evidence": "grep found no 'target_environment.*playground' line"
+        },
+        {
+          "text": "no-task-title-pollution: topic is NOT 'B42' or '\u6d4b\u8bd5\u6f14\u7ec3'",
+          "passed": false,
+          "evidence": "grep found '\u6d4b\u8bd5\u6f14\u7ec3' in baseline PRD"
+        },
+        {
+          "text": "thin-slice-size: sprint-prd.md is <=50 lines",
+          "passed": false,
+          "evidence": "wc -l shows 109 lines"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.9,
+        "stddev": 0.1414,
+        "min": 0.8,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 108.55,
+        "stddev": 2.8991,
+        "min": 106.5,
+        "max": 110.6
+      },
+      "tokens": {
+        "mean": 30916.0,
+        "stddev": 142.8356,
+        "min": 30815,
+        "max": 31017
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.325,
+        "stddev": 0.1061,
+        "min": 0.25,
+        "max": 0.4
+      },
+      "time_seconds": {
+        "mean": 124.7,
+        "stddev": 81.3173,
+        "min": 67.2,
+        "max": 182.2
+      },
+      "tokens": {
+        "mean": 36376.0,
+        "stddev": 19094.7115,
+        "min": 22874,
+        "max": 49878
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.57",
+      "time_seconds": "-16.2",
+      "tokens": "-5460"
+    }
+  },
+  "notes": []
+}

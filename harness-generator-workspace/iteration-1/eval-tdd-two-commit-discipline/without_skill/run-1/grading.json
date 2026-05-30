@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "two-commit-plan: describes commit-1 (tests/Red) before commit-2",
+      "passed": true,
+      "evidence": "Baseline also planned commit-1 test, commit-2 implementation"
+    },
+    {
+      "text": "test-first: commit-1 contains test code (ping.test.js)",
+      "passed": true,
+      "evidence": "ping.test.js in commit-1"
+    },
+    {
+      "text": "implementation-second: commit-2 contains ping.js implementation",
+      "passed": true,
+      "evidence": "routes/ping.js in commit-2"
+    },
+    {
+      "text": "contract-is-law: no extra features beyond 2 BEHAVIOR items",
+      "passed": true,
+      "evidence": "Baseline plan was minimal, no extra features noted"
+    }
+  ],
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 4,
+    "failed": 0,
+    "total": 4
+  }
+}

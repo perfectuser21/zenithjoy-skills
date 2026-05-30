@@ -1,102 +1,403 @@
 {
   "metadata": {
     "skill_name": "dev",
-    "skill_path": "~/.claude/skills/dev",
-    "timestamp": "2026-05-26T06:15:00Z",
-    "evals_run": ["bug-path-cookie-error", "small-change-add-priority-field", "big-feature-kuaishou-publish"],
-    "runs_per_configuration": 1
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-05-30T06:48:25Z",
+    "evals_run": [
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 3
   },
   "runs": [
     {
-      "config": "with_skill",
-      "eval_name": "bug-path-cookie-error",
       "eval_id": 1,
-      "pass_rate": 0.857,
-      "pass_count": 6,
-      "total": 7,
-      "time_seconds": 182.6,
-      "total_tokens": 57842,
-      "failed_assertions": ["writes-decision-bug-fix: 用了 type:bug_fix 而非 category:bug-fix"]
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.857,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "queries-brain-db: \u8f93\u51fa\u4e2d\u5305\u542b Brain DB \u67e5\u8be2",
+          "passed": true,
+          "evidence": "\u660e\u786e\u8bf4 'Brain API \u53ef\u7528' \u5e76\u5217\u51fa\u67e5\u8be2\u7ed3\u679c\uff08\u6d3b\u8dc3\u4efb\u52a1\u3001\u76f8\u5173 commit\u3001CI \u5931\u8d25\u8bb0\u5f55\uff09"
+        },
+        {
+          "text": "classifies-as-bug: \u660e\u786e\u5224\u65ad\u4e3a Bug \u8def\u5f84",
+          "passed": true,
+          "evidence": "\u8f93\u51fa '\u7c7b\u578b\uff1aBug\uff08P0\uff09'"
+        },
+        {
+          "text": "preprd-has-symptom: Bug PrepPRD \u5305\u542b\u75c7\u72b6\u6bb5",
+          "passed": true,
+          "evidence": "\u6709 '\u80cc\u666f & \u73b0\u8c61' \u6bb5\uff0c\u5217\u51fa '2026-05-25 \u8d77\u6301\u7eed\u5931\u8d25' \u548c\u5177\u4f53\u62a5\u9519"
+        },
+        {
+          "text": "preprd-has-root-cause: Bug PrepPRD \u5305\u542b\u6839\u56e0\u5047\u8bbe",
+          "passed": true,
+          "evidence": "\u6709 '\u6839\u672c\u539f\u56e0\u5206\u6790' \u6bb5\uff0c\u542b\u8bc1\u636e\u94fe\uff083\u6b65\u9aa4\uff09"
+        },
+        {
+          "text": "preprd-has-regression-test: Bug PrepPRD \u5305\u542b Regression Test",
+          "passed": true,
+          "evidence": "\u9a8c\u6536\u6807\u51c6\u7b2c4\u6761\u660e\u786e '\u9700\u8981\u65b0\u589e unit test: __tests__/publish-douyin-article.test.cjs'"
+        },
+        {
+          "text": "routes-to-systematic-debugging: \u63d0\u5230\u8def\u7531\u5230 systematic-debugging",
+          "passed": true,
+          "evidence": "'\u8def\u7531 \u2192 systematic-debugging skill' \u660e\u786e\u5199\u51fa"
+        },
+        {
+          "text": "writes-decision-bug-fix: \u5305\u542b POST decisions \u4e14 category=bug-fix",
+          "passed": false,
+          "evidence": "\u6709 decision JSON \u5185\u5bb9\uff0c\u4f46\u7528 'type: bug_fix' \u800c\u975e 'category: bug-fix'\uff0c\u683c\u5f0f\u504f\u5dee"
+        }
+      ],
+      "notes": []
     },
     {
-      "config": "without_skill",
-      "eval_name": "bug-path-cookie-error",
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.833,
+        "passed": 5,
+        "failed": 1,
+        "total": 6,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "queries-brain-db: \u5305\u542b Brain DB \u67e5\u8be2",
+          "passed": true,
+          "evidence": "\u660e\u786e\u8bf4 'Brain API \u4e0d\u53ef\u8fbe (Connection refused)'\uff0c\u5c1d\u8bd5\u67e5\u8be2 4 \u5f20\u8868"
+        },
+        {
+          "text": "classifies-as-small-change: \u5224\u65ad\u4e3a\u5c0f\u6539\u52a8\u8def\u5f84",
+          "passed": true,
+          "evidence": "\u8f93\u51fa '\u5c0f\u6539\u52a8\u8def\u5f84\uff08Small Change\uff09'"
+        },
+        {
+          "text": "preprd-format-correct: \u5305\u542b\u6539\u4ec0\u4e48\u548c\u5f71\u54cd\u8303\u56f4\u6bb5",
+          "passed": true,
+          "evidence": "\u6709 Why/What/Files/\u5f71\u54cd\u8303\u56f4\u8bc4\u4f30/\u5b8c\u6210\u6807\u51c6\uff08DoD\uff09\u5404\u6bb5"
+        },
+        {
+          "text": "preprd-mentions-migration: \u63d0\u5230 DB migration",
+          "passed": true,
+          "evidence": "\u6709\u5b8c\u6574 migration 284 SQL \u8349\u7a3f"
+        },
+        {
+          "text": "routes-to-engine-worktree: \u63d0\u5230\u8def\u7531\u5230 engine-worktree",
+          "passed": true,
+          "evidence": "'\u8def\u7531\u5230\uff1aengine-worktree skill' \u660e\u786e\u5199\u51fa"
+        },
+        {
+          "text": "writes-decision-small-change: \u5305\u542b POST decisions \u4e14 category=small-change",
+          "passed": false,
+          "evidence": "\u6709 decision JSON \u4f46\u65e0 category \u5b57\u6bb5\uff0c\u683c\u5f0f\u4e0d\u5b8c\u6574"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.9,
+        "passed": 9,
+        "failed": 1,
+        "total": 10,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "queries-brain-db: \u5305\u542b journeys \u6216 journey_features \u67e5\u8be2",
+          "passed": true,
+          "evidence": "Brain DB \u53ef\u7528\uff0c\u67e5\u5230 5 \u6761 Journey\uff0c\u8fd4\u56de\u5feb\u624b\u73b0\u6709 feature \u72b6\u6001"
+        },
+        {
+          "text": "classifies-as-big-feature: \u5224\u65ad\u4e3a\u5927\u529f\u80fd\u8def\u5f84",
+          "passed": true,
+          "evidence": "\u8f93\u51fa '\u5224\u65ad\uff1a\u5927\u529f\u80fd\uff08Large Feature\uff09'"
+        },
+        {
+          "text": "multi-role-check-done: \u505a\u4e86\u591a\u89d2\u8272\u68c0\u6d4b",
+          "passed": true,
+          "evidence": "\u6709\u5b8c\u6574 '\u591a\u89d2\u8272\u68c0\u6d4b' \u6bb5\uff0c\u8bc6\u522b\u51fa\u8fd0\u8425\u5ba2\u6237\u548c Agent \u4e24\u4e2a\u89d2\u8272"
+        },
+        {
+          "text": "semantic-dedup-done: \u505a\u4e86\u8bed\u4e49\u67e5\u91cd",
+          "passed": true,
+          "evidence": "\u6709 '\u8bed\u4e49\u67e5\u91cd' \u6bb5\uff0c\u5bf9\u6bd4\u5feb\u624b vs \u6296\u97f3\u56fe\u6587\u53d1\u5e03\uff0c\u7ed3\u8bba\u662f\u4e0d\u91cd\u590d\u9700\u65b0\u5efa"
+        },
+        {
+          "text": "preprd-has-journey-status: PrepPRD \u5305\u542b Journey \u5f53\u524d\u72b6\u6001",
+          "passed": true,
+          "evidence": "Journey \u8868\u683c\u542b 5 \u6761 Journey maturity/\u72b6\u6001"
+        },
+        {
+          "text": "preprd-has-features-list: PrepPRD \u5305\u542b\u6d89\u53ca\u7684\u811a\u672c\u5217\u8868",
+          "passed": true,
+          "evidence": "WS1\uff08kuaishou-image thin\u2192medium\uff09+ WS2\uff08kuaishou-video new-thin\uff09"
+        },
+        {
+          "text": "preprd-has-preconditions: PrepPRD \u5305\u542b\u6267\u884c\u524d\u63d0\u6761\u4ef6",
+          "passed": true,
+          "evidence": "\u6709 '\u6267\u884c\u524d\u63d0\u6761\u4ef6' 4 \u6761\uff1aCI \u72b6\u6001\u3001\u672c\u5730 cookie\u3001\u811a\u672c\u5b58\u5728\u786e\u8ba4\u3001GHA runner \u53ef\u7528"
+        },
+        {
+          "text": "base-repo-is-github-url: base_repo \u4f7f\u7528 GitHub URL",
+          "passed": true,
+          "evidence": "'base_repo': 'https://github.com/perfectuser21/zenithjoy-workspace.git'\uff0c\u5e76\u89e3\u91ca\u4e86\u539f\u56e0"
+        },
+        {
+          "text": "fires-harness: \u8f93\u51fa\u5305\u542b harness_initiative",
+          "passed": true,
+          "evidence": "Harness \u70b9\u706b JSON \u6709 'task_type': 'harness_initiative'"
+        },
+        {
+          "text": "writes-decision-feature: \u5305\u542b POST decisions \u4e14 category=feature",
+          "passed": false,
+          "evidence": "\u6709 decision JSON\uff0c\u6709 title/context/decision \u5b57\u6bb5\uff0c\u4f46\u65e0 category \u5b57\u6bb5"
+        }
+      ],
+      "notes": []
+    },
+    {
       "eval_id": 1,
-      "pass_rate": 0.286,
-      "pass_count": 2,
-      "total": 7,
-      "time_seconds": 977.5,
-      "total_tokens": 121958,
-      "failed_assertions": ["queries-brain-db", "preprd-has-symptom", "preprd-has-regression-test", "routes-to-systematic-debugging", "writes-decision-bug-fix"]
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.286,
+        "passed": 2,
+        "failed": 5,
+        "total": 7,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "queries-brain-db: \u8f93\u51fa\u4e2d\u5305\u542b Brain DB \u67e5\u8be2",
+          "passed": false,
+          "evidence": "\u6ca1\u6709\u67e5\u8be2 Brain DB\uff0c\u76f4\u63a5\u63a2\u7d22\u4ee3\u7801\u5e93"
+        },
+        {
+          "text": "classifies-as-bug: \u660e\u786e\u5224\u65ad\u4e3a Bug \u8def\u5f84",
+          "passed": true,
+          "evidence": "\u9690\u5f0f\u8bc6\u522b\u4e3a bug\uff0c\u63a2\u7d22\u6839\u56e0\u548c\u4fee\u590d\u65b9\u6848"
+        },
+        {
+          "text": "preprd-has-symptom: Bug PrepPRD \u5305\u542b\u75c7\u72b6\u6bb5",
+          "passed": false,
+          "evidence": "\u6ca1\u6709 PrepPRD \u683c\u5f0f\uff0c\u65e0\u75c7\u72b6\u6bb5"
+        },
+        {
+          "text": "preprd-has-root-cause: Bug PrepPRD \u5305\u542b\u6839\u56e0\u5047\u8bbe",
+          "passed": true,
+          "evidence": "\u6709\u8be6\u7ec6 TL;DR \u548c\u4e24\u4e2a\u6839\u672c\u539f\u56e0\u5206\u6790\uff0c\u8d28\u91cf\u5f88\u9ad8"
+        },
+        {
+          "text": "preprd-has-regression-test: Bug PrepPRD \u5305\u542b Regression Test",
+          "passed": false,
+          "evidence": "\u65e0 regression test \u8ba1\u5212\u63d0\u53ca"
+        },
+        {
+          "text": "routes-to-systematic-debugging: \u63d0\u5230\u8def\u7531\u5230 systematic-debugging",
+          "passed": false,
+          "evidence": "\u6ca1\u6709\u8def\u7531\u6982\u5ff5"
+        },
+        {
+          "text": "writes-decision-bug-fix: \u5305\u542b POST decisions \u4e14 category=bug-fix",
+          "passed": false,
+          "evidence": "\u6ca1\u6709\u5199 decision \u5230 Brain DB"
+        }
+      ],
+      "notes": []
     },
     {
-      "config": "with_skill",
-      "eval_name": "small-change-add-priority-field",
       "eval_id": 2,
-      "pass_rate": 0.833,
-      "pass_count": 5,
-      "total": 6,
-      "time_seconds": 179.0,
-      "total_tokens": 25830,
-      "failed_assertions": ["writes-decision-small-change: 有 decision 内容但无 category 字段"]
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.333,
+        "passed": 2,
+        "failed": 4,
+        "total": 6,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "queries-brain-db: \u5305\u542b Brain DB \u67e5\u8be2",
+          "passed": false,
+          "evidence": "\u6ca1\u6709\u67e5\u8be2 Brain DB"
+        },
+        {
+          "text": "classifies-as-small-change: \u5224\u65ad\u4e3a\u5c0f\u6539\u52a8\u8def\u5f84",
+          "passed": true,
+          "evidence": "\u9690\u5f0f\uff0c\u76f4\u63a5\u5f00\u59cb\u5b9e\u73b0\uff083\u4ef6\u4e8b\u7684\u5217\u8868\uff09"
+        },
+        {
+          "text": "preprd-format-correct: \u5305\u542b\u6539\u4ec0\u4e48\u548c\u5f71\u54cd\u8303\u56f4\u6bb5",
+          "passed": false,
+          "evidence": "\u6ca1\u6709 PrepPRD \u683c\u5f0f"
+        },
+        {
+          "text": "preprd-mentions-migration: \u63d0\u5230 DB migration",
+          "passed": true,
+          "evidence": "\u521b\u5efa\u4e86\u771f\u5b9e migration 284 SQL \u6587\u4ef6\uff08\u526f\u4f5c\u7528\uff01\uff09"
+        },
+        {
+          "text": "routes-to-engine-worktree: \u63d0\u5230\u8def\u7531\u5230 engine-worktree",
+          "passed": false,
+          "evidence": "\u6ca1\u6709\u8def\u7531\u6982\u5ff5"
+        },
+        {
+          "text": "writes-decision-small-change: \u5305\u542b POST decisions \u4e14 category=small-change",
+          "passed": false,
+          "evidence": "\u6ca1\u6709\u5199 decision"
+        }
+      ],
+      "notes": []
     },
     {
-      "config": "without_skill",
-      "eval_name": "small-change-add-priority-field",
-      "eval_id": 2,
-      "pass_rate": 0.333,
-      "pass_count": 2,
-      "total": 6,
-      "time_seconds": 364.5,
-      "total_tokens": 42438,
-      "failed_assertions": ["queries-brain-db", "preprd-format-correct", "routes-to-engine-worktree", "writes-decision-small-change"],
-      "side_effects": "直接创建了真实 migration 文件（284_journey_features_priority.sql），已清理"
-    },
-    {
-      "config": "with_skill",
-      "eval_name": "big-feature-kuaishou-publish",
       "eval_id": 3,
-      "pass_rate": 0.9,
-      "pass_count": 9,
-      "total": 10,
-      "time_seconds": 219.2,
-      "total_tokens": 54082,
-      "failed_assertions": ["writes-decision-feature: 无 category 字段"]
-    },
-    {
-      "config": "without_skill",
-      "eval_name": "big-feature-kuaishou-publish",
-      "eval_id": 3,
-      "pass_rate": 0.1,
-      "pass_count": 1,
-      "total": 10,
-      "time_seconds": 125.2,
-      "total_tokens": 59923,
-      "failed_assertions": ["queries-brain-db", "classifies-as-big-feature", "multi-role-check-done", "semantic-dedup-done", "preprd-has-journey-status", "preprd-has-preconditions", "base-repo-is-github-url", "fires-harness", "writes-decision-feature"]
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.1,
+        "passed": 1,
+        "failed": 9,
+        "total": 10,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "queries-brain-db: \u5305\u542b journeys \u6216 journey_features \u67e5\u8be2",
+          "passed": false,
+          "evidence": "\u6ca1\u6709\u67e5\u8be2 Brain DB\uff0c\u76f4\u63a5\u641c\u7d22 codebase"
+        },
+        {
+          "text": "classifies-as-big-feature: \u5224\u65ad\u4e3a\u5927\u529f\u80fd\u8def\u5f84",
+          "passed": false,
+          "evidence": "\u6ca1\u6709\u663e\u5f0f\u5206\u7c7b\uff0c\u76f4\u63a5\u8fdb\u5165\u4ee3\u7801\u5206\u6790"
+        },
+        {
+          "text": "multi-role-check-done: \u505a\u4e86\u591a\u89d2\u8272\u68c0\u6d4b",
+          "passed": false,
+          "evidence": "\u65e0\u591a\u89d2\u8272\u68c0\u6d4b"
+        },
+        {
+          "text": "semantic-dedup-done: \u505a\u4e86\u8bed\u4e49\u67e5\u91cd",
+          "passed": false,
+          "evidence": "\u65e0\u8bed\u4e49\u67e5\u91cd\uff08\u76f4\u63a5\u8ba4\u4e3a\u5feb\u624b\u662f\u65b0\u529f\u80fd\uff09"
+        },
+        {
+          "text": "preprd-has-journey-status: PrepPRD \u5305\u542b Journey \u5f53\u524d\u72b6\u6001",
+          "passed": false,
+          "evidence": "\u65e0 PrepPRD \u683c\u5f0f"
+        },
+        {
+          "text": "preprd-has-features-list: PrepPRD \u5305\u542b\u6d89\u53ca\u7684\u811a\u672c\u5217\u8868",
+          "passed": true,
+          "evidence": "\u6709\u7cbe\u786e\u7684 publisher_matrix \u5bf9\u6bd4\u8868\u683c\uff08\u4f46\u662f\u4ee3\u7801\u89c6\u89d2\u4e0d\u662f\u4ea7\u54c1\u89c6\u89d2\uff09"
+        },
+        {
+          "text": "preprd-has-preconditions: PrepPRD \u5305\u542b\u6267\u884c\u524d\u63d0\u6761\u4ef6",
+          "passed": false,
+          "evidence": "\u65e0\u524d\u63d0\u6761\u4ef6\u6982\u5ff5"
+        },
+        {
+          "text": "base-repo-is-github-url: base_repo \u4f7f\u7528 GitHub URL",
+          "passed": false,
+          "evidence": "\u65e0 base_repo \u6982\u5ff5"
+        },
+        {
+          "text": "fires-harness: \u8f93\u51fa\u5305\u542b harness_initiative",
+          "passed": false,
+          "evidence": "\u65e0 Harness \u6982\u5ff5\uff0c\u76f4\u63a5\u5217\u5b9e\u73b0\u6b65\u9aa4"
+        },
+        {
+          "text": "writes-decision-feature: \u5305\u542b POST decisions \u4e14 category=feature",
+          "passed": false,
+          "evidence": "\u65e0 decision \u5199\u5165"
+        }
+      ],
+      "notes": []
     }
   ],
   "run_summary": {
     "with_skill": {
-      "mean_pass_rate": 0.863,
-      "mean_time_seconds": 193.6,
-      "mean_tokens": 45918
+      "pass_rate": {
+        "mean": 0.8633,
+        "stddev": 0.0339,
+        "min": 0.833,
+        "max": 0.9
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0,
+        "max": 0
+      }
     },
     "without_skill": {
-      "mean_pass_rate": 0.24,
-      "mean_time_seconds": 489.1,
-      "mean_tokens": 74773
+      "pass_rate": {
+        "mean": 0.2397,
+        "stddev": 0.1232,
+        "min": 0.1,
+        "max": 0.333
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0,
+        "max": 0
+      }
     },
     "delta": {
-      "pass_rate": "+0.623",
-      "time_seconds": "-295.5 (with_skill 快 60%)",
-      "tokens": "-28855 (with_skill 省 39%)"
+      "pass_rate": "+0.62",
+      "time_seconds": "+0.0",
+      "tokens": "+0"
     }
   },
-  "analyst_notes": [
-    "唯一系统性失败 assertion：writes-decision-*（3/3 eval 都失败）。skill 要求 POST /api/brain/decisions 使用 category 字段，但 3 个 subagent 都用了其他字段名（type/rationale 等）。需改进：skill 里应提供完整 curl 命令示例",
-    "baseline 在 eval-2 产生了真实副作用（创建了 migration 文件），说明没有 PrepPRD 确认门的危险性",
-    "without_skill 在 eval-1 用了 156 个 tool calls、977s，比 with_skill 慢 5 倍，且仍然找不到 TypeError 的精确根因",
-    "with_skill 在 eval-3 正确识别了 base_repo 必须 GitHub URL 规则，without_skill 完全没有这个概念",
-    "writes-decision-* 是非歧视性 assertion（只有 with_skill 才可能通过），without_skill 全失败符合预期"
-  ]
+  "notes": []
 }

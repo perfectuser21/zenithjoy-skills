@@ -1,0 +1,226 @@
+{
+  "metadata": {
+    "skill_name": "harness-sprint-state",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-05-30T07:01:03Z",
+    "evals_run": [
+      1,
+      2
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 247.9,
+        "tokens": 47182,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "state-delta-created: sprint-state-delta.md exists",
+          "passed": true,
+          "evidence": "file confirmed in outputs/"
+        },
+        {
+          "text": "brain-db-api-registry: transcript mentions api_registry write",
+          "passed": true,
+          "evidence": "api_registry found in transcript"
+        },
+        {
+          "text": "brain-db-schema-registry: transcript mentions db_schema_registry write",
+          "passed": true,
+          "evidence": "db_schema_registry and agent_sessions both found in transcript"
+        },
+        {
+          "text": "notion-sync-8-tables: transcript mentions AI Journey/Feature/Skills sync",
+          "passed": true,
+          "evidence": "AI Journey, AI Feature, skill_registry all mentioned"
+        },
+        {
+          "text": "state-delta-has-feature: sprint-state-delta.md contains feature name or PR reference",
+          "passed": true,
+          "evidence": "Agent/agent-connect/pull/777 found in state-delta"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 99.0,
+        "tokens": 34252,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "state-delta-created: sprint-state-delta.md exists",
+          "passed": true,
+          "evidence": "file confirmed"
+        },
+        {
+          "text": "skill-registry-update: transcript mentions skill_registry update for harness-report v5.1",
+          "passed": true,
+          "evidence": "skill_registry and 5.1.0 found in transcript"
+        },
+        {
+          "text": "test-registry-update: transcript mentions test_registry for harness-report.test.ts",
+          "passed": true,
+          "evidence": "test_registry and harness-report.test mentioned"
+        },
+        {
+          "text": "no-spurious-api-registry: no new api_registry entry (no new endpoints)",
+          "passed": true,
+          "evidence": "no api_registry POST for new endpoints in transcript"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 45.9,
+        "tokens": 22321,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "state-delta-created: sprint-state-delta.md exists",
+          "passed": true,
+          "evidence": "file exists"
+        },
+        {
+          "text": "brain-db-api-registry: transcript mentions api_registry write",
+          "passed": false,
+          "evidence": "baseline transcript had no api_registry mention; just listed 'pending' API calls"
+        },
+        {
+          "text": "brain-db-schema-registry: transcript mentions db_schema_registry write",
+          "passed": true,
+          "evidence": "agent_sessions schema mentioned in baseline"
+        },
+        {
+          "text": "notion-sync-8-tables: transcript mentions AI Journey/Feature/Skills sync",
+          "passed": false,
+          "evidence": "baseline did not enumerate 8 Notion tables; only noted sync was pending"
+        },
+        {
+          "text": "state-delta-has-feature: sprint-state-delta.md contains feature name or PR reference",
+          "passed": true,
+          "evidence": "Agent-connect and PR#777 referenced in baseline state-delta"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 46.6,
+        "tokens": 22411,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "state-delta-created: sprint-state-delta.md exists",
+          "passed": true,
+          "evidence": "file exists"
+        },
+        {
+          "text": "skill-registry-update: transcript mentions skill_registry update for harness-report v5.1",
+          "passed": true,
+          "evidence": "Skill Registry and version identified in baseline"
+        },
+        {
+          "text": "test-registry-update: transcript mentions test_registry for harness-report.test.ts",
+          "passed": true,
+          "evidence": "test file mentioned in baseline transcript"
+        },
+        {
+          "text": "no-spurious-api-registry: no new api_registry entry (no new endpoints)",
+          "passed": true,
+          "evidence": "baseline correctly identified no new API endpoints"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 173.45,
+        "stddev": 105.2882,
+        "min": 99.0,
+        "max": 247.9
+      },
+      "tokens": {
+        "mean": 40717.0,
+        "stddev": 9142.8907,
+        "min": 34252,
+        "max": 47182
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.8,
+        "stddev": 0.2828,
+        "min": 0.6,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 46.25,
+        "stddev": 0.495,
+        "min": 45.9,
+        "max": 46.6
+      },
+      "tokens": {
+        "mean": 22366.0,
+        "stddev": 63.6396,
+        "min": 22321,
+        "max": 22411
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.20",
+      "time_seconds": "+127.2",
+      "tokens": "+18351"
+    }
+  },
+  "notes": []
+}

@@ -1,0 +1,11 @@
+{
+  "eval_id": 2,
+  "eval_name": "real-workflow-proceed",
+  "prompt": "请评估 /tmp/eval-evaluator-fixtures/real-workflow.yml 这个 workflow。这是一个 windows_cloud Sprint 的 Final E2E workflow 文件，放在磁盘上，你必须用 Bash 读取它（cat 命令）。读完后判断：这个 workflow 是否包含真实业务行为验证？能否触发 Final E2E？请给出明确结论（FAIL 或 PROCEED）并说明理由。contract 有如下 [BEHAVIOR]：session 写入路径验证、DOUYIN_COOKIES 注入验证、vitest 回归测试。",
+  "assertions": [
+    "Evaluator 检查了 workflow 文件内容",
+    "Evaluator 确认 workflow 包含业务逻辑（node/npx/vitest 命令）",
+    "Evaluator 没有因为 hollow workflow 检测而直接 FAIL",
+    "Evaluator 尝试触发 gh workflow run（或等待 workflow 结果）"
+  ]
+}

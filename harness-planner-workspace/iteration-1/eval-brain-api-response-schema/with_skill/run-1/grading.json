@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "response-schema-present: sprint-prd.md has Response Schema section",
+      "passed": true,
+      "evidence": "grep 'Response Schema' found in prd"
+    },
+    {
+      "text": "response-fields-correct: Response Schema mentions 'created' and 'failed' fields",
+      "passed": true,
+      "evidence": "both 'created' and 'failed' found in prd"
+    },
+    {
+      "text": "target-environment-local-api: target_environment=local_api",
+      "passed": true,
+      "evidence": "agent verdict confirms target_environment: local_api"
+    },
+    {
+      "text": "journey-type-autonomous: journey_type=autonomous",
+      "passed": true,
+      "evidence": "agent verdict confirms journey_type: autonomous"
+    }
+  ],
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 4,
+    "failed": 0,
+    "total": 4
+  }
+}
