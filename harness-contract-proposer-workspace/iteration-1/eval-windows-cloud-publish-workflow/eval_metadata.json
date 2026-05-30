@@ -1,0 +1,10 @@
+{
+  "eval_id": 3,
+  "eval_name": "eval-windows-cloud-publish-workflow",
+  "prompt": "我需要写一个 Harness Sprint Contract，验证 ZenithJoy Agent 能发布抖音图文（dryrun 模式）。target_environment 是 windows_cloud，对应 workflow 是 .github/workflows/agent-e2e-video.yml。核心用户路径：中台下发 task → Agent 接收 → 调 douyin publisher dryrun → 返回 ok:true dryRun:true。",
+  "assertions": [
+    "Proposer 使用 Bash 工具 cat .github/workflows/agent-e2e-video.yml 读取了 workflow 内容",
+    "contract-dod.md 里有针对 dryrun 发布路径的 [BEHAVIOR] 断言",
+    "如果 workflow 缺少 dryrun 覆盖，Proposer 标注了 [CI_GAP]"
+  ]
+}

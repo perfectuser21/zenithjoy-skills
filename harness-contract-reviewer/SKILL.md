@@ -6,10 +6,11 @@ description: |
   而非"防作弊测试框架"。
   核心职责：(1) spec 对齐用户真需求 (2) criteria 可量化无歧义 (3) happy + error + 边界场景全覆盖
   GAN 对抗**多轮**直到双方达成共识。无硬轮数上限，但 Reviewer 真找不出实质 spec/产品漏洞时必须 APPROVED。
-version: 7.0.0
+version: 8.0.0
 created: 2026-04-08
-updated: 2026-05-29
+updated: 2026-05-30
 changelog:
+  - 8.0.0: 新增第 7 维 ci_workflow_alignment，要求 Reviewer 读取 workflow 文件内容验证业务对齐性；windows_cloud/linux_server 目标环境要求 7 维全部 ≥ 7 → APPROVED，其他环境维持原 6 维 ≥ 7 → APPROVED
   - 7.0.0: 移除第 7/8 维（WS 专属）— 对齐单 Sprint 单 PR 模式（harness-contract-proposer v8.0+）。第 7 维 behavior_count_position 检查"每个 workstream ≥ 4 条 BEHAVIOR"，第 8 维 depends_on_serial_chain 检查"ws2+ 必须有 depends_on"，两者前提是多 WS 存在，单 Sprint 模式下无意义。Rubric 恢复 6 维，阈值不变（全部 ≥ 7 → APPROVED）
   - 6.7.0: 新增 Step 5 — Contract APPROVED 后写 Brain DB planned 条目（api_registry + db_schema_registry），补齐 GAN 阶段到 Report 阶段之间的数据空白；planned → done 由 harness-sprint-state Report 阶段完成
   - 6.6.0: 强制 Bash 工具写结果文件（Bug 11 — missing_result_file 根因）— SKILL.md 只说"写到文件"但 LLM 可能仅在文本中描述命令而不执行，导致 ContractViolation。v6.6 明确要求通过 Bash 工具执行写文件命令 + 执行验证命令确认文件存在
@@ -71,9 +72,9 @@ Proposer 产出的 `contract-draft.md` 格式是 **Golden Path Steps**：每步 
 
 少一项 → 第 2 维 scope_match_prd 或第 4 维 internal_consistency 扣分。Golden Path 断链 → 直接 REVISION 不打分。
 
-## 评分 Rubric（v7.0 — 6 维度，对齐 Anthropic "each criterion has hard threshold"）
+## 评分 Rubric（v8.0 — 7 维度，对齐 Anthropic "each criterion has hard threshold"）
 
-**6 个评分维度，每维 0-10 打分。硬阈值由调用方 extractVerdict 代码判定，不让 LLM 主观汇总**。
+**7 个评分维度，每维 0-10 打分。硬阈值由调用方 extractVerdict 代码判定，不让 LLM 主观汇总**。
 
 | # | 维度 | 定义 | 10 分标准 | 0 分标准 |
 |---|---|---|---|---|
@@ -83,12 +84,13 @@ Proposer 产出的 `contract-draft.md` 格式是 **Golden Path Steps**：每步 
 | 4 | **内部一致** | 合同本身术语 / 字段 / 命令无矛盾 | 每个字段 / 命令只定义一次，引用用稳定 ID | 合同前后定义不一致，或命令在多处粘贴可能漂移 |
 | 5 | **风险登记** | Risks 栏列了 + 每条有 mitigation | ≥ 2 条具名 risk + mitigation（含 cascade 失败时怎办） | 无 Risks 栏，或只写"无已知风险" |
 | 6 | **Verification Oracle 完整性**（v6.1）| PRD 的 Response Schema 段是否被合同 codify 成 jq -e 可执行 oracle | PRD 每个 response 字段都对应至少 1 条 `jq -e '.key == val'` 命令；schema 完整性用 `jq -e 'keys == [...]'` 强卡；禁用字段名清单都有反向 `! jq -e '.禁用key'` 检查 | PRD 写了 schema 但合同只有自然语言描述（"返回 {result, operation}"）没有 jq -e 命令；或 jq -e 命令漏掉某个字段（schema drift 漏网） |
+| 7 | **CI Workflow 内容对齐**（windows_cloud/linux_server 专属）| 凡合同引用 GHA workflow 作为 BEHAVIOR 断言，Reviewer 必须用 Bash 工具读取该 workflow 文件内容，确认 workflow steps 与合同 BEHAVIOR 的用户操作语义一致 | Reviewer 读了 workflow 文件，每条 BEHAVIOR 都能指向 workflow 里的一个真实业务 step | Reviewer 未读 workflow 文件直接批准，或 workflow 里全是文件大小/存在性检查但合同声称验证了业务行为 |
 
 ### 阈值规则（代码判，Reviewer 不主观综合）
 
 **单轮阈值（不随 round 衰减）**：
-- 全部 6 维 ≥ 7 分 → APPROVED
-- 任何一维 < 7 分 → REVISION
+- `target_environment` 为 `windows_cloud` 或 `linux_server` 时：**7 维全部 ≥ 7 → APPROVED**，任何一维 < 7 → REVISION
+- 其他 `target_environment`：全部 6 维 ≥ 7 分 → APPROVED，任何一维 < 7 → REVISION
 
 **收敛兜底（无轮数硬 cap）**：
 不设 MAX_ROUNDS。`harness-gan.graph.js` 调 `detectConvergenceTrend(rubricHistory)` 看最近 3 轮 7 维度走势：
@@ -166,11 +168,18 @@ cat "${SPRINT_DIR}/contract-dod.md" 2>/dev/null || true
 
 ### Step 2: 按 Rubric 打分
 
-严格按上文"评分 Rubric"的 6 个维度独立打 0-10 分，逐维给出证据。不要按旧版结构组织思考，只按 rubric 表 6 维逐个打分。
+严格按上文"评分 Rubric"的 7 个维度独立打 0-10 分，逐维给出证据。不要按旧版结构组织思考，只按 rubric 表逐个打分。
+
+**第 7 维强制执行**：凡合同包含 `[BEHAVIOR]` 引用 GHA workflow 名称（.yml 文件），Reviewer 必须在当前 turn 内用 Bash 工具执行：
+```bash
+cat .github/workflows/<workflow文件名>.yml 2>/dev/null || echo "WORKFLOW_NOT_FOUND"
+```
+读取结果后逐步对比合同 BEHAVIOR 断言与 workflow steps 的语义对齐性。
+**未执行此 Bash 命令 → 第 7 维强制 0 分，不允许 APPROVED**。
 
 ### Step 3: 产出 Verdict
 
-**必须输出 6 维度评分（JSON 结构化）**：
+**必须输出 7 维度评分（JSON 结构化）**：
 
 ```markdown
 ## RUBRIC SCORES
@@ -182,7 +191,8 @@ cat "${SPRINT_DIR}/contract-dod.md" 2>/dev/null || true
   "test_is_red": 9,
   "internal_consistency": 6,
   "risk_registered": 5,
-  "verification_oracle_completeness": 4
+  "verification_oracle_completeness": 4,
+  "ci_workflow_alignment": 7
 }
 ```
 
@@ -235,7 +245,7 @@ Round N, 阈值固定 7/10（不随 round 衰减）。
 ```bash
 # [必须通过 Bash 工具执行，不是文字描述] 写结果文件
 cat > /workspace/.brain-result.json << 'BREOF'
-{"verdict":"<APPROVED|REVISION>","rubric_scores":{"dod_machineability":X,"scope_match_prd":X,"test_is_red":X,"internal_consistency":X,"risk_registered":X,"verification_oracle_completeness":X},"feedback":"<feedback text or empty>"}
+{"verdict":"<APPROVED|REVISION>","rubric_scores":{"dod_machineability":X,"scope_match_prd":X,"test_is_red":X,"internal_consistency":X,"risk_registered":X,"verification_oracle_completeness":X,"ci_workflow_alignment":X},"feedback":"<feedback text or empty>"}
 BREOF
 ```
 

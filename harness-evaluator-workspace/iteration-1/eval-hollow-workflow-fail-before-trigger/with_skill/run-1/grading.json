@@ -1,0 +1,88 @@
+{
+  "expectations": [
+    {
+      "text": "Evaluator 在触发 gh workflow run 之前，检查了 workflow 文件的业务内容",
+      "passed": true,
+      "evidence": "Transcript Step 4 明确记录了在触发前执行了 grep 检测：`grep -cE \"(node -e|npx|npm run|vitest|playwright|curl|Invoke-RestMethod|session|publish|cookies|DOUYIN)\" hollow.yml` → 输出 0。Step 5 显示 gh workflow run 从未被执行，同时 eval-result.md Step B-2 节详述了检查 3 的完整逻辑，包括读取 workflow 文件内容并运行正则匹配。"
+    },
+    {
+      "text": "Evaluator 发现 workflow 缺少业务逻辑验证（无 node/npx/vitest/playwright 命令）",
+      "passed": true,
+      "evidence": "Transcript Step 4 记录：`BUSINESS_STEPS=0`（无业务逻辑关键词匹配），`SHALLOW_ONLY=2`（Test-Path + .Length 命中）。eval-result.md 表格明确列出 BUSINESS_STEPS=0 并说明「无 node/npx/npm run/vitest/playwright/curl/Invoke-RestMethod/session/publish/cookies/DOUYIN」。"
+    },
+    {
+      "text": "Evaluator 输出了 FAIL 结论，而不是触发了 workflow run",
+      "passed": true,
+      "evidence": "Transcript Step 5 的代码块显示写入了 `{\"verdict\":\"FAIL\",...}` 到 brain-result.json，且注明「gh workflow run 从未被执行」。eval-result.md 最终输出节同样包含 `\"verdict\": \"FAIL\"` 的 JSON，结论节明确：「Evaluator 在触发 gh workflow run 之前就 FAIL 了」。"
+    },
+    {
+      "text": "FAIL 原因明确说明 workflow 是空壳/hollow，只有文件存在/大小检查",
+      "passed": true,
+      "evidence": "brain-result.json 的 log_excerpt 写明：「workflow agent-qr-windows-verify.yml 只包含文件存在/大小检查，不含任何业务逻辑验证（node/npx/vitest/playwright/curl）。合同 BEHAVIOR 断言无法通过此 workflow 真实验证。」failed_step 字段值为 `workflow_content_check`，精确指向空壳检测阶段。"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": null,
+    "total_steps": 6,
+    "errors_encountered": 0,
+    "output_chars": 4120,
+    "transcript_chars": 3380
+  },
+  "timing": {
+    "executor_duration_seconds": 123.6,
+    "grader_duration_seconds": null,
+    "total_duration_seconds": 123.6
+  },
+  "claims": [
+    {
+      "claim": "BUSINESS_STEPS=0, SHALLOW_ONLY=2（针对空壳 workflow）",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Transcript Step 4 的 grep 命令输出与 eval-result.md 表格一致：BUSINESS_STEPS=0（无关键词匹配），SHALLOW_ONLY=2（Test-Path×1 + .Length×1）。两处数据吻合。"
+    },
+    {
+      "claim": "gh workflow run 从未被执行",
+      "type": "process",
+      "verified": true,
+      "evidence": "Transcript Step 5 明确注明「gh workflow run 从未被执行」，整个 transcript 中无任何 gh workflow run 调用记录，与该声明一致。"
+    },
+    {
+      "claim": "真实 workflow 文件（agent-qr-windows-verify.yml）同样会被判 FAIL，因为 npm test 不匹配 npm run 正则",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Transcript Step 6 和 eval-result.md「附注」节均记录：真实文件中 npm ci + npm test 不被 `npm run` 正则捕获，导致 BUSINESS_STEPS=0，SHALLOW_ONLY=3，触发空壳判定。这是执行者自行发现的附加 gap，有助于后续修复。"
+    },
+    {
+      "claim": "v1.11.0 存在 npm test 未被正则匹配的 gap",
+      "type": "quality",
+      "verified": true,
+      "evidence": "eval-result.md「修复建议」节明确指出正则 `npm run` 无法匹配 `npm test`，导致含真实单元测试的 workflow 也被误判为空壳。这是一个真实的逻辑 gap，已在 v1.11.1 修复（prompt 摘要确认）。"
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [
+      "真实 workflow agent-qr-windows-verify.yml 包含 npm ci + npm test（跑 vitest），但被 v1.11.0 正则误判为空壳。eval 场景聚焦空壳检测的正常路径，此附加发现超出 eval 范围，但值得关注。"
+    ],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Evaluator 在触发 gh workflow run 之前，检查了 workflow 文件的业务内容",
+        "reason": "断言只验证「检查了内容」，但没有验证检查深度是否足够。一个仅 grep 文件名而不读取内容的实现也能声称「检查了」。建议补充：「Evaluator 对 workflow 文件内容执行了关键词正则匹配（BUSINESS_STEPS / SHALLOW_ONLY 两路检测）」，以区分浅层存在检查与真正的内容分析。"
+      },
+      {
+        "reason": "所有断言都聚焦「空壳 workflow → FAIL」的正常路径，但没有覆盖误判风险：含真实业务步骤（npm test）的 workflow 是否会被错误 FAIL。该场景在执行中被自动发现，是 v1.11.0 的真实 bug，但 eval 套件缺少对应的「non-hollow workflow should PASS」反向断言，导致这类误报无法被 eval 捕获。"
+      }
+    ],
+    "overall": "4 条断言覆盖了主路径（空壳检测 + 前置 FAIL + 原因说明），核心场景验证充分。建议补充反向断言（含真实业务步骤的 workflow 应 PASS），以防止检测逻辑过激导致误判。"
+  }
+}

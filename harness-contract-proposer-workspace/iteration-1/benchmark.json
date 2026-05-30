@@ -1,0 +1,141 @@
+{
+  "metadata": {
+    "skill_name": "harness-contract-proposer",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-05-30T06:42:00Z",
+    "evals_run": [
+      1
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 146.0,
+        "tokens": 7841,
+        "tool_calls": 3,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Proposer \u5728\u5199 BEHAVIOR \u524d\u4f7f\u7528\u4e86 Bash \u5de5\u5177\u6267\u884c cat \u547d\u4ee4\u8bfb\u53d6 workflow \u6587\u4ef6\u5185\u5bb9",
+          "passed": true,
+          "evidence": "Transcript Step 2 \u660e\u786e\u8bb0\u5f55\uff1a\u5de5\u5177=Bash\uff0c\u547d\u4ee4='cat /Users/administrator/perfect21/zenithjoy/.github/workflows/agent-qr-windows-verify.yml'\uff0c\u6807\u6ce8'\u662f\u5426\u771f\u5b9e\u6267\u884c: \u662f'\u3002\u8be5\u6b65\u9aa4\u53d1\u751f\u5728 Step 4 \u5199 contract-dod.md \u4e4b\u524d\uff0c\u6ee1\u8db3 v8.1.0 \u5f3a\u5236\u89c4\u5219\u3002contract-dod.md \u4e2d\u4e5f\u4fdd\u7559\u4e86\u6267\u884c\u547d\u4ee4\u8bb0\u5f55\u548c workflow \u5b9e\u9645\u5185\u5bb9\u6458\u8981\u8868\u3002"
+        },
+        {
+          "text": "contract-dod.md \u91cc\u81f3\u5c11\u6709 4 \u6761 [BEHAVIOR] \u6807\u7b7e\uff08\u542b\u771f\u5b9e node/npx/PowerShell \u9a8c\u8bc1\u547d\u4ee4\uff09",
+          "passed": true,
+          "evidence": "contract-dod.md \u5171\u6709 6 \u6761 [BEHAVIOR] \u6807\u7b7e\uff0c\u5168\u90e8\u542b\u771f\u5b9e\u53ef\u6267\u884c\u547d\u4ee4\uff1aBEHAVIOR 1\uff08node -e JSON.parse+cookies \u5b57\u6bb5\u9a8c\u8bc1\uff09\u3001BEHAVIOR 2\uff08npm test --grep readSession\uff09\u3001BEHAVIOR 3\uff08node -e DOUYIN_COOKIES \u6ce8\u5165\u9a8c\u8bc1\uff09\u3001BEHAVIOR 4\uff08node -e schema keys \u68c0\u67e5\uff09\u3001BEHAVIOR 5\uff08npm test --grep session.*not.*found\uff09\u3001BEHAVIOR 6\uff08node -e \u7981\u7528\u5b57\u6bb5\u53cd\u5411\u68c0\u67e5\uff09\u3002\u6ee1\u8db3 \u22654 \u6761\u4e14\u547d\u4ee4\u5747\u4e3a\u771f\u5b9e\u94fe\u8def\u8c03\u7528\u3002"
+        },
+        {
+          "text": "contract-dod.md \u91cc\u6ca1\u6709\u628a\u6587\u4ef6\u5b58\u5728\u68c0\u67e5\uff08Test-Path\u3001.Length\u3001-lt 1000000\uff09\u6807\u8bb0\u4e3a BEHAVIOR \u9a8c\u8bc1",
+          "passed": true,
+          "evidence": "contract-dod.md \u660e\u786e\u5c06 sandbox-install job \u7684 exe \u5b58\u5728+\u5927\u5c0f\u68c0\u67e5\u6392\u9664\u5728 BEHAVIOR \u4e4b\u5916\uff08workflow \u5ba1\u67e5\u8868\u6ce8\u91ca\uff1a'\u7981\u6b62\u7b97\u4f5c\u4e1a\u52a1\u884c\u4e3a\u9a8c\u8bc1'\uff0c\u81ea\u67e5 checklist \u7b2c 6 \u9879\u4e5f\u786e\u8ba4\u6392\u9664\uff09\u30026 \u6761 [BEHAVIOR] \u5747\u4e0d\u542b Test-Path\u3001.Length\u3001-lt \u6587\u4ef6\u5927\u5c0f\u68c0\u67e5\u4f5c\u4e3a\u7ec8\u6001\u65ad\u8a00\u3002BEHAVIOR 1 \u4e2d\u6709 '[ -f ]' \u4f5c\u4e3a\u524d\u7f6e\u6761\u4ef6\uff0c\u4f46\u6838\u5fc3\u65ad\u8a00\u662f node -e \u7684 JSON \u5185\u5bb9\u9a8c\u8bc1\uff0c\u4e0d\u5f71\u54cd\u5224\u5b9a\u3002"
+        },
+        {
+          "text": "\u5982\u679c workflow \u6709\u4e0d\u8db3\u6216\u672a\u8986\u76d6\u7684\u4e1a\u52a1\u6b65\u9aa4\uff0cProposer \u6807\u6ce8\u4e86 [CI_GAP] \u8bf4\u660e",
+          "passed": true,
+          "evidence": "contract-dod.md \u6709 3 \u5904\u72ec\u7acb [CI_GAP] \u6807\u6ce8\uff1a[CI_GAP: QR \u626b\u7801\u89e6\u53d1 session \u5199\u5165\u9a8c\u8bc1]\u3001[CI_GAP: handler readSession \u8fd4\u56de\u6709\u6548 cookies]\u3001[CI_GAP: DOUYIN_COOKIES \u6ce8\u5165\u53d1\u5e03\u8fdb\u7a0b\u7684 E2E \u9a8c\u8bc1]\u3002\u6bcf\u5904\u5747\u5305\u542b\u7f3a\u5931\u63cf\u8ff0\u548c\u5177\u4f53\u8865\u5199\u4ee3\u7801\uff08PowerShell + TypeScript \u6d4b\u8bd5\u4ee3\u7801\uff09\uff0c\u6ee1\u8db3\u8981\u6c42\u3002"
+        }
+      ],
+      "notes": [
+        "BEHAVIOR 6\uff08\u7981\u7528\u5b57\u6bb5\u53cd\u5411\u68c0\u67e5\uff09\u5728 session \u6587\u4ef6\u4e0d\u5b58\u5728\u65f6 exit 0\uff08SKIP\uff09\uff0c\u7406\u8bba\u4e0a\u53ef\u4ee5\u7ed5\u8fc7\u8be5\u6761\u9a8c\u8bc1\u3002proposer \u5df2\u5728\u81ea\u67e5 checklist \u4e2d\u81ea\u6ce8\u660e\u4e3a'\u4fdd\u5b88\u5904\u7406'\uff0c\u4f46\u4e25\u683c\u6765\u8bf4\u8fd9\u6761 BEHAVIOR \u4e0d\u6ee1\u8db3'\u4ee3\u7801\u672a\u5b9e\u73b0\u5373 FAIL'\u7684\u5f3a\u7ea6\u675f\u3002"
+      ]
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 103.7,
+        "tokens": 3852,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Proposer \u5728\u5199 BEHAVIOR \u524d\u4f7f\u7528\u4e86 Bash \u5de5\u5177\u6267\u884c cat \u547d\u4ee4\u8bfb\u53d6 workflow \u6587\u4ef6\u5185\u5bb9",
+          "passed": false,
+          "evidence": "Transcript Step 1 \u4ec5\u8bb0\u5f55\"\u8bfb\u53d6\u8def\u5f84... \u7ed3\u679c: \u6210\u529f\u8bfb\u53d6\uff0c70 \u884c\"\uff0c\u672a\u660e\u786e\u8bf4\u660e\u4f7f\u7528\u4e86 Bash \u5de5\u5177\u6216 cat \u547d\u4ee4\u3002Transcript \u662f\u6458\u8981\u5f62\u5f0f\uff0c\u672a\u663e\u793a\u5b9e\u9645\u5de5\u5177\u8c03\u7528\u8bb0\u5f55\uff08\u65e0 'Tool: Bash' \u6216 'cat ...' \u5b57\u6837\uff09\u3002\u65e0\u6cd5\u786e\u8ba4\u662f\u7528 Bash(cat) \u8fd8\u662f Read \u5de5\u5177\u8bfb\u53d6\uff0c\u4e14\u65ad\u8a00\u660e\u786e\u8981\u6c42\u4f7f\u7528 Bash \u5de5\u5177\u6267\u884c cat \u547d\u4ee4\uff0c\u65e0\u8bc1\u636e\u652f\u6301\u8be5\u5177\u4f53\u5de5\u5177\u8def\u5f84\u3002"
+        },
+        {
+          "text": "contract-dod.md \u91cc\u81f3\u5c11\u6709 4 \u6761 [BEHAVIOR] \u6807\u7b7e\uff08\u542b\u771f\u5b9e node/npx/PowerShell \u9a8c\u8bc1\u547d\u4ee4\uff09",
+          "passed": true,
+          "evidence": "contract-dod.md \u5171\u6709 7 \u6761 [BEHAVIOR] \u6807\u7b7e\uff08B-1 \u5230 B-7\uff09\uff0c\u6570\u91cf\u8fdc\u8d85 4 \u6761\u95e8\u69db\u3002\u5176\u4e2d B-1 \u542b PowerShell \u547d\u4ee4 `Test-Path \"$env:USERPROFILE\\.zenithjoy-agent\\sessions\\douyin\\default.json\"`\uff0cB-2 \u542b `Get-Content | ConvertFrom-Json`\uff0cB-3/B-4/B-5/B-7 \u63cf\u8ff0\u4e86 node \u5355\u5143\u6d4b\u8bd5\u9a8c\u8bc1\u65b9\u6cd5\uff08mock spawnImpl \u6355\u83b7 env\u3001fixture session \u6587\u4ef6\u5199\u5165\u540e\u8bfb\u53d6\uff09\uff0cB-6 \u5728 windows-latest runner \u4e2d\u901a\u8fc7 path.join \u7684\u5355\u5143\u6d4b\u8bd5\u9a8c\u8bc1\u3002\u6574\u4f53\u6ee1\u8db3\"\u81f3\u5c11 4 \u6761 [BEHAVIOR] \u6807\u7b7e\"\u8981\u6c42\uff1b\u4f46\u6ce8\u610f\u4ec5 B-1\u3001B-2 \u542b\u660e\u786e PowerShell \u547d\u4ee4\uff0c\u5176\u4f59\u4e3a\u5355\u5143\u6d4b\u8bd5\u63cf\u8ff0\uff0c\u672a\u5199\u51fa\u5177\u4f53 node/npx \u547d\u4ee4\u884c\u3002"
+        },
+        {
+          "text": "contract-dod.md \u91cc\u6ca1\u6709\u628a\u6587\u4ef6\u5b58\u5728\u68c0\u67e5\uff08Test-Path\u3001.Length\u3001-lt 1000000\uff09\u6807\u8bb0\u4e3a BEHAVIOR \u9a8c\u8bc1",
+          "passed": false,
+          "evidence": "B-1 [BEHAVIOR] \u7684\u9a8c\u8bc1\u65b9\u5f0f\u4e3a\uff1a`Test-Path \"$env:USERPROFILE\\.zenithjoy-agent\\sessions\\douyin\\default.json\"` \u8fd4\u56de `True`\uff0c\u8fd9\u662f\u4e00\u4e2a\u7eaf\u6587\u4ef6\u5b58\u5728\u68c0\u67e5\uff0c\u76f4\u63a5\u8fdd\u53cd\u4e86\u65ad\u8a00\u8981\u6c42\u3002\u8be5 [BEHAVIOR] \u5c06\u6587\u4ef6\u8def\u5f84\u662f\u5426\u5b58\u5728\u4f5c\u4e3a\u6838\u5fc3\u9a8c\u8bc1\u624b\u6bb5\uff0c\u4e0e sandbox-install job \u7684 exe \u5927\u5c0f\u68c0\u67e5\u6027\u8d28\u76f8\u540c\uff08\u5373\u68c0\u67e5\u6587\u4ef6\u843d\u76d8\u800c\u975e\u4e1a\u52a1\u884c\u4e3a\u6b63\u786e\u6027\uff09\u3002"
+        },
+        {
+          "text": "\u5982\u679c workflow \u6709\u4e0d\u8db3\u6216\u672a\u8986\u76d6\u7684\u4e1a\u52a1\u6b65\u9aa4\uff0cProposer \u6807\u6ce8\u4e86 [CI_GAP] \u8bf4\u660e",
+          "passed": true,
+          "evidence": "contract-dod.md \u7b2c\u4e09\u8282\"CI \u8986\u76d6\u5206\u6790\"\u4e2d\u5305\u542b 4 \u6761 [CI_GAP] \u6807\u6ce8\uff1aGAP-1\uff08\u65e0\u7aef\u5230\u7aef QR \u626b\u7801 \u2192 session \u6587\u4ef6\u5199\u5165\u9a8c\u8bc1\uff09\u3001GAP-2\uff08sandbox-install \u4e0d\u9a8c\u8bc1 DOUYIN_COOKIES \u6ce8\u5165\u884c\u4e3a\uff09\u3001GAP-3\uff08workflow \u4ec5\u652f\u6301 workflow_dispatch \u65e0 PR trigger\uff09\u3001GAP-4\uff08\u4e0d\u9a8c\u8bc1\u6253\u5305\u4ea7\u7269\u5185 qr-bind-douyin.cjs \u662f\u5426\u5b58\u5728\uff09\u3002\u6bcf\u6761\u5747\u5305\u542b\u4fee\u590d\u5efa\u8bae\uff0c\u5185\u5bb9\u5177\u4f53\u3002"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 146.0,
+        "stddev": 0.0,
+        "min": 146.0,
+        "max": 146.0
+      },
+      "tokens": {
+        "mean": 7841.0,
+        "stddev": 0.0,
+        "min": 7841,
+        "max": 7841
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.5,
+        "stddev": 0.0,
+        "min": 0.5,
+        "max": 0.5
+      },
+      "time_seconds": {
+        "mean": 103.7,
+        "stddev": 0.0,
+        "min": 103.7,
+        "max": 103.7
+      },
+      "tokens": {
+        "mean": 3852.0,
+        "stddev": 0.0,
+        "min": 3852,
+        "max": 3852
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.50",
+      "time_seconds": "+42.3",
+      "tokens": "+3989"
+    }
+  },
+  "notes": []
+}

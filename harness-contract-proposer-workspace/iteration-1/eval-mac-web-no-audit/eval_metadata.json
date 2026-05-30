@@ -1,0 +1,10 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-mac-web-no-audit",
+  "prompt": "我需要写一个 Harness Sprint Contract，针对 ZenithJoy Dashboard 的登录页面交互。target_environment 是 mac_web（Playwright 本地运行）。验证用户能用邮箱密码登录成功，看到 Dashboard 首页，退出后重新登录能正常工作。请用 harness-contract-proposer skill 写 contract-dod.md。",
+  "assertions": [
+    "contract-dod.md 里有至少 4 条 [BEHAVIOR] 标签，使用 Playwright 命令（playwright/npx playwright）",
+    "Proposer 没有试图读取 .github/workflows/*.yml 文件（mac_web 不需要 GHA workflow 检查）",
+    "BEHAVIOR 命令针对真实 URL（localhost:5174 或类似本地地址）"
+  ]
+}

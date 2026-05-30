@@ -12,6 +12,11 @@
 
 ---
 
+## [2026-05-30] harness-evaluator + harness-contract-proposer + harness-contract-reviewer — updated + eval iteration-1
+**症状**: (1) harness-evaluator v1.11.0 的空壳 workflow 检测正则漏掉 `npm test`/`npm ci` 和 PowerShell 业务命令，导致真实 `agent-qr-windows-verify.yml`（含 `npm test`）会被误判为空壳，Evaluator 提前 FAIL 而不触发 workflow；(2) harness-contract-proposer 没有 windows_cloud workflow 内容审查规则，直接按假设写 BEHAVIOR 不验证 CI 真实内容；(3) harness-contract-reviewer 缺少 ci_workflow_alignment 维度评审
+**根因**: (1) 正则只覆盖 `npm run` 未覆盖 `npm test`/`npm ci`，PowerShell 命令完全未收录；(2)(3) v8.0 上线时只更新了 proposer 描述未添加强制读取 workflow 文件规则，reviewer 未对应增加第 7 维评分
+**修改**: (1) evaluator v1.11.1: 正则加入 `npm test|npm ci|Set-Content|New-Item|ConvertTo-Json|Write-Host.*PASS`；(2) proposer v8.1.0: 新增 windows_cloud BEHAVIOR 1:1 映射强制规则 — 必须 cat workflow 读实际内容后对比用户路径；(3) reviewer v8.0.0: 新增第 7 维 ci_workflow_alignment；三个 skill eval iteration-1 完成，with-skill pass rate: evaluator 100%、reviewer 100%、proposer 100%
+
 ## [2026-05-29] engine-pr-watchdog — updated
 **症状**: PR BEHIND，watchdog 检测到需要 rebase，rebase 完成后 push 用了 run_in_background=true，bash tool 立刻返回，Claude 输出文字结束 turn，轮询循环断裂，PR 永远卡在 BEHIND 未合并
 **根因**: run_in_background=true 让 push 异步执行，bash call 立刻返回控制权给 Claude，Claude 自然结束 turn

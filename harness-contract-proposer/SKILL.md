@@ -4,10 +4,11 @@ description: |
   Harness Contract Proposer — Harness v5 GAN Layer 2a：
   读 PRD，GAN 对抗写 Golden Path 合同（每步含真实验证命令）；
   Reviewer APPROVED 后倒推拆 task-plan.json。
-version: 8.0.0
+version: 8.1.0
 created: 2026-04-08
-updated: 2026-05-29
+updated: 2026-05-30
 changelog:
+  - 8.1.0: windows_cloud workflow 内容审查强制规则 — 写任何 windows_cloud BEHAVIOR 引用 GHA workflow 之前，Proposer 必须用 Bash 工具 cat 读取 workflow 实际内容，做用户路径 1:1 映射检查，缺失步骤标注 [CI_GAP]，禁止将文件存在/大小/版本号检查算作业务行为验证；违反直接扣 DoD 第 1 维至 0 分
   - 8.0.0: 移除 Workstream 拆分概念 — 对齐 Anthropic 官方 v2 Harness 设计（一个 Sprint = 一个 Generator = 一个 PR）。删除"单 WS ≤ 200 行"切分死规则、depends_on 串行链校验；task-plan.json 始终只输出 1 个 task（ws1）；测试目录改为 tests/；DoD 文件改为 contract-dod.md
   - 7.12.0: 假绿反模式强制禁止（Bug 10 — W28 GAN REVISION 实证）— (1) 新端点 BEHAVIOR 禁止 "404-acceptable" 旁路：Brain 通用 404 handler 返回 {"error":"Not Found"} 会让 jq 检查全部假绿，新路由未注册时 BEHAVIOR 必须 FAIL；(2) 禁止用环境操作（mkdir/touch/health curl）作为 WS 代码实现的 BEHAVIOR 断言；加自查 checklist 第 7 条
   - 7.11.0: GAN 来源标注（FROM_PRD/AI_ADDED）— 每个 Golden Path Step 必须声明来源标签 + 理由；DoD BEHAVIOR:E2E 段（user_facing 专属）含截图规格 + Claude 视觉自验期望；mac_web Playwright 模板加 page.screenshot() 在关键操作前后
@@ -473,6 +474,25 @@ exit 0
 **FAIL 标准**：任何 step exit≠0 OR Playwright 失败 OR Vite 30s 内未就绪
 **GHA workflow**：`.github/workflows/e2e-windows.yml`（`workflow_dispatch` + `windows-latest`）
 **secrets 必须**：`E2E_SUPER_ADMIN_EMAIL`、`E2E_SUPER_ADMIN_PASSWORD`（在 sprint PRD 的认证前提条件段中声明）
+
+---
+
+### windows_cloud BEHAVIOR 必须满足"用户路径 1:1 映射"规则（强制）
+
+在写任何 `[BEHAVIOR]` 引用 GHA workflow 之前，Proposer 必须：
+
+1. 用 Bash 工具执行 `cat .github/workflows/<workflow文件名>.yml`，读取该 workflow 的实际内容
+2. 列出用户真实操作路径（每一步用户会做什么），例如：
+   - 用户安装 Agent
+   - 用户扫码绑定（session 写入本地文件）
+   - 用户触发发布
+   - Agent 读取 session 文件，注入 DOUYIN_COOKIES
+   - 发布返回 ok:true，无浏览器弹出
+3. 对比 workflow 里的 steps，确认每一步用户操作都有对应的 step 验证
+4. 如果 workflow 缺少某个用户步骤的验证 → 必须在合同里标注 `[CI_GAP: <缺失的步骤>]` 并要求 Generator 补写 workflow step
+5. **禁止将只检查文件存在/大小/版本号的 step 算作业务行为验证**
+
+违反此规则（直接写 `[BEHAVIOR] <workflow名> PASS` 而不读 workflow 内容）→ Reviewer 第 1 维 DoD 机检性直接扣至 0 分
 
 ---
 
