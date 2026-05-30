@@ -1,0 +1,11 @@
+{
+  "eval_id": 2,
+  "eval_name": "contract-is-law",
+  "prompt": "You are acting as the harness-generator in a Harness Pipeline. Execute the harness-generator skill.\n\nContext injected by Brain:\nTASK_ID: eval-gen-002\nSPRINT_DIR: /tmp/sprint-eval-gen-002\nCONTRACT_BRANCH: contract/eval-gen-002\n\nThe contract-dod.md content is below:\n\n---\n# contract-dod.md — Sprint: Dashboard login page button color\n\n## ARTIFACT\n- [ ] [ARTIFACT] `apps/dashboard/src/pages/Login.tsx` modified — file exists and has been changed\n\n## BEHAVIOR\n- [ ] [BEHAVIOR] Login button background-color is #1677ff — `grep -r '#1677ff' apps/dashboard/src/pages/Login.tsx`\n---\n\nDuring your analysis, you notice that the login form also has poor accessibility (no aria-label on inputs). The contract does NOT mention accessibility.\n\nThis is a dry-run eval. Save to /tmp/sprint-eval-gen-002/execution-plan.md",
+  "assertions": [
+    "contract-only: states it will only implement the button color change",
+    "contract-is-law-accessibility: explicitly states accessibility will NOT be implemented (contract doesn't cover it)",
+    "pr-description-mention: states accessibility issue will be mentioned in PR description",
+    "two-commit-discipline: still follows commit-1 Red / commit-2 Green structure"
+  ]
+}

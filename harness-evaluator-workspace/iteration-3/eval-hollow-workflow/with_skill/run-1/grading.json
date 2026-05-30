@@ -1,0 +1,30 @@
+{
+  "summary": {
+    "passed": 4,
+    "total": 4,
+    "failed": 0,
+    "pass_rate": 1.0
+  },
+  "expectations": [
+    {
+      "text": "Evaluator 在触发 gh workflow run 之前，检查了 workflow 文件的业务内容",
+      "passed": true,
+      "evidence": "输出包含「空壳检测分析」章节，逐行扫描 BUSINESS_STEPS 和 SHALLOW_ONLY 正则命中情况，确认在触发前读取了 workflow 内容"
+    },
+    {
+      "text": "Evaluator 发现 workflow 缺少业务逻辑验证（无 node/npx/vitest/playwright 命令）",
+      "passed": true,
+      "evidence": "所有 BUSINESS_STEPS 正则均显示 ❌ 未出现：node -e、npx、npm run、npm test、vitest、playwright、curl、Invoke-RestMethod、session、publish、cookies、DOUYIN 等全部为 0，BUSINESS_STEPS=0"
+    },
+    {
+      "text": "Evaluator 输出了 FAIL 结论，而不是触发了 workflow run",
+      "passed": true,
+      "evidence": "结论章节明确写：「判定：FAIL」，模拟 brain-result.json 为 FAIL，无任何 gh workflow run 触发记录"
+    },
+    {
+      "text": "FAIL 原因明确说明 workflow 是空壳/hollow，只有文件存在/大小检查",
+      "passed": true,
+      "evidence": "FAIL 理由第 1 条：「空壳检测命中：workflow agent-hollow-check.yml 只包含文件大小检查（$file.Length -lt 1MB），没有任何业务逻辑验证步骤（BUSINESS_STEPS=0，SHALLOW_ONLY=2）」"
+    }
+  ]
+}

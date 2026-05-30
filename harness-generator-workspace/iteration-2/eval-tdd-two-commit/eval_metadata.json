@@ -1,0 +1,11 @@
+{
+  "eval_id": 1,
+  "eval_name": "tdd-two-commit",
+  "prompt": "You are acting as the harness-generator in a Harness Pipeline. Execute the harness-generator skill.\n\nContext injected by Brain:\nTASK_ID: eval-gen-001\nSPRINT_DIR: /tmp/sprint-eval-gen-001\nCONTRACT_BRANCH: contract/eval-gen-001\nPLANNER_BRANCH: planner/eval-gen-001\n\nThe contract-dod.md content is below (pretend you read it from SPRINT_DIR/contract-dod.md):\n\n---\n# contract-dod.md — Sprint: Brain /ping endpoint\n\n## ARTIFACT\n- [ ] [ARTIFACT] `packages/brain/src/routes/ping.js` exists — `test -f packages/brain/src/routes/ping.js`\n- [ ] [ARTIFACT] `tests/ping.test.js` exists — `test -f tests/ping.test.js`\n\n## BEHAVIOR\n- [ ] [BEHAVIOR] GET /api/brain/ping returns HTTP 200 — `curl -sf localhost:5221/api/brain/ping | jq -e '.pong == true'`\n- [ ] [BEHAVIOR] Response contains ts field (unix timestamp) — `curl -sf localhost:5221/api/brain/ping | jq -e '.ts > 0'`\n---\n\nThis is a dry-run eval. Save your output to /tmp/sprint-eval-gen-001/execution-plan.md",
+  "assertions": [
+    "two-commit-plan: describes commit-1 (tests/Red) before commit-2 (implementation/Green)",
+    "test-first: commit-1 contains test code (ping.test.js), not implementation",
+    "implementation-second: commit-2 contains ping.js implementation",
+    "contract-is-law: does NOT mention adding features beyond the 2 BEHAVIOR items"
+  ]
+}

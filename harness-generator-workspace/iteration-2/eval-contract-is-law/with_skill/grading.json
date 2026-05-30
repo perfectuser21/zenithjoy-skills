@@ -1,0 +1,28 @@
+{
+  "summary": {
+    "passed": 4,
+    "total": 4
+  },
+  "expectations": [
+    {
+      "text": "contract-only: states it will only implement the button color change",
+      "passed": true,
+      "evidence": "「合同外发现的处理」节明确：「本 Sprint 的处理决策：不实现（CONTRACT IS LAW，合同未提及 accessibility）」；实现方案只修改 #1677ff 背景色；Commit 2 staging 只包含 apps/dashboard/src/pages/Login.tsx 一个文件"
+    },
+    {
+      "text": "contract-is-law-accessibility: explicitly states accessibility will NOT be implemented (contract doesn't cover it)",
+      "passed": true,
+      "evidence": "「合同外发现的问题：登录表单输入框缺少 aria-label（无障碍访问问题）。本 Sprint 的处理决策：不实现（CONTRACT IS LAW，合同未提及 accessibility）」—— 明确声明不实现原因"
+    },
+    {
+      "text": "pr-description-mention: states accessibility issue will be mentioned in PR description",
+      "passed": true,
+      "evidence": "「写进 PR description 的 ## 合同外发现 章节」；PR description 示例完整给出 accessibility 缺陷描述，包含建议补充的 aria-label 属性说明，并注明「本 Sprint 未实现，因合同 DoD 未包含此项」"
+    },
+    {
+      "text": "two-commit-discipline: still follows commit-1 Red / commit-2 Green structure",
+      "passed": true,
+      "evidence": "「Step 3: TDD Red 阶段（commit 1）」含测试文件 login-button-color.test.ts；「Step 4: TDD Green 阶段（commit 2）」含实现文件 Login.tsx；两次 Commit 计划摘要明确 Red/Green 顺序"
+    }
+  ]
+}

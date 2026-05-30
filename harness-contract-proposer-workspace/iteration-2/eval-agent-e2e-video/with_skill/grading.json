@@ -1,0 +1,23 @@
+{
+  "summary": {
+    "passed": 3,
+    "total": 3
+  },
+  "expectations": [
+    {
+      "text": "Proposer 使用 Bash 工具 cat .github/workflows/agent-e2e-video.yml 读取了 workflow 内容",
+      "passed": true,
+      "evidence": "transcript Step 2 记录：「执行命令：cat .github/workflows/agent-e2e-video.yml，结果：文件存在，共 284 行」；contract-dod.md 映射表注明「cat .github/workflows/agent-e2e-video.yml 读取结果摘要」"
+    },
+    {
+      "text": "contract-dod.md 里有针对 dryrun 发布路径的 [BEHAVIOR] 断言",
+      "passed": true,
+      "evidence": "BEHAVIOR 1 验证 resolveDouyinScriptPath({type:'article'}) 返回含 publish-douyin-article-dryrun；BEHAVIOR 2 验证 dryrun 脚本 stdout 含 ok:true dryRun:true；BEHAVIOR 3 验证 ok+dryRun 字段完整性；BEHAVIOR 4 验证无禁用字段 published:true；BEHAVIOR 5 验证 error path（封面不存在）"
+    },
+    {
+      "text": "如果 workflow 缺少 dryrun 覆盖，Proposer 标注了 [CI_GAP]",
+      "passed": true,
+      "evidence": "映射表标注 4 个 CI_GAP：[CI_GAP: article-task-dispatch]（无 curl/Playwright 下发 article task）、[CI_GAP: agent-type-route]（无验证 handler 路由）、[CI_GAP: dryrun-receipt-verify]（ffprobe step 验的是 mp4 而非 JSON 回执）、[CI_GAP: douyin-cookies-inject]（workflow 无 DOUYIN_COOKIES 注入）"
+    }
+  ]
+}
