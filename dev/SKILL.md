@@ -60,9 +60,35 @@ curl -s "localhost:5221/api/brain/okr/tree"
 
 **PrepPRD 是唯一的人工确认点。**
 
+### ⚠️ 步骤 0（大功能前必做）：查旧 Sprint 找相似 Golden Path
+
+在生成 PrepPRD 之前，先做这一步：
+
+1. 查 Brain 历史任务：
+   ```bash
+   curl "localhost:5221/api/brain/tasks?limit=50"
+   ```
+   过滤 `task_type = 'harness_initiative'`，在 `description` 字段里关键词匹配用户描述。
+
+2. 同时 grep 历史 Sprint PRD：
+   ```bash
+   grep -r "Golden Path" sprints/*/sprint-prd.md
+   ```
+   找标题或内容相似的。
+
+3. **找到** → 展示给用户："上次做 [X] 时 Golden Path 是这样，这次要一样吗？"
+   **没找到** → 主动问 3 个引导问题：
+   - 谁来操作？在哪个页面入口？
+   - 操作完后你期望看到什么结果？
+   - 如果失败了用户怎么知道、怎么恢复？
+
+4. 用户回答后补全隐含步骤，再给用户确认，再继续写 PrepPRD。
+
+---
+
 ### ⚠️ 大功能必做：写 PrepPRD 之前先提炼 Golden Path
 
-在生成大功能 PrepPRD 之前，必须先做这一步：
+在步骤 0 完成后，提炼 Golden Path：
 
 **从用户描述里提炼 Golden Path，补全隐含步骤，展示给用户确认后再继续。**
 
@@ -415,20 +441,12 @@ node ~/.claude/skills/dev/scripts/status.js --area "ZenithJoy"
 ### Run 固定结构
 
 ```
-点火 → GAN → Planner（拆 WS）→ Generator（2-5 WS）→ Evaluator → Final E2E → Sync+Report
+点火 → Planner（PRD）→ GAN（合同）→ Generator（1 WS）→ Evaluator（pre-merge 验证）→ Report
 ```
 
-- 1 Workstream = 1 /dev session = 1 PR
-- 1 Run 目标 2-5 WS（甜点区）
-- PRD 只写 What，不写 How
-
-### Sizing Check
-
-| 预估 WS | 处理 |
-|---|---|
-| 1 个 | 走路径 B |
-| 2-5 个 | 正常 Harness |
-| 6 个以上 | 提醒拆成两次 Run |
+- 1 Sprint = 1 Generator = 1 PR（harness v2，无 WS 拆分概念）
+- Planner 只写 PRD（What），不拆任务
+- GAN 结束后 Proposer 输出 task-plan.json（始终只有 ws1 一个任务）
 
 ### 多角色检测
 

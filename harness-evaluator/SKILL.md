@@ -192,6 +192,10 @@ else
 fi
 ```
 
+> **⚠️ 注意（harness v2）**：harness-task.graph.js 的 evaluate_contract 节点始终注入
+> IS_FINAL_E2E=true，因此生产中只会走模式 B。模式 A 的逐 WS DoD 验证在单 Sprint 设计下
+> 已不被调用，此段文档保留仅作参考。
+
 ---
 
 ### 模式 A：逐任务 DoD 验证
