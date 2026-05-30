@@ -1,31 +1,53 @@
-## [2026-05-29] engine-pr-watchdog — updated
-禁止 run_in_background：Step 4 rebase/push 必须同步执行，防止 push 后台化导致 turn 结束、Stop Hook 触发、轮询循环断裂
-
-## [2026-05-29] harness-contract-reviewer + harness-report — updated
-移除 WS 拆分残留：reviewer 删第 7/8 维（依赖多 WS 前提），report 改单 Sprint Task 创建
-
-## [2026-05-29] harness-contract-proposer + harness-generator — updated
-移除 Workstream 拆分概念，对齐 Anthropic 官方 v2 Harness 设计（一个 Sprint = 一个 Generator = 一个 PR）
-
-## [2026-05-29] hooks/ — created
-全局 Claude Code hooks 迁移到 zenithjoy-skills/hooks/，统一版本控制。
-
-## [2026-05-29] harness-generator — updated
-Step 7.5：PR 创建后轮询 CI 直到合并，不再立刻退出。
-
-## [2026-05-29] engine-pr-watchdog — updated v3.0.0
-修复 WTBASE 路径错、scope 太窄、trigger 受限三个问题，改为查所有 repo 的 open PR。
-
-## [2026-05-29] engine-pr-watchdog — updated
-超时立刻重新 Bash 调用，不得输出文字或结束 turn，PR 不合并就不停。
-
 # ZenithJoy Skills Changelog
 
 每次通过 skill-creator 创建或更新 skill 后，在此文件顶部追加一条记录。
 
-格式：`## [YYYY-MM-DD] <skill-name> — <created|updated>`
+格式（必须含三段）：
+```
+## [YYYY-MM-DD] <skill-name> — <created|updated>
+**症状**: 触发本次修改的现象（什么行为失效、什么 CI 报错、什么用户反馈）
+**根因**: 造成症状的根本原因
+**修改**: 本次做了什么改动
+```
 
 ---
 
+## [2026-05-29] engine-pr-watchdog — updated
+**症状**: PR BEHIND，watchdog 检测到需要 rebase，rebase 完成后 push 用了 run_in_background=true，bash tool 立刻返回，Claude 输出文字结束 turn，轮询循环断裂，PR 永远卡在 BEHIND 未合并
+**根因**: run_in_background=true 让 push 异步执行，bash call 立刻返回控制权给 Claude，Claude 自然结束 turn
+**修改**: 禁止 run_in_background，Step 4 rebase/push 全部改为同步执行
+
+## [2026-05-29] harness-contract-reviewer + harness-report — updated
+**症状**: harness pipeline 在单 Sprint 单 PR 模式下，reviewer 第 7/8 维依赖多 Workstream 前提，评审无意义；report 创建多个 Sprint Task 与单 Sprint 模型矛盾
+**根因**: 早期多 Workstream 设计残留，与 Anthropic 官方 v2（一 Sprint = 一 PR）冲突
+**修改**: reviewer 删第 7/8 维，report 改为单 Sprint Task 创建
+
+## [2026-05-29] harness-contract-proposer + harness-generator — updated
+**症状**: proposer/generator 仍按多 Workstream 逻辑分配任务，产生冗余分支，与 pipeline 整体方向冲突
+**根因**: 多 WS 拆分概念在 skill 里未清除，与官方 v2 单 Sprint 设计不兼容
+**修改**: 移除 Workstream 拆分概念，对齐官方 v2（一个 Sprint = 一个 Generator = 一个 PR）
+
+## [2026-05-29] hooks/ — created
+**症状**: 全局 hooks 散落在 ~/.claude/hooks/，每次修改无版本记录，无法 review，出问题无法回溯
+**根因**: hooks 不在 git 管理下，缺乏变更追踪
+**修改**: 迁移到 zenithjoy-skills/hooks/，统一版本控制
+
+## [2026-05-29] harness-generator — updated
+**症状**: generator 开完 PR 后立刻退出，CI 未等待，PR 长期 open 无人跟进，需要人工手动合并
+**根因**: generator 把"开 PR"视为任务终点，没有后续监控机制
+**修改**: Step 7.5 PR 创建后轮询 CI 直到合并（后被独立 engine-pr-watchdog skill 接管）
+
+## [2026-05-29] engine-pr-watchdog — updated v3.0.0
+**症状**: watchdog 只监控当前 repo，跨 repo PR（cecelia / zenithjoy-workspace / zenithjoy-skills）被漏掉；WTBASE 路径错导致 worktree 找不到
+**根因**: scope 设计过窄，只检查当前目录的 repo；路径变量赋值有误
+**修改**: 改为查询所有三个 repo 的 open PR，修复 WTBASE 路径错误，放宽 trigger 条件
+
+## [2026-05-29] engine-pr-watchdog — updated
+**症状**: watchdog bash loop 运行超 600s（Bash tool 上限）后超时退出，Claude 自然输出文字结束 turn，轮询断裂，PR 被遗忘
+**根因**: Bash tool 有 10 分钟硬上限，超时后控制权回到 Claude，Claude 不会自动继续轮询
+**修改**: 超时后必须立刻重新发起 Bash 调用，不得输出任何文字，不得结束 turn
+
 ## [2026-05-29] skill-creator — updated
-加入 ZenithJoy 强制规则（所有 skill 改动必须经过 skill-creator）；Post-Creation 步骤新增 zenithjoy-skills 同步 + CHANGELOG 更新；明确两个 repo 的架构和职责。
+**症状**: skill 改动时有人绕过 skill-creator 直接编辑文件，CHANGELOG 未更新，zenithjoy-skills 同步状态不一致
+**根因**: 缺少强制约束，AI 可以直接修改 skill 文件跳过流程
+**修改**: 加入 ZenithJoy 强制规则（所有改动必须经过 skill-creator）；Post-Creation 步骤新增 zenithjoy-skills 同步 + CHANGELOG 更新

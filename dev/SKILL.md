@@ -1,8 +1,8 @@
 ---
 name: dev
-version: 19.2.0
-updated: 2026-05-27
-description: 统一开发点火入口。查 10 张 Brain DB 表拿上下文 → 判断类型（bug / 小改动 / 大功能）→ 生成 PrepPRD → 用户确认 → 路由执行。
+version: 19.3.0
+updated: 2026-05-30
+description: 统一开发点火入口。查 12 张 Brain DB 表拿上下文 → 判断类型（bug / 小改动 / 大功能）→ 生成 PrepPRD → 用户确认 → 路由执行。
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 ---
 
@@ -10,9 +10,9 @@ trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, w
 
 ---
 
-## 第零步：查 10 张表 + 判断类型（每次都要做，不跳过）
+## 第零步：查 12 张表 + 判断类型（每次都要做，不跳过）
 
-用户说任何话后，**先查 Brain DB 10 张表拿上下文，再判断类型**。
+用户说任何话后，**先查 Brain DB 12 张表拿上下文，再判断类型**。
 
 ```bash
 curl -s "localhost:5221/api/brain/journeys"
@@ -25,9 +25,10 @@ curl -s "localhost:5221/api/brain/skills?limit=50"
 curl -s "localhost:5221/api/brain/registry?type=api&limit=20"
 curl -s "localhost:5221/api/brain/registry?type=db_schema&limit=20"
 curl -s "localhost:5221/api/brain/registry?type=test&limit=20"
+curl -s "localhost:5221/api/brain/okr/tree"
 ```
 
-**10 张表：**
+**12 张表：**
 
 | # | 本地 DB | Notion | 作用 |
 |---|---------|--------|------|
@@ -41,6 +42,8 @@ curl -s "localhost:5221/api/brain/registry?type=test&limit=20"
 | 8 | `test_registry` | Sprint State — Tests Registry | 测试文件注册 |
 | 9 | `issues` | Issues | 已知问题记录 |
 | 10 | `decisions` | AI Notes (Type=Decision) | 用户决策记录 |
+| 11 | `objectives` | Goals (`29ec40c2-ba63-8301-99c1-8110bfd84d9b`) | 每条 Line 的 North Star — O 层目标 |
+| 12 | `key_results` | Key Results (`684c40c2-ba63-83a7-b6ba-8161f110a18c`) | 每个 O 下的 KR — Roadmap 里程碑 |
 
 判断类型：
 
@@ -225,7 +228,7 @@ curl -s -X POST localhost:5221/api/brain/decisions \
 Skill({"skill":"superpowers:systematic-debugging"})
 ```
 
-systematic-debugging → engine-worktree → Superpowers autonomous 接力链 → fix PR → engine-ship
+systematic-debugging → engine-worktree → Superpowers autonomous 接力链 → fix PR → engine-ship → engine-pr-watchdog
 
 ---
 
@@ -249,7 +252,7 @@ Skill({"skill":"engine-worktree"})
 ```
 
 Superpowers autonomous 接力链：
-brainstorming → writing-plans → subagent-driven-development → finishing（Option 2 push+PR）→ engine-ship
+brainstorming → writing-plans → subagent-driven-development → finishing（Option 2 push+PR）→ engine-ship → engine-pr-watchdog
 
 **Autonomous 规则（必遵守）：**
 
@@ -267,7 +270,7 @@ Tier 1 固定默认：
   - "每 plan task commit 顺序：commit-1 fail test / commit-2 impl"
   - "controller 会 verify commit 顺序，不符合让你重做"
 - finishing → Option 2 (push+PR)
-- finishing 完成 → 下一 tool call 必须 `Skill({"skill":"engine-ship"})`
+- finishing 完成 → 下一 tool call 必须 `Skill({"skill":"engine-ship"})` → engine-ship 完成后自动调 `engine-pr-watchdog`
 - BLOCKED 第 3 次 → `superpowers:dispatching-parallel-agents`
 
 **smoke.sh 强制（feat: + 改 brain/src/ 的 PR）：**
@@ -465,5 +468,7 @@ PRD 里的 Steps 必须来自 `journey_steps` 表，引用 step_id，禁止凭�
 | Tests Registry | `365c40c2-ba63-8164-8037-eb72e713809e` |
 | Issues | `a17c40c2-ba63-82fb-9888-8152cefe29ec` |
 | AI Notes（Decision）| `185c40c2-ba63-828c-973f-81a9c4582cd6`（Type=Decision）|
+| Goals（Objectives）| `29ec40c2-ba63-8301-99c1-8110bfd84d9b` |
+| Key Results | `684c40c2-ba63-83a7-b6ba-8161f110a18c` |
 
 凭据：`source ~/.credentials/1password.env && export OP_SERVICE_ACCOUNT_TOKEN && NOTION_KEY=$(op item get "Notion" --vault CS --fields credential --reveal | tr -d '"')`

@@ -565,8 +565,11 @@ git checkout -b "$BRANCH"
 # skill 文件
 git add "$SKILL_NAME/"
 
-# CHANGELOG（顶部追加一条）
-# 格式：## [YYYY-MM-DD] <skill-name> — <created|updated>\n<一句话描述>
+# CHANGELOG（顶部追加一条，必须含三段，缺一不可）
+# ## [YYYY-MM-DD] <skill-name> — <created|updated>
+# **症状**: 触发本次修改的现象（什么行为失效、什么报错、什么用户反馈）
+# **根因**: 造成症状的根本原因
+# **修改**: 本次做了什么改动
 git add CHANGELOG.md
 
 git commit -m "<created|updated>: ${SKILL_NAME} — <改动一句话摘要>
