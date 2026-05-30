@@ -1,0 +1,29 @@
+{
+  "skill_name": "harness-evaluator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "请用 harness-evaluator skill 执行以下 windows_cloud Sprint 的模式 B（Final E2E）验证。Sprint 信息：\n\n- target_environment: windows_cloud\n- workflow: .github/workflows/agent-qr-windows-verify-OLD.yml（空壳版本，只检查 exe 文件大小 > 1MB）\n- contract-dod.md 里有如下 [BEHAVIOR] 断言：\n  - [BEHAVIOR] A: session 写入路径验证（node 命令检查文件存在）\n  - [BEHAVIOR] B: DOUYIN_COOKIES 注入验证\n  - [BEHAVIOR] C: vitest 回归测试\n\n现在 workflow 只有一个 step：检查 exe 文件大小是否 > 1MB（`if ($size -lt 1000000) { exit 1 }`）。这个 workflow 完全没有业务逻辑测试。请执行 Evaluator 的 Step B-2 final E2E。",
+      "expected_output": "Evaluator 在触发 gh workflow run 之前，必须检查 workflow 内容，发现 workflow 只有文件大小检查没有任何业务逻辑（无 node/npx/vitest/session/cookies 等命令），直接输出 FAIL 并拒绝触发 workflow，说明原因是 workflow 是空壳（hollow）",
+      "files": [],
+      "assertions": [
+        "Evaluator 在触发 gh workflow run 之前，检查了 workflow 文件的业务内容",
+        "Evaluator 发现 workflow 缺少业务逻辑验证（无 node/npx/vitest/playwright 命令）",
+        "Evaluator 输出了 FAIL 结论，而不是触发了 workflow run",
+        "FAIL 原因明确说明 workflow 是空壳/hollow，只有文件存在/大小检查"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "请用 harness-evaluator skill 执行以下 windows_cloud Sprint 的模式 B（Final E2E）验证。Sprint 信息：\n\n- target_environment: windows_cloud\n- workflow: .github/workflows/agent-qr-windows-verify.yml（真实业务 E2E 版本）\n- contract-dod.md 里有如下 [BEHAVIOR] 断言：\n  - [BEHAVIOR] A: session 写入路径验证\n  - [BEHAVIOR] B: DOUYIN_COOKIES 注入验证\n  - [BEHAVIOR] C: vitest 回归测试\n\n这个 workflow 包含：写 mock session 到真实 Windows 路径、node 命令验证 session 读取路径一致性、node 命令验证 DOUYIN_COOKIES 注入解析、npx vitest run 回归测试。请执行 Evaluator 的 Step B-2。",
+      "expected_output": "Evaluator 检查 workflow 内容，发现含有真实业务逻辑（node 命令、npx vitest、session 验证），通过空壳检测，正常触发 gh workflow run。",
+      "files": [],
+      "assertions": [
+        "Evaluator 检查了 workflow 文件内容",
+        "Evaluator 确认 workflow 包含业务逻辑（node/npx/vitest 命令）",
+        "Evaluator 没有因为 hollow workflow 检测而直接 FAIL",
+        "Evaluator 尝试触发 gh workflow run（或等待 workflow 结果）"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-real-workflow-proceed",
+  "prompt": "请用 harness-evaluator skill 执行以下 windows_cloud Sprint 的模式 B（Final E2E）验证。Sprint 信息：\n\n- target_environment: windows_cloud\n- workflow: .github/workflows/agent-qr-windows-verify.yml（真实业务 E2E 版本）\n- contract-dod.md 里有 [BEHAVIOR] 断言：session 写入路径验证、DOUYIN_COOKIES 注入验证、vitest 回归测试\n\n这个 workflow 包含：写 mock session 到真实 Windows 路径、node 命令验证 session 读取路径一致性、node 命令验证 DOUYIN_COOKIES 注入解析、npx vitest run 回归测试。请执行 Evaluator 的 Step B-2。",
+  "assertions": [
+    "Evaluator 检查了 workflow 文件内容",
+    "Evaluator 确认 workflow 包含业务逻辑（node/npx/vitest 命令）",
+    "Evaluator 没有因为 hollow workflow 检测而直接 FAIL",
+    "Evaluator 尝试触发 gh workflow run（或等待 workflow 结果）"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "eval_id": 1,
+  "eval_name": "eval-hollow-workflow-should-revision",
+  "prompt": "请用 harness-contract-reviewer skill 审查以下 contract-dod.md（windows_cloud target）：\n\n```\n# Sprint Contract: QR 扫码绑定\ntarget_environment: windows_cloud\nworkflow: .github/workflows/agent-qr-windows-verify.yml\n\n[ARTIFACT] session 文件写入路径\n[BEHAVIOR] CI 验证: 运行 agent-qr-windows-verify workflow，PASS = 文件存在且大小 > 1KB\n[BEHAVIOR] session 格式验证: 文件包含 cookies 字段\n```\n\n上述 contract 里的 BEHAVIOR 只检查文件大小和字段存在，没有真正验证 QR 扫码 → session 写入 → handler 读取 → DOUYIN_COOKIES 注入的完整链路。请给出 Reviewer 的审查结论。",
+  "assertions": [
+    "Reviewer 使用 Bash 工具 cat .github/workflows/agent-qr-windows-verify.yml 读取了 workflow 内容",
+    "Reviewer 在输出里明确列出了第 7 维（ci_workflow_alignment）的分数",
+    "第 7 维分数 ≤ 5（因为 BEHAVIOR 只有文件检查，没有业务逻辑验证）",
+    "最终 verdict 是 REVISION 而不是 APPROVED",
+    "Reviewer 指出了 BEHAVIOR 里缺少 DOUYIN_COOKIES 注入验证或 session 路径一致性验证的具体漏洞"
+  ]
+}

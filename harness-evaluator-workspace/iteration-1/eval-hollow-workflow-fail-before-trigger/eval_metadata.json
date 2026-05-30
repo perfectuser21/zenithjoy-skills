@@ -1,0 +1,11 @@
+{
+  "eval_id": 1,
+  "eval_name": "eval-hollow-workflow-fail-before-trigger",
+  "prompt": "请用 harness-evaluator skill 执行以下 windows_cloud Sprint 的模式 B（Final E2E）验证。Sprint 信息：\n\n- target_environment: windows_cloud\n- workflow: .github/workflows/agent-qr-windows-verify-OLD.yml（空壳版本，只检查 exe 文件大小 > 1MB）\n- contract-dod.md 里有 [BEHAVIOR] 断言：session 写入路径验证、DOUYIN_COOKIES 注入验证、vitest 回归测试\n\nworkflow 内容（空壳版）：\n```yaml\nsteps:\n  - name: 验证 exe 文件\n    run: |\n      if (-not (Test-Path 'pack/zenithjoy-agent.exe')) { exit 1 }\n      $size = (Get-Item 'pack/zenithjoy-agent.exe').Length\n      if ($size -lt 1000000) { exit 1 }\n```\n\n请执行 Evaluator 的 Step B-2 final E2E，对此空壳 workflow 进行评估。",
+  "assertions": [
+    "Evaluator 在触发 gh workflow run 之前，检查了 workflow 文件的业务内容",
+    "Evaluator 发现 workflow 缺少业务逻辑验证（无 node/npx/vitest/playwright 命令）",
+    "Evaluator 输出了 FAIL 结论，而不是触发了 workflow run",
+    "FAIL 原因明确说明 workflow 是空壳/hollow，只有文件存在/大小检查"
+  ]
+}

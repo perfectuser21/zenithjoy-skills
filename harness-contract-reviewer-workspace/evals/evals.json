@@ -1,0 +1,30 @@
+{
+  "skill_name": "harness-contract-reviewer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "请用 harness-contract-reviewer skill 审查以下 contract-dod.md（windows_cloud target）：\n\n```\n# Sprint Contract: QR 扫码绑定\ntarget_environment: windows_cloud\nworkflow: .github/workflows/agent-qr-windows-verify.yml\n\n[ARTIFACT] session 文件写入路径\n[BEHAVIOR] CI 验证: 运行 agent-qr-windows-verify workflow，PASS = 文件存在且大小 > 1KB\n[BEHAVIOR] session 格式验证: 文件包含 cookies 字段\n```\n\n上述 contract 里的 BEHAVIOR 只检查文件大小和字段存在，没有真正验证 QR 扫码 → session 写入 → handler 读取 → DOUYIN_COOKIES 注入的完整链路。请给出 Reviewer 的审查结论。",
+      "expected_output": "Reviewer 必须：(1) 读取 workflow 文件内容；(2) 触发第 7 维 ci_workflow_alignment 审查；(3) 发现 BEHAVIOR 只有文件检查没有业务逻辑，第 7 维给出低分（≤3）；(4) 输出 REVISION 而非 APPROVED。",
+      "files": [],
+      "assertions": [
+        "Reviewer 使用 Bash 工具 cat .github/workflows/agent-qr-windows-verify.yml 读取了 workflow 内容",
+        "Reviewer 在输出里明确列出了第 7 维（ci_workflow_alignment）的分数",
+        "第 7 维分数 ≤ 5（因为 BEHAVIOR 只有文件检查，没有业务逻辑验证）",
+        "最终 verdict 是 REVISION 而不是 APPROVED",
+        "Reviewer 指出了 BEHAVIOR 里缺少 DOUYIN_COOKIES 注入验证或 session 路径一致性验证的具体漏洞"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "请用 harness-contract-reviewer skill 审查以下 contract-dod.md（windows_cloud target）：\n\n```\n# Sprint Contract: QR 扫码绑定 E2E\ntarget_environment: windows_cloud\nworkflow: .github/workflows/agent-qr-windows-verify.yml\n\n[ARTIFACT] QR session 路径 ~/.zenithjoy-agent/sessions/douyin/default.json\n\n[BEHAVIOR] A: session 写入路径验证\n  命令: node -e \"const p=path.join(os.homedir(),'.zenithjoy-agent','sessions','douyin','default.json'); if(!fs.existsSync(p)) process.exit(1); console.log('PASS')\"\n  期望: PASS\n\n[BEHAVIOR] B: DOUYIN_COOKIES 注入验证\n  命令: node -e \"const session=fs.readFileSync(p,'utf-8'); const env={DOUYIN_COOKIES:session}; const _p=JSON.parse(env.DOUYIN_COOKIES); const cookies=Array.isArray(_p)?_p:(_p.cookies||[]); if(!cookies.length) process.exit(1); console.log('PASS: cookies='+cookies.length)\"\n  期望: PASS\n\n[BEHAVIOR] C: vitest 回归测试\n  命令: npx vitest run src/handlers/__tests__/douyin-publish.test.ts --reporter=verbose\n  期望: 全部 PASS\n```\n\n请审查此 contract。",
+      "expected_output": "Reviewer 读取 workflow 文件，发现第 7 维 ci_workflow_alignment 的 BEHAVIOR 与 workflow 步骤对齐良好，所有 7 维分数 ≥ 7，输出 APPROVED。",
+      "files": [],
+      "assertions": [
+        "Reviewer 使用 Bash 工具读取了 workflow 文件内容",
+        "Reviewer 列出了第 7 维（ci_workflow_alignment）的分数，且分数 ≥ 7",
+        "7 个维度全部评分，所有分数 ≥ 7",
+        "最终 verdict 是 APPROVED"
+      ]
+    }
+  ]
+}

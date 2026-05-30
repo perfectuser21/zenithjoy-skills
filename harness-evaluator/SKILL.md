@@ -6,10 +6,12 @@ description: |
   evaluator 在 CI 绿之后、PR merge 之前真启服务 + 跑 contract 的 manual:bash 命令验真行为。
   PASS → 允许 merge；FAIL → 不 merge，带反馈打回 Generator 在 PR 分支 fix loop（main 不变动）。
   模式 A 跑 contract-dod-ws*.md BEHAVIOR；模式 B（所有 ws merge 后）跑 final E2E Golden Path。
-version: 1.10.0
+version: 1.11.1
 created: 2026-05-06
-updated: 2026-05-26
+updated: 2026-05-30
 changelog:
+  - 1.11.1: 修复空壳检测正则漏掉 npm test/npm ci 和 PowerShell 业务命令 — eval 中发现 BUSINESS_STEPS 正则用 "npm run" 但未含 "npm test"（GHA 常用写法）及 "npm ci"，导致用了 npm test 的真实业务 workflow 被误判为空壳；同步补充 PowerShell 业务模式（Set-Content/New-Item/ConvertTo-Json）防止 PS 脚本的 session 写入被漏判
+  - 1.11.0: windows_cloud 模式 B trigger 前新增 workflow 内容检查 — 在 gh workflow run 之前检查：(1) workflow 文件是否存在；(2) 合同 contract-dod.md 是否有 [BEHAVIOR] 条目；(3) workflow 是否只有文件存在/大小检查而不含业务逻辑验证（node/npx/vitest/playwright/curl 等）。第 3 条命中时直接 FAIL，防止 workflow 空壳导致假绿
   - 1.10.0: mac_web host executor 兼容 — 新增 WORKSPACE="${WORKSPACE_PATH:-/workspace}" 变量；所有 .brain-result.json 写入路径改为 "$WORKSPACE/.brain-result.json"（Docker /workspace，宿主 worktreePath）；mac_web Step B-2 修复：由 node /tmp/e2e-verify.js（文件不存在）改为优先 bash /tmp/e2e-verify.sh 并 fallback node .js；更新注入变量表格添加 WORKSPACE_PATH 和 WINDOWS_CLOUD_WORKFLOW
   - 1.9.0: Step B-2.5 截图处理（mac_web 专属）— 复制 screenshots/*.png 到 ~/claude-output/harness-screenshots/$SPRINT/；Claude Read 每张 PNG 视觉自验（对照 BEHAVIOR:E2E 期望描述）；生成公网 URL（38.23.47.81:9998）；PASS brain-result.json 增加 screenshots 字段
   - 1.8.0: 删除 windows_local case — 所有 Windows 测试统一走 windows_cloud（GitHub Actions），无需维护 xian-pc/xian-rog 本地 Windows 机器；TARGET_ENV 枚举同步缩减
@@ -425,6 +427,39 @@ case "$TARGET_ENV" in
     # GITHUB_REPO 由 harness-initiative.graph.js 注入，base_repo 含 zenithjoy → perfectuser21/zenithjoy-workspace
     REPO="${GITHUB_REPO:-perfectuser21/cecelia}"
     WORKFLOW="${WINDOWS_CLOUD_WORKFLOW:-e2e-windows.yml}"
+    # ── 前置检查：workflow 内容是否覆盖合同 BEHAVIOR（防假绿）──────────────
+    # 读取 workflow 文件，对比合同 BEHAVIOR 断言
+    WORKFLOW_FILE=".github/workflows/${WINDOWS_CLOUD_WORKFLOW}"
+    if [[ ! -f "$WORKFLOW_FILE" ]]; then
+      cat > "$WORKSPACE/.brain-result.json" << BREOF
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"workflow_content_check","log_excerpt":"workflow 文件不存在: $WORKFLOW_FILE — 合同 BEHAVIOR 断言引用了不存在的 workflow，请先创建该文件"}
+BREOF
+      exit 0
+    fi
+
+    # 提取合同 BEHAVIOR 条目（关键词）
+    BEHAVIOR_COUNT=$(grep -c '\[BEHAVIOR\]' "${SPRINT_DIR}/contract-dod.md" 2>/dev/null || echo 0)
+    if [[ "$BEHAVIOR_COUNT" -eq 0 ]]; then
+      cat > "$WORKSPACE/.brain-result.json" << BREOF
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"workflow_content_check","log_excerpt":"合同 contract-dod.md 中无 [BEHAVIOR] 条目，无法验证 workflow 覆盖性"}
+BREOF
+      exit 0
+    fi
+
+    # 检查 workflow 是否只有文件存在/大小检查（空壳检测）
+    BUSINESS_STEPS=$(grep -cE "(node -e|npx|npm run|npm test|npm ci|vitest|playwright|curl|Invoke-RestMethod|session|publish|cookies|DOUYIN|Set-Content|New-Item|ConvertTo-Json|Write-Host.*PASS)" "$WORKFLOW_FILE" 2>/dev/null || echo 0)
+    SHALLOW_ONLY=$(grep -cE "(Test-Path|\.Length|\.Size|file.*exist|exist.*file)" "$WORKFLOW_FILE" 2>/dev/null || echo 0)
+
+    if [[ "$BUSINESS_STEPS" -eq 0 && "$SHALLOW_ONLY" -gt 0 ]]; then
+      WORKFLOW_PREVIEW=$(head -30 "$WORKFLOW_FILE" | tr '\n' '|')
+      cat > "$WORKSPACE/.brain-result.json" << BREOF
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"workflow_content_check","log_excerpt":"workflow $WINDOWS_CLOUD_WORKFLOW 只包含文件存在/大小检查，不含任何业务逻辑验证（node/npx/vitest/playwright/curl）。合同 BEHAVIOR 断言无法通过此 workflow 真实验证。请更新 workflow 加入业务行为测试。workflow 前30行: $WORKFLOW_PREVIEW"}
+BREOF
+      exit 0
+    fi
+
+    echo "[evaluator] workflow 内容检查通过: $BUSINESS_STEPS 个业务步骤"
+    # ── 触发 GHA workflow ──────────────────────────────────────────────────
     gh workflow run "$WORKFLOW" \
       --repo "$REPO" \
       -f task_id="$TASK_ID" \
