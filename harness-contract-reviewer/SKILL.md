@@ -6,10 +6,11 @@ description: |
   而非"防作弊测试框架"。
   核心职责：(1) spec 对齐用户真需求 (2) criteria 可量化无歧义 (3) happy + error + 边界场景全覆盖
   GAN 对抗**多轮**直到双方达成共识。无硬轮数上限，但 Reviewer 真找不出实质 spec/产品漏洞时必须 APPROVED。
-version: 8.0.0
+version: 8.1.0
 created: 2026-04-08
 updated: 2026-05-30
 changelog:
+  - 8.1.0: 修复 ci_workflow_alignment 7 维对齐 — 非 windows_cloud/linux_server 环境不再跳过第 7 维，改为默认填 10（N/A）；阈值统一为全 7 维 ≥ 7 → APPROVED；防止 Brain computeVerdictFromRubric 因缺字段返回 null 降级到 LLM 文字判断
   - 8.0.0: 新增第 7 维 ci_workflow_alignment，要求 Reviewer 读取 workflow 文件内容验证业务对齐性；windows_cloud/linux_server 目标环境要求 7 维全部 ≥ 7 → APPROVED，其他环境维持原 6 维 ≥ 7 → APPROVED
   - 7.0.0: 移除第 7/8 维（WS 专属）— 对齐单 Sprint 单 PR 模式（harness-contract-proposer v8.0+）。第 7 维 behavior_count_position 检查"每个 workstream ≥ 4 条 BEHAVIOR"，第 8 维 depends_on_serial_chain 检查"ws2+ 必须有 depends_on"，两者前提是多 WS 存在，单 Sprint 模式下无意义。Rubric 恢复 6 维，阈值不变（全部 ≥ 7 → APPROVED）
   - 6.7.0: 新增 Step 5 — Contract APPROVED 后写 Brain DB planned 条目（api_registry + db_schema_registry），补齐 GAN 阶段到 Report 阶段之间的数据空白；planned → done 由 harness-sprint-state Report 阶段完成
@@ -84,13 +85,13 @@ Proposer 产出的 `contract-draft.md` 格式是 **Golden Path Steps**：每步 
 | 4 | **内部一致** | 合同本身术语 / 字段 / 命令无矛盾 | 每个字段 / 命令只定义一次，引用用稳定 ID | 合同前后定义不一致，或命令在多处粘贴可能漂移 |
 | 5 | **风险登记** | Risks 栏列了 + 每条有 mitigation | ≥ 2 条具名 risk + mitigation（含 cascade 失败时怎办） | 无 Risks 栏，或只写"无已知风险" |
 | 6 | **Verification Oracle 完整性**（v6.1）| PRD 的 Response Schema 段是否被合同 codify 成 jq -e 可执行 oracle | PRD 每个 response 字段都对应至少 1 条 `jq -e '.key == val'` 命令；schema 完整性用 `jq -e 'keys == [...]'` 强卡；禁用字段名清单都有反向 `! jq -e '.禁用key'` 检查 | PRD 写了 schema 但合同只有自然语言描述（"返回 {result, operation}"）没有 jq -e 命令；或 jq -e 命令漏掉某个字段（schema drift 漏网） |
-| 7 | **CI Workflow 内容对齐**（windows_cloud/linux_server 专属）| 凡合同引用 GHA workflow 作为 BEHAVIOR 断言，Reviewer 必须用 Bash 工具读取该 workflow 文件内容，确认 workflow steps 与合同 BEHAVIOR 的用户操作语义一致 | Reviewer 读了 workflow 文件，每条 BEHAVIOR 都能指向 workflow 里的一个真实业务 step | Reviewer 未读 workflow 文件直接批准，或 workflow 里全是文件大小/存在性检查但合同声称验证了业务行为 |
+| 7 | **CI Workflow 内容对齐**（windows_cloud/linux_server 专属）| 凡合同引用 GHA workflow 作为 BEHAVIOR 断言，Reviewer 必须用 Bash 工具读取该 workflow 文件内容，确认 workflow steps 与合同 BEHAVIOR 的用户操作语义一致 | Reviewer 读了 workflow 文件，每条 BEHAVIOR 都能指向 workflow 里的一个真实业务 step | Reviewer 未读 workflow 文件直接批准，或 workflow 里全是文件大小/存在性检查但合同声称验证了业务行为。**非 windows_cloud/linux_server 环境：填 10（N/A，无 GHA workflow 可审查）** |
 
 ### 阈值规则（代码判，Reviewer 不主观综合）
 
 **单轮阈值（不随 round 衰减）**：
 - `target_environment` 为 `windows_cloud` 或 `linux_server` 时：**7 维全部 ≥ 7 → APPROVED**，任何一维 < 7 → REVISION
-- 其他 `target_environment`：全部 6 维 ≥ 7 分 → APPROVED，任何一维 < 7 → REVISION
+- 其他 `target_environment`：全部 7 维 ≥ 7 → APPROVED，任何一维 < 7 → REVISION（ci_workflow_alignment 对非 windows 环境默认填 10，表示 N/A 直接通过）
 
 **收敛兜底（无轮数硬 cap）**：
 不设 MAX_ROUNDS。`harness-gan.graph.js` 调 `detectConvergenceTrend(rubricHistory)` 看最近 3 轮 7 维度走势：
@@ -255,6 +256,11 @@ test -f /workspace/.brain-result.json && echo "OK: result file written" || echo 
 ```
 
 REVISION 时 feedback 必须含具体修改方向。
+
+**ci_workflow_alignment 填值规则**：
+- `target_environment` 为 `windows_cloud` 或 `linux_server`：正常审查 workflow 文件后打分（0-10）
+- 其他环境（mac_web / local_api / playground 等）：直接填 `10`（N/A，无 GHA workflow 可审查）
+- **禁止省略此字段**：Brain `computeVerdictFromRubric` 要求全 7 维都有值，缺字段返回 null 降级到 LLM 文字判断
 
 ---
 

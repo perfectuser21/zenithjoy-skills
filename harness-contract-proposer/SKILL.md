@@ -107,9 +107,9 @@ vitest 测试文件还要写（generator TDD red-green 用），但**不再被 e
 ### Step 1: 读取 PRD
 
 ```bash
-# TASK_ID、SPRINT_DIR、PLANNER_BRANCH、PROPOSE_ROUND、INITIATIVE_ID、REVIEW_BRANCH、DB 由 cecelia-run 通过 prompt 注入，直接使用
+# TASK_ID、SPRINT_DIR、PLANNER_BRANCH、PROPOSE_ROUND、INITIATIVE_ID、DB 由 cecelia-run 通过 prompt 注入，直接使用
 # 每次调用 = 一轮 GAN；Brain 的 harness-gan-graph.js 管理轮次循环和 APPROVED/REVISION 路由
-# REVIEW_BRANCH: 上一轮 Reviewer 的分支（第一轮为空）；DB: postgresql://localhost/cecelia（或 $DB_URL）
+# DB: postgresql://localhost/cecelia（或 $DB_URL）
 git fetch origin "${PLANNER_BRANCH}" 2>/dev/null || true
 git show "origin/${PLANNER_BRANCH}:${SPRINT_DIR}/sprint-prd.md" 2>/dev/null || \
   cat "${SPRINT_DIR}/sprint-prd.md"
@@ -118,14 +118,6 @@ git show "origin/${PLANNER_BRANCH}:${SPRINT_DIR}/sprint-prd.md" 2>/dev/null || \
 读取 journey_type（从 PRD 末尾）：
 ```bash
 JOURNEY_TYPE=$(grep -m1 "^## journey_type:" "${SPRINT_DIR}/sprint-prd.md" | sed 's/## journey_type: //' | tr -d ' ') || JOURNEY_TYPE="autonomous"
-```
-
-如果是修订轮（propose_round > 1），读取 Reviewer 反馈：
-```bash
-if [ -n "$REVIEW_BRANCH" ]; then
-  git fetch origin "${REVIEW_BRANCH}" 2>/dev/null || true
-  git show "origin/${REVIEW_BRANCH}:${SPRINT_DIR}/contract-review-feedback.md" 2>/dev/null || true
-fi
 ```
 
 ---
