@@ -6,10 +6,11 @@ description: |
   evaluator 在 CI 绿之后、PR merge 之前真启服务 + 跑 contract 的 manual:bash 命令验真行为。
   PASS → 允许 merge；FAIL → 不 merge，带反馈打回 Generator 在 PR 分支 fix loop（main 不变动）。
   模式 A 跑 contract-dod-ws*.md BEHAVIOR；模式 B（所有 ws merge 后）跑 final E2E Golden Path。
-version: 1.11.1
+version: 1.12.0
 created: 2026-05-06
 updated: 2026-05-30
 changelog:
+  - 1.12.0: 修复 Mode A DoD 文件名 + 变量名双重不匹配 — Brain 注入的是 WORKSTREAM_INDEX（不是 WORKSTREAM_N）；proposer v8.0 写 contract-dod.md（不是 contract-dod-ws{N}.md）。Mode A 现在优先读 contract-dod.md，fallback contract-dod-ws{N}.md；引入 WS_NUM 统一解析两个变量名
   - 1.11.1: 修复空壳检测正则漏掉 npm test/npm ci 和 PowerShell 业务命令 — eval 中发现 BUSINESS_STEPS 正则用 "npm run" 但未含 "npm test"（GHA 常用写法）及 "npm ci"，导致用了 npm test 的真实业务 workflow 被误判为空壳；同步补充 PowerShell 业务模式（Set-Content/New-Item/ConvertTo-Json）防止 PS 脚本的 session 写入被漏判
   - 1.11.0: windows_cloud 模式 B trigger 前新增 workflow 内容检查 — 在 gh workflow run 之前检查：(1) workflow 文件是否存在；(2) 合同 contract-dod.md 是否有 [BEHAVIOR] 条目；(3) workflow 是否只有文件存在/大小检查而不含业务逻辑验证（node/npx/vitest/playwright/curl 等）。第 3 条命中时直接 FAIL，防止 workflow 空壳导致假绿
   - 1.10.0: mac_web host executor 兼容 — 新增 WORKSPACE="${WORKSPACE_PATH:-/workspace}" 变量；所有 .brain-result.json 写入路径改为 "$WORKSPACE/.brain-result.json"（Docker /workspace，宿主 worktreePath）；mac_web Step B-2 修复：由 node /tmp/e2e-verify.js（文件不存在）改为优先 bash /tmp/e2e-verify.sh 并 fallback node .js；更新注入变量表格添加 WORKSPACE_PATH 和 WINDOWS_CLOUD_WORKFLOW
@@ -185,7 +186,9 @@ WORKSPACE="${WORKSPACE_PATH:-/workspace}"
 if [[ "$IS_FINAL_E2E" == "true" ]]; then
   echo "模式 B — 最终 E2E"
 else
-  echo "模式 A — 逐任务 DoD（ws${WORKSTREAM_N}）"
+  # Brain 注入的变量名是 WORKSTREAM_INDEX（不是 WORKSTREAM_N）
+  WS_NUM="${WORKSTREAM_INDEX:-${WORKSTREAM_N:-1}}"
+  echo "模式 A — 逐任务 DoD（ws${WS_NUM}）"
 fi
 ```
 
@@ -196,10 +199,17 @@ fi
 #### Step A-1: 读 DoD 文件
 
 ```bash
-DOD_FILE="${SPRINT_DIR}/contract-dod-ws${WORKSTREAM_N}.md"
+# Brain 注入的变量名是 WORKSTREAM_INDEX（不是 WORKSTREAM_N）
+WS_NUM="${WORKSTREAM_INDEX:-${WORKSTREAM_N:-1}}"
+
+# v8.0 单 Sprint 模式写 contract-dod.md（无 WS 后缀）；兼容旧格式 contract-dod-ws{N}.md
+DOD_FILE="${SPRINT_DIR}/contract-dod.md"
+if [[ ! -f "$DOD_FILE" ]]; then
+  DOD_FILE="${SPRINT_DIR}/contract-dod-ws${WS_NUM}.md"
+fi
 if [[ ! -f "$DOD_FILE" ]]; then
   cat > "$WORKSPACE/.brain-result.json" << BREOF
-{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"dod_missing","log_excerpt":null}
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"dod_missing","log_excerpt":"合同 DoD 文件不存在：尝试了 contract-dod.md 和 contract-dod-ws${WS_NUM}.md，均未找到"}
 BREOF
   exit 0
 fi
