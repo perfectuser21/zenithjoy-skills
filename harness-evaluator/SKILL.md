@@ -74,7 +74,7 @@ generator 写代码 + push PR
 | `IS_FINAL_E2E` | `true` = 模式 B（E2E）；其他值 = 模式 A（逐任务 DoD） |
 | `SPRINT_DIR` | Sprint 目录，如 `sprints/run-20260506-1400` |
 | `TASK_ID` | Brain 中当前 evaluate task 的 UUID |
-| `WORKSTREAM_N` | 当前 workstream 编号（如 `1`），仅模式 A 用 |
+| `WORKSTREAM_INDEX` | 当前 workstream 编号（如 `1`），仅模式 A 用；旧变量名 `WORKSTREAM_N` 同时兼容 |
 | `JOURNEY_TYPE` | `user_facing` / `autonomous` / `dev_pipeline` / `agent_remote` |
 | `TARGET_ENV` | `mac_web` / `windows_cloud` / `linux_server` / `local_api` / `playground`（来自 PRD `target_environment` 字段）|
 | `WORKSPACE_PATH` | 结果文件写入目录（mac_web host 执行时为 worktreePath，Docker 默认不注入，脚本 fallback `/workspace`）|

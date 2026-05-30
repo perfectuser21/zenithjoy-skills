@@ -231,7 +231,7 @@ echo "[harness-report Phase A] 6步交付完成"
 
 ## Phase B: Sprint 状态同步
 
-> **详细实现见 `references/sprint-state-sync.md`**（包含完整的 Brain DB 写入 + 8个 Notion DB 同步步骤）
+> **详细实现见 `~/.claude/skills/harness-report/references/sprint-state-sync.md`**（包含完整的 Brain DB 写入 + 8个 Notion DB 同步步骤）
 
 Phase B 的核心工作：
 1. 从 `sprint-prd.md` / `contract-draft.md` 解析本次 Sprint 产出（APIs、DB Schema、Tests、Features）
@@ -240,4 +240,4 @@ Phase B 的核心工作：
 4. 写本地 `sprint-states/<journey_id>/state.md`
 5. git commit + push
 
-执行前先读取 `references/sprint-state-sync.md` 获取完整步骤和代码。
+执行前先读取 `~/.claude/skills/harness-report/references/sprint-state-sync.md` 获取完整步骤和代码。
