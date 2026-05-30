@@ -5,10 +5,11 @@ description: |
   读取 GAN 对抗已批准的 sprint-contract.md + tests/*.test.ts + contract-dod.md，按 TDD 纪律两次 commit（commit 1 = 测试 Red / commit 2 = 实现 Green）。
   融入 4 个 superpowers：test-driven-development / verification-before-completion / systematic-debugging / requesting-code-review。
   CONTRACT IS LAW：合同里有的全实现，合同外一字不加；测试文件从合同原样复制，commit 1 后不可修改（CI 强校验）。一个 Sprint = 一个 Generator = 一个 PR。
-version: 7.0.0
+version: 7.1.0
 created: 2026-04-08
-updated: 2026-05-29
+updated: 2026-05-30
 changelog:
+  - 7.1.0: Step 6.5 补 windows_cloud 例外说明 — [BEHAVIOR] 必须 bash-executable；PowerShell 只在 contract-draft.md ## E2E 验收 区块
   - 7.0.0: 移除 Workstream 拆分 — 对齐 Anthropic 官方 v2 Harness 设计（一个 Sprint = 一个 Generator = 一个 PR）。删除 WORKSTREAM_INDEX/WORKSTREAM_COUNT 必要参数约束；测试目录从 tests/ws1/ 改为 tests/；DoD 文件从 contract-dod-ws1.md 改为 contract-dod.md；分支命名去掉 ws 后缀；移除多 ws 并行 rebase 说明
   - 6.3.0: 修字段名协议矛盾 — workstreams[].scope_files → tasks[].files（proposer SKILL v7.6+ 实际输出 schema 是 tasks[]，v6.2 段写错）
   - 6.2.0: 修协议盲 — Step 1 后加 task-plan.json 必读字段段（proposer GAN 收敛后输出，含 workstreams scope_files 白名单）
@@ -315,6 +316,11 @@ echo "✅ Contract 自验全过，可以 push"
 - 自验失败 → 自修代码（不改 contract）
 - 自修后重新跑 Step 6.5 直到全过
 - **禁止跳过 Step 6.5 直接 push**（W19/W20/W21/W22 教训）
+
+**windows_cloud target 例外说明**：
+- contract-dod.md 里的 `[BEHAVIOR]` 条目必须是 **bash-executable**（curl/psql/jq 等 API-level 检查），generator 在 Linux Docker 里跑这些没问题
+- PowerShell / Windows 专属命令只写在 contract-draft.md 的 `## E2E 验收` 区块里，供 evaluator 触发 GHA workflow 时使用
+- 如果自验时发现 [BEHAVIOR] 里有 PowerShell 命令 → 这是 proposer 写错了（应在 E2E 区块），告知 generator 无法在本地验证、标 `[CI_GAP]` 并 push，让 evaluator 的 windows_cloud Mode B 去跑
 
 ### Step 7: Push + PR
 
