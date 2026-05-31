@@ -339,8 +339,10 @@ git push origin HEAD 2>/dev/null || echo "[harness-planner] push skipped (no cre
 **最后一条消息**：
 
 ```
-{"verdict": "DONE", "branch": "cp-...", "sprint_dir": "sprints/run-..."}
+{"verdict": "DONE", "branch": "cp-...", "sprint_dir": "sprints/run-...", "planner_branch": "cp-..."}
 ```
+
+说明：`planner_branch` 字段供 Brain `runGanLoopNode` 读取，作为 GAN proposer 的 `PLANNER_BRANCH` env，避免回退到 main 读 PRD。
 
 ---
 

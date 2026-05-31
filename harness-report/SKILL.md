@@ -167,9 +167,9 @@ echo "✅ Step 3.5: 文档归档完成"
 ### Step 4: 更新 Notion Feature Registry
 
 ```bash
-node ~/.claude/skills/dev/scripts/add-feature.js \
-  --feature-id "$FEATURE_ID" \
-  --status "done" 2>/dev/null || echo "WARN: Feature Registry 更新失败（非阻断）"
+[ -n "$FEATURE_ID" ] && curl -s -X PATCH "localhost:5221/api/brain/journey_features/$FEATURE_ID" \
+  -H "Content-Type: application/json" \
+  -d '{"thickness":"done","status":"done"}' >/dev/null 2>&1 || echo "WARN: Feature Registry 更新失败（非阻断）"
 echo "✅ Step 4: Notion Feature Registry status → done"
 ```
 
