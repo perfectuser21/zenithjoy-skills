@@ -521,20 +521,6 @@ echo "✅ 生产环境 Golden Path 验证通过"
 
 ---
 
-## Workstreams
-
-workstream_count: {N}
-
-### Workstream 1: {标题}
-
-**范围**: {清晰的实现边界}
-**大小**: S(<100行) / M(100-300行) / L(>300行)
-**依赖**: 无 / Workstream X 完成后
-
-**BEHAVIOR 覆盖测试文件**: `tests/ws1/xxx.test.ts`
-
----
-
 ## Test Contract
 
 | 功能 | Test File | BEHAVIOR 覆盖 | 预期红证据 |
