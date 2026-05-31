@@ -122,7 +122,7 @@ if [ -n "$PR_BRANCH" ]; then
 fi
 ```
 
-模式 B（`IS_FINAL_E2E=true`）跑 main，不切。
+注意：Brain evaluateContractNode 始终注入 PR_BRANCH（pre-merge gate），实际总会切换到 PR 分支验证代码，不论 IS_FINAL_E2E 值。
 
 **反例**：跳过 Step 0a 直接跑 main 上的 server → generator 改动看不见 → 永远 FAIL（W19-W36 9 次实证）。
 
