@@ -6,10 +6,11 @@ description: |
   人类启动 harness/sprint 的唯一正确入口是 /walking-skeleton（动作5 harness-bridge），
   它会 POST Brain harness_initiative 任务，Brain 再自动调本 skill。
   直接调本 skill = 绕过 Brain 调度层，违反 zero-human-gate 原则。
-version: 8.7.0
+version: 8.8.0
 created: 2026-04-08
-updated: 2026-05-30
+updated: 2026-06-01
 changelog:
+  - 8.8.0: 删Response Schema必填段（职责归Proposer Step 1.1）；Step 0.1加initiative_runs Run历史查询
   - 8.7.0: thin-slice 行数上限从 ≤50 调整为 ≤100 — 实测含 smoke script 的真实 PRD 常见 80-110 行，50 行限制在 eval 中持续误报；保留"禁止 254 行 medium/thick PRD"的精神，只放宽数字
   - 8.6.0: 删除 windows_local — 所有 Windows 测试统一走 windows_cloud（GitHub Actions windows-latest）；Cecelia 是内网产品走 mac_web/local_api，无需 windows_local；target_environment 从 6 种缩减为 5 种
   - 8.5.0: 加 target_environment 字段 — Step 0.5 新增推断规则，PRD 模板末尾新增 target_environment 行；evaluator 模式B 按此字段派发到正确机器执行 E2E
@@ -70,7 +71,7 @@ changelog:
 **自查 checklist**（写完 sprint-prd.md 后必 grep）：
 
 - [ ] grep "## Golden Path" 段含 thin_prd 关键词字面
-- [ ] grep "## Response Schema" 或 endpoint 描述含 thin_prd 主题字面
+- [ ] endpoint 描述含 thin_prd 主题字面
 - [ ] 主题词字面相等（不能同义改写："/ping" 不能改成 "/health-check"）
 
 **违规示例**（禁止）：
@@ -167,6 +168,14 @@ curl localhost:5221/api/brain/context
 
 **边界**：只读运行时上下文，不探索代码实现细节。
 
+**Journey Run 历史（initiative_runs）**：读 task payload 中的 `JOURNEY_ID`（或 `journey_id`），非空则：
+
+```bash
+curl "localhost:5221/api/brain/harness/runs?limit=10"
+```
+
+取前 5 条，提取字段：`id` / `phase` / `started_at` / `completed_at` / `failure_reason`，用于感知本 Journey 已跑过的 Sprint 历史、当前卡点与失败原因，避免 PRD 重复已完成范围。
+
 ---
 
 ### Step 0.5: 推断 journey_type + target_environment
@@ -259,48 +268,7 @@ mkdir -p "$SPRINT_DIR"
 2. [系统处理]
 3. [可观测结果]
 
-## Response Schema（API 任务必填，其他任务标 N/A）
-
-> **目的**：把响应字段 codify 成 oracle，让 proposer 把每个字段转成 `jq -e` 命令，evaluator 真起服务真 curl 真校验。避免 generator 自由发挥 key 名（W19 result→sum / W20 result→product 实证）。
->
-> **填法**：
-> - 列出所有 endpoint 的 success response shape（key 名/类型/必填性）
-> - 列出所有 endpoint 的 error response shape（HTTP code + body shape）
-> - 明确禁用字段名清单（避免 generator 用近义词替换）
-> - 不允许仅用自然语言描述（"返回结果对象"无效）；必须给字面 JSON 示例
-
-模板：
-
-```
-### Endpoint: GET /xxx
-
-**Query Parameters**（v8.2 新增 — 强制约束 query param 名，避免 generator 漂移到 a/b）:
-- `<必填 param 名>` (type, 必填): 用途说明
-- 例如: `base` (number-as-string, 必填), `exp` (number-as-string, 必填)
-- **禁用 query 名**: 列出 generator 容易用错的别名（如禁用 `a/b/x/y/p/q/n/m/input1/input2/v1/v2`）
-- **强约束**: generator 必须**字面用** PRD 列出的 query 名；用错 query 名 endpoint 应返 400 或 404
-
-**Success (HTTP 200)**:
-```json
-{"result": <number>, "operation": "<string字面量 'multiply'>"}
-```
-- `result` (number, 必填): 计算结果
-- `operation` (string, 必填): 字面量 `multiply`，禁用变体 `mul`/`multiplication`/`product`/`op`/`method`
-
-**Error (HTTP 400)**:
-```json
-{"error": "<string>"}
-```
-- 必有 `error` key，禁用 `message`/`msg`/`reason` 等替代
-
-**禁用响应字段名**: `sum`/`product`/`value`/`answer`/`data`/`payload`/`response`（generator 不得自由发挥）
-
-**Schema 完整性**: response 顶层 keys 必须**完全等于** `["operation", "result"]`，不允许多余字段
-```
-
-非 API 任务（纯内部 Brain 改动 / 数据库迁移 / CI 流程）此段写 `N/A — 任务无 HTTP 响应`。
-
-**关键**：proposer SKILL v7.4 强制每个 Query Parameter 在合同里有 1 条 [BEHAVIOR] 验。Query 名漂移会被 evaluator jq -e + curl 抓住。
+<!-- Response Schema由Proposer在Step 1.1读api_registry后推导，Planner不负责定义技术规范。 -->
 
 ## 边界情况
 
