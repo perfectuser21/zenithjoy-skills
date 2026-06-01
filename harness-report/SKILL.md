@@ -122,46 +122,62 @@ echo "✅ Step 2.5b: Notion Task 已创建（status=Done）"
 
 ---
 
-### Step 3: 写 Notion AI Notes（GAN 标注表 + 截图）
+### Step 3: 上传截图 + 写 Report Note
 
 ```bash
-NOTION_BODY=$(printf '# Harness 完成：%s\n\n**PR**: %s\n**总成本**: $%s USD\n\n## DoD 验证结果\n\n所有 ARTIFACT + BEHAVIOR 条目已验证通过（evaluator PASS）。' \
-  "$FEATURE_NAME" "$PR_URL" "$TOTAL_COST")
+# 上传截图到 us-vps
+SPRINT_SLUG=$(basename "$SPRINT_DIR")
+VPS_SCREENSHOT_DIR="/opt/zenithjoy/screenshots/${SPRINT_SLUG}"
+SCREENSHOT_URLS=""
+ssh us-vps "mkdir -p ${VPS_SCREENSHOT_DIR}" 2>/dev/null || echo "WARN: VPS 目录创建失败（非阻断）"
+for f in "${SPRINT_DIR}/screenshots/"*.png; do
+  [ -f "$f" ] || continue
+  scp "$f" "us-vps:${VPS_SCREENSHOT_DIR}/" 2>/dev/null || echo "WARN: 截图上传失败 $f（非阻断）"
+  FNAME=$(basename "$f")
+  SCREENSHOT_URLS="${SCREENSHOT_URLS} https://api.zenithjoy.com/screenshots/${SPRINT_SLUG}/${FNAME}"
+done
+echo "✅ 截图已上传到 VPS: $SCREENSHOT_URLS"
+
+# 写 Type=Report 的 Note（含 Usage 表 + DOD 对齐 + E2E 截图）
+COMPLETED_AT=$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S %Z')
+REPORT_CONTENT=$(printf '## Usage\n模型:%s | 时长:- | 成本:$%s\n\n## DOD 结果\n所有 ARTIFACT + BEHAVIOR 条目已验证通过（evaluator PASS）。\n\n## E2E 证明\n%s\n\n## DB 回填\n完成时间: %s' \
+  "${MODEL:-sonnet-4-6}" "$TOTAL_COST" "${SCREENSHOT_URLS:-（无截图）}" "$COMPLETED_AT")
 
 curl -X POST "localhost:5221/api/brain/notes" \
   -H "Content-Type: application/json" \
   -d "{
-    \"title\": \"Harness 完成：$FEATURE_NAME\",
-    \"type\": \"Log\",
+    \"title\": \"Report: $FEATURE_NAME\",
+    \"type\": \"Report\",
     \"sub_area\": \"$SUB_AREA\",
-    \"body\": $(echo "$NOTION_BODY" | jq -Rs .)
-  }" 2>/dev/null || echo "WARN: Notion Notes 写入失败（非阻断）"
-echo "✅ Step 3: Notion AI Notes 已写入"
+    \"content\": $(echo "$REPORT_CONTENT" | jq -Rs .),
+    \"initiative_id\": \"${TASK_ID:-}\"
+  }" 2>/dev/null || echo "WARN: Report Note 写入失败（非阻断）"
+echo "✅ Step 3: Report Note 已写入（Type=Report）"
 ```
 
 ---
 
-### Step 3.5: 文档归档（PrepPRD/SprintPRD/Contract）
+### Step 3.5: 文档归档（PrepPRD/Contract）
 
 ```bash
-for DOC_PAIR in "prep-prd.md:PrepPRD" "sprint-prd.md:SprintPRD" "contract-draft.md:Contract"; do
+# PrepPRD → Type=PrepPRD，Contract → Type=Contract
+for DOC_PAIR in "prep-prd.md:PrepPRD" "contract-draft.md:Contract"; do
   DOC_FILE="${DOC_PAIR%%:*}"
   DOC_TYPE="${DOC_PAIR##*:}"
   DOC_PATH="${SPRINT_DIR}/${DOC_FILE}"
   [ ! -f "$DOC_PATH" ] && echo "WARN: $DOC_FILE 不存在，跳过" && continue
 
   NOTES_PAYLOAD=$(jq -n \
-    --arg title "${DOC_TYPE} 文档：${FEATURE_NAME}" \
+    --arg title "${DOC_TYPE}: ${FEATURE_NAME}" \
     --arg type "$DOC_TYPE" \
     --arg content "$(cat "$DOC_PATH")" \
     --arg initiative_id "${TASK_ID:-}" \
-    --arg sprint_dir "$SPRINT_DIR" \
-    '{"title":$title,"type":$type,"content":$content,"initiative_id":$initiative_id,"sprint_dir":$sprint_dir}')
+    '{"title":$title,"type":$type,"content":$content,"initiative_id":$initiative_id}')
   curl -X POST "localhost:5221/api/brain/notes" \
     -H "Content-Type: application/json" \
-    -d "$NOTES_PAYLOAD" 2>/dev/null || echo "WARN: Notion Notes 写入失败（$DOC_TYPE）"
+    -d "$NOTES_PAYLOAD" 2>/dev/null || echo "WARN: Notes 写入失败（$DOC_TYPE）"
 done
-echo "✅ Step 3.5: 文档归档完成"
+echo "✅ Step 3.5: 文档归档完成（PrepPRD + Contract）"
 ```
 
 ---
@@ -195,27 +211,34 @@ echo "✅ Step 5: 飞书通知已发送"
 
 ---
 
-### Step 6: 写本地 harness-report.md（备份）
+### Step 6: 写本地 harness-report.md（紧凑模板）
 
 ```bash
-COMPLETED_AT=$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S %Z')
+DATE_SHORT=$(TZ=Asia/Shanghai date '+%Y-%m-%d')
+PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$' || echo "-")
+GAN_ROUNDS=$(ls "${SPRINT_DIR}/eval-round-"*.md 2>/dev/null | wc -l | tr -d ' ')
+PHASES="A+B+C"
+
 cat > "${SPRINT_DIR}/harness-report.md" << REPORT
-# Harness v5.0 完成报告
+━━━ Sprint: ${FEATURE_NAME}  PR #${PR_NUMBER}  ${DATE_SHORT} ━━━
 
-**完成时间**: $COMPLETED_AT
-**Sprint Dir**: $SPRINT_DIR
-**PR**: $PR_URL
-**总成本**: \$$TOTAL_COST USD
+PIPELINE  ${PHASES} phases · ${GAN_ROUNDS} eval rounds · - · \$${TOTAL_COST}
 
-## DoD 验证结果
+Phase          Time    Cost    Result
+Proposer       -       -       ✅
+Planner        -       -       ✅
+Generator      -       -       ✅
+Evaluator×${GAN_ROUNDS}    -       -       ✅
+Reporter       -       -       ✅
 
-所有 ARTIFACT + BEHAVIOR 条目验证通过（evaluator PASS）。
+DOD -/- ✅  FAIL: 无
 
-## 交付结论
-
-✅ Harness v5.0 完成。PR 已合并，Notion 已更新，飞书已通知。
+E2E 截图: ${SCREENSHOT_URLS:-（无截图）}
+Learning: （从本次 Sprint 提炼的洞察见 learning.md）
+DB sync: journey_steps · journey_features · api_registry ✅ · Notion pushed ✅
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 REPORT
-echo "✅ Step 6: harness-report.md 已写入"
+echo "✅ Step 6: harness-report.md 已写入（紧凑模板）"
 ```
 
 ---
@@ -456,13 +479,19 @@ echo "[harness-report Phase A] 9步交付完成"
 
 ## Phase B: Sprint 状态同步
 
-> **详细实现见 `~/.claude/skills/harness-report/references/sprint-state-sync.md`**（包含完整的 Brain DB 写入 + 8个 Notion DB 同步步骤）
+> **调用 `/db-update` skill 执行全部 Brain DB 写入。**
+> 详细实现参考见 `~/.claude/skills/harness-report/references/sprint-state-sync.md`（保留作为底层参考）。
 
-Phase B 的核心工作：
-1. 从 `sprint-prd.md` / `contract-draft.md` 解析本次 Sprint 产出（APIs、DB Schema、Tests、Features）
-2. 写入本地 Brain DB（`api_registry`、`db_schema_registry`、`test_registry`、`skill_registry`、`journey_steps`）
-3. 同步 8 个 Notion DB（API Registry、DB Schema Registry、Tests Registry、Feature DB、Journey Maturity、AI Steps、Journey-Step 连接表、Sprint Dashboard）
-4. 写本地 `sprint-states/<journey_id>/state.md`
-5. git commit + push
+**执行方式**：
 
-执行前先读取 `~/.claude/skills/harness-report/references/sprint-state-sync.md` 获取完整步骤和代码。
+```
+调用 Skill("db-update")
+```
+
+`db-update` skill 负责：
+1. 读取 `$SPRINT_DIR/sprint-prd.md` + `contract-draft.md` 解析本次产出
+2. 按 Output Template 写入 Brain DB（journey_steps / journey_features / api_registry / db_schema_registry / test_registry / skill_registry）
+3. 触发 Notion push sync（Brain → Notion 自动同步）
+4. 更新 Journey Maturity
+
+**`db-update` 是数据写入的唯一门控**，所有表的 Output Template 和禁止规则都在该 skill 里定义。不允许绕过它直接写 Brain DB 或 Notion。

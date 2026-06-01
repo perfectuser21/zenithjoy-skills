@@ -12,6 +12,16 @@
 
 ---
 
+## [2026-06-01] db-update — created
+**症状**: 无统一数据写入规范，Feature 表被测试数据污染，截图存 COS 费用高
+**根因**: notion-sync 名称误导（以为目的是同步 Notion），缺少所有表的 Output Template，截图路径未规范
+**修改**: renamed notion-sync → db-update，补全 10 张表 + 5 种 Notes Type 的 Output Template，harness-report 截图改 VPS scp
+
+## [2026-06-01] harness-report — updated
+**症状**: Report 格式冗长，缺 Usage 表、DOD 对齐、截图证明
+**根因**: Step 6 report 模板无结构，截图走 COS 未规范
+**修改**: 新增紧凑 Report 模板，截图改 scp 到 us-vps，Phase B 调用 db-update skill
+
 ## [2026-05-30] dev + harness-planner — updated (eval 修复)
 **症状**: (1) dev eval：三条路径（Bug/小改动/大功能）写 decision 时用 `type: bug_fix` 而非 `category: bug-fix`，Brain API 只认 category 字段，数据写入失效；(2) harness-planner eval：thin-slice-size 断言以 ≤50 行为标准，但含 smoke script 的真实 PRD 常见 80-110 行，eval 持续误报
 **根因**: (1) dev SKILL.md bash snippet 注释说"换成实际值后执行"，Claude 自行重写 JSON 时忽略 category 写成 type；(2) ≤50 行限制是 2026-05-12 防 254 行 PRD 临时设的，未考虑 smoke script 正常占 20-40 行
