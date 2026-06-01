@@ -6,10 +6,11 @@ description: |
   人类启动 harness/sprint 的唯一正确入口是 /walking-skeleton（动作5 harness-bridge），
   它会 POST Brain harness_initiative 任务，Brain 再自动调本 skill。
   直接调本 skill = 绕过 Brain 调度层，违反 zero-human-gate 原则。
-version: 8.8.0
+version: 8.9.0
 created: 2026-04-08
 updated: 2026-06-01
 changelog:
+  - 8.9.0: 明确"只做Scope锚定"原则；sprint-prd.md模板加journey_id+step_id强制字段
   - 8.8.0: 删Response Schema必填段（职责归Proposer Step 1.1）；Step 0.1加initiative_runs Run历史查询
   - 8.7.0: thin-slice 行数上限从 ≤50 调整为 ≤100 — 实测含 smoke script 的真实 PRD 常见 80-110 行，50 行限制在 eval 中持续误报；保留"禁止 254 行 medium/thick PRD"的精神，只放宽数字
   - 8.6.0: 删除 windows_local — 所有 Windows 测试统一走 windows_cloud（GitHub Actions windows-latest）；Cecelia 是内网产品走 mac_web/local_api，无需 windows_local；target_environment 从 6 种缩减为 5 种
@@ -36,6 +37,7 @@ changelog:
 
 ## 核心原则
 
+- **只做 Scope 锚定**：Planner 唯一职责 = 把 dev 产出的 Golden Path 映射到具体 Journey Step，写入 sprint-prd.md。不查代码，不查新上下文，只用 PrepPRD 里已有信息做锚定。
 - **只写 What，不写 How**：PRD 描述用户看到的行为，不描述实现路径
 - **Golden Path 优先**：PRD 围绕核心使用场景（入口→关键步骤→出口）组织，不按功能列表
 - **不拆任务**：Planner 只写 PRD；任务 DAG 由 Proposer 在合同 GAN 确认后从 Golden Path 倒推
@@ -291,6 +293,8 @@ mkdir -p "$SPRINT_DIR"
 ## journey_type_reason: {1 句推断依据}
 ## target_environment: mac_web|windows_cloud|linux_server|local_api|playground
 ## target_environment_reason: {1 句推断依据，含目标机器名（如 GitHub Actions、hk-vps、localhost:5174）}
+## journey_id: <Journey UUID，来自 PrepPRD 或 task.payload.journey_id>
+## step_id: <Step UUID 或 step code，如 L01-S5，来自 PrepPRD Golden Path 锚定结果>
 ```
 
 ---
