@@ -1,8 +1,8 @@
 ---
 name: dev
-version: 19.4.0
-updated: 2026-05-30
-description: 统一开发点火入口。查 12 张 Brain DB 表拿上下文 → 判断类型（bug / 小改动 / 大功能）→ 生成 PrepPRD → 用户确认 → 路由执行。
+version: 19.5.0
+updated: 2026-06-01
+description: Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:13个上下文源）→生成PrepPRD落地文件→用户确认→路由执行
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 ---
 
@@ -10,49 +10,73 @@ trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, w
 
 ---
 
-## 第零步：查 12 张表 + 判断类型（每次都要做，不跳过）
+## 第零步 Phase 1：听懂意图（不查表，纯解析）
 
-用户说任何话后，**先查 Brain DB 12 张表拿上下文，再判断类型**。
+**先听用户说了什么，不查任何 DB，直接判断类型：**
+
+```
+用户描述
+  ├── 有 bug / 出问题了 / 不对 / 报错 / 崩了    → 【路径 A：Bug】
+  ├── 改一下 / 小改动 / 加个字段 / 调一下配置   → 【路径 B：小改动】
+  └── 想做 X / 新功能 / 立项 / 做一个 / 贯穿    → 【路径 C：大功能/Harness】
+```
+
+**模糊时（无法区分路径）：只问 1 个问题，不多问。**
+- 示例："这是一个已有功能出问题，还是你想新增一个功能？"
+
+判断完成后，立即进入 Phase 2。
+
+---
+
+## 第零步 Phase 2：按路径按需查上下文
+
+### 路径 A（Bug）— 3 个 curl
 
 ```bash
 curl -s "localhost:5221/api/brain/journeys"
+curl -s "localhost:5221/api/brain/issues?limit=20"
+curl -s -X POST "localhost:5221/api/brain/decisions/match" \
+  -H "Content-Type: application/json" -d "{\"query\": \"<用户描述关键词>\"}"
+```
+
+### 路径 B（小改动）— 3 个 curl
+
+```bash
+curl -s "localhost:5221/api/brain/journeys"
+curl -s -X POST "localhost:5221/api/brain/decisions/match" \
+  -H "Content-Type: application/json" -d "{\"query\": \"<用户描述关键词>\"}"
+curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
+```
+
+### 路径 C（大功能）— 13 个上下文源
+
+```bash
+# 1-3: Journey 体系
+curl -s "localhost:5221/api/brain/journeys"
 curl -s "localhost:5221/api/brain/journey_steps"
 curl -s "localhost:5221/api/brain/journey_features?limit=50"
+
+# 4: 进行中任务（新增）
+curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
+
+# 5: Harness 历史 Run（initiative_runs，新增）
+curl -s "localhost:5221/api/brain/harness/runs?limit=20"
+
+# 6-8: 问题 / 决策 / 技能
 curl -s "localhost:5221/api/brain/issues?limit=20"
 curl -s -X POST "localhost:5221/api/brain/decisions/match" \
   -H "Content-Type: application/json" -d "{\"query\": \"<用户描述关键词>\"}"
 curl -s "localhost:5221/api/brain/skills?limit=50"
-curl -s "localhost:5221/api/brain/registry?type=api&limit=20"
-curl -s "localhost:5221/api/brain/registry?type=db_schema&limit=20"
-curl -s "localhost:5221/api/brain/registry?type=test&limit=20"
+
+# 9: OKR 进度
 curl -s "localhost:5221/api/brain/okr/tree"
+
+# 10-11: 当前状态 + 路线图（文件读取）
+# 读 ~/.claude/projects/-Users-administrator-perfect21-cecelia/memory/state.md
+# 读 ~/.claude/projects/-Users-administrator-perfect21-cecelia/memory/roadmap.md
 ```
 
-**12 张表：**
-
-| # | 本地 DB | Notion | 作用 |
-|---|---------|--------|------|
-| 1 | `journeys` | AI Journey | 顶层用户路径 |
-| 2 | `journey_steps` | AI Steps | 可复用步骤 |
-| 3 | `journey_step_links` | Journey-Step 连接表 | Journey × Step 顺序 |
-| 4 | `journey_features` | AI Feature | 每步功能脚本 |
-| 5 | `skill_registry` | Skill Registry | AI 技能清单 |
-| 6 | `api_registry` | Sprint State — API Registry | 接口注册 |
-| 7 | `db_schema_registry` | Sprint State — DB Schema Registry | 表结构注册 |
-| 8 | `test_registry` | Sprint State — Tests Registry | 测试文件注册 |
-| 9 | `issues` | Issues | 已知问题记录 |
-| 10 | `decisions` | AI Notes (Type=Decision) | 用户决策记录 |
-| 11 | `objectives` | Goals (`29ec40c2-ba63-8301-99c1-8110bfd84d9b`) | 每条 Line 的 North Star — O 层目标 |
-| 12 | `key_results` | Key Results (`684c40c2-ba63-83a7-b6ba-8161f110a18c`) | 每个 O 下的 KR — Roadmap 里程碑 |
-
-判断类型：
-
-```
-用户描述
-  ├── 有 bug / 出问题 / 不对 / 报错    → 【路径 A：Bug】
-  ├── 改一个字段 / 加个配置 / 小改动   → 【路径 B：小改动】（单 WS）
-  └── 想做 X / 新功能 / 贯穿 Journey   → 【路径 C：大功能】（多 WS，Harness）
-```
+> 路径 C 不再查 api_registry / db_schema_registry / test_registry（已移到 Proposer 阶段）。
 
 ---
 
@@ -124,7 +148,7 @@ Step 1: [用户如何知道出错了] → Step 2: [用户如何恢复]
 [用户看到了什么]
 
 ## 根因假设
-[基于 10 张表上下文 + 代码推断]
+[基于上下文 + 代码推断]
 
 ## 关联上下文
 - 相关 Journey/Step：[如有]
@@ -233,11 +257,30 @@ Step 1: [用户如何知道出错了] → Step 2: [用户如何恢复]
 
 ---
 
+## PrepPRD 落地：确认后写文件
+
+用户确认 PrepPRD（说"对"/"走"/"可以"）后，**在写 decision 之前**，先生成落地文件：
+
+1. 根据功能名生成 `sprint_dir`，格式：`sprints/MMDDHHNN-功能名slug`（MMDDHHNN 取当前上海时间）
+2. 创建目录并写入 PrepPRD：
+   ```bash
+   SPRINT_DIR="sprints/$(TZ=Asia/Shanghai date +%m%d%H%M)-<功能名slug>"
+   mkdir -p "$SPRINT_DIR"
+   cat > "$SPRINT_DIR/prep-prd.md" << 'EOF'
+   <PrepPRD全文>
+   EOF
+   ```
+3. 输出确认：`已保存 PrepPRD 到 $SPRINT_DIR/prep-prd.md`
+
+路径 C 点火时，`sprint_dir` 写入 Brain task payload（见下方路径 C 执行部分）。
+
+---
+
 ## 三条执行路径
 
 ### 路径 A：Bug
 
-PrepPRD 确认后，**立即执行**这条 bash 命令写 decision（不要生成 JSON、不要描述，直接 Bash 运行）：
+PrepPRD 落地后，**立即执行**这条 bash 命令写 decision（不要生成 JSON、不要描述，直接 Bash 运行）：
 
 ```bash
 # 把方括号内容换成实际值后执行
@@ -261,7 +304,7 @@ systematic-debugging → engine-worktree → Superpowers autonomous 接力链 �
 
 ### 路径 B：小改动
 
-PrepPRD 确认后，**立即执行**这条 bash 命令写 decision（不要生成 JSON、不要描述，直接 Bash 运行）：
+PrepPRD 落地后，**立即执行**这条 bash 命令写 decision（不要生成 JSON、不要描述，直接 Bash 运行）：
 
 ```bash
 # 把方括号内容换成实际值后执行
@@ -309,7 +352,7 @@ Tier 1 固定默认：
 
 ### 路径 C：大功能（Harness）
 
-PrepPRD 确认后，**立即执行**这条 bash 命令写 decision（不要生成 JSON、不要描述，直接 Bash 运行）：
+PrepPRD 落地后，**立即执行**这条 bash 命令写 decision（不要生成 JSON、不要描述，直接 Bash 运行）：
 
 ```bash
 # 把方括号内容换成实际值后执行
