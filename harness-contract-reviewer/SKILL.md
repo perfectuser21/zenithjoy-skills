@@ -6,10 +6,11 @@ description: |
   而非"防作弊测试框架"。
   核心职责：(1) spec 对齐用户真需求 (2) criteria 可量化无歧义 (3) happy + error + 边界场景全覆盖
   GAN 对抗**多轮**直到双方达成共识。无硬轮数上限，但 Reviewer 真找不出实质 spec/产品漏洞时必须 APPROVED。
-version: 8.2.0
+version: 8.3.0
 created: 2026-04-08
-updated: 2026-05-30
+updated: 2026-06-01
 changelog:
+  - 8.3.0: 维度2去超覆盖惩罚，技术扩展不扣分，消除GAN因合理扩展被反复打回的根因
   - 8.2.0: B50 收敛模型 — 维度2 scope_match_prd 改双向惩罚（超覆盖也扣分）；维度5 风险登记相对任务不强制≥2；新增 Step 2.5 收敛追踪段（阻塞问题逐轮减少+合同行数趋势+只补PRD真漏覆盖）。根治简单任务合同膨胀发散
   - 8.1.0: 修复 ci_workflow_alignment 7 维对齐 — 非 windows_cloud/linux_server 环境不再跳过第 7 维，改为默认填 10（N/A）；阈值统一为全 7 维 ≥ 7 → APPROVED；防止 Brain computeVerdictFromRubric 因缺字段返回 null 降级到 LLM 文字判断
   - 8.0.0: 新增第 7 维 ci_workflow_alignment，要求 Reviewer 读取 workflow 文件内容验证业务对齐性；windows_cloud/linux_server 目标环境要求 7 维全部 ≥ 7 → APPROVED，其他环境维持原 6 维 ≥ 7 → APPROVED
@@ -81,7 +82,7 @@ Proposer 产出的 `contract-draft.md` 格式是 **Golden Path Steps**：每步 
 | # | 维度 | 定义 | 10 分标准 | 0 分标准 |
 |---|---|---|---|---|
 | 1 | **DoD 机检性** | 每条 DoD 能否转成 `exit code` 命令（非 echo / grep "..." ≥ 0） | 所有 DoD 都有 `node -e / curl / psql / npx vitest run` 类命令，exit 非 0 即真红 | 全是 echo / ls / 自然语言描述 |
-| 2 | **Scope 匹配 PRD（双向惩罚）** | DoD 必须与 PRD **1:1**：既不漏覆盖，**也不超覆盖**。合同含 PRD 未要求的额外 risk/behavior/场景/字段 = 范围蔓延，扣分 | 严格 1:1 覆盖 PRD（每个 Golden Path 步骤/响应字段/路径各一条验证），无任何 PRD 之外的内容 | 漏 PRD 关键 story（欠覆盖）**或** 含 PRD 没要求的东西（超覆盖/膨胀）——两者都判低分 |
+| 2 | **Scope 匹配 PRD（覆盖完整性）** | DoD必须完整覆盖PRD定义的所有Golden Path步骤。允许为使断言机器可执行而做的技术扩展（jq-e严匹配、时间窗口防造假、error path验证），不视为超覆盖 | PRD每个Golden Path步骤/响应字段/路径各有对应断言；技术扩展有明确理由 | 漏掉PRD明确要求的场景；或添加了PRD完全未提及的业务功能验证（纯业务蔓延，非技术必要扩展） |
 | 3 | **Test 真红** | 测试文件存在性 + 必须 FAIL 的假设成立 | 显式列 "测试文件在 `tests/...`，不动代码跑 → exit=1 with `at time.test.ts:N`" | 没列 test 文件路径，或无法判断"尚未实现时是否会 FAIL" |
 | 4 | **内部一致** | 合同本身术语 / 字段 / 命令无矛盾 | 每个字段 / 命令只定义一次，引用用稳定 ID | 合同前后定义不一致，或命令在多处粘贴可能漂移 |
 | 5 | **风险登记（相对任务）** | Risks 栏覆盖**该任务真实存在的**风险点 + 每条 mitigation。简单任务风险点少则少列，不强凑数 | 覆盖任务所有真实风险点，每条有 mitigation；简单任务 1 条真风险也算满分 | 无 Risks 栏，或漏掉明显风险点，或为凑数编造 PRD 无关的风险 |
@@ -201,7 +202,8 @@ cat .github/workflows/<workflow文件名>.yml 2>/dev/null || echo "WORKFLOW_NOT_
 **死规则：**
 1. **阻塞问题必须逐轮减少**。若本轮新增问题 > 已解决问题，且新增的不是"PRD 真实漏覆盖"而是"锦上添花"，→ 这些新问题作废，不计入，直接按已覆盖判 APPROVED。
 2. **合同行数逐轮增长是发散信号**。简单任务（PRD ≤ 100 行）合同超过 ~150 行还在涨 → 说明在膨胀，Reviewer 应停止挑"更严谨"，按 PRD 覆盖度判分。
-3. **"可以更完整"不是阻塞问题**。只有"PRD 明确要求的某项，合同没覆盖"才是真阻塞。PRD 没要求的，合同有没有都不扣分（有了反而按维度 2 超覆盖扣分）。
+3. **"可以更完整"不是阻塞问题**。只有"PRD 明确要求的某项，合同没覆盖"才是真阻塞。PRD 没要求的，合同有没有都不扣分。
+4. **技术扩展不算超覆盖**——Proposer为让断言机器可执行而加的内容（jq-e/curl-f/时间窗口/error path）不属于范围蔓延，不按维度2扣分。只有验证了PRD完全没提的业务功能才算真正蔓延。
 
 ---
 
