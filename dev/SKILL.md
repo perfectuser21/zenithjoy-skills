@@ -36,7 +36,7 @@ trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, w
 curl -s "localhost:5221/api/brain/journeys"
 curl -s "localhost:5221/api/brain/issues?limit=20"
 curl -s -X POST "localhost:5221/api/brain/decisions/match" \
-  -H "Content-Type: application/json" -d "{\"query\": \"<用户描述关键词>\"}"
+  -H "Content-Type: application/json" -d "{\"prd\": \"<用户描述关键词>\"}"
 ```
 
 ### 路径 B（小改动）— 3 个 curl
@@ -44,7 +44,7 @@ curl -s -X POST "localhost:5221/api/brain/decisions/match" \
 ```bash
 curl -s "localhost:5221/api/brain/journeys"
 curl -s -X POST "localhost:5221/api/brain/decisions/match" \
-  -H "Content-Type: application/json" -d "{\"query\": \"<用户描述关键词>\"}"
+  -H "Content-Type: application/json" -d "{\"prd\": \"<用户描述关键词>\"}"
 curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
 ```
 
@@ -65,7 +65,7 @@ curl -s "localhost:5221/api/brain/harness/runs?limit=20"
 # 6-8: 问题 / 决策 / 技能
 curl -s "localhost:5221/api/brain/issues?limit=20"
 curl -s -X POST "localhost:5221/api/brain/decisions/match" \
-  -H "Content-Type: application/json" -d "{\"query\": \"<用户描述关键词>\"}"
+  -H "Content-Type: application/json" -d "{\"prd\": \"<用户描述关键词>\"}"
 curl -s "localhost:5221/api/brain/skills?limit=50"
 
 # 9: OKR 进度
@@ -285,9 +285,9 @@ PrepPRD 落地后，**立即执行**这条 bash 命令写 decision（不要生�
 ```bash
 # 把方括号内容换成实际值后执行
 # ⚠️ 字段名必须严格照搬：category（不能写 type），made_by（不能写 author 替代 made_by）
-curl -s -X POST localhost:5221/api/brain/decisions \
+curl -s -X POST localhost:5221/api/brain/strategic-decisions \
   -H "Content-Type: application/json" \
-  -d "{\"decision\":\"[修法摘要，如：修复 DOUYIN_COOKIES storageState 格式兼容]\",\"reason\":\"[根因，如：addCookies 期望数组但收到 storageState 对象]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"bug-fix\"}"
+  -d "{\"topic\":\"<bug 根因简述>\",\"decision\":\"[修法摘要，如：修复 DOUYIN_COOKIES storageState 格式兼容]\",\"reason\":\"[根因，如：addCookies 期望数组但收到 storageState 对象]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"bug-fix\"}"
 ```
 
 > **必填字段（名称不可改）**：`decision`、`reason`、`made_by="user"`、**`category="bug-fix"`**（Brain API 只认 `category`，写 `type` 会被忽略）。
@@ -309,9 +309,9 @@ PrepPRD 落地后，**立即执行**这条 bash 命令写 decision（不要生�
 ```bash
 # 把方括号内容换成实际值后执行
 # ⚠️ 字段名必须严格照搬：category（不能写 type），made_by（不能写 author 替代 made_by）
-curl -s -X POST localhost:5221/api/brain/decisions \
+curl -s -X POST localhost:5221/api/brain/strategic-decisions \
   -H "Content-Type: application/json" \
-  -d "{\"decision\":\"[改动摘要，如：给 journey_features 加 priority 字段 P0/P1/P2 默认 P1]\",\"reason\":\"[原因，如：harness 需要按优先级筛选 feature]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"small-change\"}"
+  -d "{\"topic\":\"<改动方向简述>\",\"decision\":\"[改动摘要，如：给 journey_features 加 priority 字段 P0/P1/P2 默认 P1]\",\"reason\":\"[原因，如：harness 需要按优先级筛选 feature]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"small-change\"}"
 ```
 
 > **必填字段（名称不可改）**：`decision`、`reason`、`made_by="user"`、**`category="small-change"`**（Brain API 只认 `category`，写 `type` 会被忽略）。
@@ -331,7 +331,7 @@ brainstorming → writing-plans → subagent-driven-development → finishing（
 
 Tier 1 固定默认：
 - brainstorming design approval → Research Subagent APPROVE（除非发现硬阻碍）
-- brainstorming clarifying question → Research Subagent 查代码 + `curl localhost:5221/api/brain/decisions/match` + `docs/learnings/` 回答
+- brainstorming clarifying question → Research Subagent 查代码 + `curl localhost:5221/api/brain/decisions/match` (payload `{"prd":"<关键词>"}`) + `docs/learnings/` 回答
 - brainstorming 启动前 → Research Subagent 跑 `bash packages/engine/skills/dev/scripts/enrich-decide.sh .raw-prd-<branch>.md` 判 thin
 - brainstorming spec 必须含「测试策略」段（E2E / integration / unit / trivial 四档，缺则 reject）
 - writing-plans → subagent-driven
@@ -357,9 +357,9 @@ PrepPRD 落地后，**立即执行**这条 bash 命令写 decision（不要生�
 ```bash
 # 把方括号内容换成实际值后执行
 # ⚠️ 字段名必须严格照搬：category（不能写 type），made_by（不能写 author 替代 made_by）
-curl -s -X POST localhost:5221/api/brain/decisions \
+curl -s -X POST localhost:5221/api/brain/strategic-decisions \
   -H "Content-Type: application/json" \
-  -d "{\"decision\":\"[功能方向摘要，如：立项快手图文+视频发布功能，2 WS dryrun 优先]\",\"reason\":\"[为什么做，如：快手 handler 只支持 image，video 无 dryrun 路径，与抖音对称设计]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"feature\"}"
+  -d "{\"topic\":\"<功能方向简述>\",\"decision\":\"[功能方向摘要，如：立项快手图文+视频发布功能，2 WS dryrun 优先]\",\"reason\":\"[为什么做，如：快手 handler 只支持 image，video 无 dryrun 路径，与抖音对称设计]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"feature\"}"
 ```
 
 > **必填字段（名称不可改）**：`decision`、`reason`、`made_by="user"`、**`category="feature"`**（Brain API 只认 `category`，写 `type` 会被忽略）。

@@ -4,10 +4,11 @@ description: |
   Harness Contract Proposer — Harness v5 GAN Layer 2a：
   读 PRD，GAN 对抗写 Golden Path 合同（每步含真实验证命令）；
   Reviewer APPROVED 后倒推拆 task-plan.json。
-version: 8.4.0
+version: 8.5.0
 created: 2026-04-08
 updated: 2026-06-01
 changelog:
+  - 8.5.0: Step 1.1 加推导结果输出规范（写入 contract-draft.md ## Response Schema 推导段）；自查 checklist 改为检查 contract-draft 而非 PRD
   - 8.4.0: 新增Step1.1读api/db/test registry技术上下文，消除Proposer技术真空写合同的根因
   - 8.3.0: B50 收敛模型 — 软化 ≥4 BEHAVIOR 硬底（覆盖4类标准场景是下限，上限由PRD定，禁padding）；新增 Step 1.5 精简纪律（修订轮先删后加、净变化趋近0、只补PRD真漏覆盖、scope不蔓延）。配合 reviewer v8.2 + brain B50 合同膨胀检测
   - 8.2.0: 修复自查 checklist 旧格式引用 — contract-dod-ws*.md → contract-dod.md（与 v8.0 单 Sprint 单文件格式对齐）
@@ -142,6 +143,26 @@ curl -sf "localhost:5221/api/brain/registry?type=test&limit=30" > /tmp/test_regi
 3. **测试风格统一** — 按test_registry现有文件写tests/（如已有tests用`describe+it`+`vitest`，新测试跟进）
 
 **Registry为空时**：跳过推导，按PRD字面定义，标`[NEW_PATTERN]`。
+
+**推导结果输出规范（必须执行）**：
+完成以上三个用途的推导后，必须在 contract-draft.md 的 Golden Path 段之前写入：
+```markdown
+## Response Schema（推导来源: [PRD字面/api_registry推导/NEW_PATTERN]）
+
+### Endpoint: <METHOD> <path>
+**Success (HTTP 200)**:
+```json
+{"field1": <type>, "field2": <type>}
+```
+- `field1` (type, 必填): 来源——[PRD明确/api_registry端点X的field1/NEW_PATTERN]
+- `field2` (type, 必填): ...
+**禁用字段名**: [...（来自api_registry现有端点的同义替换词）]
+**Error (HTTP 4xx)**:
+```json
+{"error": "<string>"}
+```
+```
+若 PRD 无 HTTP 响应（纯内部改动/DB迁移），写 `N/A — 任务无 HTTP 响应`，Reviewer 第6维自动满分。
 
 ---
 
@@ -671,10 +692,10 @@ PRD `## Response Schema` 段定义的字段名（key 字面值）是**不可改�
 
 写完 contract-dod.md 前 proposer **必须自查**：
 
-1. **提取 PRD response 字段名** → grep 出 `## Response Schema` 段的字面 key 名（如 `result`, `operation`, `error`）
+1. **提取 contract-draft.md Response Schema 推导段字段名** → grep 出 contract-draft.md 中 `## Response Schema` 推导段的字面 key 名（如 `result`, `operation`, `error`）
 2. **提取 contract jq -e 字段名** → grep 出 contract-dod.md 里 `jq -e '.<key>'` 的字面 key 名
-3. **断言**：contract keys 集合 == PRD keys 集合（字面相等）
-4. **断言**：PRD 禁用列表里的字段名 **绝对不在** contract 任何 jq -e 命令的正向断言里出现（只能在反向 `! has(...)` 检查里）
+3. **断言**：contract keys 集合 == contract-draft.md Response Schema 推导段 keys 集合（字面相等）
+4. **断言**：contract-draft.md Response Schema 推导段禁用列表里的字段名 **绝对不在** contract 任何 jq -e 命令的正向断言里出现（只能在反向 `! has(...)` 检查里）
 5. **断言（v7.6 新加 — Bug 9）**：`grep -c '^- \[ \] \[BEHAVIOR\]' contract-dod.md` ≥ 4。少于 4 → contract 作废，按 Step 2b 模板补齐到 ≥ 4 条不同场景（schema 字段 + keys 完整性 + 禁用字段反向 + error path 至少各 1）
 6. **假绿自查（v7.12 新加 — Bug 10）**：对每条 `[BEHAVIOR]` 命令，心想"如果对应代码**一行都没写**，这条命令会 FAIL 吗？"。答案是 YES → 真红，合格；答案是 NO（mkdir/touch/health check/404-acceptable 都能通过）→ **假绿，必须改写**
 

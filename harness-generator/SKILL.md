@@ -5,10 +5,11 @@ description: |
   读取 GAN 对抗已批准的 contract-draft.md + tests/*.test.ts + contract-dod.md，按 TDD 纪律两次 commit（commit 1 = 测试 Red / commit 2 = 实现 Green）。
   融入 4 个 superpowers：test-driven-development / verification-before-completion / systematic-debugging / requesting-code-review。
   CONTRACT IS LAW：合同里有的全实现，合同外一字不加；测试文件从合同原样复制，commit 1 后不可修改（CI 强校验）。一个 Sprint = 一个 Generator = 一个 PR。
-version: 7.2.0
+version: 7.3.0
 created: 2026-04-08
-updated: 2026-05-30
+updated: 2026-06-01
 changelog:
+  - 7.3.0: Step 6.5 加 localhost→host.docker.internal 替换逻辑（与 Evaluator 镜像，修复容器内 Brain API BEHAVIOR 命令必然超时 FAIL 的问题）
   - 7.2.0: 修 Bug 5 — 读合同文件名从 sprint-contract.md 改为 contract-draft.md（v8.x reviewer 不再做 cp 步骤）
   - 7.1.0: Step 6.5 补 windows_cloud 例外说明 — [BEHAVIOR] 必须 bash-executable；PowerShell 只在 contract-draft.md ## E2E 验收 区块
   - 7.0.0: 移除 Workstream 拆分 — 对齐 Anthropic 官方 v2 Harness 设计（一个 Sprint = 一个 Generator = 一个 PR）。删除 WORKSTREAM_INDEX/WORKSTREAM_COUNT 必要参数约束；测试目录从 tests/ws1/ 改为 tests/；DoD 文件从 contract-dod-ws1.md 改为 contract-dod.md；分支命名去掉 ws 后缀；移除多 ws 并行 rebase 说明
@@ -288,6 +289,11 @@ echo "[contract-self-verify] 提取 $CMD_COUNT 条 [BEHAVIOR] manual:bash 命令
 PASS_COUNT=0
 FAIL_LOG=""
 while IFS= read -r cmd; do
+  # 容器内 localhost→host.docker.internal 替换（与 Evaluator 逻辑镜像）
+  if [ -n "$BRAIN_URL" ] && [ "$BRAIN_URL" != "http://localhost:5221" ]; then
+    BRAIN_HOST_PORT=$(echo "$BRAIN_URL" | sed "s|http://||")
+    cmd=$(echo "$cmd" | sed "s|localhost:5221|$BRAIN_HOST_PORT|g")
+  fi
   echo "[contract-self-verify] 跑: $cmd"
   if bash -c "$cmd" 2>&1; then
     PASS_COUNT=$((PASS_COUNT + 1))
@@ -313,6 +319,7 @@ echo "✅ Contract 自验全过，可以 push"
 ```
 
 **核心规则**：
+- 注意：替换逻辑与 Evaluator Step A-2 完全镜像，保证 Generator 自验环境与 Evaluator 执行环境行为一致。
 - generator 自验跟 evaluator 跑同一套 manual:bash 命令——所以"自验过 = evaluator 也会过"（除了环境差异）
 - 自验失败 → 自修代码（不改 contract）
 - 自修后重新跑 Step 6.5 直到全过
