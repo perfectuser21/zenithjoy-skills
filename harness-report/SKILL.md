@@ -6,10 +6,11 @@ description: |
   → 更新Notion Feature Registry → 飞书通知 → 写本地harness-report.md备份。
   Phase B（Sprint状态同步）：写本地Brain DB → 同步8个Notion DB（API/DB Schema/Tests/Features/Journey/Steps等）→ git commit。
   由 harness-evaluator PASS 后调用；也可手动触发补同步。
-version: 6.0.0
+version: 6.1.0
 created: 2026-04-08
-updated: 2026-05-30
+updated: 2026-06-01
 changelog:
+  - 6.1.0: 新增Step6全量Registry回写+Step7结构化Learning+Step8 index.html可视化；截图路径统一到SPRINT_DIR/screenshots/
   - 6.0.0: 合并 harness-sprint-state → 统一为"交付报告+状态同步"单一 skill，删除独立的 harness-sprint-state skill
   - 5.1.0: 移除 Step 2.5b 多 WS 扫描逻辑 — 改为单 Sprint 直接创建 Notion Task
   - 5.0.0: 6步完整交付 — 回写Brain任务状态 + Dashboard + Notion AI Notes + Feature Registry + 飞书 + 本地备份
@@ -74,6 +75,7 @@ echo "✅ Step 1: Brain 任务状态已回写 completed"
 ### Step 2: 更新中台 Dashboard
 
 ```bash
+mkdir -p "$SPRINT_DIR/screenshots"
 curl -X POST "localhost:5221/api/brain/harness/complete" \
   -H "Content-Type: application/json" \
   -d "{
@@ -218,13 +220,236 @@ echo "✅ Step 6: harness-report.md 已写入"
 
 ---
 
+### Step 7: 全量回写 Registry（闭环）
+
+```bash
+# 提取 API endpoints 并写 registry
+if [ -f "${SPRINT_DIR}/contract-draft.md" ]; then
+  grep -oE '(GET|POST|PUT|DELETE|PATCH) /[a-zA-Z0-9/_:-]+' "${SPRINT_DIR}/contract-draft.md" | while read -r METHOD PATH_; do
+    ENDPOINT="${METHOD} ${PATH_}"
+    PAYLOAD=$(jq -n \
+      --arg type "api" \
+      --arg status "done" \
+      --arg endpoint "$ENDPOINT" \
+      --arg sprint_dir "$SPRINT_DIR" \
+      --arg pr_url "${PR_URL:-}" \
+      '{"type":$type,"status":$status,"endpoint":$endpoint,"metadata":{"sprint_dir":$sprint_dir,"pr_url":$pr_url}}')
+    curl -s -X POST "localhost:5221/api/brain/registry" \
+      -H "Content-Type: application/json" \
+      -d "$PAYLOAD" >/dev/null 2>&1 || echo "WARN: registry 写入失败（$ENDPOINT）"
+  done
+  echo "✅ Step 7a: API endpoints 已回写 Registry"
+else
+  echo "WARN: contract-draft.md 不存在，跳过 API registry"
+fi
+
+# 提取 DB 表名并写 registry
+if [ -f "${SPRINT_DIR}/sprint-prd.md" ]; then
+  grep -oE 'Table: [a-zA-Z_]+' "${SPRINT_DIR}/sprint-prd.md" | awk '{print $2}' | while read -r TABLE; do
+    PAYLOAD=$(jq -n \
+      --arg type "db_schema" \
+      --arg status "done" \
+      --arg table "$TABLE" \
+      --arg sprint_dir "$SPRINT_DIR" \
+      --arg pr_url "${PR_URL:-}" \
+      '{"type":$type,"status":$status,"table":$table,"metadata":{"sprint_dir":$sprint_dir,"pr_url":$pr_url}}')
+    curl -s -X POST "localhost:5221/api/brain/registry" \
+      -H "Content-Type: application/json" \
+      -d "$PAYLOAD" >/dev/null 2>&1 || echo "WARN: registry 写入失败（table: $TABLE）"
+  done
+  echo "✅ Step 7b: DB 表名已回写 Registry"
+else
+  echo "WARN: sprint-prd.md 不存在，跳过 DB schema registry"
+fi
+
+# 提取测试文件并写 registry
+if [ -d "${SPRINT_DIR}/tests" ]; then
+  find "${SPRINT_DIR}/tests" -name "*.test.ts" -o -name "*.spec.ts" | while read -r TEST_FILE; do
+    PAYLOAD=$(jq -n \
+      --arg type "test" \
+      --arg status "done" \
+      --arg file "$TEST_FILE" \
+      --arg sprint_dir "$SPRINT_DIR" \
+      --arg pr_url "${PR_URL:-}" \
+      '{"type":$type,"status":$status,"file":$file,"metadata":{"sprint_dir":$sprint_dir,"pr_url":$pr_url}}')
+    curl -s -X POST "localhost:5221/api/brain/registry" \
+      -H "Content-Type: application/json" \
+      -d "$PAYLOAD" >/dev/null 2>&1 || echo "WARN: registry 写入失败（test: $TEST_FILE）"
+  done
+  echo "✅ Step 7c: 测试文件已回写 Registry"
+else
+  echo "WARN: ${SPRINT_DIR}/tests 目录不存在，跳过 test registry"
+fi
+```
+
+---
+
+### Step 8: 生成结构化 Learning
+
+```bash
+# 统计 GAN 轮次和 Evaluator fix 次数
+GAN_ROUNDS=$(ls "${SPRINT_DIR}/eval-round-"*.md 2>/dev/null | wc -l | tr -d ' ')
+EVAL_FIX_COUNT=$GAN_ROUNDS
+SPRINT_NAME=$(basename "$SPRINT_DIR")
+COMPLETED_AT_SHORT=$(TZ=Asia/Shanghai date '+%m%d%H%M')
+
+cat > "${SPRINT_DIR}/learning.md" << LEARNING_EOF
+# Learning — ${FEATURE_NAME}
+
+## 运行指标
+
+- GAN 轮次：${GAN_ROUNDS}
+- Evaluator Fix 次数：${EVAL_FIX_COUNT}
+- PR：${PR_URL}
+- Sprint Dir：${SPRINT_DIR}
+
+## 发现的问题
+
+### [PROMPT] Prompt 类问题
+
+- （无 / 填写本次遇到的 prompt 设计问题）
+
+### [BUG] 代码缺陷
+
+- （无 / 填写本次修复的 bug）
+
+### [INFRA] 基础设施问题
+
+- （无 / 填写本次遇到的 CI/环境/工具链问题）
+
+### [DESIGN] 设计缺陷
+
+- （无 / 填写本次发现的架构或设计问题）
+
+## 下次预防清单
+
+- [ ] 检查 contract-draft.md 格式是否符合 evaluator 预期
+- [ ] 确认 DoD 所有 [BEHAVIOR] 条目有对应测试
+- [ ] GAN 轮次 > 2 时复盘 evaluator prompt 是否过严
+LEARNING_EOF
+echo "✅ Step 8a: learning.md 已生成到 ${SPRINT_DIR}/learning.md"
+
+# 复制到 docs/learnings/ 永久保留
+REPO_ROOT=$(git -C "$SPRINT_DIR" rev-parse --show-toplevel 2>/dev/null || echo "")
+if [ -n "$REPO_ROOT" ]; then
+  mkdir -p "${REPO_ROOT}/docs/learnings"
+  LEARNING_DEST="${REPO_ROOT}/docs/learnings/cp-${COMPLETED_AT_SHORT}-${SPRINT_NAME}.md"
+  cp "${SPRINT_DIR}/learning.md" "$LEARNING_DEST"
+  echo "✅ Step 8b: learning.md 已复制到 $LEARNING_DEST"
+else
+  echo "WARN: 无法定位 git 根目录，跳过 docs/learnings 复制"
+fi
+```
+
+---
+
+### Step 9: 生成 index.html（单文件可视化页面）
+
+```bash
+SPRINT_NAME=$(basename "$SPRINT_DIR")
+
+node -e "
+const fs = require('fs');
+const path = require('path');
+
+const sprintDir = process.env.SPRINT_DIR || '$SPRINT_DIR';
+const sprintName = path.basename(sprintDir);
+const prUrl = process.env.PR_URL || '$PR_URL';
+const featureName = process.env.FEATURE_NAME || '$FEATURE_NAME';
+
+function readMd(name) {
+  const p = path.join(sprintDir, name);
+  if (!fs.existsSync(p)) return null;
+  return fs.readFileSync(p, 'utf8');
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+const docs = [
+  { id: 'prep-prd', label: 'PrepPRD', file: 'prep-prd.md' },
+  { id: 'sprint-prd', label: 'PRD', file: 'sprint-prd.md' },
+  { id: 'contract', label: 'D-Contract', file: 'contract-draft.md' },
+  { id: 'dod', label: 'DOD', file: 'dod.md' },
+  { id: 'report', label: 'Report', file: 'harness-report.md' },
+  { id: 'learning', label: 'Learning', file: 'learning.md' },
+];
+
+// 截图 base64
+const screenshotDir = path.join(sprintDir, 'screenshots');
+let screenshotHtml = '';
+if (fs.existsSync(screenshotDir)) {
+  const pngs = fs.readdirSync(screenshotDir).filter(f => f.endsWith('.png'));
+  for (const png of pngs) {
+    const data = fs.readFileSync(path.join(screenshotDir, png));
+    const b64 = data.toString('base64');
+    screenshotHtml += \`<div class=\"screenshot\"><p>\${escapeHtml(png)}</p><img src=\"data:image/png;base64,\${b64}\" style=\"max-width:100%;\"/></div>\`;
+  }
+}
+
+const navItems = docs.map(d => \`<li><a href=\"#\" onclick=\"show('\${d.id}');return false;\">\${d.label}</a></li>\`).join('');
+const sections = docs.map(d => {
+  const content = readMd(d.file);
+  const body = content ? \`<pre style=\"white-space:pre-wrap;word-break:break-word;\">\${escapeHtml(content)}</pre>\` : '<p>（文件不存在）</p>';
+  return \`<div id=\"\${d.id}\" class=\"section\" style=\"display:none;\">\${body}</div>\`;
+}).join('');
+
+const html = \`<!DOCTYPE html>
+<html lang=\"zh\">
+<head><meta charset=\"UTF-8\"><title>\${escapeHtml(featureName)} — Sprint Report</title>
+<style>
+body{font-family:sans-serif;margin:0;display:flex;flex-direction:column;height:100vh;}
+header{background:#1a1a2e;color:#fff;padding:12px 24px;display:flex;align-items:center;gap:16px;}
+header a{color:#adf;text-decoration:none;}
+main{display:flex;flex:1;overflow:hidden;}
+nav{width:160px;background:#f4f4f4;border-right:1px solid #ddd;padding:16px 0;overflow-y:auto;}
+nav ul{list-style:none;margin:0;padding:0;}
+nav li a{display:block;padding:8px 16px;color:#333;text-decoration:none;}
+nav li a:hover{background:#e0e0e0;}
+.content{flex:1;overflow-y:auto;padding:24px;}
+.section pre{background:#f8f8f8;border:1px solid #ddd;padding:16px;border-radius:4px;}
+.screenshot{margin-bottom:16px;}
+</style>
+</head>
+<body>
+<header>
+  <span><strong>\${escapeHtml(featureName)}</strong> Sprint Report</span>
+  \${prUrl ? \`<a href=\"\${prUrl}\" target=\"_blank\">PR</a>\` : ''}
+</header>
+<main>
+<nav><ul>
+\${navItems}
+<li><a href=\"#\" onclick=\"show('screenshots');return false;\">截图</a></li>
+</ul></nav>
+<div class=\"content\">
+\${sections}
+<div id=\"screenshots\" class=\"section\" style=\"display:none;\">\${screenshotHtml || '<p>无截图</p>'}</div>
+</div>
+</main>
+<script>
+function show(id){document.querySelectorAll('.section').forEach(s=>s.style.display='none');var el=document.getElementById(id);if(el)el.style.display='block';}
+// 默认显示第一个有内容的 section
+var first = document.querySelector('.section');if(first)first.style.display='block';
+</script>
+</body></html>\`;
+
+fs.writeFileSync(path.join(sprintDir, 'index.html'), html, 'utf8');
+console.log('index.html generated');
+" && echo "✅ Step 9a: index.html 已生成到 ${SPRINT_DIR}/index.html"
+
+echo "📎 访问地址: http://38.23.47.81:9998/sprints/${SPRINT_NAME}/index.html"
+```
+
+---
+
 ### Phase A 完成标志
 
 ```bash
 cat > /workspace/.brain-result.json << BREOF
 {"verdict":"DONE","task_id":"$TASK_ID","report_path":"${SPRINT_DIR}/harness-report.md","pr_url":"$PR_URL","screenshots":$SCREENSHOTS}
 BREOF
-echo "[harness-report Phase A] 6步交付完成"
+echo "[harness-report Phase A] 9步交付完成"
 ```
 
 ---
