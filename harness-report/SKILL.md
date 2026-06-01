@@ -371,7 +371,7 @@ const docs = [
   { id: 'prep-prd', label: 'PrepPRD', file: 'prep-prd.md' },
   { id: 'sprint-prd', label: 'PRD', file: 'sprint-prd.md' },
   { id: 'contract', label: 'D-Contract', file: 'contract-draft.md' },
-  { id: 'dod', label: 'DOD', file: 'dod.md' },
+  { id: 'dod', label: 'DOD', file: 'contract-dod.md' },
   { id: 'report', label: 'Report', file: 'harness-report.md' },
   { id: 'learning', label: 'Learning', file: 'learning.md' },
 ];
