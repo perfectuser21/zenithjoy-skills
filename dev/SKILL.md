@@ -1,8 +1,8 @@
 ---
 name: dev
-version: 19.5.0
+version: 19.6.0
 updated: 2026-06-01
-description: Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:13个上下文源）→生成PrepPRD落地文件→用户确认→路由执行
+description: Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→比对已有Steps展示Golden Path草稿→用户确认→生成PrepPRD→路由执行
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 ---
 
@@ -48,7 +48,7 @@ curl -s -X POST "localhost:5221/api/brain/decisions/match" \
 curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
 ```
 
-### 路径 C（大功能）— 13 个上下文源
+### 路径 C（大功能）— 6 个上下文源
 
 ```bash
 # 1-3: Journey 体系
@@ -56,27 +56,18 @@ curl -s "localhost:5221/api/brain/journeys"
 curl -s "localhost:5221/api/brain/journey_steps"
 curl -s "localhost:5221/api/brain/journey_features?limit=50"
 
-# 4: 进行中任务（新增）
+# 4: 进行中任务
 curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
 
-# 5: Harness 历史 Run（initiative_runs，新增）
+# 5: Harness 历史 Run（initiative_runs）
 curl -s "localhost:5221/api/brain/harness/runs?limit=20"
 
-# 6-8: 问题 / 决策 / 技能
-curl -s "localhost:5221/api/brain/issues?limit=20"
+# 6: 历史决策匹配
 curl -s -X POST "localhost:5221/api/brain/decisions/match" \
   -H "Content-Type: application/json" -d "{\"prd\": \"<用户描述关键词>\"}"
-curl -s "localhost:5221/api/brain/skills?limit=50"
-
-# 9: OKR 进度
-curl -s "localhost:5221/api/brain/okr/tree"
-
-# 10-11: 当前状态 + 路线图（文件读取）
-# 读 ~/.claude/projects/-Users-administrator-perfect21-cecelia/memory/state.md
-# 读 ~/.claude/projects/-Users-administrator-perfect21-cecelia/memory/roadmap.md
 ```
 
-> 路径 C 不再查 api_registry / db_schema_registry / test_registry（已移到 Proposer 阶段）。
+> 路径 C 不查 api_registry / db_schema_registry / test_registry / issues / skills / OKR / state.md / roadmap.md（已移到 Proposer 阶段）。
 
 ---
 
@@ -84,29 +75,33 @@ curl -s "localhost:5221/api/brain/okr/tree"
 
 **PrepPRD 是唯一的人工确认点。**
 
-### ⚠️ 步骤 0（大功能前必做）：查旧 Sprint 找相似 Golden Path
+### ⚠️ 步骤 0（大功能前必做）：比对已有 Steps，展示 Golden Path 草稿
 
-在生成 PrepPRD 之前，先做这一步：
+在生成 PrepPRD 之前，必须完成这一步（基于路径 C 已查的 6 个源）：
 
-1. 查 Brain 历史任务：
-   ```bash
-   curl "localhost:5221/api/brain/tasks?limit=50"
+1. **确定本次 Journey**：从 `journeys` 结果里找用户描述对应的那条 Journey（语义匹配）。
+
+2. **过滤已有 Steps**：在 `journey_steps` 结果里，过滤属于该 Journey 且 `status = passing/done` 的步骤，列出"已完成"清单。
+
+3. **从用户描述提炼需要的步骤**：结合用户意图，从 `journey_steps` 结果里找出本次需要涉及（新建或推进）的步骤。
+
+4. **展示 Golden Path 草稿给用户确认**，格式：
+
    ```
-   过滤 `task_type = 'harness_initiative'`，在 `description` 字段里关键词匹配用户描述。
+   已有步骤（✅ 不动）：
+   1. ✅ [Step 名] — [当前状态]
+   2. ✅ [Step 名] — [当前状态]
 
-2. 同时 grep 历史 Sprint PRD：
-   ```bash
-   grep -r "Golden Path" sprints/*/sprint-prd.md
+   本次新增/推进（➕ 本 sprint 范围）：
+   3. ➕ [Step 名] — [计划厚度/目标]
+   4. ➕ [Step 名] — [计划厚度/目标]
+
+   建议 Golden Path（供用户确认）：
+   Step 1: [谁] [做了什么] → 系统 [响应] → [状态]
+   Step 2: ...
    ```
-   找标题或内容相似的。
 
-3. **找到** → 展示给用户："上次做 [X] 时 Golden Path 是这样，这次要一样吗？"
-   **没找到** → 主动问 3 个引导问题：
-   - 谁来操作？在哪个页面入口？
-   - 操作完后你期望看到什么结果？
-   - 如果失败了用户怎么知道、怎么恢复？
-
-4. 用户回答后补全隐含步骤，再给用户确认，再继续写 PrepPRD。
+5. **用户说"对"/"走"/"可以"后，才继续写 PrepPRD**。用户修改草稿时按修改版本重新展示，直到确认。
 
 ---
 
