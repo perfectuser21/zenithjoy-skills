@@ -4,10 +4,11 @@ description: |
   Harness Contract Proposer — Harness v5 GAN Layer 2a：
   读 PRD，GAN 对抗写 Golden Path 合同（每步含真实验证命令）；
   Reviewer APPROVED 后倒推拆 task-plan.json。
-version: 8.3.0
+version: 8.4.0
 created: 2026-04-08
-updated: 2026-05-30
+updated: 2026-06-01
 changelog:
+  - 8.4.0: 新增Step1.1读api/db/test registry技术上下文，消除Proposer技术真空写合同的根因
   - 8.3.0: B50 收敛模型 — 软化 ≥4 BEHAVIOR 硬底（覆盖4类标准场景是下限，上限由PRD定，禁padding）；新增 Step 1.5 精简纪律（修订轮先删后加、净变化趋近0、只补PRD真漏覆盖、scope不蔓延）。配合 reviewer v8.2 + brain B50 合同膨胀检测
   - 8.2.0: 修复自查 checklist 旧格式引用 — contract-dod-ws*.md → contract-dod.md（与 v8.0 单 Sprint 单文件格式对齐）
   - 8.1.0: windows_cloud workflow 内容审查强制规则 — 写任何 windows_cloud BEHAVIOR 引用 GHA workflow 之前，Proposer 必须用 Bash 工具 cat 读取 workflow 实际内容，做用户路径 1:1 映射检查，缺失步骤标注 [CI_GAP]，禁止将文件存在/大小/版本号检查算作业务行为验证；违反直接扣 DoD 第 1 维至 0 分
@@ -120,6 +121,27 @@ git show "origin/${PLANNER_BRANCH}:${SPRINT_DIR}/sprint-prd.md" 2>/dev/null || \
 ```bash
 JOURNEY_TYPE=$(grep -m1 "^## journey_type:" "${SPRINT_DIR}/sprint-prd.md" | sed 's/## journey_type: //' | tr -d ' ') || JOURNEY_TYPE="autonomous"
 ```
+
+---
+
+### Step 1.1: 读技术上下文（从registry推导现有规范）
+
+**Proposer负责What→How翻译，翻译必须基于现有系统约定。**
+
+```bash
+# 读取技术上下文，推导字段命名规范、DB约定、测试风格
+curl -sf "localhost:5221/api/brain/registry?type=api&limit=50" > /tmp/api_registry.json 2>/dev/null || echo '[]' > /tmp/api_registry.json
+curl -sf "localhost:5221/api/brain/registry?type=db_schema&limit=50" > /tmp/db_registry.json 2>/dev/null || echo '[]' > /tmp/db_registry.json
+curl -sf "localhost:5221/api/brain/registry?type=test&limit=30" > /tmp/test_registry.json 2>/dev/null || echo '[]' > /tmp/test_registry.json
+```
+
+**三个用途**：
+
+1. **Response Schema推导** — 从api_registry相似端点推导字段命名规范（如已有端点返回`initiative_id`而非`id`，新端点跟进）
+2. **DB字段名对齐** — 从db_schema找status值约定（如已有`queued/in_progress/completed`枚举，不自创新值）
+3. **测试风格统一** — 按test_registry现有文件写tests/（如已有tests用`describe+it`+`vitest`，新测试跟进）
+
+**Registry为空时**：跳过推导，按PRD字面定义，标`[NEW_PATTERN]`。
 
 ---
 
@@ -619,6 +641,16 @@ echo OK
 - `[FROM_PRD]` 标了但 PRD 里找不到对应文字 → REVISION
 - `[AI_ADDED]` 没附理由 → REVISION
 - 整个合同没有任何 `[AI_ADDED]` 标注但明显有 GAN 加的防造假逻辑 → REVISION（说明 proposer 没诚实标注）
+
+### Response Schema来源优先级
+
+写合同 Response Schema 字段名时，按以下优先级推导：
+
+1. **PRD明确指定** → 字面用（最高优先级，不可覆盖）
+2. **api_registry相似端点** → 推导用（Step 1.1读取，用于补充PRD未指定的字段命名风格）
+3. **都没有** → REST惯例 + 标`[NEW_PATTERN]`注释（说明这是新增模式）
+
+---
 
 ### ⚠️ 死规则（v7.5 — 修 Bug 8 proposer 漂 PRD 字段名）
 
