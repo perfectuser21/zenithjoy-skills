@@ -1,3 +1,8 @@
+## [2026-06-03] zenithjoy-deploy — removed
+**症状**: zenithjoy-deploy 和 dashboard-deploy 并存，功能重复
+**根因**: 应直接替换而不是新建
+**修改**: 删除 zenithjoy-deploy，由 dashboard-deploy 完全替代
+
 ## [2026-06-03] dashboard-deploy — created
 **症状**: zenithjoy-deploy skill 只覆盖 ZenithJoy，Cecelia dashboard 无 skill；旧 skill 缺公网验证步骤
 **根因**: 两个 dashboard 架构差异大，需统一入口；旧 skill 不含 Cloudflare tunnel ingress 知识
