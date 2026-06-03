@@ -1,3 +1,8 @@
+## [2026-06-03] dashboard-deploy — created
+**症状**: zenithjoy-deploy skill 只覆盖 ZenithJoy，Cecelia dashboard 无 skill；旧 skill 缺公网验证步骤
+**根因**: 两个 dashboard 架构差异大，需统一入口；旧 skill 不含 Cloudflare tunnel ingress 知识
+**修改**: 新建 dashboard-deploy 覆盖 ZenithJoy（rsync+HK VPS）和 Cecelia（本地 bind mount），含公网验证和 502 排查
+
 # ZenithJoy Skills Changelog
 
 每次通过 skill-creator 创建或更新 skill 后，在此文件顶部追加一条记录。

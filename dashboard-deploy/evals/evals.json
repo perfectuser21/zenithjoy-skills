@@ -1,0 +1,23 @@
+{
+  "skill_name": "dashboard-deploy",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "ZenithJoy 的 dashboard 挂了，用户访问 autopilot.zenjoymedia.media 显示 502，帮我重新部署一下",
+      "expected_output": "执行 ZenithJoy dashboard 部署：npm build → rsync → docker restart → curl 公网验证，最终确认 HTTP 200",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "我刚合并了 Cecelia dashboard 的一个 PR，需要把新版本部署上去",
+      "expected_output": "通过 Brain webhook 触发 Cecelia dashboard 部署，轮询状态直到 idle，然后验证 http://hk-vps:5211 返回 200",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "中台的前端没有更新，我看到的还是旧版本，你帮我推一下",
+      "expected_output": "识别为 ZenithJoy 中台，执行部署流程，特别注意 rsync 到正确目录（autopilot-dashboard/dist 而不是 repo/dist），重启容器后公网验证",
+      "files": []
+    }
+  ]
+}
