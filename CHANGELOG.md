@@ -1,3 +1,8 @@
+## [2026-06-08] wechat-uia-silent-send — created
+**症状**: 无文档说明微信后台 UIA 发送机制，每次开发重复踩坑（等待时间/版本限制/前台路径无效）
+**根因**: 经过多轮调试才摸清 `Invoke()` 后需 2s 等待、UIA SetValue+PostMessageW 才是唯一可靠路径
+**修改**: 新建 skill，记录静默发送架构、命令文件 IPC、成功验证方法、禁止使用的死路
+
 ## [2026-06-03] zenithjoy-deploy — removed
 **症状**: zenithjoy-deploy 和 dashboard-deploy 并存，功能重复
 **根因**: 应直接替换而不是新建
