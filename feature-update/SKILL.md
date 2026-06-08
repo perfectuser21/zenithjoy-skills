@@ -6,6 +6,8 @@ description: |
   feature 版本升级、feature 状态变更、feature 注册。
 ---
 
+> ⚠️ 本 skill 已废弃（2026-06-08）：feature registry 的角色由 abilities catalog 取代，改用 /api/brain/abilities。保留仅作历史。
+
 # Feature Update Skill
 
 ## Notion Feature Registry

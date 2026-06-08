@@ -5,6 +5,8 @@ description: Feature Map 可视化设计规范 - 展示系统关键功能的交�
 trigger: feature map、功能地图、架构可视化、系统地图
 ---
 
+> 注：feature 模型已升级为 ability（见 abilities 表），本可视化后续应改读 abilities catalog。
+
 # Feature Map 可视化设计规范
 
 展示系统关键功能的交互式地图，基于 Brain 架构图实战优化总结的最佳实践。
