@@ -1,3 +1,6 @@
+## [2026-06-08] dev/db-update/feature-update/feature-map — updated
+概念对齐到 Ability/Feature/GoldenPath 新模型；feature-update 标废弃。
+
 ## [2026-06-08] wechat-uia-silent-send — updated (eval iteration-1 + 2 bug fixes)
 **症状**: 实际使用中发现 2 个 bug：(1) skill 里写命令文件的示例用 `cmd /c echo` 遇中文乱码；(2) IPC 代码在 json.load 异常时 os.remove 不执行，带 BOM 的文件导致每 3 秒死循环刷屏
 **根因**: (1) `cmd /c echo` 无法处理中文/引号，正确做法是 pure ASCII JSON + `\uXXXX` 转义；(2) `os.remove` 放在 `json.load` 之后，parse 失败时文件未删，需改 `encoding='utf-8-sig'` + 读完立即删

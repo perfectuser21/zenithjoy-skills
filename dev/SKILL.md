@@ -55,6 +55,7 @@ curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
 curl -s "localhost:5221/api/brain/journeys"
 curl -s "localhost:5221/api/brain/journey_steps"
 curl -s "localhost:5221/api/brain/journey_features?limit=50"
+curl -s "localhost:5221/api/brain/abilities?limit=50"  # 新能力目录（迁移中，逐步取代上面两个）
 
 # 4: 进行中任务
 curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
@@ -306,7 +307,7 @@ PrepPRD 落地后，**立即执行**这条 bash 命令写 decision（不要生�
 # ⚠️ 字段名必须严格照搬：category（不能写 type），made_by（不能写 author 替代 made_by）
 curl -s -X POST localhost:5221/api/brain/strategic-decisions \
   -H "Content-Type: application/json" \
-  -d "{\"topic\":\"<改动方向简述>\",\"decision\":\"[改动摘要，如：给 journey_features 加 priority 字段 P0/P1/P2 默认 P1]\",\"reason\":\"[原因，如：harness 需要按优先级筛选 feature]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"small-change\"}"
+  -d "{\"topic\":\"<改动方向简述>\",\"decision\":\"[改动摘要，如：给 abilities 加 priority 字段 P0/P1/P2 默认 P1]\",\"reason\":\"[原因，如：harness 需要按优先级筛选 ability]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"small-change\"}"
 ```
 
 > **必填字段（名称不可改）**：`decision`、`reason`、`made_by="user"`、**`category="small-change"`**（Brain API 只认 `category`，写 `type` 会被忽略）。
@@ -404,21 +405,27 @@ Brain tick 自动 pick up，`curl localhost:5221/api/brain/tasks/<task_id>` 查�
 
 ## Walking Skeleton 概念（路径 C 参考）
 
-### 四层结构
+### 层级结构（新模型）
 
 ```
 Journey — 端到端价值闭环
-  └── Phase — 概念分组，不进 DB
-  └── Step  — 可追踪用户能力单元（journey_steps 表）
-        └── Feature — 一个可独立运行的自动化脚本（journey_features 表）
+  └── Phase — 阶段（发布/生成/剪辑），客户视角的流程分组
+        └── Ability — 客户价值 workflow（abilities 表 kind=ability）
+              · Feature — 使能件（登录/下载/cookie/保活，abilities 表 kind=feature）
+Golden Path — 横切：Ability+Feature 的有序组合（golden_path 表，按 scope 筛 + 按 order 排）
 ```
 
-Step 判断：能对客户说"我们现在支持 [Step名] 了"吗？
-- "我们支持抖音发布了" ✅ → Step
-- "我们支持视频格式了" ❌ → 太细，是 Feature
+- **Ability** = 客户为之而来的价值 workflow（发抖音视频）；判据：会不会写进客户交付清单
+- **Feature** = 使能件，客户不为它来（登录/下载/cookie/保活）
+- **Golden Path** = 客户真实流程 = Ability+Feature 有序组合
+
+Ability 判断：能对客户说"我们现在支持 [Ability名] 了"吗？
+- "我们支持抖音发布了" ✅ → Ability
+- "我们支持视频格式了" ❌ → 太细，是 Feature（使能件）
 - "我们支持发布了" ❌ → 太粗，是 Phase
 
-每条 Journey 5-20 个 Step。Step 可跨 Journey 共享。
+> ⚠️ 迁移中：旧表 journey_steps/journey_features 正逐步迁移到 abilities/golden_path。
+> 本阶段两套并存，新建优先走 abilities/golden_path。
 
 ### Journey Type
 
@@ -492,7 +499,7 @@ node ~/.claude/skills/dev/scripts/status.js --area "ZenithJoy"
 
 ### 语义查重
 
-用户提到 Step 名 → 先查 `journey_steps`，语义相近必须问用户确认，不直接新建。
+用户提到 Ability 名 → 先查 abilities catalog（`GET /api/brain/abilities`），语义相近必须复用引用，不直接新建。
 
 ### Planner 决策逻辑
 
