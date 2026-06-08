@@ -3,7 +3,10 @@ name: device-transfer
 description: |
   设备之间的数据传输决策。涉及以下任何场景时必须先读这个 skill：
   触发词：传文件、下载、上传、SCP、GitHub 拉代码、插件分发、COS、怎么把X传到Y、
-  设备之间传、速度慢、exit node、NAS 挂载、跨国传输。
+  设备之间传、速度慢、exit node、NAS 挂载、跨国传输、
+  下载失败、拉不下来、下载超慢、下载不了、timeout、Connection refused、timed out、
+  apt 慢、pip 慢、npm 慢、curl 失败、wget 失败、安装超时、网络超时、连不上、
+  GitHub releases 下载、从外网拿、国内访问不了。
 ---
 
 # 数据传输决策 Skill

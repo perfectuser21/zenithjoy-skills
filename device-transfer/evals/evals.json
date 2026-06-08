@@ -1,0 +1,26 @@
+{
+  "skill_name": "device-transfer",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "eval-github-clone",
+      "prompt": "我在西安 m4 上 git clone 一个 GitHub 仓库，一直 timeout，怎么搞？",
+      "expected_output": "给出具体可执行的命令，覆盖 exit node 方案和/或 git proxy 方案，区分两种方案的适用场景",
+      "files": []
+    },
+    {
+      "id": 2,
+      "eval_name": "eval-usm-to-xian",
+      "prompt": "我有一个 2GB 的模型文件在 us-mac，要传到 xian-m4，怎么传最快？",
+      "expected_output": "给出 COS 路径（us-mac 上传 + 西安 curl 下载），包含 exit node 关闭提醒和具体命令",
+      "files": []
+    },
+    {
+      "id": 3,
+      "eval_name": "eval-plugin-dist",
+      "prompt": "我想把一个 80MB 的插件从 m4 分发到 xian-pc，怎么弄？",
+      "expected_output": "识别为 B 类（插件分发），给出 COS 上传 + curl 下载的具体命令，包含 exit node 状态提醒",
+      "files": []
+    }
+  ]
+}

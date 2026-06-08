@@ -1,3 +1,8 @@
+## [2026-06-08] device-transfer — updated (eval iteration-1 + 触发词补全)
+**症状**: skill 存在但触发不稳定——Claude 在国内机器遇到下载失败/超时时不会自动调用，每次需要用户手动提醒
+**根因**: description 触发词只覆盖主动发起传输的场景，没有覆盖"中途遇到下载失败"的报错词；CLAUDE.md 也没有全局规则兜底
+**修改**: 补充 13 个触发词（下载失败、timeout、Connection refused、apt/pip/npm/curl 慢等）；CLAUDE.md 新增"国内外网下载失败"全局规则；新建 evals 3 条，iteration-1 结果 with_skill=12/12 (100%) vs without_skill=1/12 (8.3%)
+
 ## [2026-06-08] dev/db-update/feature-update/feature-map — updated
 概念对齐到 Ability/Feature/GoldenPath 新模型；feature-update 标废弃。
 
