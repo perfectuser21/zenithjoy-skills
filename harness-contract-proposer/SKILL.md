@@ -4,10 +4,11 @@ description: |
   Harness Contract Proposer — Harness v5 GAN Layer 2a：
   读 PRD，GAN 对抗写 Golden Path 合同（每步含真实验证命令）；
   Reviewer APPROVED 后倒推拆 task-plan.json。
-version: 8.5.0
+version: 9.0.0
 created: 2026-04-08
-updated: 2026-06-01
+updated: 2026-06-08
 changelog:
+  - 9.0.0: 第零纪律 — 每条 [BEHAVIOR] 必须 1:1 对应 Golden Path 步骤，在真实目标环境验证用户可观察输出，禁止 mock 任何 Golden Path 执行路径；target_environment 由 Golden Path 内容自动推断（新增 windows_wechat 路径 → xian-rog 真机）；自查 checklist 新增第 7 条 Golden Path 溯源；windows_wechat E2E 模板新增；禁止事项新增第 6 条
   - 8.5.0: Step 1.1 加推导结果输出规范（写入 contract-draft.md ## Response Schema 推导段）；自查 checklist 改为检查 contract-draft 而非 PRD
   - 8.4.0: 新增Step1.1读api/db/test registry技术上下文，消除Proposer技术真空写合同的根因
   - 8.3.0: B50 收敛模型 — 软化 ≥4 BEHAVIOR 硬底（覆盖4类标准场景是下限，上限由PRD定，禁padding）；新增 Step 1.5 精简纪律（修订轮先删后加、净变化趋近0、只补PRD真漏覆盖、scope不蔓延）。配合 reviewer v8.2 + brain B50 合同膨胀检测
@@ -58,6 +59,41 @@ GAN 收敛（Reviewer APPROVED）后输出第 4 件：
 - Reviewer 审合同是否覆盖 Golden Path 全程
 - Reviewer 审验证命令是否能造假通过（核心新增）
 - GAN 轮次无上限，直到 Reviewer APPROVED
+
+---
+
+## ⚡ 第零纪律：Golden Path → [BEHAVIOR] 1:1 映射（v9.0 核心原则）
+
+**每条 [BEHAVIOR] 必须来自 Golden Path 的一个具体步骤，验证用户可观察到的真实输出。**
+
+### 核心规则
+
+1. **1:1 映射**：每条 [BEHAVIOR] 必须能回答「这是 Golden Path 哪一步的用户可观察输出？」。答不出来 → 删掉这条，或在 Golden Path 里补一个对应步骤。
+
+2. **禁止 mock 任何 Golden Path 执行路径**：Golden Path 写"Agent 下载模块 → 激活运行"，[BEHAVIOR] 必须触发真实下载、确认进程启动——禁止用 `downloadImpl: async () => {}` 或 `fakeChild = new EventEmitter()` 代替。Golden Path 写"用户发微信消息 → 系统写飞书记录"，[BEHAVIOR] 必须真实触发微信消息并断言飞书表新增记录，禁止 `MOCK_WECHAT_VERSION=4.2.0.0` 注入假环境。
+
+3. **target_environment 由 Golden Path 内容自动推断**，无需提前枚举平台表：
+   - Golden Path 步骤含"微信"/"wechat_rpa"/"listen_chat"/"pyautogui"/"个人微信" → `windows_wechat`（xian-rog 自托管真机，含微信 4.1.8 + UIA）
+   - Golden Path 步骤含"抖音发布"/"快手"/"小红书"/"平台发布"/"Agent 安装包" → `windows_cloud`（GHA windows-latest）
+   - Golden Path 步骤含"Dashboard"/"前端页面"/"浏览器打开 Cecelia" → `mac_web`（Playwright 本机 localhost:5174）
+   - Golden Path 步骤含"Brain API"/"数据库"/"后台任务" → `local_api`
+
+### 典型反例（违反立即 FAIL，Reviewer 打回）
+
+| 反例 | 问题 | 正确做法 |
+|---|---|---|
+| `downloadImpl: async () => { called++ }` | mock 下载，真实 COS 下载未执行 | 真实下载包，确认文件存在且大小合理 |
+| `fakeChild = new EventEmitter()` | mock 进程激活，真实模块未启动 | 真实 fork 子进程，确认 pid 存在且 ready 事件触发 |
+| `MOCK_WECHAT_VERSION=4.2.0.0` | 注入假版本绕过真机检测 | windows_wechat runner 上读真实微信版本，不注入 MOCK_* |
+| `if [ $API_UP ]; then ...; else exit 0; fi` | API 不可用时静默 SKIP | API 不可用 = 环境未就绪 = FAIL，禁止 `exit 0` 兜底 |
+| 只检查文件大小/存在性 | 产出物存在 ≠ 行为正确 | 验证业务属性：内容字段/DB 记录/进程状态/UI 变化 |
+
+### 自查问题（写完每条 [BEHAVIOR] 必须先回答再继续）
+
+> 「如果对应的 Golden Path 这一步根本没有真实执行，这条 [BEHAVIOR] 命令会 FAIL 吗？」
+
+- **会 FAIL** → 合格
+- **不会 FAIL**（因为 mock/skip/exit 0 兜底）→ 不合格，必须改为真实验证
 
 ---
 
@@ -237,9 +273,10 @@ psql $DB -c "SELECT count(*) FROM brain_alerts WHERE task_id='$TASK_ID' AND crea
 ## E2E 验收（最终 final-e2e 跑 — 按 target_environment 选模板）
 
 **journey_type**: {autonomous|user_facing|dev_pipeline|agent_remote}
-**target_environment**: {local_api|mac_web|windows_cloud|linux_server|playground}
+**target_environment**: {local_api|mac_web|windows_cloud|windows_wechat|linux_server|playground}
 
 > **选模板规则**：看 PRD 末尾的 `target_environment` 字段，不是 `journey_type`。evaluator 模式B 按 `target_environment` SSH 派发到正确机器，合同 E2E 脚本必须与目标机器匹配。
+> `windows_wechat` 与 `windows_cloud` 的区别：前者走 xian-rog self-hosted runner（含真实微信 4.1.8），后者走 GHA windows-latest（无微信，适合 Agent 安装包/Publisher 测试）。
 
 ---
 
@@ -551,6 +588,53 @@ exit 0
 
 ---
 
+### target_environment = windows_wechat（微信 RPA — xian-rog 自托管真机，含微信 4.1.8 + UIA）
+
+> 适用：任何 Golden Path 步骤含"微信"/"listen_chat"/"wechat_rpa"/"pyautogui" 的 Sprint。
+> 机器：xian-rog self-hosted runner，标签 `wechat-capable`，微信版本已锁 4.1.8.107。
+> 触发：evaluator 调 `gh workflow run e2e-wechat-rpa.yml --repo perfectuser21/zenithjoy-workspace`。
+
+**核心禁止（违反 → Reviewer 打回）**：
+- ❌ `MOCK_WECHAT_VERSION=*` — 禁止注入假版本，必须读真实微信版本
+- ❌ `fakeChild = new EventEmitter()` — 禁止 mock 进程
+- ❌ 把此 target 写成 `windows_cloud`（GHA 无微信，BEHAVIOR 全部假绿）
+
+**E2E 验收步骤（写入 `sprints/.../e2e-verify.ps1`，在 xian-rog 执行）**：
+
+```powershell
+# final-e2e 验证脚本 — WeChat RPA（xian-rog 真机）
+# 前提：xian-rog 已安装微信 4.1.8.107，listen_chat.py 已就绪
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+$agentDir = "$env:LOCALAPPDATA\zenithjoy-agent"   # 或 sprint 实际路径
+$pythonExe = "$agentDir\python-embedded\python.exe"
+$listenChat = "$agentDir\wechat-rpa\listen_chat.py"
+
+# 1. dryrun 版本确认（读真实 listen_chat.py 版本，禁止 MOCK_WECHAT_VERSION）
+$ver = & $pythonExe $listenChat --dryrun-print-version
+if ($LASTEXITCODE -ne 0) { throw "FAIL: dryrun-print-version exit=$LASTEXITCODE" }
+Write-Host "listen_chat version: $ver"
+
+# 2. 真实微信进程检测（UIA 控件树验证，不注入假版本）
+$wechatProc = Get-Process -Name WeChat -ErrorAction SilentlyContinue
+if (-not $wechatProc) { throw "FAIL: 微信未运行，xian-rog 预置条件未满足" }
+
+# 3. 验证核心行为（按 Golden Path 步骤写真实断言）
+# 示例：listen_chat.py 监听到新消息后写 DB 记录
+$result = & $pythonExe $listenChat --e2e-smoke 2>&1
+if ($LASTEXITCODE -ne 0) { throw "FAIL: e2e-smoke exit=$LASTEXITCODE output=$result" }
+
+Write-Host "✅ windows_wechat E2E 验证通过"
+exit 0
+```
+
+**PASS 标准**：脚本 exit 0 + 真实微信版本读取成功 + 核心行为断言通过
+**FAIL 标准**：exit 1 OR 微信未运行 OR MOCK_* 注入（自动检测）
+**GHA workflow**：`.github/workflows/e2e-wechat-rpa.yml`（`workflow_dispatch` + self-hosted `wechat-capable`）
+
+---
+
 ### target_environment = linux_server（生产 API — SSH 到 hk-vps 执行）
 
 ```bash
@@ -698,6 +782,7 @@ PRD `## Response Schema` 段定义的字段名（key 字面值）是**不可改�
 4. **断言**：contract-draft.md Response Schema 推导段禁用列表里的字段名 **绝对不在** contract 任何 jq -e 命令的正向断言里出现（只能在反向 `! has(...)` 检查里）
 5. **断言（v7.6 新加 — Bug 9）**：`grep -c '^- \[ \] \[BEHAVIOR\]' contract-dod.md` ≥ 4。少于 4 → contract 作废，按 Step 2b 模板补齐到 ≥ 4 条不同场景（schema 字段 + keys 完整性 + 禁用字段反向 + error path 至少各 1）
 6. **假绿自查（v7.12 新加 — Bug 10）**：对每条 `[BEHAVIOR]` 命令，心想"如果对应代码**一行都没写**，这条命令会 FAIL 吗？"。答案是 YES → 真红，合格；答案是 NO（mkdir/touch/health check/404-acceptable 都能通过）→ **假绿，必须改写**
+7. **Golden Path 溯源（v9.0 新加）**：对每条 `[BEHAVIOR]`，回答「这是 Golden Path 哪一步的用户可观察输出？」——答不出来 → 删掉该条目或补对应 Golden Path 步骤；命令里含 `MOCK_*` 环境变量或 mock 对象 → 不合格；Golden Path 含微信操作但 `target_environment` 写 `windows_cloud` → 路由错误，必须改 `windows_wechat`
 
 任一断言 fail → contract 草案作废，**用 PRD 字面字段名 + ≥ 4 条 [BEHAVIOR] 重写**。
 
@@ -976,3 +1061,4 @@ Brain 读此文件获取结果，不解析 stdout。`$PROPOSE_BRANCH` 由 Brain 
 3. **autonomous BEHAVIOR 命令测 playground 服务器** → `cd playground && node server.js` 等只能出现在明确标注 `is_skeleton: true` 的 playground 训练 sprint 里；真实功能 sprint 必须测 `localhost:5221`（Brain）
 4. **user_facing 模式B E2E 不含 Playwright 断言** → 只有 curl 没有 `toBeVisible/toHaveText` 等 UI 断言 = 假 E2E，Reviewer 打回
 5. **禁止在 main 分支操作**
+6. **windows_wechat 路由错误**（v9.0）→ Golden Path 含微信操作但 `target_environment` 写成 `windows_cloud` → BEHAVIOR 在 GHA runner（无微信）上全部假绿，Reviewer 打回；反之亦然（非微信功能写 `windows_wechat` 也错）

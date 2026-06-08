@@ -6,10 +6,11 @@ description: |
   而非"防作弊测试框架"。
   核心职责：(1) spec 对齐用户真需求 (2) criteria 可量化无歧义 (3) happy + error + 边界场景全覆盖
   GAN 对抗**多轮**直到双方达成共识。无硬轮数上限，但 Reviewer 真找不出实质 spec/产品漏洞时必须 APPROVED。
-version: 8.4.0
+version: 9.0.0
 created: 2026-04-08
-updated: 2026-06-01
+updated: 2026-06-08
 changelog:
+  - 9.0.0: Golden Path 覆盖审查新增两条强制问题（[BEHAVIOR] 1:1 对应步骤 + 禁止 mock）；维度 7 扩展覆盖 windows_wechat（e2e-wechat-rpa.yml）；阈值规则和填值规则同步更新
   - 8.4.0: 第6维评分基准从「PRD Response Schema 段」改为「contract-draft.md Response Schema 推导段」；N/A 任务自动满分
   - 8.3.0: [跳过，与 8.2.0 合并发布]
   - 8.2.0: B50 收敛模型 — 维度2 scope_match_prd 改双向惩罚（超覆盖也扣分）；维度5 风险登记相对任务不强制≥2；新增 Step 2.5 收敛追踪段（阻塞问题逐轮减少+合同行数趋势+只补PRD真漏覆盖）。根治简单任务合同膨胀发散
@@ -73,6 +74,8 @@ Proposer 产出的 `contract-draft.md` 格式是 **Golden Path Steps**：每步 
 2. **每步验证命令真实可执行？** 不是占位符 `# TODO` 也不是无 jq -e 的弱断言
 3. **PRD 的每个 User Story → Golden Path 至少一个 step 对应？** 反之亦然（无多余 step）
 4. **Step 间数据流自洽？** 上一步输出格式 == 下一步输入格式
+5. **每条 [BEHAVIOR] 是否 1:1 对应 Golden Path 一个步骤？**（v9.0 强制）答不出对应步骤 → 第 1 维 DoD 机检性扣分（该条命令无真实 Golden Path 锚点，属假验证）
+6. **验证命令是否在真实 target_environment 执行，无 mock？**（v9.0 强制）检测信号：含 `MOCK_*` 环境变量、`EventEmitter`/`fakeChild`/`downloadImpl: async`、`exit 0` 兜底 → 第 1 维直接 0 分；Golden Path 含微信操作但 target_environment 写 `windows_cloud`（GHA 无微信）→ 第 7 维 0 分
 
 少一项 → 第 2 维 scope_match_prd 或第 4 维 internal_consistency 扣分。Golden Path 断链 → 直接 REVISION 不打分。
 
@@ -88,13 +91,13 @@ Proposer 产出的 `contract-draft.md` 格式是 **Golden Path Steps**：每步 
 | 4 | **内部一致** | 合同本身术语 / 字段 / 命令无矛盾 | 每个字段 / 命令只定义一次，引用用稳定 ID | 合同前后定义不一致，或命令在多处粘贴可能漂移 |
 | 5 | **风险登记（相对任务）** | Risks 栏覆盖**该任务真实存在的**风险点 + 每条 mitigation。简单任务风险点少则少列，不强凑数 | 覆盖任务所有真实风险点，每条有 mitigation；简单任务 1 条真风险也算满分 | 无 Risks 栏，或漏掉明显风险点，或为凑数编造 PRD 无关的风险 |
 | 6 | **Verification Oracle 完整性**（v6.1）| contract-draft.md 中 ## Response Schema 推导段（由 Proposer Step 1.1 写入）是否被 contract-dod.md codify 成 jq -e 可执行 oracle；PRD 无 HTTP 响应时（写了 N/A）本维度自动满分 10 | contract-draft.md 有 Response Schema 推导段，且每个字段对应至少1条 jq -e 验证；或任务明确标注 N/A | contract-draft.md 有 Response Schema 推导段但合同无任何 jq -e 字段验证；或推导段缺失但任务明显有 HTTP 响应 |
-| 7 | **CI Workflow 内容对齐**（windows_cloud/linux_server 专属）| 凡合同引用 GHA workflow 作为 BEHAVIOR 断言，Reviewer 必须用 Bash 工具读取该 workflow 文件内容，确认 workflow steps 与合同 BEHAVIOR 的用户操作语义一致 | Reviewer 读了 workflow 文件，每条 BEHAVIOR 都能指向 workflow 里的一个真实业务 step | Reviewer 未读 workflow 文件直接批准，或 workflow 里全是文件大小/存在性检查但合同声称验证了业务行为。**非 windows_cloud/linux_server 环境：填 10（N/A，无 GHA workflow 可审查）** |
+| 7 | **CI Workflow 内容对齐**（windows_cloud/windows_wechat/linux_server 专属）| 凡合同引用 GHA workflow 作为 BEHAVIOR 断言，Reviewer 必须用 Bash 工具读取该 workflow 文件内容，确认 workflow steps 与合同 BEHAVIOR 的用户操作语义一致；对 windows_wechat 额外确认：workflow 跑在 self-hosted `wechat-capable` runner，无 `MOCK_*` 注入 | Reviewer 读了 workflow 文件，每条 BEHAVIOR 都能指向 workflow 里的一个真实业务 step | Reviewer 未读 workflow 文件直接批准；workflow 里全是文件大小/存在性检查；windows_wechat 合同用了 MOCK_WECHAT_VERSION 或 fakeChild。**非 windows_cloud/windows_wechat/linux_server 环境：填 10（N/A，无 GHA workflow 可审查）** |
 
 ### 阈值规则（代码判，Reviewer 不主观综合）
 
 **单轮阈值（不随 round 衰减）**：
-- `target_environment` 为 `windows_cloud` 或 `linux_server` 时：**7 维全部 ≥ 7 → APPROVED**，任何一维 < 7 → REVISION
-- 其他 `target_environment`：全部 7 维 ≥ 7 → APPROVED，任何一维 < 7 → REVISION（ci_workflow_alignment 对非 windows 环境默认填 10，表示 N/A 直接通过）
+- `target_environment` 为 `windows_cloud`、`windows_wechat` 或 `linux_server` 时：**7 维全部 ≥ 7 → APPROVED**，任何一维 < 7 → REVISION
+- 其他 `target_environment`：全部 7 维 ≥ 7 → APPROVED，任何一维 < 7 → REVISION（ci_workflow_alignment 对非 windows/linux 环境默认填 10，表示 N/A 直接通过）
 
 **收敛兜底（无轮数硬 cap）**：
 不设 MAX_ROUNDS。`harness-gan.graph.js` 调 `detectConvergenceTrend(rubricHistory)` 看最近 3 轮 7 维度走势：
@@ -288,6 +291,7 @@ REVISION 时 feedback 必须含具体修改方向。
 
 **ci_workflow_alignment 填值规则**：
 - `target_environment` 为 `windows_cloud` 或 `linux_server`：正常审查 workflow 文件后打分（0-10）
+- `target_environment` 为 `windows_wechat`：审查 `e2e-wechat-rpa.yml`，额外检查 runner 标签是否含 `wechat-capable`、有无 `MOCK_*` 注入、有无真实微信进程检测步骤，后打分（0-10）
 - 其他环境（mac_web / local_api / playground 等）：直接填 `10`（N/A，无 GHA workflow 可审查）
 - **禁止省略此字段**：Brain `computeVerdictFromRubric` 要求全 7 维都有值，缺字段返回 null 降级到 LLM 文字判断
 
