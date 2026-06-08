@@ -1,3 +1,8 @@
+## [2026-06-08] wechat-uia-silent-send — updated (eval iteration-1 + 2 bug fixes)
+**症状**: 实际使用中发现 2 个 bug：(1) skill 里写命令文件的示例用 `cmd /c echo` 遇中文乱码；(2) IPC 代码在 json.load 异常时 os.remove 不执行，带 BOM 的文件导致每 3 秒死循环刷屏
+**根因**: (1) `cmd /c echo` 无法处理中文/引号，正确做法是 pure ASCII JSON + `\uXXXX` 转义；(2) `os.remove` 放在 `json.load` 之后，parse 失败时文件未删，需改 `encoding='utf-8-sig'` + 读完立即删
+**修改**: 修复写命令文件章节（改为 ASCII+`\uXXXX` 方案），修复 IPC 代码示例（utf-8-sig + 先删后解析），补充"联系人找不到时 dump 会话列表"调试指引；新建 evals 3 条，iteration-1 结果 with_skill=100% vs without_skill=75%
+
 ## [2026-06-08] wechat-uia-silent-send — created
 **症状**: 无文档说明微信后台 UIA 发送机制，每次开发重复踩坑（等待时间/版本限制/前台路径无效）
 **根因**: 经过多轮调试才摸清 `Invoke()` 后需 2s 等待、UIA SetValue+PostMessageW 才是唯一可靠路径

@@ -1,0 +1,26 @@
+{
+  "skill_name": "wechat-uia-silent-send",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "write-command-file-encoding",
+      "prompt": "我想从 Mac 上通过 SSH 远程触发 xian-rog 上的 listen_chat.py，让它主动给微信联系人'李芳'发一条消息'你好，有时间聊聊吗？'。应该怎么写这个命令文件？给我可以直接复制执行的 SSH 命令。",
+      "expected_output": "提供正确的命令文件写入方法：使用纯 ASCII JSON + \\uXXXX 转义，不使用 cmd /c echo，不使用 Out-File -Encoding UTF8（会产生 BOM）",
+      "files": []
+    },
+    {
+      "id": 2,
+      "eval_name": "bom-deadloop-debug",
+      "prompt": "xian-rog 上的 listen_chat 日志里一直循环报错：[主动发送] 指令处理异常: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)，每 3 秒一条，文件 C:\\Users\\Public\\zj-proactive-send.json 也一直存在没被删掉。怎么回事？怎么修？",
+      "expected_output": "解释 BOM 根因（PowerShell Out-File/WriteAllText 用了带 BOM 的 UTF-8），解释文件未删的原因（exception 在 os.remove 之前导致死循环），提供双重修法：1) 读文件改用 utf-8-sig，2) 读完立即删文件不管 parse 成不成功",
+      "files": []
+    },
+    {
+      "id": 3,
+      "eval_name": "contact-not-found-debug",
+      "prompt": "我用命令文件给'糊糊大老婆'发了条消息，listen_chat.py 把文件消费掉了，但日志里说'[主动发送] 找不到 糊糊大老婆'，消息没发出去。微信里我叫她糊糊大老婆，但 WeChat 里的备注名我不确定。怎么查清楚她在微信会话列表里的真实名字？",
+      "expected_output": "说明联系人 match 是子串匹配（列表内可见的最近会话）；提供 dump 所有会话名字的调试方法：在 listen_chat.py 里找不到时打 log 输出全部 ListItem 名字，并解释需要重启进程才生效",
+      "files": []
+    }
+  ]
+}
