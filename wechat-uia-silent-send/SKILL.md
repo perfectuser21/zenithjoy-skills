@@ -103,12 +103,24 @@ listen_chat.py 每个心跳周期检测到该文件后处理，处理完立即�
 
 ### 写入命令文件（macOS/Linux 远端触发）
 
+**关键：必须用 ASCII-only JSON + `\u` 转义，避免编码问题。**
+
+`cmd /c echo` 和 PowerShell `Out-File -Encoding UTF8` 均不可用：
+- `cmd /c echo` 遇到中文/引号直接乱码或失败
+- `Out-File -Encoding UTF8` 写 UTF-8 **带 BOM**，Python `json.load(encoding='utf-8')` 会报 `Unexpected UTF-8 BOM` 并死循环（文件未删，每次轮询重试）
+
+**正确写法：pure ASCII JSON，中文字符用 `\uXXXX` 转义**
+
 ```bash
-# 从 macOS 通过 SSH 写入
-ssh xian-rog 'cmd /c "echo {\"target\": \"默忆\", \"message\": \"测试\"} > C:\Users\Public\zj-proactive-send.json"'
+# 1. 查出目标联系人的 Unicode 码位（Python 一行）
+python3 -c "print([hex(ord(c)) for c in '默忆'])"
+# → ['0x9ed8', '0x5fc6']
+
+# 2. SSH 写入（Windows PowerShell + ASCII encoding）
+ssh xian-rog "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u9ed8\\u5fc6\\\",\\\"message\\\":\\\"\\u6d4b\\u8bd5\\\"}'; [System.IO.File]::WriteAllText('C:\\Users\\Public\\zj-proactive-send.json',\$j,[System.Text.Encoding]::ASCII)\""
 ```
 
-注意 bat/cmd 字符串里反斜杠不要双写：Windows 路径用单反斜杠。
+JSON 值里的 `\uXXXX` 是标准 JSON Unicode 转义，Python `json.load` 自动解码为中文字符。文件为纯 ASCII，无任何编码歧义。
 
 ### listen_chat.py 轮询中的处理逻辑（patch 位置）
 
@@ -118,9 +130,11 @@ ssh xian-rog 'cmd /c "echo {\"target\": \"默忆\", \"message\": \"测试\"} > C
 _psc = r"C:\Users\Public\zj-proactive-send.json"
 if os.path.exists(_psc):
     try:
-        with open(_psc, "r", encoding="utf-8") as _f:
-            _cmd = json.load(_f)
-        os.remove(_psc)
+        # utf-8-sig 兼容带 BOM 的 UTF-8（PowerShell 常见输出）
+        with open(_psc, "r", encoding="utf-8-sig") as _f:
+            _raw = _f.read()
+        os.remove(_psc)   # 读完立即删，parse 异常也不会死循环
+        _cmd = json.loads(_raw)
         _tgt, _msg = _cmd.get("target", ""), _cmd.get("message", "")
         if _tgt and _msg:
             _log(f"[主动发送] target={_tgt!r}")
@@ -178,6 +192,16 @@ if os.path.exists(_psc):
 **问题：消息发出但返回 False（ok=False）**
 → `get_value()` 抛异常被吞掉，`remaining=""` 误判为失败
 → 用日志确认：看 `AttachInput+Enter 成功` 还是 `Enter未清空`
+
+**问题：log 显示 `找不到 'xxx'`，联系人名字对不上**
+→ 会话列表里最多显示最近 N 条对话，不在列表内的联系人无法 match
+→ 在 `_psi is None` 分支前加一行 dump：
+```python
+_names = [(it.element_info.name or "").split("\n")[0]
+          for it in mw.descendants(control_type="ListItem")]
+_log(f"[主动发送] 会话列表: {_names}")
+```
+修改 listen_chat.py 后需重启进程才生效，然后写一条 target 故意不匹配的命令触发 dump，从日志读出真实名字。
 
 **问题：在 xian-rog 上 schtasks 进程看不到微信窗口**
 → schtasks 在 session 0，微信在 session 1（用户桌面），进程隔离
