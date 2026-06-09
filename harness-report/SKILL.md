@@ -235,7 +235,8 @@ DOD -/- ✅  FAIL: 无
 
 E2E 截图: ${SCREENSHOT_URLS:-（无截图）}
 Learning: （从本次 Sprint 提炼的洞察见 learning.md）
-DB sync: journey_steps · journey_features · api_registry ✅ · Notion pushed ✅
+DB sync: journey_features · api_registry ✅ · Notion pushed ✅
+# journey_steps 已停用（2026-06-09），Ability/Feature 统一用 journey_features
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 REPORT
 echo "✅ Step 6: harness-report.md 已写入（紧凑模板）"
@@ -285,21 +286,22 @@ else
   echo "WARN: sprint-prd.md 不存在，跳过 DB schema registry"
 fi
 
-# 提取测试文件并写 registry
+# 提取测试文件并写 registry（包含 content 字段，供 proposer Step 1.2 读取历史约束）
 if [ -d "${SPRINT_DIR}/tests" ]; then
   find "${SPRINT_DIR}/tests" -name "*.test.ts" -o -name "*.spec.ts" | while read -r TEST_FILE; do
     PAYLOAD=$(jq -n \
       --arg type "test" \
       --arg status "done" \
-      --arg file "$TEST_FILE" \
+      --arg name "$TEST_FILE" \
+      --arg content "$(cat "$TEST_FILE" 2>/dev/null || echo "")" \
       --arg sprint_dir "$SPRINT_DIR" \
       --arg pr_url "${PR_URL:-}" \
-      '{"type":$type,"status":$status,"file":$file,"metadata":{"sprint_dir":$sprint_dir,"pr_url":$pr_url}}')
+      '{"type":$type,"status":$status,"name":$name,"content":$content,"metadata":{"sprint_dir":$sprint_dir,"pr_url":$pr_url}}')
     curl -s -X POST "localhost:5221/api/brain/registry" \
       -H "Content-Type: application/json" \
       -d "$PAYLOAD" >/dev/null 2>&1 || echo "WARN: registry 写入失败（test: $TEST_FILE）"
   done
-  echo "✅ Step 7c: 测试文件已回写 Registry"
+  echo "✅ Step 7c: 测试文件已回写 Registry（含 content 字段）"
 else
   echo "WARN: ${SPRINT_DIR}/tests 目录不存在，跳过 test registry"
 fi
@@ -469,7 +471,8 @@ echo "📎 访问地址: http://38.23.47.81:9998/sprints/${SPRINT_NAME}/index.ht
 ### Phase A 完成标志
 
 ```bash
-cat > /workspace/.brain-result.json << BREOF
+WORKSPACE="${WORKSPACE_PATH:-${WORKSPACE:-/workspace}}"
+cat > "$WORKSPACE/.brain-result.json" << BREOF
 {"verdict":"DONE","task_id":"$TASK_ID","report_path":"${SPRINT_DIR}/harness-report.md","pr_url":"$PR_URL","screenshots":$SCREENSHOTS}
 BREOF
 echo "[harness-report Phase A] 9步交付完成"
@@ -490,7 +493,8 @@ echo "[harness-report Phase A] 9步交付完成"
 
 `db-update` skill 负责：
 1. 读取 `$SPRINT_DIR/sprint-prd.md` + `contract-draft.md` 解析本次产出
-2. 按 Output Template 写入 Brain DB（journey_steps / journey_features / api_registry / db_schema_registry / test_registry / skill_registry）
+2. 按 Output Template 写入 Brain DB（journey_features / api_registry / db_schema_registry / test_registry / skill_registry）
+   # journey_steps 已停用（2026-06-09），Ability/Feature 统一用 journey_features
 3. 触发 Notion push sync（Brain → Notion 自动同步）
 4. 更新 Journey Maturity
 

@@ -51,9 +51,11 @@ curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
 ### 路径 C（大功能）— 5 个上下文源
 
 ```bash
-# 1: Journey 体系（abilities 是唯一正表，journey_steps/journey_features 已废弃，禁止查询）
+# 1: Journey 体系（journey_features 是唯一正表，2026-06-09 abilities 表已删并合并）
+# 旧 /api/brain/abilities endpoint 已映射到 journey_features
+# 查询 Ability/Feature 必须用 journey_features，禁止查 abilities
 curl -s "localhost:5221/api/brain/journeys"
-curl -s "localhost:5221/api/brain/abilities?limit=50"
+curl -s "localhost:5221/api/brain/journey_features?limit=50"
 
 # 2: 进行中任务
 curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
@@ -80,9 +82,9 @@ curl -s -X POST "localhost:5221/api/brain/decisions/match" \
 
 1. **确定本次 Journey**：从 `journeys` 结果里找用户描述对应的那条 Journey（语义匹配）。
 
-2. **过滤已有 Abilities**：在 `abilities` 结果里，过滤属于该 Journey 且 `status = working/done` 的能力，列出"已完成"清单。
+2. **过滤已有 Abilities**：在 `journey_features` 结果里，过滤属于该 Journey 且 `status = working/done` 的能力，列出"已完成"清单。
 
-3. **从用户描述提炼本次需要的 Ability/Feature**：结合用户意图，从 `abilities` 结果里找出本次需要新建或推进的项。
+3. **从用户描述提炼本次需要的 Ability/Feature**：结合用户意图，从 `journey_features` 结果里找出本次需要新建或推进的项。
 
 4. **提炼 Golden Path**，补全用户没说出口的隐含步骤，格式：
 

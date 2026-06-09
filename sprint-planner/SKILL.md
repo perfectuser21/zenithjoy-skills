@@ -74,6 +74,14 @@ mkdir -p "$SPRINT_DIR"
 ## 不在范围内
 - <排除项1>
 - <排除项2>
+
+## journey_type
+<!-- auto_publish / wechat_rpa / autonomous / windows_wechat — 决定 Evaluator 执行路径 -->
+{JOURNEY_TYPE}
+
+## target_environment
+<!-- mac_web / windows_cloud / windows_wechat / local_api — 决定 E2E 运行环境 -->
+{TARGET_ENVIRONMENT}
 ```
 
 ### Phase 3: git commit + push
@@ -98,5 +106,5 @@ echo "✅ sprint-prd.md 已推送到 ${CURRENT_BRANCH}"
 **CRITICAL**: 必须在输出中包含 `branch` 字段，Brain 用它告诉 Proposer 去哪个分支读 sprint-prd.md。
 
 ```json
-{"verdict": "DONE", "prd_path": "sprints/sprint-prd.md", "branch": "<git branch --show-current 的值>"}
+{"verdict": "DONE", "prd_path": "${SPRINT_DIR}/sprint-prd.md", "branch": "<git branch --show-current 的值>"}
 ```

@@ -99,7 +99,7 @@ generator 写代码 + push PR
 
 1. **禁止把 vitest 输出 grep "passed" 当 PASS 证据**。vitest 是 generator 自写的测试，不是 contract oracle。即便看到 "Tests 8 passed" 也不能给 PASS——必须真跑合同里 [BEHAVIOR] 的 `Test:` 命令逐条校验
 2. **禁止以"代码看起来对"给 PASS**。不能读 server.js 源码看到 `app.get('/sum')` 就 PASS——必须真起 server + 真 curl + jq 校验响应
-3. **缺 [BEHAVIOR] Test: 命令直接 FAIL**。如果合同 contract-dod-ws{N}.md 没有 [BEHAVIOR] 条目（数 < 1），输出 `{"verdict": "FAIL", "feedback": "DoD 缺 [BEHAVIOR] 条目"}`；这是 contract 阶段没 codify oracle 的问题，evaluator 不能猜
+3. **缺 [BEHAVIOR] Test: 命令直接 FAIL**。如果合同 contract-dod.md 没有 [BEHAVIOR] 条目（数 < 1），输出 `{"verdict": "FAIL", "feedback": "DoD 缺 [BEHAVIOR] 条目"}`；这是 contract 阶段没 codify oracle 的问题，evaluator 不能猜
 4. **缺 jq -e 严匹配直接 FAIL**。如果 [BEHAVIOR] Test: 命令只 `curl -f /xxx` 不带 jq 校验 body shape，输出 `{"verdict":"FAIL","feedback":"命令缺 jq -e 严匹配，属弱 oracle，schema drift 无法被抓，拒绝通过；请在 contract-dod 里补充 jq -e 值校验命令后重新提交"}` — 禁止"容忍但报告"的中间态，GAN 已收敛后不存在"下轮 reviewer 再严化"的机会
 
 **特别针对 schema drift（W19/W20 根因）**：如果 PRD 写 response 必须 `{result, operation}` 但 generator 实际返 `{product}`：
@@ -510,6 +510,11 @@ BREOF
     fi
     ;;
 
+
+  windows_wechat)
+    echo "[evaluator] target=windows_wechat → 复用 windows_cloud E2E runner（wechat-capable self-hosted）"
+    TARGET_ENV="windows_cloud"
+    ;;&
 
   linux_server)
     # SSH 到 hk-vps 或 us-vps 执行 bash 脚本

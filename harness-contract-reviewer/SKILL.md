@@ -38,7 +38,7 @@ changelog:
 
 # /harness-contract-reviewer — Harness v6.0 Contract Reviewer
 
-**角色**: Evaluator（合同对齐审查员）
+**角色**: GAN Reviewer（合同对齐审查员）
 **对应 task_type**: `harness_contract_review`
 
 ---
