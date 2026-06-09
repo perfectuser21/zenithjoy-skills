@@ -6,10 +6,11 @@ description: |
   evaluator 在 CI 绿之后、PR merge 之前真启服务 + 跑 contract 的 manual:bash 命令验真行为。
   PASS → 允许 merge；FAIL → 不 merge，带反馈打回 Generator 在 PR 分支 fix loop（main 不变动）。
   模式 A 跑 contract-dod-ws*.md BEHAVIOR；模式 B（所有 ws merge 后）跑 final E2E Golden Path。
-version: 1.13.0
+version: 1.14.0
 created: 2026-05-06
-updated: 2026-06-01
+updated: 2026-06-10
 changelog:
+  - 1.14.0: windows_wechat E2E 路由 3 项修复 — P0: 删除 ;;&fallthrough，windows_wechat 合并入 OR pattern 触发 e2e-wechat-rpa.yml（xian-rog self-hosted）；P1: Step B-1 ps1 提取条件加入 windows_wechat；P2: B33 autonomous 检测排除 windows_cloud/windows_wechat（PowerShell E2E 不含 localhost:5221 是正常的）
   - 1.13.0: 截图路径从 ~/claude-output/ 改为 SPRINT_DIR/screenshots/（与 Report Step8 index.html 对齐）
   - 1.12.0: 修复 Mode A DoD 文件名 + 变量名双重不匹配 — Brain 注入的是 WORKSTREAM_INDEX（不是 WORKSTREAM_N）；proposer v8.0 写 contract-dod.md（不是 contract-dod-ws{N}.md）。Mode A 现在优先读 contract-dod.md，fallback contract-dod-ws{N}.md；引入 WS_NUM 统一解析两个变量名
   - 1.11.1: 修复空壳检测正则漏掉 npm test/npm ci 和 PowerShell 业务命令 — eval 中发现 BUSINESS_STEPS 正则用 "npm run" 但未含 "npm test"（GHA 常用写法）及 "npm ci"，导致用了 npm test 的真实业务 workflow 被误判为空壳；同步补充 PowerShell 业务模式（Set-Content/New-Item/ConvertTo-Json）防止 PS 脚本的 session 写入被漏判
@@ -77,9 +78,10 @@ generator 写代码 + push PR
 | `TASK_ID` | Brain 中当前 evaluate task 的 UUID |
 | `WORKSTREAM_INDEX` | 当前 workstream 编号（如 `1`），仅模式 A 用；旧变量名 `WORKSTREAM_N` 同时兼容 |
 | `JOURNEY_TYPE` | `user_facing` / `autonomous` / `dev_pipeline` / `agent_remote` |
-| `TARGET_ENV` | `mac_web` / `windows_cloud` / `linux_server` / `local_api` / `playground`（来自 PRD `target_environment` 字段）|
+| `TARGET_ENV` | `mac_web` / `windows_cloud` / `windows_wechat` / `linux_server` / `local_api` / `playground`（来自 PRD `target_environment` 字段；`windows_wechat` = xian-rog self-hosted，微信已登录；`windows_cloud` = GHA windows-latest 云端）|
 | `WORKSPACE_PATH` | 结果文件写入目录（mac_web host 执行时为 worktreePath，Docker 默认不注入，脚本 fallback `/workspace`）|
 | `WINDOWS_CLOUD_WORKFLOW` | GHA workflow 文件名（harness-initiative.graph.js 根据 base_repo 注入：zenithjoy → `agent-e2e-video.yml`，否则 `e2e-windows.yml`）|
+| `WECHAT_RPA_WORKFLOW` | windows_wechat 专用 GHA workflow 文件名（默认 `e2e-wechat-rpa.yml`，在 xian-rog self-hosted runner 上运行，微信已登录环境）|
 | `DB` | PostgreSQL 连接串，如 `postgresql://localhost/cecelia` |
 
 **注**：DoD 文件中的 `Test:` 命令若引用 `$TARGET_TASK_ID`，该 ID 来自 DoD 文件内部（合同写入时硬编码或由 Generator 写入），Evaluator 直接执行 DoD 中的命令原文，不需单独注入。
@@ -317,8 +319,8 @@ fi
 # 读取 target_environment（注入变量优先，fallback PRD 文件）
 TARGET_ENV="${TARGET_ENV:-local_api}"
 
-if [[ "$TARGET_ENV" == "windows_cloud" ]]; then
-  # windows_cloud：提取 ps1/powershell 代码块写到 sprint_dir/e2e-verify.ps1，供 GHA runner 使用
+if [[ "$TARGET_ENV" == "windows_cloud" || "$TARGET_ENV" == "windows_wechat" ]]; then
+  # windows_cloud / windows_wechat：提取 ps1/powershell 代码块写到 sprint_dir/e2e-verify.ps1，供 GHA runner 使用
   awk '/^## E2E 验收/{found=1} found && /^```(powershell|ps1)/{in_block=1; next} in_block && /^```/{in_block=0; exit} in_block{print}' \
     "$CONTRACT" > /tmp/e2e-verify.ps1
   if [[ ! -s /tmp/e2e-verify.ps1 ]]; then
@@ -328,7 +330,7 @@ if [[ "$TARGET_ENV" == "windows_cloud" ]]; then
   fi
   if [[ ! -s /tmp/e2e-verify.ps1 ]]; then
     cat > "$WORKSPACE/.brain-result.json" << BREOF
-{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"setup","log_excerpt":"windows_cloud 合同中未找到 ## E2E 验收 区块或区块内无 ps1/powershell 脚本"}
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"setup","log_excerpt":"windows_cloud/windows_wechat 合同中未找到 ## E2E 验收 区块或区块内无 ps1/powershell 脚本"}
 BREOF
     exit 0
   fi
@@ -376,7 +378,8 @@ BREOF
   fi
 else
   # 真实功能 sprint：autonomous journey_type 必须包含真实 Brain API URL
-  if [[ "$JOURNEY_TYPE" == "autonomous" ]]; then
+  # windows_cloud/windows_wechat 的 E2E 是 PowerShell，通过 GHA 运行，不直接调 localhost:5221，跳过此检测
+  if [[ "$JOURNEY_TYPE" == "autonomous" && "$TARGET_ENV" != "windows_cloud" && "$TARGET_ENV" != "windows_wechat" ]]; then
     if ! grep -qE "localhost:5221/api/brain/|psql.*cecelia" /tmp/e2e-verify.sh; then
       cat > "$WORKSPACE/.brain-result.json" << BREOF
 {"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"url_validation","log_excerpt":"autonomous sprint 的 E2E 脚本未测真实 Brain API (localhost:5221) 或 DB，检测到可能测了 playground 或未知目标，请改为 curl localhost:5221/api/brain/... 验证真实行为"}
@@ -434,17 +437,22 @@ case "$TARGET_ENV" in
     EXIT_CODE=${PIPESTATUS[0]}
     ;;
 
-  windows_cloud)
-    # GitHub Actions windows-latest runner（ZenithJoy Agent 等连公网产品）
-    # 每次触发都是全新干净 VM，免费（public repo），适合下载安装包/连云端 endpoint
+  windows_cloud|windows_wechat)
+    # GitHub Actions runner（ZenithJoy Agent 等连公网产品）
+    # windows_cloud  → GHA windows-latest 云端 runner（全新干净 VM）
+    # windows_wechat → xian-rog self-hosted runner（微信已登录的 Windows 环境）
     # 合同 e2e 脚本必须是 .ps1 格式（见 proposer windows_cloud 模板）
     # 等待结果：轮询 run 状态，最长 10 分钟
     # GITHUB_REPO 由 harness-initiative.graph.js 注入，base_repo 含 zenithjoy → perfectuser21/zenithjoy-workspace
     REPO="${GITHUB_REPO:-perfectuser21/cecelia}"
-    WORKFLOW="${WINDOWS_CLOUD_WORKFLOW:-e2e-windows.yml}"
+    if [[ "$TARGET_ENV" == "windows_wechat" ]]; then
+      WORKFLOW="${WECHAT_RPA_WORKFLOW:-e2e-wechat-rpa.yml}"
+    else
+      WORKFLOW="${WINDOWS_CLOUD_WORKFLOW:-e2e-windows.yml}"
+    fi
     # ── 前置检查：workflow 内容是否覆盖合同 BEHAVIOR（防假绿）──────────────
     # 读取 workflow 文件，对比合同 BEHAVIOR 断言
-    WORKFLOW_FILE=".github/workflows/${WINDOWS_CLOUD_WORKFLOW}"
+    WORKFLOW_FILE=".github/workflows/${WORKFLOW}"
     if [[ ! -f "$WORKFLOW_FILE" ]]; then
       cat > "$WORKSPACE/.brain-result.json" << BREOF
 {"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"workflow_content_check","log_excerpt":"workflow 文件不存在: $WORKFLOW_FILE — 合同 BEHAVIOR 断言引用了不存在的 workflow，请先创建该文件"}
@@ -468,7 +476,7 @@ BREOF
     if [[ "$BUSINESS_STEPS" -eq 0 && "$SHALLOW_ONLY" -gt 0 ]]; then
       WORKFLOW_PREVIEW=$(head -30 "$WORKFLOW_FILE" | tr '\n' '|')
       cat > "$WORKSPACE/.brain-result.json" << BREOF
-{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"workflow_content_check","log_excerpt":"workflow $WINDOWS_CLOUD_WORKFLOW 只包含文件存在/大小检查，不含任何业务逻辑验证（node/npx/vitest/playwright/curl）。合同 BEHAVIOR 断言无法通过此 workflow 真实验证。请更新 workflow 加入业务行为测试。workflow 前30行: $WORKFLOW_PREVIEW"}
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"workflow_content_check","log_excerpt":"workflow $WORKFLOW 只包含文件存在/大小检查，不含任何业务逻辑验证（node/npx/vitest/playwright/curl）。合同 BEHAVIOR 断言无法通过此 workflow 真实验证。请更新 workflow 加入业务行为测试。workflow 前30行: $WORKFLOW_PREVIEW"}
 BREOF
       exit 0
     fi
@@ -510,11 +518,6 @@ BREOF
     fi
     ;;
 
-
-  windows_wechat)
-    echo "[evaluator] target=windows_wechat → 复用 windows_cloud E2E runner（wechat-capable self-hosted）"
-    TARGET_ENV="windows_cloud"
-    ;;&
 
   linux_server)
     # SSH 到 hk-vps 或 us-vps 执行 bash 脚本
@@ -587,9 +590,13 @@ fi
 #### Step B-2.6: windows_cloud artifact 下载 + 视觉验证
 
 ```bash
-if [[ "$TARGET_ENV" == "windows_cloud" ]]; then
+if [[ "$TARGET_ENV" == "windows_cloud" || "$TARGET_ENV" == "windows_wechat" ]]; then
   REPO="${GITHUB_REPO:-perfectuser21/zenithjoy-workspace}"
-  WORKFLOW="${WINDOWS_CLOUD_WORKFLOW:-e2e-windows.yml}"
+  if [[ "$TARGET_ENV" == "windows_wechat" ]]; then
+    WORKFLOW="${WECHAT_RPA_WORKFLOW:-e2e-wechat-rpa.yml}"
+  else
+    WORKFLOW="${WINDOWS_CLOUD_WORKFLOW:-e2e-windows.yml}"
+  fi
 
   # 获取最新 run ID（触发后等 10s 再查，避免拿到上一次 run）
   RUN_ID=$(gh run list --repo "$REPO" --workflow "$WORKFLOW" \
