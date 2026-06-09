@@ -45,7 +45,7 @@ Phase B: Sprint 状态同步 → 把本次 Sprint 产出的 API/DB/Tests/Feature
 
 ```bash
 # TASK_ID、SPRINT_DIR、PROJECT_ID、FEATURE_ID、FEATURE_NAME、SUB_AREA、
-# PR_URL、TOTAL_COST、SCREENSHOTS 由 cecelia-run 通过 prompt 注入，直接使用
+# PR_URL、TOTAL_COST、SCREENSHOTS、HARNESS_INITIATIVE_ID 由 cecelia-run 通过 prompt 注入，直接使用
 FIRST_SCREENSHOT_URL=$(echo "$SCREENSHOTS" | jq -r '.[0] // ""')
 TOTAL_COST="${TOTAL_COST:-0}"
 SCREENSHOTS="${SCREENSHOTS:-[]}"
@@ -79,7 +79,7 @@ mkdir -p "$SPRINT_DIR/screenshots"
 curl -X POST "localhost:5221/api/brain/harness/complete" \
   -H "Content-Type: application/json" \
   -d "{
-    \"initiative_id\": \"$TASK_ID\",
+    \"initiative_id\": \"${HARNESS_INITIATIVE_ID:-$TASK_ID}\",
     \"sprint_dir\": \"$SPRINT_DIR\",
     \"pr_url\": \"$PR_URL\",
     \"screenshots\": $SCREENSHOTS
@@ -216,7 +216,9 @@ echo "✅ Step 5: 飞书通知已发送"
 ```bash
 DATE_SHORT=$(TZ=Asia/Shanghai date '+%Y-%m-%d')
 PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$' || echo "-")
-GAN_ROUNDS=$(ls "${SPRINT_DIR}/eval-round-"*.md 2>/dev/null | wc -l | tr -d ' ')
+GAN_ROUNDS=$(curl -s "localhost:5221/api/brain/tasks/$TASK_ID" 2>/dev/null \
+  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('payload',{}).get('gan_rounds',0))" \
+  2>/dev/null || echo 0)
 PHASES="A+B+C"
 
 cat > "${SPRINT_DIR}/harness-report.md" << REPORT
@@ -253,11 +255,12 @@ if [ -f "${SPRINT_DIR}/contract-draft.md" ]; then
     ENDPOINT="${METHOD} ${PATH_}"
     PAYLOAD=$(jq -n \
       --arg type "api" \
-      --arg status "done" \
+      --arg status "active" \
+      --arg name "$ENDPOINT" \
       --arg endpoint "$ENDPOINT" \
       --arg sprint_dir "$SPRINT_DIR" \
       --arg pr_url "${PR_URL:-}" \
-      '{"type":$type,"status":$status,"endpoint":$endpoint,"metadata":{"sprint_dir":$sprint_dir,"pr_url":$pr_url}}')
+      '{"type":$type,"status":$status,"name":$name,"endpoint":$endpoint,"metadata":{"sprint_dir":$sprint_dir,"pr_url":$pr_url}}')
     curl -s -X POST "localhost:5221/api/brain/registry" \
       -H "Content-Type: application/json" \
       -d "$PAYLOAD" >/dev/null 2>&1 || echo "WARN: registry 写入失败（$ENDPOINT）"
@@ -272,11 +275,12 @@ if [ -f "${SPRINT_DIR}/sprint-prd.md" ]; then
   grep -oE 'Table: [a-zA-Z_]+' "${SPRINT_DIR}/sprint-prd.md" | awk '{print $2}' | while read -r TABLE; do
     PAYLOAD=$(jq -n \
       --arg type "db_schema" \
-      --arg status "done" \
+      --arg status "active" \
+      --arg name "$TABLE" \
       --arg table "$TABLE" \
       --arg sprint_dir "$SPRINT_DIR" \
       --arg pr_url "${PR_URL:-}" \
-      '{"type":$type,"status":$status,"table":$table,"metadata":{"sprint_dir":$sprint_dir,"pr_url":$pr_url}}')
+      '{"type":$type,"status":$status,"name":$name,"table":$table,"metadata":{"sprint_dir":$sprint_dir,"pr_url":$pr_url}}')
     curl -s -X POST "localhost:5221/api/brain/registry" \
       -H "Content-Type: application/json" \
       -d "$PAYLOAD" >/dev/null 2>&1 || echo "WARN: registry 写入失败（table: $TABLE）"
@@ -291,7 +295,7 @@ if [ -d "${SPRINT_DIR}/tests" ]; then
   find "${SPRINT_DIR}/tests" -name "*.test.ts" -o -name "*.spec.ts" | while read -r TEST_FILE; do
     PAYLOAD=$(jq -n \
       --arg type "test" \
-      --arg status "done" \
+      --arg status "active" \
       --arg name "$TEST_FILE" \
       --arg content "$(cat "$TEST_FILE" 2>/dev/null || echo "")" \
       --arg sprint_dir "$SPRINT_DIR" \
@@ -313,7 +317,9 @@ fi
 
 ```bash
 # 统计 GAN 轮次和 Evaluator fix 次数
-GAN_ROUNDS=$(ls "${SPRINT_DIR}/eval-round-"*.md 2>/dev/null | wc -l | tr -d ' ')
+GAN_ROUNDS=$(curl -s "localhost:5221/api/brain/tasks/$TASK_ID" 2>/dev/null \
+  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('payload',{}).get('gan_rounds',0))" \
+  2>/dev/null || echo 0)
 EVAL_FIX_COUNT=$GAN_ROUNDS
 SPRINT_NAME=$(basename "$SPRINT_DIR")
 COMPLETED_AT_SHORT=$(TZ=Asia/Shanghai date '+%m%d%H%M')
