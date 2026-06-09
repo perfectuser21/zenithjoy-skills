@@ -1,8 +1,8 @@
 ---
 name: dev
-version: 19.6.0
-updated: 2026-06-01
-description: Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→比对已有Steps展示Golden Path草稿→用户确认→生成PrepPRD→路由执行
+version: 20.0.0
+updated: 2026-06-09
+description: Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→比对已有Steps展示Golden Path草稿→确认前置工作全部到位→用户确认PrepPRD→路由执行
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 ---
 
@@ -48,27 +48,25 @@ curl -s -X POST "localhost:5221/api/brain/decisions/match" \
 curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
 ```
 
-### 路径 C（大功能）— 6 个上下文源
+### 路径 C（大功能）— 5 个上下文源
 
 ```bash
-# 1-3: Journey 体系
+# 1: Journey 体系（abilities 是唯一正表，journey_steps/journey_features 已废弃，禁止查询）
 curl -s "localhost:5221/api/brain/journeys"
-curl -s "localhost:5221/api/brain/journey_steps"
-curl -s "localhost:5221/api/brain/journey_features?limit=50"
-curl -s "localhost:5221/api/brain/abilities?limit=50"  # 新能力目录（迁移中，逐步取代上面两个）
+curl -s "localhost:5221/api/brain/abilities?limit=50"
 
-# 4: 进行中任务
+# 2: 进行中任务
 curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
 
-# 5: Harness 历史 Run（initiative_runs）
+# 3: Harness 历史 Run
 curl -s "localhost:5221/api/brain/harness/runs?limit=20"
 
-# 6: 历史决策匹配
+# 4: 历史决策匹配
 curl -s -X POST "localhost:5221/api/brain/decisions/match" \
   -H "Content-Type: application/json" -d "{\"prd\": \"<用户描述关键词>\"}"
 ```
 
-> 路径 C 不查 api_registry / db_schema_registry / test_registry / issues / skills / OKR / state.md / roadmap.md（已移到 Proposer 阶段）。
+> 路径 C 不查 api_registry / db_schema_registry / test_registry / issues / skills / OKR（已移到 Proposer 阶段）。
 
 ---
 
@@ -76,64 +74,61 @@ curl -s -X POST "localhost:5221/api/brain/decisions/match" \
 
 **PrepPRD 是唯一的人工确认点。**
 
-### ⚠️ 步骤 0（大功能前必做）：比对已有 Steps，展示 Golden Path 草稿
+### ⚠️ 步骤 0（大功能前必做）：比对已有 Abilities，展示 Golden Path 草稿
 
-在生成 PrepPRD 之前，必须完成这一步（基于路径 C 已查的 6 个源）：
+在生成 PrepPRD 之前，必须完成这一步（基于路径 C 已查的 5 个源）：
 
 1. **确定本次 Journey**：从 `journeys` 结果里找用户描述对应的那条 Journey（语义匹配）。
 
-2. **过滤已有 Steps**：在 `journey_steps` 结果里，过滤属于该 Journey 且 `status = passing/done` 的步骤，列出"已完成"清单。
+2. **过滤已有 Abilities**：在 `abilities` 结果里，过滤属于该 Journey 且 `status = working/done` 的能力，列出"已完成"清单。
 
-3. **从用户描述提炼需要的步骤**：结合用户意图，从 `journey_steps` 结果里找出本次需要涉及（新建或推进）的步骤。
+3. **从用户描述提炼本次需要的 Ability/Feature**：结合用户意图，从 `abilities` 结果里找出本次需要新建或推进的项。
 
-4. **展示 Golden Path 草稿给用户确认**，格式：
+4. **提炼 Golden Path**，补全用户没说出口的隐含步骤，格式：
 
    ```
-   已有步骤（✅ 不动）：
-   1. ✅ [Step 名] — [当前状态]
-   2. ✅ [Step 名] — [当前状态]
+   已有（✅ 不动）：
+   - ✅ [Ability/Feature 名] — [当前状态]
 
    本次新增/推进（➕ 本 sprint 范围）：
-   3. ➕ [Step 名] — [计划厚度/目标]
-   4. ➕ [Step 名] — [计划厚度/目标]
+   - ➕ [Ability/Feature 名] — [计划厚度/目标]
 
-   建议 Golden Path（供用户确认）：
-   Step 1: [谁] [做了什么] → 系统 [响应] → [状态]
+   建议 Golden Path（用户视角，不写系统组件）：
+   [首次使用]
+   Step 1: [谁] [做了什么操作] → 系统 [响应] → [下一状态]
    Step 2: ...
+   [日常使用]
+   Step 1: ...
+   [出错/掉线后]
+   Step 1: [用户如何知道出错了] → [用户如何恢复]
    ```
 
-5. **用户说"对"/"走"/"可以"后，才继续写 PrepPRD**。用户修改草稿时按修改版本重新展示，直到确认。
+   提炼规则：
+   - 写"用户操作"，不写"系统组件"（❌ "建 check-health.js" ✅ "用户点'抖音登录'"）
+   - 必须覆盖异常场景：掉线了 → 用户怎么知道 → 用户怎么恢复
+
+5. **用户说"对"/"走"/"可以"后**，立即进入步骤 1（前置工作核对）。
 
 ---
 
-### ⚠️ 大功能必做：写 PrepPRD 之前先提炼 Golden Path
+### ⚠️ 步骤 1（大功能必做）：核对前置工作
 
-在步骤 0 完成后，提炼 Golden Path：
+**Golden Path 确认后、PrepPRD 写作前，必须完成此步。这是硬门槛。**
 
-**从用户描述里提炼 Golden Path，补全隐含步骤，展示给用户确认后再继续。**
+从 Golden Path 推断本次 sprint 需要哪些外部依赖，逐条核对：
 
-格式（逐步写，不跳过）：
-```
-[首次使用]
-Step 1: [谁] [做了什么操作] → 系统 [响应] → [下一状态]
-Step 2: ...
+| 前置类型 | 检查方式 | 未到位怎么办 |
+|---|---|---|
+| API Key / 凭据 | `source ~/.credentials/<service>.env` 能读到变量，或确认 GHA Secrets 名称已配 | 停下来问用户要 |
+| 用户本地脚本 | 路径存在且文件非空（`ls -la <path>`）| 让用户提供路径或上传到 repo |
+| 测试 fixture（视频/图片/数据）| 文件存在且大小合理（`ls -lh <path>`）| 让用户提供，或用 ffmpeg 合成最小合法素材 |
+| 外部服务接入 | API 端点、鉴权方式、示例 curl 已知 | 问用户要文档 |
 
-[日常使用]
-Step 1: ...
+**全部 ✅ 才继续写 PrepPRD。有任何一项 ❌ → 停下来明确告诉用户缺什么，拿到后再继续。**
 
-[出错/掉线后]
-Step 1: [用户如何知道出错了] → Step 2: [用户如何恢复]
-```
+> 唯一例外：用户主动说"只要 thin 骨架、不验真实行为" → 可继续，但 PrepPRD 验收标准里**禁止写** ffprobe / 真实 API 输出 / 真实文件等无法达到的条件，只能写 API schema / 服务启动 / 路由响应。
 
-提炼规则：
-- 写"用户操作"，不写"系统组件"
-  - ❌ "建 check-health.js，配置 GitHub Secrets"
-  - ✅ "管理员打开 Dashboard → 点'抖音登录' → 本地弹出 Chrome 到 creator 页"
-- 补全用户没说出口但一定存在的步骤（如"登录后自动抓 cookie 并同步"）
-- 必须覆盖**异常场景**：掉线了 → 用户怎么知道 → 用户怎么恢复
-- 用户描述里的每个隐含动作都要显式写出来
-
-**Golden Path 用户确认后，才能继续写 PrepPRD。**
+---
 
 ### Bug PrepPRD
 
@@ -147,7 +142,7 @@ Step 1: [用户如何知道出错了] → Step 2: [用户如何恢复]
 [基于上下文 + 代码推断]
 
 ## 关联上下文
-- 相关 Journey/Step：[如有]
+- 相关 Journey/Ability：[如有]
 - 相关 Issue：[Issue ID，如有]
 - 相关历史决策：[decisions 里有没有相关记录]
 
@@ -175,7 +170,7 @@ Step 1: [用户如何知道出错了] → Step 2: [用户如何恢复]
 [业务或技术原因]
 
 ## 关联上下文
-- 相关 Journey/Step/Feature：[如有]
+- 相关 Journey/Ability：[如有]
 - 相关历史决策：[decisions 里有没有相关记录]
 
 ## 影响范围
@@ -188,6 +183,8 @@ Step 1: [用户如何知道出错了] → Step 2: [用户如何恢复]
 
 ### 大功能 PrepPRD（Harness）
 
+> ⛔ 写之前必须完成步骤 1（前置工作核对），禁止在"前置工作"栏保留任何未确认的 `[ ]` 空白项。
+
 ```markdown
 # PrepPRD：[Journey 名] — [本次目标一句话]
 
@@ -197,16 +194,16 @@ Step 1: [用户如何知道出错了] → Step 2: [用户如何恢复]
 - [ ] 待讨论：[列出还不确定的事]
 
 ## Journey 当前状态
-- ✅ [Step 名] — [thin/medium/done]
-- 🔄 [Step 名] — [进行中]
-- ⬜ [Step 名] — [planned]
+- ✅ [Ability/Feature 名] — [thin/medium/done]
+- 🔄 [Ability/Feature 名] — [进行中]
+- ⬜ [Ability/Feature 名] — [planned]
 
 ## 本次要做的
 [用用户语言描述]
 
 ## Golden Path（用户操作流程，逐步，不跳过）
 
-> 这是唯一决定"做什么"的锚点。合同、WS 拆分、E2E 全部从这里派生。
+> 这是唯一决定"做什么"的锚点。合同、E2E 全部从这里派生。
 
 ### 首次使用
 1. [谁] [做了什么] → 系统 [响应] → [状态]
@@ -224,31 +221,33 @@ Step 1: [用户如何知道出错了] → Step 2: [用户如何恢复]
 ## 完成后用户能
 [用户可感知的变化，列举 1-3 条]
 
-## 涉及的脚本（Feature）
-- [脚本名]（新增 / 加厚 thin→medium）
+## 涉及的 Ability / Feature
+- [名称]（新增 / 加厚 thin→medium）
 
 ## 不包含
 - [本次不做的事]
 
-## 前置工作（实现开始前必须到位）
+## 前置工作（已逐项确认，无 TBD）
 
 ### 账号与登录
-- [ ] 需要登录：[平台/账号]
+- [x] [平台/账号] — [已登录 / 凭据在 ~/.credentials/xxx.env]
 
 ### API 与凭据
-- [ ] 需要：[API key / secret / token / 环境变量名]
+- [x] [API key 名] — [已在 ~/.credentials/xxx.env / GHA Secret: XXX_KEY]
 
-### E2E 测试账号（Harness Final E2E 必填）
-- [ ] 测试账号邮箱：[email]
-- [ ] 测试账号密码：[password 或 GHA secrets 名称]
-- [ ] 超管权限：[邮箱在 VITE_SUPER_ADMIN_EMAILS / 还是普通用户]
-- [ ] 登录方式：邮箱密码（better-auth）/ 其他
+### E2E 测试账号
+- [x] 测试账号邮箱：[email]
+- [x] 登录方式：[邮箱密码 / 扫码 / 其他]
+
+### 测试 Fixture
+- [x] [素材名] — [路径 / 已在 repo / ffmpeg 合成方法]
 
 ### 基础设施
-- [ ] 需要：[服务/端口/环境变量/GHA secrets 名称]
+- [x] [服务/端口] — [已就绪 / 启动命令]
 
-## 用户确认的成功标准
-- [可验证的条件]
+## 验收标准（Final E2E）
+- [ ] [可验证的条件，如：ffprobe 验证输出视频有视频流+音频流+时长>0]
+- [ ] CI 全绿
 ```
 
 ---
@@ -276,18 +275,15 @@ Step 1: [用户如何知道出错了] → Step 2: [用户如何恢复]
 
 ### 路径 A：Bug
 
-PrepPRD 落地后，**立即执行**这条 bash 命令写 decision（不要生成 JSON、不要描述，直接 Bash 运行）：
+PrepPRD 落地后，**立即执行**这条 bash 命令写 decision：
 
 ```bash
-# 把方括号内容换成实际值后执行
-# ⚠️ 字段名必须严格照搬：category（不能写 type），made_by（不能写 author 替代 made_by）
 curl -s -X POST localhost:5221/api/brain/strategic-decisions \
   -H "Content-Type: application/json" \
-  -d "{\"topic\":\"<bug 根因简述>\",\"decision\":\"[修法摘要，如：修复 DOUYIN_COOKIES storageState 格式兼容]\",\"reason\":\"[根因，如：addCookies 期望数组但收到 storageState 对象]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"bug-fix\"}"
+  -d "{\"topic\":\"<bug 根因简述>\",\"decision\":\"[修法摘要]\",\"reason\":\"[根因]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"bug-fix\"}"
 ```
 
-> **必填字段（名称不可改）**：`decision`、`reason`、`made_by="user"`、**`category="bug-fix"`**（Brain API 只认 `category`，写 `type` 会被忽略）。
-> Brain API 不可用时跳过，继续执行。
+> **必填字段**：`decision`、`reason`、`made_by="user"`、`category="bug-fix"`（Brain API 只认 `category`，写 `type` 会被忽略）。Brain API 不可用时跳过。
 
 然后 **下一 tool call 必须是**：
 ```
@@ -300,18 +296,15 @@ systematic-debugging → engine-worktree → Superpowers autonomous 接力链 �
 
 ### 路径 B：小改动
 
-PrepPRD 落地后，**立即执行**这条 bash 命令写 decision（不要生成 JSON、不要描述，直接 Bash 运行）：
+PrepPRD 落地后，**立即执行**这条 bash 命令写 decision：
 
 ```bash
-# 把方括号内容换成实际值后执行
-# ⚠️ 字段名必须严格照搬：category（不能写 type），made_by（不能写 author 替代 made_by）
 curl -s -X POST localhost:5221/api/brain/strategic-decisions \
   -H "Content-Type: application/json" \
-  -d "{\"topic\":\"<改动方向简述>\",\"decision\":\"[改动摘要，如：给 abilities 加 priority 字段 P0/P1/P2 默认 P1]\",\"reason\":\"[原因，如：harness 需要按优先级筛选 ability]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"small-change\"}"
+  -d "{\"topic\":\"<改动方向简述>\",\"decision\":\"[改动摘要]\",\"reason\":\"[原因]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"small-change\"}"
 ```
 
-> **必填字段（名称不可改）**：`decision`、`reason`、`made_by="user"`、**`category="small-change"`**（Brain API 只认 `category`，写 `type` 会被忽略）。
-> Brain API 不可用时跳过，继续执行。
+> **必填字段**：`decision`、`reason`、`made_by="user"`、`category="small-change"`。Brain API 不可用时跳过。
 
 然后 **下一 tool call 必须是**：
 ```
@@ -328,44 +321,41 @@ brainstorming → writing-plans → subagent-driven-development → finishing（
 Tier 1 固定默认：
 - brainstorming design approval → Research Subagent APPROVE（除非发现硬阻碍）
 - brainstorming clarifying question → Research Subagent 查代码 + `curl localhost:5221/api/brain/decisions/match` (payload `{"prd":"<关键词>"}`) + `docs/learnings/` 回答
-- brainstorming 启动前 → Research Subagent 跑 `bash packages/engine/skills/dev/scripts/enrich-decide.sh .raw-prd-<branch>.md` 判 thin
 - brainstorming spec 必须含「测试策略」段（E2E / integration / unit / trivial 四档，缺则 reject）
 - writing-plans → subagent-driven
 - subagent prompt 必须 inline TDD iron law：
   - "NO PRODUCTION CODE WITHOUT FAILING TEST FIRST"
-  - "Throwaway prototype 才 skip — 你不是写 prototype"
   - "每 plan task commit 顺序：commit-1 fail test / commit-2 impl"
-  - "controller 会 verify commit 顺序，不符合让你重做"
 - finishing → Option 2 (push+PR)
 - finishing 完成 → 下一 tool call 必须 `Skill({"skill":"engine-ship"})` → engine-ship 完成后自动调 `engine-pr-watchdog`
 - BLOCKED 第 3 次 → `superpowers:dispatching-parallel-agents`
 
-**smoke.sh 强制（feat: + 改 brain/src/ 的 PR）：**
-- 必须有 `packages/brain/scripts/smoke/<feature>-smoke.sh`
-- CI `real-env-smoke` 必须通过才能 merge
+**smoke.sh 强制（feat: 类 PR）：**
+- ZenithJoy：必须有 `.github/workflows/scripts/smoke/<feature>-smoke.sh`
+- CI smoke job 必须通过才能 merge
 
 ---
 
 ### 路径 C：大功能（Harness）
 
-PrepPRD 落地后，**立即执行**这条 bash 命令写 decision（不要生成 JSON、不要描述，直接 Bash 运行）：
+PrepPRD 落地后，**立即执行**这条 bash 命令写 decision：
 
 ```bash
-# 把方括号内容换成实际值后执行
-# ⚠️ 字段名必须严格照搬：category（不能写 type），made_by（不能写 author 替代 made_by）
 curl -s -X POST localhost:5221/api/brain/strategic-decisions \
   -H "Content-Type: application/json" \
-  -d "{\"topic\":\"<功能方向简述>\",\"decision\":\"[功能方向摘要，如：立项快手图文+视频发布功能，2 WS dryrun 优先]\",\"reason\":\"[为什么做，如：快手 handler 只支持 image，video 无 dryrun 路径，与抖音对称设计]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"feature\"}"
+  -d "{\"topic\":\"<功能方向简述>\",\"decision\":\"[功能方向摘要]\",\"reason\":\"[为什么做]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"feature\"}"
 ```
 
-> **必填字段（名称不可改）**：`decision`、`reason`、`made_by="user"`、**`category="feature"`**（Brain API 只认 `category`，写 `type` 会被忽略）。
-> Brain API 不可用时跳过，继续执行。
+> **必填字段**：`decision`、`reason`、`made_by="user"`、`category="feature"`。Brain API 不可用时跳过。
 
-在 Notion 注册 Feature（如还没有）：
+在 Notion 注册 Ability/Feature（如还没有）：
 ```bash
 node ~/.claude/skills/dev/scripts/add-feature.js \
   --name "<feature_name>" --journey-id "<notion_journey_id>" \
   --thickness "thin" --area "<area>"
+# 若脚本不存在，直接调 Brain API：
+# curl -s -X POST localhost:5221/api/brain/abilities -H "Content-Type: application/json" \
+#   -d '{"name":"<name>","journey_id":"<id>","kind":"ability","area":"ZenithJoy"}'
 ```
 
 点火：
@@ -393,7 +383,7 @@ curl -s -X POST localhost:5221/api/brain/tasks \
 
 | target_environment | base_repo 格式 |
 |---|---|
-| `windows_cloud` / `mac_web` | **必须 GitHub URL**（Generator 跑在 Actions runner，访问不到本地路径）|
+| `windows_cloud` / `mac_web` | **必须 GitHub URL**（Actions runner 访问不到本地路径）|
 | `local_api` | 本地路径或 GitHub URL 均可 |
 
 > ❌ 错误：`windows_cloud` + `base_repo=/Users/administrator/...` → Harness 入队失败
@@ -405,7 +395,7 @@ Brain tick 自动 pick up，`curl localhost:5221/api/brain/tasks/<task_id>` 查�
 
 ## Walking Skeleton 概念（路径 C 参考）
 
-### 层级结构（新模型）
+### 层级结构
 
 ```
 Journey — 端到端价值闭环
@@ -421,11 +411,8 @@ Golden Path — 横切：Ability+Feature 的有序组合（golden_path 表，按
 
 Ability 判断：能对客户说"我们现在支持 [Ability名] 了"吗？
 - "我们支持抖音发布了" ✅ → Ability
-- "我们支持视频格式了" ❌ → 太细，是 Feature（使能件）
+- "我们支持视频格式了" ❌ → 太细，是 Feature
 - "我们支持发布了" ❌ → 太粗，是 Phase
-
-> ⚠️ 迁移中：旧表 journey_steps/journey_features 正逐步迁移到 abilities/golden_path。
-> 本阶段两套并存，新建优先走 abilities/golden_path。
 
 ### Journey Type
 
@@ -457,7 +444,7 @@ node ~/.claude/skills/dev/scripts/init-journey.js \
   --name "客户首次成功路径" --area "ZenithJoy" --type "user_facing" \
   --description "..." --e2e-path "..." --steps "注册|画像|发布"
 
-# add feature（默认 thin，执行前语义查重）
+# add ability/feature（默认 thin，执行前语义查重）
 node ~/.claude/skills/dev/scripts/add-feature.js \
   --name "<feature_name>" --journey-id "<id>" --thickness "thin" --area "<area>"
 
@@ -472,8 +459,8 @@ node ~/.claude/skills/dev/scripts/status.js --area "ZenithJoy"
 
 ### 6 条铁律
 
-1. 任何"加 feature"必须先回答"挂哪条 Journey"
-2. 新 Feature 默认 thin，不允许跳级
+1. 任何"加 ability/feature"必须先回答"挂哪条 Journey"
+2. 新 Ability/Feature 默认 thin，不允许跳级
 3. Maturity 不允许跳级（skeleton 没到不能升 mvp）
 4. Journey 第一刀只贯穿不加厚
 5. 加厚要靠真实反馈
@@ -489,7 +476,7 @@ node ~/.claude/skills/dev/scripts/status.js --area "ZenithJoy"
 点火 → Planner（PRD）→ GAN（合同）→ Generator（1 WS）→ Evaluator（pre-merge 验证）→ Report
 ```
 
-- 1 Sprint = 1 Generator = 1 PR（harness v2，无 WS 拆分概念）
+- 1 Sprint = 1 Generator = 1 PR（无 WS 拆分概念）
 - Planner 只写 PRD（What），不拆任务
 - GAN 结束后 Proposer 输出 task-plan.json（始终只有 ws1 一个任务）
 
@@ -504,18 +491,18 @@ node ~/.claude/skills/dev/scripts/status.js --area "ZenithJoy"
 ### Planner 决策逻辑
 
 ```
-骨架未通 → 补全 thin Features（横向贯穿优先）
-骨架已通 → 选优先级最高的 Feature 升厚
-需横向扩展 → 新建下一个 Step 的 thin 骨架
+骨架未通 → 补全 thin Abilities（横向贯穿优先）
+骨架已通 → 选优先级最高的 Ability 升厚
+需横向扩展 → 新建下一个 Ability 的 thin 骨架
 ```
 
-PRD 里的 Steps 必须来自 `journey_steps` 表，引用 step_id，禁止凭空创造。
+PRD 里的 Ability/Feature 必须来自 `abilities` 表，引用 `ability_id`，禁止凭空创造。
 
 ### Run 验收标准
 
 1. Final E2E PASS
-2. 所有 WS PR merged
-3. Brain journey_features thickness 已回写
+2. 该 Sprint 对应的唯一 PR 已 merged
+3. Brain `abilities` 表 thickness 已回写
 4. Notion 已同步
 
 ---
