@@ -202,6 +202,27 @@ curl -sf "localhost:5221/api/brain/registry?type=test&limit=30" > /tmp/test_regi
 
 ---
 
+### Step 1.2：提取已有回归测试约束
+
+基于 PRD 内容识别关键模块，读取相关测试文件，将已知约束写入合同草稿的"已知约束"章节。
+
+操作步骤：
+1. 读取 sprint-prd.md，提取关键词（微信/wechat → line04；视频/video → video；发布/publisher → publishers）
+2. 根据关键词定位测试文件：
+   - 微信相关：`find . -path "*/line04*" -name "*.test.ts" -o -path "*/wechat-rpa*" -name "test_*.py" 2>/dev/null | head -10`
+   - 视频相关：`find . -path "*/video*" -name "*.test.ts" -o -path "*/video*" -name "*.spec.ts" 2>/dev/null | head -10`
+   - 发布相关：`find . -path "*/publisher*" -name "*.test.ts" 2>/dev/null | head -10`
+3. 读取找到的测试文件（头 80 行），提取所有 `it(` / `test(` / `describe(` / `def test_` 的描述文字
+4. 在 contract-draft.md 的 `## 已知约束（来自回归测试）` 章节写入这些描述，格式：
+   ```
+   - [文件名] → [测试描述]
+   ```
+5. 如果找不到任何测试文件，在该章节写 `（暂无已知约束）`，不要留空
+
+这一步确保 Generator 看到历史约束，防止同一 bug 在下个 sprint 重现。
+
+---
+
 ### Step 1.5: 精简纪律（B50 — 防膨胀，修订轮必做）
 
 **核心：合同收敛目标是"覆盖完 PRD"，不是"无限加严谨度"。处理 Reviewer 反馈时先减后加，净变化趋近 0。**
@@ -851,7 +872,7 @@ RESP=$(curl -f localhost:3001/multiply?a=7&b=5)
 3. **禁用字段反向**（`! has("X")` 每个禁用名一条）
 4. **error path**（非法输入返 4xx + error 字段存在）
 
-如果 PRD 含 Response Schema 段，**每个字段还要额外 1 条** [BEHAVIOR] 验。Reviewer 第 7 维 behavior_count_position 会 grep 数量；< 4 直接 REVISION。
+如果 PRD 含 Response Schema 段，**每个字段还要额外 1 条** [BEHAVIOR] 验。Reviewer 第 7 维 ci_workflow_alignment 会 grep 数量；< 4 直接 REVISION。
 
 ### ❌ 禁止借口（v7.6 — Bug 9 实证）
 
