@@ -306,7 +306,7 @@ REVISION 时 feedback 必须含具体修改方向。
 const fs = require('fs');
 const SPRINT_DIR = process.env.SPRINT_DIR;
 const BRAIN = process.env.BRAIN_API || 'http://localhost:5221';
-const SPRINT_ID = process.env.SPRINT_ID || 'unknown';
+const SPRINT_ID = process.env.TASK_ID || 'unknown'; // TASK_ID 由 cecelia-run 注入，SPRINT_ID 未注入
 
 const contract = fs.existsSync(`${SPRINT_DIR}/contract-draft.md`)
   ? fs.readFileSync(`${SPRINT_DIR}/contract-draft.md`, 'utf8') : '';
@@ -333,7 +333,7 @@ async function writePlanned() {
           name: `${api.method} ${api.endpoint}`,
           type: 'api',
           status: 'planned',
-          metadata: { sprint_id: SPRINT_ID, method: api.method, endpoint: api.endpoint }
+          metadata: { task_id: SPRINT_ID, method: api.method, endpoint: api.endpoint }
         })
       });
       console.log('✅ api_registry planned:', api.method, api.endpoint);
@@ -350,7 +350,7 @@ async function writePlanned() {
           name: table,
           type: 'db_schema',
           status: 'planned',
-          metadata: { sprint_id: SPRINT_ID }
+          metadata: { task_id: SPRINT_ID }
         })
       });
       console.log('✅ db_schema_registry planned:', table);

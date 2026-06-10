@@ -372,15 +372,17 @@ PR 创建完不退出，原地轮询直到合并。合并后才进 Step 8。
 # 从 PR_URL 提取 PR 号
 PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
 REPO=$(echo "$PR_URL" | grep -oE 'github\.com/[^/]+/[^/]+' | sed 's|github.com/||')
-FIX_COUNT=0
 MAX_FIXES=3
+# FIX_COUNT 持久化到文件，防止 Bash timeout 重调用后计数归零
+FIX_COUNT_FILE="/tmp/generator-fix-count-${PR_NUMBER}"
+FIX_COUNT=$(cat "$FIX_COUNT_FILE" 2>/dev/null || echo 0)
 
 # 先启用 auto-merge
 gh pr merge "$PR_NUMBER" --repo "$REPO" --auto --squash 2>/dev/null && echo "auto-merge enabled"
 
 while true; do
   STATE=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json state --jq '.state' 2>/dev/null)
-  [ "$STATE" = "MERGED" ] && { echo "PR #$PR_NUMBER merged"; break; }
+  [ "$STATE" = "MERGED" ] && { echo "PR #$PR_NUMBER merged"; rm -f "$FIX_COUNT_FILE"; break; }
   [ "$STATE" = "CLOSED" ] && { echo "PR #$PR_NUMBER closed"; break; }
 
   CHECKS=$(gh pr checks "$PR_NUMBER" --repo "$REPO" 2>/dev/null)
@@ -391,9 +393,11 @@ while true; do
   if [ "$FAILED" -gt 0 ]; then
     if [ "$FIX_COUNT" -ge "$MAX_FIXES" ]; then
       echo "CI failed $MAX_FIXES times, giving up"
+      rm -f "$FIX_COUNT_FILE"
       break
     fi
     FIX_COUNT=$((FIX_COUNT+1))
+    echo "$FIX_COUNT" > "$FIX_COUNT_FILE"
     # CI 失败 → 读日志修复
     RUN_ID=$(gh pr checks "$PR_NUMBER" --repo "$REPO" --json name,conclusion,databaseId 2>/dev/null \
       | jq -r '[.[] | select(.conclusion=="failure")] | sort_by(.databaseId) | last | .databaseId // empty')

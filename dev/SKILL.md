@@ -329,7 +329,7 @@ Tier 1 固定默认：
   - "NO PRODUCTION CODE WITHOUT FAILING TEST FIRST"
   - "每 plan task commit 顺序：commit-1 fail test / commit-2 impl"
 - finishing → Option 2 (push+PR)
-- finishing 完成 → 下一 tool call 必须 `Skill({"skill":"engine-ship"})` → engine-ship 完成后自动调 `engine-pr-watchdog`
+- finishing 完成 → 下一 tool call 必须 `Skill({"skill":"engine-ship"})` → engine-ship 完成 → 下一 tool call 必须 `Skill({"skill":"engine-pr-watchdog"})`
 - BLOCKED 第 3 次 → `superpowers:dispatching-parallel-agents`
 
 **smoke.sh 强制（feat: 类 PR）：**
@@ -402,8 +402,8 @@ Brain tick 自动 pick up，`curl localhost:5221/api/brain/tasks/<task_id>` 查�
 ```
 Journey — 端到端价值闭环
   └── Phase — 阶段（发布/生成/剪辑），客户视角的流程分组
-        └── Ability — 客户价值 workflow（abilities 表 kind=ability）
-              · Feature — 使能件（登录/下载/cookie/保活，abilities 表 kind=feature）
+        └── Ability — 客户价值 workflow（journey_features 表 kind=ability）
+              · Feature — 使能件（登录/下载/cookie/保活，journey_features 表 kind=feature）
 Golden Path — 横切：Ability+Feature 的有序组合（golden_path 表，按 scope 筛 + 按 order 排）
 ```
 
@@ -488,7 +488,7 @@ node ~/.claude/skills/dev/scripts/status.js --area "ZenithJoy"
 
 ### 语义查重
 
-用户提到 Ability 名 → 先查 abilities catalog（`GET /api/brain/abilities`），语义相近必须复用引用，不直接新建。
+用户提到 Ability 名 → 先查 journey_features catalog（`GET /api/brain/journey_features`），语义相近必须复用引用，不直接新建。
 
 ### Planner 决策逻辑
 
@@ -498,13 +498,13 @@ node ~/.claude/skills/dev/scripts/status.js --area "ZenithJoy"
 需横向扩展 → 新建下一个 Ability 的 thin 骨架
 ```
 
-PRD 里的 Ability/Feature 必须来自 `abilities` 表，引用 `ability_id`，禁止凭空创造。
+PRD 里的 Ability/Feature 必须来自 `journey_features` 表，引用 `feature_id`，禁止凭空创造。
 
 ### Run 验收标准
 
 1. Final E2E PASS
 2. 该 Sprint 对应的唯一 PR 已 merged
-3. Brain `abilities` 表 thickness 已回写
+3. Brain `journey_features` 表 thickness 已回写
 4. Notion 已同步
 
 ---

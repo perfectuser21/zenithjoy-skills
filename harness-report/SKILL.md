@@ -89,25 +89,12 @@ echo "✅ Step 2: 中台 Dashboard 已更新"
 
 ---
 
-### Step 2.5: 创建 Notion Project（Run 级）+ Notion Task（WS 级）
+### Step 2.5: 写 Notion Task Notes（关联到被推进的 Ability/Feature Task）
+
+> **架构决策（2026-06-10）**：Sprint/Run 不是 Notion 实体，不创建 Run 级 Notion Project。
+> 本 sprint 产出物（PrepPRD / Contract / Report）作为 Notes 关联到对应 Ability/Feature Task。
 
 ```bash
-JOURNEY_ID="${JOURNEY_ID:-}"
-JOURNEY_ID_JSON=$([ -n "${JOURNEY_ID:-}" ] && echo "\"$JOURNEY_ID\"" || echo "null")
-
-PROJECT_PAYLOAD=$(jq -n \
-  --arg title "$FEATURE_NAME" \
-  --arg status "Done" \
-  --argjson journey_id "$JOURNEY_ID_JSON" \
-  --arg sprint_dir "$SPRINT_DIR" \
-  --arg pr_url "$PR_URL" \
-  '{title:$title, status:$status, journey_id:$journey_id, sprint_dir:$sprint_dir, pr_url:$pr_url}')
-
-curl -s -X POST "localhost:5221/api/brain/notion/project" \
-  -H "Content-Type: application/json" \
-  -d "$PROJECT_PAYLOAD" 2>/dev/null || echo "WARN: Notion Project 创建失败（非阻断）"
-echo "✅ Step 2.5a: Notion Project 已创建（Run 级）"
-
 TASK_PAYLOAD=$(jq -n \
   --arg title "$FEATURE_NAME" \
   --arg status "Done" \
@@ -117,7 +104,7 @@ TASK_PAYLOAD=$(jq -n \
 curl -s -X POST "localhost:5221/api/brain/notion/task" \
   -H "Content-Type: application/json" \
   -d "$TASK_PAYLOAD" 2>/dev/null || echo "WARN: Notion Task 创建失败（非阻断）"
-echo "✅ Step 2.5b: Notion Task 已创建（status=Done）"
+echo "✅ Step 2.5: Notion Task Notes 已写入（status=Done）"
 ```
 
 ---
