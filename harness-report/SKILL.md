@@ -4,12 +4,13 @@ description: |
   Harness Report — 最终步骤：交付报告 + Sprint 状态同步。
   Phase A（6步交付）：回写Brain任务状态 → 更新中台Dashboard → 写Notion AI Notes（GAN标注表+截图）
   → 更新Notion Feature Registry → 飞书通知 → 写本地harness-report.md备份。
-  Phase B（Sprint状态同步）：写本地Brain DB → 同步8个Notion DB（API/DB Schema/Tests/Features/Journey/Steps等）→ git commit。
-  由 harness-evaluator PASS 后调用；也可手动触发补同步。
-version: 6.1.0
+  Phase B（Sprint状态同步）：写本地Brain DB → 通过 db-update skill 触发 notion-push-sync.js 的 8 个 push 函数（journeys/journey_features/issues/skill_registry/journey_steps/journey_step_links/decisions/initiative_contracts）→ git commit。
+  由 harness-evaluator PASS 后 Brain reportNode 自动 spawn；也可手动触发补同步。
+version: 6.2.0
 created: 2026-04-08
-updated: 2026-06-01
+updated: 2026-06-11
 changelog:
+  - 6.2.0: 链路审计修复 5 项 — (a)「同步 8 个 Notion DB」改为明确清单（notion-push-sync.js 的 8 个 push 函数）+ 注明入口是 db-update skill；(b) journey_steps 措辞改"保留只读兼容（仍同步存量），新增数据禁止写入"；(c) 开头加「触发条件」（evaluator PASS 后 Brain reportNode 自动 spawn；手动用于补同步）；(d) Phase A 开头加前置文件存在性检查（缺失则对应步骤跳过 + WARN）；(e) 路径拼装统一 ${SPRINT_DIR%/}/xxx 防双斜杠
   - 6.1.0: 新增Step6全量Registry回写+Step7结构化Learning+Step8 index.html可视化；截图路径统一到SPRINT_DIR/screenshots/
   - 6.0.0: 合并 harness-sprint-state → 统一为"交付报告+状态同步"单一 skill，删除独立的 harness-sprint-state skill
   - 5.1.0: 移除 Step 2.5b 多 WS 扫描逻辑 — 改为单 Sprint 直接创建 Notion Task
@@ -25,6 +26,13 @@ changelog:
 **角色**: Reporter + Sprint State Syncer  
 **对应 task_type**: `harness_report`  
 **调用时机**: harness-evaluator PASS 后；或手动补同步
+
+---
+
+## 触发条件
+
+- **自动**：harness-evaluator 输出 `verdict=PASS` 后，由 Brain `reportNode` 自动 spawn 本 skill（`task_type=harness_report`），无需人工介入。
+- **手动**：当某次 Sprint 的 Notion/DB 同步漏掉或失败，可手动触发本 skill **补同步**（Phase A 会按文件存在性跳过已无意义的步骤，Phase B 走 db-update 重推）。
 
 ---
 
@@ -46,10 +54,28 @@ Phase B: Sprint 状态同步 → 把本次 Sprint 产出的 API/DB/Tests/Feature
 ```bash
 # TASK_ID、SPRINT_DIR、PROJECT_ID、FEATURE_ID、FEATURE_NAME、SUB_AREA、
 # PR_URL、TOTAL_COST、SCREENSHOTS、HARNESS_INITIATIVE_ID 由 cecelia-run 通过 prompt 注入，直接使用
+SPRINT_DIR="${SPRINT_DIR%/}"   # 统一去尾斜杠：后续所有 ${SPRINT_DIR}/xxx 拼装防双斜杠（每个 bash 块开头都应保留此规约）
 FIRST_SCREENSHOT_URL=$(echo "$SCREENSHOTS" | jq -r '.[0] // ""')
 TOTAL_COST="${TOTAL_COST:-0}"
 SCREENSHOTS="${SCREENSHOTS:-[]}"
 ```
+
+---
+
+### 前置文件存在性检查（Phase A 开头必跑）
+
+报告/归档前先探测 sprint 产出文件，缺失则对应步骤明确**跳过 + WARN**，不让后续步骤因文件不存在而静默失败：
+
+```bash
+SPRINT_DIR="${SPRINT_DIR%/}"   # 去掉尾部斜杠，防后续拼装出双斜杠
+HAS_PRD=0; HAS_CONTRACT=0; HAS_DOD=0
+[ -f "${SPRINT_DIR}/sprint-prd.md" ]     && HAS_PRD=1      || echo "WARN: sprint-prd.md 不存在 → Step 7b(DB registry) 将跳过"
+[ -f "${SPRINT_DIR}/contract-draft.md" ] && HAS_CONTRACT=1 || echo "WARN: contract-draft.md 不存在 → Step 3.5(Contract 归档) / Step 7a(API registry) 将跳过"
+[ -f "${SPRINT_DIR}/contract-dod.md" ]   && HAS_DOD=1      || echo "WARN: contract-dod.md 不存在 → DOD 对齐章节标注（无 DoD 文件）"
+echo "[harness-report] 前置文件：prd=$HAS_PRD contract=$HAS_CONTRACT dod=$HAS_DOD"
+```
+
+> 后续 Step 3.5 / Step 7 已各自带 `[ ! -f ... ] && ... continue` 防御；本检查是 Phase A 入口的统一前置探测，便于一眼看清哪些步骤会跳过。
 
 ---
 
@@ -236,7 +262,7 @@ DOD -/- ✅  FAIL: 无
 E2E 截图: ${SCREENSHOT_URLS:-（无截图）}
 Learning: （从本次 Sprint 提炼的洞察见 learning.md）
 DB sync: journey_features · api_registry ✅ · Notion pushed ✅
-# journey_steps 已停用（2026-06-09），Ability/Feature 统一用 journey_features
+# journey_steps 保留只读兼容（notion-push-sync 仍同步存量数据），新增数据禁止写入；Ability/Feature 一律写 journey_features
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 REPORT
 echo "✅ Step 6: harness-report.md 已写入（紧凑模板）"
@@ -498,7 +524,7 @@ echo "[harness-report Phase A] 9步交付完成"
 `db-update` skill 负责：
 1. 读取 `$SPRINT_DIR/sprint-prd.md` + `contract-draft.md` 解析本次产出
 2. 按 Output Template 写入 Brain DB（journey_features / api_registry / db_schema_registry / test_registry / skill_registry）
-   # journey_steps 已停用（2026-06-09），Ability/Feature 统一用 journey_features
+   # journey_steps 保留只读兼容（notion-push-sync 仍同步存量数据），新增数据禁止写入；Ability/Feature 一律写 journey_features
 3. 触发 Notion push sync（Brain → Notion 自动同步）
 4. 更新 Journey Maturity
 

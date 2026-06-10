@@ -5,18 +5,19 @@ description: |
   Generator 写完代码 push PR 后，CI 跑过基础卫生（lint/type/vitest mock/build），
   evaluator 在 CI 绿之后、PR merge 之前真启服务 + 跑 contract 的 manual:bash 命令验真行为。
   PASS → 允许 merge；FAIL → 不 merge，带反馈打回 Generator 在 PR 分支 fix loop（main 不变动）。
-  模式 A 跑 contract-dod-ws*.md BEHAVIOR；模式 B（所有 ws merge 后）跑 final E2E Golden Path。
-version: 1.14.0
+  单模式（harness v2 始终 IS_FINAL_E2E=true）：读 contract-draft.md 的 ## E2E 验收 脚本，按 target_environment 派发跑 Golden Path 端到端真实行为。
+version: 1.15.0
 created: 2026-05-06
-updated: 2026-06-10
+updated: 2026-06-11
 changelog:
+  - 1.15.0: 链路审计修复 7 项 — (a) 清理模式 A/WS 拆分残留（description/常见错误/变量表统一为单模式 IS_FINAL_E2E=true 跑 contract-draft.md ## E2E 验收，全文清掉 ws_id/contract-dod-ws）；(b) 修 Step B-2 双重执行 bug（删无条件首跑，windows 环境不再 bash 不存在的 .sh，超时 124 判定并入 case 后统一）；(c) 新增 Step B-1.6 环境预检 + localhost 重写（容器内 sed 重写 + 二进制 command -v 缺失即 env_missing FAIL，禁止降级）；(d) 新增 Step B-1.7 弱 oracle/作弊扫描；(e) 新增 Step B-1.8 Golden Path 覆盖核对；(f) 新增「领域验证死规则」（视频 ffprobe / 发布真实出现 / DB 时间窗 / UI 可见断言）；(g) 修注入变量表 WECHAT_RPA_WORKFLOW/WORKSPACE_PATH/mac_web 注解
   - 1.14.0: windows_wechat E2E 路由 3 项修复 — P0: 删除 ;;&fallthrough，windows_wechat 合并入 OR pattern 触发 e2e-wechat-rpa.yml（xian-rog self-hosted）；P1: Step B-1 ps1 提取条件加入 windows_wechat；P2: B33 autonomous 检测排除 windows_cloud/windows_wechat（PowerShell E2E 不含 localhost:5221 是正常的）
   - 1.13.0: 截图路径从 ~/claude-output/ 改为 SPRINT_DIR/screenshots/（与 Report Step8 index.html 对齐）
-  - 1.12.0: 修复 Mode A DoD 文件名 + 变量名双重不匹配 — Brain 注入的是 WORKSTREAM_INDEX（不是 WORKSTREAM_N）；proposer v8.0 写 contract-dod.md（不是 contract-dod-ws{N}.md）。Mode A 现在优先读 contract-dod.md，fallback contract-dod-ws{N}.md；引入 WS_NUM 统一解析两个变量名
+  - 1.12.0: 修复历史 DoD 文件名 + 变量名双重不匹配 — proposer v8.0 起统一写 contract-dod.md（取代旧 per-WS 拆分文件名）；统一解析变量名（历史条目，单模式后已不再有多文件 fallback）
   - 1.11.1: 修复空壳检测正则漏掉 npm test/npm ci 和 PowerShell 业务命令 — eval 中发现 BUSINESS_STEPS 正则用 "npm run" 但未含 "npm test"（GHA 常用写法）及 "npm ci"，导致用了 npm test 的真实业务 workflow 被误判为空壳；同步补充 PowerShell 业务模式（Set-Content/New-Item/ConvertTo-Json）防止 PS 脚本的 session 写入被漏判
   - 1.11.0: windows_cloud 模式 B trigger 前新增 workflow 内容检查 — 在 gh workflow run 之前检查：(1) workflow 文件是否存在；(2) 合同 contract-dod.md 是否有 [BEHAVIOR] 条目；(3) workflow 是否只有文件存在/大小检查而不含业务逻辑验证（node/npx/vitest/playwright/curl 等）。第 3 条命中时直接 FAIL，防止 workflow 空壳导致假绿
   - 1.10.0: mac_web host executor 兼容 — 新增 WORKSPACE="${WORKSPACE_PATH:-/workspace}" 变量；所有 .brain-result.json 写入路径改为 "$WORKSPACE/.brain-result.json"（Docker /workspace，宿主 worktreePath）；mac_web Step B-2 修复：由 node /tmp/e2e-verify.js（文件不存在）改为优先 bash /tmp/e2e-verify.sh 并 fallback node .js；更新注入变量表格添加 WORKSPACE_PATH 和 WINDOWS_CLOUD_WORKFLOW
-  - 1.9.0: Step B-2.5 截图处理（mac_web 专属）— 复制 screenshots/*.png 到 ~/claude-output/harness-screenshots/$SPRINT/；Claude Read 每张 PNG 视觉自验（对照 BEHAVIOR:E2E 期望描述）；生成公网 URL（38.23.47.81:9998）；PASS brain-result.json 增加 screenshots 字段
+  - 1.9.0: Step B-2.5 截图处理（mac_web 专属）— 复制 screenshots/*.png 到 sprint 截图目录（v1.13 后统一 SPRINT_DIR/screenshots/）；Claude Read 每张 PNG 视觉自验（对照 BEHAVIOR:E2E 期望描述）；生成公网 URL（38.23.47.81:9998）；PASS brain-result.json 增加 screenshots 字段
   - 1.8.0: 删除 windows_local case — 所有 Windows 测试统一走 windows_cloud（GitHub Actions），无需维护 xian-pc/xian-rog 本地 Windows 机器；TARGET_ENV 枚举同步缩减
   - 1.7.0: windows_native 拆分为 windows_cloud + windows_local（已被 1.8.0 合并）
   - 1.6.0: 修复 B33 误伤真实功能 sprint — B33 URL 检测改为 playground 感知：playground sprint（playground/server.js 存在）禁止出现 Brain API URL；真实功能 sprint（autonomous journey_type）反向要求 E2E 脚本必须含 Brain API URL，缺失直接 FAIL（防止 playground 命令混入真实 sprint）
@@ -73,14 +74,14 @@ generator 写代码 + push PR
 
 | 变量 | 含义 |
 |------|------|
-| `IS_FINAL_E2E` | `true` = 模式 B（E2E）；其他值 = 模式 A（逐任务 DoD） |
+| `IS_FINAL_E2E` | harness v2 始终注入 `true`（单模式 E2E）；缺失或非 `true` = Brain dispatch 异常，直接 FATAL（见 Step 0） |
 | `SPRINT_DIR` | Sprint 目录，如 `sprints/run-20260506-1400` |
 | `TASK_ID` | Brain 中当前 evaluate task 的 UUID |
 | `JOURNEY_TYPE` | `user_facing` / `autonomous` / `dev_pipeline` / `agent_remote` |
-| `TARGET_ENV` | `mac_web` / `windows_cloud` / `windows_wechat` / `linux_server` / `local_api` / `playground`（来自 PRD `target_environment` 字段；`windows_wechat` = xian-rog self-hosted，微信已登录；`windows_cloud` = GHA windows-latest 云端）|
-| `WORKSPACE_PATH` | 结果文件写入目录（mac_web host 执行时为 worktreePath，Docker 默认不注入，脚本 fallback `/workspace`）|
+| `TARGET_ENV` | `mac_web` / `windows_cloud` / `windows_wechat` / `linux_server` / `local_api` / `playground`（来自 PRD `target_environment` 字段；`mac_web` = 在宿主 Mac 直跑（非 Docker），Playwright 可达 localhost:5174；`windows_wechat` = xian-rog self-hosted，微信已登录；`windows_cloud` = GHA windows-latest 云端）|
+| `WORKSPACE_PATH` | 结果文件写入目录。**mac_web 宿主执行时由 host-executor 注入**（值为 worktreePath）；Docker 默认不注入，脚本 fallback `/workspace` |
 | `WINDOWS_CLOUD_WORKFLOW` | GHA workflow 文件名（harness-initiative.graph.js 根据 base_repo 注入：zenithjoy → `agent-e2e-video.yml`，否则 `e2e-windows.yml`）|
-| `WECHAT_RPA_WORKFLOW` | windows_wechat 专用 GHA workflow 文件名（默认 `e2e-wechat-rpa.yml`，在 xian-rog self-hosted runner 上运行，微信已登录环境）|
+| `WECHAT_RPA_WORKFLOW` | windows_wechat 专用 GHA workflow 文件名，**由 `evaluateContractNode` 注入，缺省 `e2e-wechat-rpa.yml`**；在 xian-rog self-hosted runner（微信已登录）上运行 |
 | `DB` | PostgreSQL 连接串，如 `postgresql://localhost/cecelia` |
 
 **注**：DoD 文件中的 `Test:` 命令若引用 `$TARGET_TASK_ID`，该 ID 来自 DoD 文件内部（合同写入时硬编码或由 Generator 写入），Evaluator 直接执行 DoD 中的命令原文，不需单独注入。
@@ -114,7 +115,7 @@ generator 写代码 + push PR
 
 ### Step 0a：切到 PR 分支（pre-merge gate 前置）
 
-evaluator 必须先切到 PR 分支才能跑 server 验真行为。模式 A 跑 generator 在 PR 分支写的代码，PR 分支名由 `$PR_BRANCH` env 提供（brain `evaluateContractNode` 透传 — B14 修复）。
+evaluator 必须先切到 PR 分支才能跑 server 验真行为。evaluator 跑 generator 在 PR 分支写的代码，PR 分支名由 `$PR_BRANCH` env 提供（brain `evaluateContractNode` 透传 — B14 修复）。
 
 ```bash
 if [ -n "$PR_BRANCH" ]; then
@@ -293,21 +294,129 @@ fi
 | 真实功能 sprint autonomous | ✅ 必须有 | ❌ FAIL（错误目标）|
 | 真实功能 sprint user_facing | ✅ 需要（API 验后端）| ❌ 无意义 |
 
-#### Step B-2: 执行 E2E 脚本
+#### Step B-1.6: 环境预检 + localhost 重写（执行前置，与 generator Step 6.5 镜像）
+
+**在执行 E2E 脚本前必须先做两件事：容器内 URL 重写 + 工具可用性预检。windows_cloud/windows_wechat 走 GHA runner，跳过本步（脚本是 .ps1，在远端机器执行）。**
 
 ```bash
-timeout 120 bash /tmp/e2e-verify.sh 2>&1 | tee /tmp/e2e-result.log
-EXIT_CODE=${PIPESTATUS[0]}
-# timeout 退出码 124 表示超时
-if [[ $EXIT_CODE -eq 124 ]]; then
+if [[ "$TARGET_ENV" != "windows_cloud" && "$TARGET_ENV" != "windows_wechat" ]]; then
+  # ── 1) 容器内 localhost 重写（$BRAIN_URL 含 host.docker.internal 说明在容器里跑）──
+  # 与 harness-generator Step 6.5 的替换逻辑镜像，保证 evaluator 与 generator 自验环境一致
+  if [[ "$BRAIN_URL" == *"host.docker.internal"* ]]; then
+    BRAIN_HOST_PORT=$(echo "$BRAIN_URL" | sed -E 's|https?://||')
+    sed -i "s|localhost:5221|$BRAIN_HOST_PORT|g" /tmp/e2e-verify.sh
+    sed -i "s|postgresql://localhost|postgresql://host.docker.internal|g" /tmp/e2e-verify.sh
+    echo "[evaluator] 容器内 URL 重写完成：localhost:5221→$BRAIN_HOST_PORT, pg→host.docker.internal"
+  fi
+
+  # ── 2) 二进制可用性预检（脚本引用的工具逐个 command -v）──
+  REQUIRED_BINS=""
+  grep -qE '\bpsql\b' /tmp/e2e-verify.sh && REQUIRED_BINS="$REQUIRED_BINS psql"
+  grep -qE '\b(playwright|npx playwright)\b' /tmp/e2e-verify.sh && REQUIRED_BINS="$REQUIRED_BINS playwright"
+  grep -qE '\bffprobe\b' /tmp/e2e-verify.sh && REQUIRED_BINS="$REQUIRED_BINS ffprobe"
+  grep -qE '\bffmpeg\b' /tmp/e2e-verify.sh && REQUIRED_BINS="$REQUIRED_BINS ffmpeg"
+  grep -qE '\bnode\b' /tmp/e2e-verify.sh && REQUIRED_BINS="$REQUIRED_BINS node"
+  grep -qE '\bjq\b' /tmp/e2e-verify.sh && REQUIRED_BINS="$REQUIRED_BINS jq"
+  grep -qE '\bcurl\b' /tmp/e2e-verify.sh && REQUIRED_BINS="$REQUIRED_BINS curl"
+
+  for bin in $REQUIRED_BINS; do
+    BIN_CHECK="$bin"
+    [[ "$bin" == "playwright" ]] && BIN_CHECK="npx"   # playwright 通过 npx 调用
+    if ! command -v "$BIN_CHECK" >/dev/null 2>&1; then
+      MISS_LINE=$(grep -nE "\b$bin\b" /tmp/e2e-verify.sh | head -1)
+      cat > "$WORKSPACE/.brain-result.json" << BREOF
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"env_missing","log_excerpt":"E2E 脚本需要 $bin 但当前环境未安装（脚本引用行：$MISS_LINE）。这是环境路由问题，Brain 应把本 sprint 派到装有 $bin 的目标环境，evaluator 不改写/降级验证。"}
+BREOF
+      exit 0
+    fi
+  done
+fi
+```
+
+**死规则（加粗，必须遵守）**：**禁止在工具缺失时改写验证命令、降级验证、或跳过该步——`env_missing` 就是 FAIL，让 Brain 路由到正确环境，这不是 evaluator 该变通的事。** 例如脚本要 ffprobe 验视频但本机无 ffprobe → 直接 `env_missing` FAIL，绝不允许改成"检查文件大小"凑过。
+
+#### Step B-1.7: 弱 oracle / 作弊扫描（执行前置）
+
+**执行前扫描 /tmp/e2e-verify.sh，命中任一即 FAIL，禁止 PASS。** windows_cloud/windows_wechat 同理扫描 /tmp/e2e-verify.ps1（关键词换成 PowerShell 等价物）。
+
+```bash
+SCAN_FILE=/tmp/e2e-verify.sh
+[[ "$TARGET_ENV" == "windows_cloud" || "$TARGET_ENV" == "windows_wechat" ]] && SCAN_FILE=/tmp/e2e-verify.ps1
+
+# 1) 有 curl 但全文无 jq -e 值校验 → 弱 oracle
+if grep -qE '\bcurl\b' "$SCAN_FILE" && ! grep -qE 'jq -e' "$SCAN_FILE"; then
   cat > "$WORKSPACE/.brain-result.json" << BREOF
-{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"timeout","log_excerpt":"E2E 脚本执行超时（120 秒），请检查被测服务是否正常启动或脚本是否有无限等待"}
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"weak_oracle","log_excerpt":"脚本含 curl 但全文无 jq -e 值校验，属弱 oracle，schema drift 无法被抓。请在 contract-draft 的 ## E2E 验收 里补 jq -e 值断言后重交。"}
+BREOF
+  exit 0
+fi
+
+# 2) MOCK_ / 无条件 exit 0 兜底 / 断言上吞错的 || true / dry-run
+if grep -qE 'MOCK_|--dry-run|--dryrun|\bdryRun\b' "$SCAN_FILE"; then
+  HIT=$(grep -nE 'MOCK_|--dry-run|--dryrun|\bdryRun\b' "$SCAN_FILE" | head -1)
+  cat > "$WORKSPACE/.brain-result.json" << BREOF
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"cheat_scan","log_excerpt":"脚本含 MOCK_/dry-run 作弊标志（行：$HIT），非真实执行路径。E2E 必须打真实服务/真实产物，禁止 mock 与 dry-run。"}
+BREOF
+  exit 0
+fi
+if grep -qE '\|\|[[:space:]]*true' "$SCAN_FILE" || grep -qE '^[[:space:]]*exit 0[[:space:]]*$' "$SCAN_FILE"; then
+  HIT=$(grep -nE '\|\|[[:space:]]*true|^[[:space:]]*exit 0[[:space:]]*$' "$SCAN_FILE" | head -1)
+  cat > "$WORKSPACE/.brain-result.json" << BREOF
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"cheat_scan","log_excerpt":"脚本含吞错 || true 或无条件 exit 0 兜底（行：$HIT），断言失败也会假绿。删除兜底，让真实 exit code 驱动结果。"}
+BREOF
+  exit 0
+fi
+
+# 3) 只有文件存在/大小检查而无内容断言
+if grep -qE 'test -[ef]|\[ -[ef] |\.size|stat -c|ls -l' "$SCAN_FILE" && ! grep -qE 'jq -e|ffprobe|toBeVisible|toHaveText|psql' "$SCAN_FILE"; then
+  cat > "$WORKSPACE/.brain-result.json" << BREOF
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"weak_oracle","log_excerpt":"脚本只做文件存在/大小检查，无任何内容/行为断言（jq -e / ffprobe / DOM 断言 / psql 均缺）。产出物存在 ≠ 行为正确，请补真实内容断言。"}
 BREOF
   exit 0
 fi
 ```
 
-按 `target_environment` 选择执行方式（v1.6 — 机器感知派发）：
+#### Step B-1.8: Golden Path 覆盖核对（LLM 判断步骤）
+
+**读 `${SPRINT_DIR}/sprint-prd.md` 的 Golden Path 段，逐步核对 E2E 脚本是否对每一步都有对应的真实命令 + 断言。任何一步未覆盖 → FAIL，feedback 列出未覆盖步骤。**
+
+这是 **LLM 判断步骤**（不是纯 bash）。evaluator 必须：
+
+1. 用 Read 工具读 `${SPRINT_DIR}/sprint-prd.md`，提取 Golden Path 每个步骤（Step 1/2/3…）。
+2. 用 Read 读 `/tmp/e2e-verify.sh`（或 .ps1）。
+3. **输出一张逐步对照表**（这是硬要求，不能只给结论）：
+
+   | Golden Path 步骤 | 脚本中对应命令行号 | 是否有断言（jq -e / ffprobe / DOM / psql）|
+   |---|---|---|
+   | Step 1: <用户动作> | L<行号> 或「未覆盖」 | ✅/❌ |
+
+4. 任一步骤「未覆盖」或「无断言」→ 写 FAIL：
+
+```bash
+cat > "$WORKSPACE/.brain-result.json" << BREOF
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"golden_path_gap","log_excerpt":"Golden Path 第 N 步「<步骤描述>」在 E2E 脚本中无对应命令/断言。E2E 必须覆盖 Golden Path 每一步，请补该步的真实命令 + 断言。"}
+BREOF
+exit 0
+```
+
+#### 领域验证死规则（evaluator 侧卡点 — 执行前扫描，缺对应 oracle 直接 FAIL）
+
+**sprint 涉及对应领域时，E2E 脚本必须含下表的 oracle，缺则 FAIL（failed_step=domain_oracle_missing）。与 proposer 合同侧「领域验证规则」死规则一一呼应。**
+
+| sprint 涉及 | 脚本必须含的 oracle | 缺失时 feedback |
+|---|---|---|
+| **视频**（生成/剪辑/转码，产出 .mp4/.mov 等）| `ffprobe` 验**视频流 + 音频流 + 时长合理**（如 `ffprobe -v error -show_streams` + 判断 codec_type=video/audio + duration>0）| "视频类 sprint 但脚本无 ffprobe 视频流/音频流/时长断言" |
+| **发布**（抖音/快手/小红书/视频号/公众号等）| 验证内容**真实出现**（平台 API 查到帖子 / 截图确认），非"脚本 echo ok" | "发布类 sprint 但脚本未验证内容真实出现（平台 API/截图）" |
+| **DB 写入** | `psql` 查行数且带 **`created_at > NOW() - interval`** 时间窗（防历史数据冒充本轮）| "DB 写入类 sprint 但脚本无带时间窗的 psql 行数断言" |
+| **UI 交互** | 可见状态断言：`toBeVisible` / `toHaveText` / 截图比对 | "UI 类 sprint 但脚本无可见状态断言（toBeVisible/toHaveText/截图）" |
+
+判断"sprint 涉及哪个领域"以 `${SPRINT_DIR}/sprint-prd.md` 的 Golden Path + journey_type + target_environment 为准。命中领域但脚本缺对应 oracle → FAIL，不允许放行。
+
+#### Step B-2: 执行 E2E 脚本
+
+**只执行一次**。按 `target_environment` 选择执行方式（v1.6 — 机器感知派发）。每个 case 分支自行设 `EXIT_CODE`；超时（exit 124）判定在 case 之后**统一**处理。
+
+> ⚠️ v1.15 删除了旧版的无条件首跑（旧版先无条件 `timeout 120 bash /tmp/e2e-verify.sh` 再按 case 重跑一遍 = 双重执行；且 windows_cloud/windows_wechat 时首跑会 `bash` 一个不存在的 `.sh`——脚本实际是 `.ps1`）。现在只在对应 case 分支里执行一次。
 
 ```bash
 # 读取 target_environment（从 PRD 或注入变量）
@@ -435,6 +544,15 @@ BREOF
     EXIT_CODE=${PIPESTATUS[0]}
     ;;
 esac
+
+# ── 统一超时判定（timeout 退出码 124 = 超时）──────────────────────────
+# 各 case 分支用 timeout 跑脚本，超时统一在此判定，不在分支内重复
+if [[ "$EXIT_CODE" -eq 124 ]]; then
+  cat > "$WORKSPACE/.brain-result.json" << BREOF
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"timeout","log_excerpt":"E2E 脚本执行超时，请检查被测服务是否正常启动或脚本是否有无限等待"}
+BREOF
+  exit 0
+fi
 ```
 
 **前置条件**：
@@ -571,5 +689,5 @@ BREOF
 1. **验证命令用 mock 或 dry-run** → 必须连接真实服务（brain 端口 5221，真实 DB）
 2. **feedback 笼统** → 必须指明具体文件/函数/值，附修复方向
 3. **输出带 markdown 代码块** → Brain 解析 verdict 字段时会失败
-4. **模式 A 漏提取 [BEHAVIOR] 条目** → `grep -n '\[BEHAVIOR\]'` 验证提取数量
-5. **模式 B E2E 脚本提取不全** → 确认 `## E2E 验收` 区块边界正确
+4. **E2E 脚本提取不全** → 确认 `contract-draft.md` 的 `## E2E 验收` 区块边界正确，提取后 `/tmp/e2e-verify.sh`（或 `.ps1`）非空
+5. **跳过环境预检/弱 oracle 扫描直接执行** → 执行前必跑 Step B-1.6/B-1.7/B-1.8：工具缺失 = `env_missing` FAIL（禁止降级），弱 oracle/作弊命中 = FAIL，Golden Path 有步骤未覆盖 = FAIL
