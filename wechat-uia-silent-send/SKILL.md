@@ -64,10 +64,12 @@ if not remaining:
     return True
 ```
 
-### 兜底路径（非静默）
+### 兜底路径（静默，绝对禁止 SW_RESTORE）
 
-仅当主路径失败时：`SW_RESTORE` + `_find_send_button().iface_invoke.Invoke()`。
-这会把窗口拉到前台，用户可见，但优先级最低。
+仅当主路径失败时：直接调用 `_find_send_button().iface_invoke.Invoke()`。
+- `SW_SHOWNA` 已在主路径还原窗口，UIA `Invoke()` 不依赖前台焦点
+- **绝对禁止** `ShowWindow(SW_RESTORE)`——这会把微信激活到前台，违反零前台原则
+- 兜底失败 → 静默返回 `False`，不做任何窗口操作
 
 ### 成功验证的坑
 
@@ -173,12 +175,25 @@ if os.path.exists(_psc):
 | `keybd_event(VK_RETURN)` | 全局事件，后台会话发到错误窗口 |
 | `SendInput(VK_RETURN)` | 同上 |
 | `mouse_event / _abs_click` | 需要前台焦点，后台静默必失败 |
+| `ShowWindow(SW_RESTORE)` + Invoke | SW_RESTORE 把微信激活到前台，等同 SetForegroundWindow；UIA Invoke 直接调即可，不需要 SW_RESTORE |
 | `_force_foreground + SetForegroundWindow` | 抢焦点，用户可感知，且不稳定 |
 | `_set_clipboard_text + Ctrl+V` | 依赖前台焦点，后台 session 下无效 |
+| `_set_clipboard_text + WM_PASTE(0x0302)` | 同上；mmui::MainWindow 控件 handle=0 时 PostMessage 被无声丢弃，且无法验证结果 |
 
 代码文件：`services/agent/wechat-rpa/listen_chat.py`
 以上方法对应的函数 `_force_foreground()` / `_abs_click()` / `_set_clipboard_text()` 已从
 代码库删除，不得重新引入。
+
+## 变更记录（Change Log）
+
+> **规则**：每次对 `_uia_send` / `reply_in_chat` 做变更，必须在此表追加一行。
+> 遇到"SetValue/AttachThread 不行了"的报告，先查这里，再决定是否改路径。
+
+| 日期 | 变更 | 触发原因 | 结论 |
+|------|------|----------|------|
+| 2026-06 | 引入 `_set_clipboard_text + WM_PASTE` 替代 SetValue（PR #717） | 报告 mmui::MainWindow SetValue 不写入文本 | ❌ 失败回滚：handle=0 WM_PASTE 无声丢弃，日志假成功用户收不到；PR #722 加验证，PR #723 整块删除 |
+| 2026-06-09 | 恢复 SetValue + AttachThreadInput 主路径，删 WM_PASTE（PR #723） | WM_PASTE 确认无效，skill 原方案 4.1.8.107 实测有效 | ✅ |
+| 2026-06-09 | 删除 fallback 中 SW_RESTORE，改为直接 Invoke()（PR #727） | 实测日志：Enter 偶发失败触发 SW_RESTORE→微信前台激活；UIA Invoke 不需要前台 | ✅ |
 
 ## 调试指引
 

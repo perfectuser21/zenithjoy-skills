@@ -53,7 +53,7 @@ Notion（展示层，只读）
 
 ### 2. journey_steps（Golden Path 步骤）
 
-> ⚠️ 迁移中：逐步由 abilities/golden_path 取代
+> ⚠️ 已废弃（2026-06-09）：不再写入。历史数据只读，新数据统一写 `journey_features`（kind 字段区分 ability/feature）。
 
 **API**：`POST /api/brain/journey_steps`
 **Notion**：AI Steps DB
@@ -98,9 +98,11 @@ Name 自动生成格式：`{JourneyCode}-S{step_order}`（如 `L01-S4`、`ZjOps-
 
 ---
 
-### 4. journey_features（功能实现单元）
+### 4. journey_features（Ability/Feature 唯一存储）
 
-> ⚠️ 迁移中：逐步由 abilities/golden_path 取代
+**2026-06-09 决策：abilities 表已删，journey_features 是 Ability/Feature 的唯一 SSOT。**
+- **Ability**（kind=ability）= 客户为之而来的价值 workflow（发抖音视频）
+- **Feature**（kind=feature）= 使能件（登录/下载/cookie/保活）
 
 **API**：`POST /api/brain/journey_features`
 **Notion**：AI Feature DB
@@ -108,44 +110,22 @@ Name 自动生成格式：`{JourneyCode}-S{step_order}`（如 `L01-S4`、`ZjOps-
 ```json
 {
   "journey_id": "uuid",
-  "step_id": "notion-step-uuid（可选）",
-  "name": "QR 码 API 端点",
+  "name": "抖音视频发布",
+  "kind": "ability",
   "status": "done",
   "thickness": "thin",
+  "workflow_ref": "douyin-publisher",
   "version": "1.0.0"
 }
 ```
 
+**kind 合法值**：`ability` | `feature`
 **status 合法值**：`planned` | `building` | `done` | `deprecated`
 **thickness 合法值**：`thin` | `medium` | `thick` | `mature`
 
 **禁止写入**：
 - 名称含 `[Sprint]`、`KeysTest`、`MyRun`（测试污染）
 - `journey_id` 为空
-
----
-
-### abilities（能力目录，kind 区分 ability/feature）
-
-新数据模型核心表，取代 journey_steps/journey_features。
-- **Ability**（kind=ability）= 客户为之而来的价值 workflow（发抖音视频）；判据：会不会写进客户交付清单
-- **Feature**（kind=feature）= 使能件（登录/下载/cookie/保活），客户不为它来
-
-**API**：`POST /api/brain/abilities`
-
-```json
-{
-  "name": "抖音视频发布",
-  "area": "zenithjoy",
-  "journey_id": "uuid",
-  "kind": "ability",
-  "type": "user_facing",
-  "workflow_ref": "douyin-publisher",
-  "status": "passing"
-}
-```
-
-字段：`name` | `area` | `journey_id` | `kind`(ability|feature) | `type` | `workflow_ref` | `status`
 
 ---
 
