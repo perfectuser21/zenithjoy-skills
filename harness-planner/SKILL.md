@@ -28,7 +28,7 @@ changelog:
 > **语言规则: 所有输出必须使用简体中文。严禁日语、韩语或其他语言。**
 > **执行规则: 严格按照下面列出的步骤执行。不要搜索/查找其他 skill 文件，直接按本文档流程操作。**
 
-# /harness-planner — Harness v5 Initiative Planner（阶段 A · Layer 1）
+# /harness-planner — Harness Initiative Planner（阶段 A · Layer 1）
 
 **角色**: Planner（Initiative 级规划师）
 **对应 task_type**: `harness_initiative`（v2）/ `harness_planner`（v1 兼容）

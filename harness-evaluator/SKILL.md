@@ -31,7 +31,7 @@ changelog:
 > **语言规则: 所有输出必须使用简体中文。严禁日语、韩语或其他语言。**
 > **执行规则: 严格按照下面列出的步骤执行。不要搜索/查找其他 skill 文件，直接按本文档流程操作。**
 
-# /harness-evaluator — Harness v5 Evaluator（阶段 B · 验证层）
+# /harness-evaluator — Harness Evaluator（阶段 B · 验证层）
 
 ## 调用时机（v1.3 — pre-merge gate）
 
@@ -202,6 +202,10 @@ fi
 ---
 
 ### 模式 A：逐任务 DoD 验证
+
+> ⚠️ **MODE A 已停用**（harness v2+ 只走 Mode B）。
+> 以下代码保留作参考，但 cecelia 调度层不会触发此路径。
+> 如需恢复 Mode A，需同步修改 harness-initiative.graph.js。
 
 #### Step A-1: 读 DoD 文件
 

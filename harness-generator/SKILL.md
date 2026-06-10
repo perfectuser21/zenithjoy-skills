@@ -1,7 +1,7 @@
 ---
 id: harness-generator-skill
 description: |
-  Harness Generator — Harness v7.0 严格合同执行者 × Superpowers 融合。
+  Harness Generator — 严格合同执行者 × Superpowers 融合。
   读取 GAN 对抗已批准的 contract-draft.md + tests/*.test.ts + contract-dod.md，按 TDD 纪律两次 commit（commit 1 = 测试 Red / commit 2 = 实现 Green）。
   融入 4 个 superpowers：test-driven-development / verification-before-completion / systematic-debugging / requesting-code-review。
   CONTRACT IS LAW：合同里有的全实现，合同外一字不加；测试文件从合同原样复制，commit 1 后不可修改（CI 强校验）。一个 Sprint = 一个 Generator = 一个 PR。
@@ -28,7 +28,7 @@ changelog:
 > **语言规则: 所有输出必须使用简体中文。严禁日语、韩语或其他语言。**
 > **执行规则: 严格按照下面列出的步骤执行。不要搜索/查找其他 skill 文件，不要 find/glob 查找任何 SKILL.md，直接按本文档流程操作。**
 
-# /harness-generator — Harness v7.0 TDD 执行者（Superpowers 融合，单 Sprint）
+# /harness-generator — Harness Generator TDD 执行者（Superpowers 融合，单 Sprint）
 
 **角色**: Generator（代码实现者，遵循 TDD Red-Green 纪律）
 **对应 task_type**: `harness_generate` / `harness_fix`

@@ -29,13 +29,13 @@ changelog:
   - 7.1.0: 修复 task-plan.json 永不生成 (#2819) — Step 3 改成每轮都生成（删 "仅 APPROVED 时执行" 门槛）；APPROVED 分支即最后一轮 proposer 的分支，inferTaskPlan 从此读取
   - 7.0.0: Golden Path 合同 — 格式从"Feature 1/Feature 2"改为 Golden Path Steps（每步含验证命令）；GAN 新增"验证命令可否造假"审查；合同 GAN 收敛后 Proposer 输出 task-plan.json（从 Golden Path 倒推）
   - 6.0.0: Working Skeleton — is_skeleton 检测；按 journey_type 切换 E2E test 模板（4 种）；contract-dod-ws0.md 加 YAML header
-  - 5.0.0: [已废止 — v7.4 起反转] TDD 融合 — 合同产出 3 份产物；Test Contract 索引表；~~严禁 contract-dod-ws 出现 [BEHAVIOR] 条目~~（**v7.4 起反转：BEHAVIOR 必须留 contract-dod-ws*.md 内 + 带 manual:bash 命令；不要再按此条执行**）
+  - 5.0.0: [已废弃] 曾禁止 [BEHAVIOR] 出现在合同中（此规则已被 v7.4 反转）。TDD 融合 — 合同产出 3 份产物；Test Contract 索引表。当前正确规则：[BEHAVIOR] 必须在 contract-dod.md 里，带 manual:bash 命令。
 ---
 
 > **语言规则: 所有输出必须使用简体中文。严禁日语、韩语或其他语言。**
 > **执行规则: 严格按照下面列出的步骤执行。不要搜索/查找其他 skill 文件，直接按本文档流程操作。**
 
-# /harness-contract-proposer — Harness v5 Contract Proposer
+# /harness-contract-proposer — Harness Contract Proposer
 
 **角色**: Generator（合同起草者）
 **对应 task_type**: `harness_contract_propose`
