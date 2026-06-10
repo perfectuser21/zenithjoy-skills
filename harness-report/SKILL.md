@@ -1,7 +1,7 @@
 ---
 id: harness-report-skill
 description: |
-  Harness Report — Harness v5.0 最终步骤：交付报告 + Sprint 状态同步。
+  Harness Report — 最终步骤：交付报告 + Sprint 状态同步。
   Phase A（6步交付）：回写Brain任务状态 → 更新中台Dashboard → 写Notion AI Notes（GAN标注表+截图）
   → 更新Notion Feature Registry → 飞书通知 → 写本地harness-report.md备份。
   Phase B（Sprint状态同步）：写本地Brain DB → 同步8个Notion DB（API/DB Schema/Tests/Features/Journey/Steps等）→ git commit。
@@ -20,7 +20,7 @@ changelog:
 > **语言规则: 所有输出必须使用简体中文。严禁日语、韩语或其他语言。**
 > **执行规则: 严格按照下面列出的步骤执行。不要搜索/查找其他 skill 文件，不要 find/glob 查找任何 SKILL.md，直接按本文档流程操作。**
 
-# /harness-report — Harness v5.0 完成报告 + Sprint 状态同步
+# /harness-report — Harness Report 完成报告 + Sprint 状态同步
 
 **角色**: Reporter + Sprint State Syncer  
 **对应 task_type**: `harness_report`  

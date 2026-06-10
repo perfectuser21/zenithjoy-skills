@@ -1,7 +1,7 @@
 ---
 id: harness-contract-reviewer-skill
 description: |
-  Harness Contract Reviewer — Harness v6.0 GAN Layer 2b：
+  Harness Contract Reviewer — Harness GAN Reviewer Layer 2b：
   Evaluator 角色，对抗性审查 Proposer 提出的 sprint contract，聚焦 **产品/spec 质量**
   而非"防作弊测试框架"。
   核心职责：(1) spec 对齐用户真需求 (2) criteria 可量化无歧义 (3) happy + error + 边界场景全覆盖
@@ -36,7 +36,7 @@ changelog:
 > **语言规则: 所有输出必须使用简体中文。严禁日语、韩语或其他语言。**
 > **执行规则: 严格按照下面列出的步骤执行。不要搜索/查找其他 skill 文件。**
 
-# /harness-contract-reviewer — Harness v6.0 Contract Reviewer
+# /harness-contract-reviewer — Harness Contract Reviewer
 
 **角色**: GAN Reviewer（合同对齐审查员）
 **对应 task_type**: `harness_contract_review`
