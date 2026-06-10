@@ -998,7 +998,7 @@ grep -E "FAIL|failed|✗" /tmp/sprint-red.log || { echo "ERROR: 测试未产生 
 ```bash
 cat > "${SPRINT_DIR}/task-plan.json" << 'JSONEOF'
 {
-  "initiative_id": "pending",
+  "initiative_id": "${INITIATIVE_ID}",
   "journey_type": "{journey_type}",
   "journey_type_reason": "{1 句推断依据}",
   "tasks": [

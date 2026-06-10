@@ -76,7 +76,6 @@ generator 写代码 + push PR
 | `IS_FINAL_E2E` | `true` = 模式 B（E2E）；其他值 = 模式 A（逐任务 DoD） |
 | `SPRINT_DIR` | Sprint 目录，如 `sprints/run-20260506-1400` |
 | `TASK_ID` | Brain 中当前 evaluate task 的 UUID |
-| `WORKSTREAM_INDEX` | 当前 workstream 编号（如 `1`），仅模式 A 用；旧变量名 `WORKSTREAM_N` 同时兼容 |
 | `JOURNEY_TYPE` | `user_facing` / `autonomous` / `dev_pipeline` / `agent_remote` |
 | `TARGET_ENV` | `mac_web` / `windows_cloud` / `windows_wechat` / `linux_server` / `local_api` / `playground`（来自 PRD `target_environment` 字段；`windows_wechat` = xian-rog self-hosted，微信已登录；`windows_cloud` = GHA windows-latest 云端）|
 | `WORKSPACE_PATH` | 结果文件写入目录（mac_web host 执行时为 worktreePath，Docker 默认不注入，脚本 fallback `/workspace`）|
@@ -186,124 +185,16 @@ W41 fix loop 5 round 评测：如果用 chromium default profile，第 5 round e
 # Docker 路径默认 /workspace，宿主路径由注入变量覆盖
 WORKSPACE="${WORKSPACE_PATH:-/workspace}"
 
-if [[ "$IS_FINAL_E2E" == "true" ]]; then
-  echo "模式 B — 最终 E2E"
-else
-  # Brain 注入的变量名是 WORKSTREAM_INDEX（不是 WORKSTREAM_N）
-  WS_NUM="${WORKSTREAM_INDEX:-${WORKSTREAM_N:-1}}"
-  echo "模式 A — 逐任务 DoD（ws${WS_NUM}）"
-fi
-```
-
-> **⚠️ 注意（harness v2）**：harness-task.graph.js 的 evaluate_contract 节点始终注入
-> IS_FINAL_E2E=true，因此生产中只会走模式 B。模式 A 的逐 WS DoD 验证在单 Sprint 设计下
-> 已不被调用，此段文档保留仅作参考。
-
----
-
-### 模式 A：逐任务 DoD 验证
-
-> ⚠️ **MODE A 已停用**（harness v2+ 只走 Mode B）。
-> 以下代码保留作参考，但 cecelia 调度层不会触发此路径。
-> 如需恢复 Mode A，需同步修改 harness-initiative.graph.js。
-
-#### Step A-1: 读 DoD 文件
-
-```bash
-# Brain 注入的变量名是 WORKSTREAM_INDEX（不是 WORKSTREAM_N）
-WS_NUM="${WORKSTREAM_INDEX:-${WORKSTREAM_N:-1}}"
-
-# v8.0 单 Sprint 模式写 contract-dod.md（无 WS 后缀）；兼容旧格式 contract-dod-ws{N}.md
-DOD_FILE="${SPRINT_DIR}/contract-dod.md"
-if [[ ! -f "$DOD_FILE" ]]; then
-  DOD_FILE="${SPRINT_DIR}/contract-dod-ws${WS_NUM}.md"
-fi
-if [[ ! -f "$DOD_FILE" ]]; then
+# harness v2 始终注入 IS_FINAL_E2E=true；若未注入说明 Brain dispatch 异常
+[[ "$IS_FINAL_E2E" == "true" ]] || {
+  echo "FATAL: IS_FINAL_E2E 未注入，Brain dispatch 异常，请检查 harness-initiative.graph.js" >&2
   cat > "$WORKSPACE/.brain-result.json" << BREOF
-{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"dod_missing","log_excerpt":"合同 DoD 文件不存在：尝试了 contract-dod.md 和 contract-dod-ws${WS_NUM}.md，均未找到"}
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"dispatch_error","log_excerpt":"IS_FINAL_E2E 未注入，Brain evaluateContractNode 配置异常"}
 BREOF
-  exit 0
-fi
-cat "$DOD_FILE"
+  exit 1
+}
+echo "模式 B — 最终 E2E"
 ```
-
-若提取结果中 `[BEHAVIOR]` 条目数量为 0，输出 FAIL：
-```bash
-cat > "$WORKSPACE/.brain-result.json" << BREOF
-{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"no_behavior","log_excerpt":null}
-BREOF
-```
-
-提取所有 `[BEHAVIOR]` 条目的 `Test:` 字段命令。格式示例：
-
-```
-[BEHAVIOR] 任务完成后 status = completed
-Test: curl -s localhost:5221/api/brain/tasks/$TARGET_TASK_ID | jq -r '.status'
-期望: completed
-```
-
-#### Step A-2: 逐条执行验证命令
-
-**B22 — Docker 环境 URL 替换（执行任何 Test 命令前必须完成）**：
-
-当 evaluator 在 Docker 容器内运行时，`localhost:5221` 无法连接到宿主的 Brain API，必须替换为 `host.docker.internal:5221`。执行每条 Test 命令前，检查并替换：
-
-```bash
-# 若 BRAIN_URL 已设为非 localhost 地址（说明在 Docker 容器内）
-if [ -n "$BRAIN_URL" ] && [ "$BRAIN_URL" != "http://localhost:5221" ]; then
-  BRAIN_HOST_PORT=$(echo "$BRAIN_URL" | sed 's|http://||')
-  # 在 Test 命令字符串中替换 localhost:5221 → host.docker.internal:5221
-  TEST_CMD=$(echo "$TEST_CMD" | sed "s|localhost:5221|$BRAIN_HOST_PORT|g")
-fi
-```
-
-将替换后的 `$TEST_CMD` 传给 `bash -c "$TEST_CMD"` 执行。
-
-对每条 `[BEHAVIOR]` 条目：
-
-1. 执行 `Test:` 字段中的命令（在真实环境，非 mock）
-**Test: 字段前缀处理（v1.2 — 修协议盲，proposer SKILL 写 manual:bash 前缀）**：
-- Test 命令若以 `manual:bash -c '<cmd>'` 开头 → strip `manual:bash -c '` 前缀和末尾 `'`，把里面的 `<cmd>` 整体用 `bash -c "<cmd>"` 执行；执行前先做 B22 URL 替换
-- Test 命令若以 `manual:` 开头（无 bash -c）→ strip `manual:` 前缀，剩下原样 bash 执行；执行前先做 B22 URL 替换
-- 不以 `manual:` 开头的（如 `node -e "..."` / `curl ...`） → 直接 bash 执行原文；执行前先做 B22 URL 替换
-- 这是跟 proposer SKILL v7.4+ 协议约定的格式，evaluator 不能因看到 `manual:` 前缀就跳过命令
-
-2. 记录 stdout / stderr / exit code
-3. 将结果与 `期望:` 行对比（规则：`stdout` trim 后**包含**期望字符串即通过，大小写敏感）
-
-按 `$JOURNEY_TYPE` 选择验证工具（表中 `journey_type` 列对应注入变量 `$JOURNEY_TYPE` 的值）：
-
-| journey_type | 验证工具 |
-|---|---|
-| `autonomous` | `curl` / `psql` / `node` 脚本 |
-| `user_facing` | Playwright（chrome MCP）模拟用户操作 |
-| `dev_pipeline` | `curl callback` + `gh pr view` |
-| `agent_remote` | 检查 bridge 回调 + DB 状态 |
-| 其他/未知值 | 回退到 `autonomous` 方式（curl/psql/node） |
-
-#### Step A-3: 输出报告
-
-**全部通过时**（所有 `[BEHAVIOR]` exit 0 且结果匹配期望）：
-
-```bash
-cat > "$WORKSPACE/.brain-result.json" << BREOF
-{"verdict":"PASS","task_id":"$TASK_ID","failed_step":null,"log_excerpt":null}
-BREOF
-```
-
-**有任何失败时**：
-
-```bash
-cat > "$WORKSPACE/.brain-result.json" << BREOF
-{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"<失败的 DoD 条目描述>","log_excerpt":"<实际输出 vs 期望值，具体修复方向>"}
-BREOF
-```
-
-**`feedback` 写作规则**：
-- 必须包含具体失败的文件路径或函数名
-- 必须包含实际得到的值 vs 期望值
-- 必须给出具体修复方向（如："在 task-router.js 中为 harness_evaluate 添加路由条目，当前路由映射缺少此 task_type"）
-- 禁止输出："建议检查代码" / "请排查问题" 等笼统描述
 
 ---
 

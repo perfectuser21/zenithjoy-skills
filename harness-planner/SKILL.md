@@ -3,9 +3,8 @@ id: harness-planner-skill
 description: |
   【Brain 内部节点，禁止人类直接调用】
   Harness Planner — Brain executor 在 harness_initiative 任务中自动调用的 Layer 1 节点。
-  人类启动 harness/sprint 的唯一正确入口是 /walking-skeleton（动作5 harness-bridge），
-  它会 POST Brain harness_initiative 任务，Brain 再自动调本 skill。
-  直接调本 skill = 绕过 Brain 调度层，违反 zero-human-gate 原则。
+  人类启动 harness/sprint 通过 /dev 路径C（POST localhost:5221/api/brain/tasks，task_type=harness_initiative）。
+  Brain tick 自动 pick up 后调本 skill。直接调本 skill = 绕过 Brain 调度层，违反 zero-human-gate 原则。
 version: 8.9.0
 created: 2026-04-08
 updated: 2026-06-01
@@ -199,6 +198,7 @@ else（无路径线索）→ 默认 autonomous
 |---|---|---|---|
 | Cecelia Dashboard / Web UI | `mac_web` | 本机 Playwright | localhost:5174，context 原生隔离 |
 | **Windows 产品**（ZenithJoy Agent 等）| **`windows_cloud`** | **GitHub Actions windows-latest** | 完全干净 VM，public repo 免费无限次，永远无历史状态 |
+| **微信 RPA**（Path 4 个微接管）| **`windows_wechat`** | **xian-rog self-hosted runner** | 真实微信 4.1.8 已登录环境，xian-rog 注册为 GHA self-hosted |
 | 生产 API 验证 | `linux_server` | SSH hk-vps / us-vps | curl + psql |
 | Brain 内部 / 纯后端 | `local_api` | 本地 evaluator | curl localhost:5221 + psql |
 | playground 训练 sprint | `playground` | 本地 | node playground/server.js |
@@ -208,6 +208,7 @@ else（无路径线索）→ 默认 autonomous
 ```
 if 涉及 apps/dashboard/ → mac_web
 if Windows App → windows_cloud（GitHub Actions，无论连公网还是内网）
+if 微信 RPA / wechat_rpa / Path4 个微 → windows_wechat（xian-rog self-hosted）
 if 仅 packages/brain/ → local_api
 if 涉及生产部署 → linux_server
 if is_skeleton=true or thin_prd 含 "playground" → playground
@@ -291,7 +292,7 @@ mkdir -p "$SPRINT_DIR"
 
 ## journey_type: autonomous|user_facing|dev_pipeline|agent_remote
 ## journey_type_reason: {1 句推断依据}
-## target_environment: mac_web|windows_cloud|linux_server|local_api|playground
+## target_environment: mac_web|windows_cloud|windows_wechat|linux_server|local_api|playground
 ## target_environment_reason: {1 句推断依据，含目标机器名（如 GitHub Actions、hk-vps、localhost:5174）}
 ## journey_id: <Journey UUID，来自 PrepPRD 或 task.payload.journey_id>
 ## step_id: <Step UUID 或 step code，如 L01-S5，来自 PrepPRD Golden Path 锚定结果>

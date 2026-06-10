@@ -58,8 +58,10 @@ PR_NUMBER=<PR号>
 REPO=<owner/repo>          # 如 perfectuser21/cecelia
 WORKTREE_PATH=<worktree路径>
 DEV_MODE_FILE=<.dev-mode文件路径>
-FIX_COUNT=0
 MAX_FIXES=3
+# FIX_COUNT 持久化到文件，防止 Bash 重新调用时计数归零
+FIX_COUNT_FILE="/tmp/watchdog-fix-count-${PR_NUMBER}"
+FIX_COUNT=$(cat "$FIX_COUNT_FILE" 2>/dev/null || echo 0)
 
 echo "🔍 开始监控 PR #$PR_NUMBER ($REPO)"
 
@@ -68,6 +70,7 @@ while true; do
   STATE=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json state --jq '.state' 2>/dev/null)
   if [ "$STATE" = "MERGED" ] || [ -z "$STATE" ]; then
     echo "✅ PR #$PR_NUMBER 已合并，退出轮询"
+    rm -f "$FIX_COUNT_FILE"
     break
   fi
   if [ "$STATE" = "CLOSED" ]; then
@@ -83,9 +86,12 @@ while true; do
   if [ "$FAILED" -gt 0 ]; then
     if [ "$FIX_COUNT" -ge "$MAX_FIXES" ]; then
       echo "🚨 连续修复 $MAX_FIXES 次仍失败，需要人工介入"
+      rm -f "$FIX_COUNT_FILE"
       exit 10
     fi
-    echo "❌ CI 有 $FAILED 个失败（第 $((FIX_COUNT+1)) 次）"
+    FIX_COUNT=$((FIX_COUNT+1))
+    echo "$FIX_COUNT" > "$FIX_COUNT_FILE"
+    echo "❌ CI 有 $FAILED 个失败（第 $FIX_COUNT 次）"
     exit 10
   fi
 

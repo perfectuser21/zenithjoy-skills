@@ -2,7 +2,7 @@
 name: engine-ship
 version: 16.2.0
 updated: 2026-05-07
-description: Cecelia /dev 接力链终棒。Superpowers finishing 完成 push+PR 后，写 Learning + 触发 Brain fire-learnings-event + 标记 step_4_ship=done。Stop Hook 接管合并 + cleanup。
+description: Cecelia /dev 接力链终棒。Superpowers finishing 完成 push+PR 后，写 Learning + 触发 Brain fire-learnings-event + 标记 step_4_ship=done。完成后下一 tool call 必须 Skill(engine-pr-watchdog)。
 trigger: Superpowers finishing-a-development-branch 完成后，按 /dev SKILL.md Phase 5 硬规则点火
 ---
 
@@ -76,4 +76,4 @@ git push origin HEAD
 
 ## TERMINAL IMPERATIVE
 
-engine-ship 是 /dev 接力链终点。**退出 assistant turn，不再调 Skill**。Stop Hook 接管：CI 绿 + `step_4_ship=done` → 自动合并 PR → cleanup → exit 0；CI 红 → exit 2，退 `/superpowers:systematic-debugging`。
+engine-ship 是 /dev 接力链倒数第二棒。**完成后下一 tool call 必须是 `Skill({"skill":"engine-pr-watchdog"})`**，由它接管 CI 监控 + 自动合并 + cleanup。CI 红 → engine-pr-watchdog 内部调 `superpowers:systematic-debugging`。
