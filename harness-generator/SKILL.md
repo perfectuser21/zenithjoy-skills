@@ -279,7 +279,7 @@ Review Summary 贴进 PR body。
 ```bash
 # 1. 提取 contract DoD 文件所有 [BEHAVIOR] Test: 命令
 DOD_FILE="${SPRINT_DIR}/contract-dod.md"
-grep -E "^\s+Test: manual:" "$DOD_FILE" | sed 's/.*Test: manual://' > /tmp/contract-behavior-cmds.sh
+grep -E "^\s*Test: manual:" "$DOD_FILE" | sed 's/.*Test: manual://' > /tmp/contract-behavior-cmds.sh
 
 CMD_COUNT=$(wc -l < /tmp/contract-behavior-cmds.sh | tr -d ' ')
 echo "[contract-self-verify] 提取 $CMD_COUNT 条 [BEHAVIOR] manual:bash 命令"

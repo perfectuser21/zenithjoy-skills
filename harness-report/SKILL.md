@@ -153,6 +153,17 @@ curl -X POST "localhost:5221/api/brain/notes" \
     \"initiative_id\": \"${TASK_ID:-}\"
   }" 2>/dev/null || echo "WARN: Report Note 写入失败（非阻断）"
 echo "✅ Step 3: Report Note 已写入（Type=Report）"
+
+# 收尾 PATCH：截图上传完成后回写 screenshot_url 到 Brain DB（Step 1 时 URL 还未生成）
+if [ -n "$SCREENSHOT_URLS" ] && [ "$SCREENSHOT_URLS" != "[]" ]; then
+  # 将空格分隔的 URL 列表转为 JSON 数组
+  SCREENSHOT_URLS_JSON=$(echo "$SCREENSHOT_URLS" | tr ' ' '\n' | grep -v '^$' | jq -R . | jq -sc .)
+  curl -s -X PATCH "localhost:5221/api/brain/tasks/$TASK_ID" \
+    -H "Content-Type: application/json" \
+    -d "{\"screenshots\": $SCREENSHOT_URLS_JSON}" \
+    >/dev/null 2>&1 || true
+  echo "✅ 截图 URL 已回写 Brain DB"
+fi
 ```
 
 ---
