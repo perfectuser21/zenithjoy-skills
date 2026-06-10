@@ -6,10 +6,11 @@ description: |
   而非"防作弊测试框架"。
   核心职责：(1) spec 对齐用户真需求 (2) criteria 可量化无歧义 (3) happy + error + 边界场景全覆盖
   GAN 对抗**多轮**直到双方达成共识。无硬轮数上限，但 Reviewer 真找不出实质 spec/产品漏洞时必须 APPROVED。
-version: 9.0.0
+version: 9.1.0
 created: 2026-04-08
-updated: 2026-06-08
+updated: 2026-06-11
 changelog:
+  - 9.1.0: 链路审计修复 3 项 — (a) Golden Path 覆盖审查检测信号补「只检查文件存在/大小而无内容验证 → 第 1 维直接 0 分」+「逐项核对 proposer 作弊反例清单」；(b) 强化 N/A 规则表述：windows_wechat 第 7 维必须实审 e2e-wechat-rpa.yml 不可填 10，N/A 只适用非 windows_cloud/windows_wechat/linux_server；(c) 第 6 维 verification_oracle_completeness 审查项加入领域验证规则核对（视频 ffprobe / 发布真实出现 / DB 时间窗 / UI 可见断言）+ [BEHAVIOR] ≥ 4 数量检查明确归此维。注意：7 个维度名是与 Brain ReviewerOutputSchema 的接口约定，一个都没改
   - 9.0.0: Golden Path 覆盖审查新增两条强制问题（[BEHAVIOR] 1:1 对应步骤 + 禁止 mock）；维度 7 扩展覆盖 windows_wechat（e2e-wechat-rpa.yml）；阈值规则和填值规则同步更新
   - 8.4.0: 第6维评分基准从「PRD Response Schema 段」改为「contract-draft.md Response Schema 推导段」；N/A 任务自动满分
   - 8.3.0: [跳过，与 8.2.0 合并发布]
@@ -76,6 +77,8 @@ Proposer 产出的 `contract-draft.md` 格式是 **Golden Path Steps**：每步 
 4. **Step 间数据流自洽？** 上一步输出格式 == 下一步输入格式
 5. **每条 [BEHAVIOR] 是否 1:1 对应 Golden Path 一个步骤？**（v9.0 强制）答不出对应步骤 → 第 1 维 DoD 机检性扣分（该条命令无真实 Golden Path 锚点，属假验证）
 6. **验证命令是否在真实 target_environment 执行，无 mock？**（v9.0 强制）检测信号：含 `MOCK_*` 环境变量、`EventEmitter`/`fakeChild`/`downloadImpl: async`、`exit 0` 兜底 → 第 1 维直接 0 分；Golden Path 含微信操作但 target_environment 写 `windows_cloud`（GHA 无微信）→ 第 7 维 0 分
+7. **验证命令是否只检查文件存在/大小而无内容验证？**（v9.1 强制）只 `test -f` / `.size` / `ls -l` 而无 jq -e / ffprobe / DOM 断言 / psql 内容验证 → **第 1 维直接 0 分**（产出物存在 ≠ 行为正确）
+8. **逐项核对 proposer「作弊反例清单」**（v9.1 强制）：对照 proposer SKILL 的 ≥10 条作弊反例（MOCK_*、stub/spy、jest.mock/vi.mock 真路径、无条件 exit 0、断言上 `\|\| true`、只查文件存在/大小、历史数据冒充本轮、dry-run、sleep 后假断言、grep 自己 echo 的串）——合同命中任一 → 对应维度（多数为第 1 维 / 第 6 维）按反例表所列直接低分
 
 少一项 → 第 2 维 scope_match_prd 或第 4 维 internal_consistency 扣分。Golden Path 断链 → 直接 REVISION 不打分。
 
@@ -123,6 +126,15 @@ Proposer 产出的 `contract-draft.md` 格式是 **Golden Path Steps**：每步 
 - ❌ PRD 要求 schema 完整 2 字段，合同没 `jq -e 'keys == ["operation","result"]'` 完整性卡
 - ❌ E2E 脚本只 `curl -f /xxx` 看 HTTP 200，没 jq 校验 body shape
 - ✅ 每个 PRD response 字段 → 对应 1 条 `jq -e '.<key> == <value>'` 命令；schema 完整性卡 + 禁用字段反向检查全齐
+
+**领域验证规则核对（v9.1 — 第 6 维必查，与 proposer/evaluator 死规则呼应）**：sprint 命中以下领域但合同缺对应 oracle → 第 6 维低分：
+
+- ❌ **视频**类（生成/剪辑/转码）合同无 `ffprobe` 验**视频流 + 音频流 + 时长 > 0**
+- ❌ **发布**类合同无"内容真实出现"验证（平台 API 查到帖子 / 截图确认），只 echo / 看 HTTP 200
+- ❌ **DB 写入**类合同 `SELECT count(*)` 无 `created_at > NOW() - interval` 时间窗（历史数据冒充）
+- ❌ **UI 交互**类合同无 `toBeVisible` / `toHaveText` / 截图比对可见状态断言
+
+**[BEHAVIOR] ≥ 4 数量检查（归属第 6 维，v9.1 明确）**：`grep -c '^- \[ \] \[BEHAVIOR\]' contract-dod.md` < 4（至少覆盖 schema 字段 / keys 完整性 / 禁用字段反向 / error path 四类各一条）→ 第 6 维低分 REVISION。**此数量检查由第 6 维负责，不归第 7 维 ci_workflow_alignment**（第 7 维只审 CI Workflow 内容对齐）。
 
 ---
 
@@ -246,7 +258,7 @@ Round N, 阈值固定 7/10（不随 round 衰减）。
 ### 需要 Proposer 修的（只列 block 项，不列 nice-to-have）
 
 **问题 1**（维度：内部一致, 当前 6 分，目标 ≥ 7）
-**描述**：`contract-dod-ws1.md` 和 `contract-draft.md` 两处粘贴同一 node -e 命令，修改任一会漂移。
+**描述**：`contract-dod.md` 和 `contract-draft.md` 两处粘贴同一 node -e 命令，修改任一会漂移。
 **修复**：单源 SSOT — 合同只放稳定 ID 引用（`A1/A2/...`），DoD 文件是唯一文本源。
 
 **问题 2**（维度：风险登记, 当前 5 分，目标 ≥ 7）
@@ -291,8 +303,8 @@ REVISION 时 feedback 必须含具体修改方向。
 
 **ci_workflow_alignment 填值规则**：
 - `target_environment` 为 `windows_cloud` 或 `linux_server`：正常审查 workflow 文件后打分（0-10）
-- `target_environment` 为 `windows_wechat`：审查 `e2e-wechat-rpa.yml`，额外检查 runner 标签是否含 `wechat-capable`、有无 `MOCK_*` 注入、有无真实微信进程检测步骤，后打分（0-10）
-- 其他环境（mac_web / local_api / playground 等）：直接填 `10`（N/A，无 GHA workflow 可审查）
+- `target_environment` 为 `windows_wechat`：**必须实审 `e2e-wechat-rpa.yml`，禁止填 10（N/A）**。额外检查 runner 标签是否含 `wechat-capable`、有无 `MOCK_*` 注入、有无真实微信进程检测步骤，后打分（0-10）。未执行 `cat .github/workflows/e2e-wechat-rpa.yml` → 第 7 维强制 0 分
+- 其他环境（mac_web / local_api / playground 等）：直接填 `10`（N/A，无 GHA workflow 可审查）。**N/A 只适用于非 windows_cloud / windows_wechat / linux_server 的环境**
 - **禁止省略此字段**：Brain `computeVerdictFromRubric` 要求全 7 维都有值，缺字段返回 null 降级到 LLM 文字判断
 
 ---

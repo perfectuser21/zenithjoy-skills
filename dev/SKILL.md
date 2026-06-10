@@ -1,9 +1,11 @@
 ---
 name: dev
-version: 20.0.0
-updated: 2026-06-09
+version: 20.1.0
+updated: 2026-06-11
 description: Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→比对已有Steps展示Golden Path草稿→确认前置工作全部到位→用户确认PrepPRD→路由执行
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
+changelog:
+  - 20.1.0: 链路审计修复 4 项 — (a) 路径 C payload target_environment 枚举补全为 6 种（mac_web|windows_cloud|windows_wechat|linux_server|local_api|playground）；(b) PrepPRD Golden Path 模板改为单线性步骤序列（Step 1→2→…，每步=用户动作+系统可观察响应），与 proposer 1:1 映射对齐，三段式作补充；(c) abilities 注释改准确（表已删但 endpoint 仍可用、后端映射 journey_features）；(d) 加 add-feature 脚本 vs Brain API 参数对照表
 ---
 
 > **CRITICAL LANGUAGE RULE**: 所有输出简体中文。
@@ -51,9 +53,9 @@ curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
 ### 路径 C（大功能）— 5 个上下文源
 
 ```bash
-# 1: Journey 体系（journey_features 是唯一正表，2026-06-09 abilities 表已删并合并）
-# 旧 /api/brain/abilities endpoint 已映射到 journey_features
-# 查询 Ability/Feature 必须用 journey_features，禁止查 abilities
+# 1: Journey 体系（journey_features 是唯一正表）
+# abilities 表已删（2026-06-09）；/api/brain/abilities endpoint 仍可用、后端已映射到 journey_features
+# 查询 Ability/Feature 推荐直接用 journey_features（语义最清晰）；abilities endpoint 是兼容别名
 curl -s "localhost:5221/api/brain/journeys"
 curl -s "localhost:5221/api/brain/journey_features?limit=50"
 
@@ -95,14 +97,11 @@ curl -s -X POST "localhost:5221/api/brain/decisions/match" \
    本次新增/推进（➕ 本 sprint 范围）：
    - ➕ [Ability/Feature 名] — [计划厚度/目标]
 
-   建议 Golden Path（用户视角，不写系统组件）：
-   [首次使用]
-   Step 1: [谁] [做了什么操作] → 系统 [响应] → [下一状态]
-   Step 2: ...
-   [日常使用]
-   Step 1: ...
-   [出错/掉线后]
-   Step 1: [用户如何知道出错了] → [用户如何恢复]
+   建议 Golden Path（用户视角，不写系统组件，单线性步骤序列）：
+   Step 1: [谁] [做了什么操作] → 系统 [可观察响应] → [下一状态]
+   Step 2: [下一步操作] → 系统 [可观察响应] → [下一状态]
+   Step 3: ...（到出口）
+   （可选补充：首次/日常差异、出错恢复——出错场景至少一条 [用户如何知道出错] → [用户如何恢复]）
    ```
 
    提炼规则：
@@ -203,19 +202,16 @@ curl -s -X POST "localhost:5221/api/brain/decisions/match" \
 ## 本次要做的
 [用用户语言描述]
 
-## Golden Path（用户操作流程，逐步，不跳过）
+## Golden Path（用户操作流程，单线性步骤序列，逐步不跳过）
 
 > 这是唯一决定"做什么"的锚点。合同、E2E 全部从这里派生。
+> **主体是单线性步骤序列**（Step 1→2→3→…），每步 = `用户动作 + 系统可观察响应`，与 proposer 的 [BEHAVIOR] 1:1 映射对齐（一步 = 一条 [BEHAVIOR]）。
 
-### 首次使用
-1. [谁] [做了什么] → 系统 [响应] → [状态]
-2. ...
+1. [谁] [做了什么操作] → 系统 [可观察响应] → [下一状态]
+2. [谁] [下一步操作] → 系统 [可观察响应] → [下一状态]
+3. ...（一直到出口：用户拿到最终可感知的结果）
 
-### 日常使用
-1. ...
-
-### 出错/掉线后
-1. [用户如何发现问题] → [用户做什么] → 系统 [恢复动作]
+> **补充场景（可选，不替代主线）**：若功能有明显的"首次使用 / 日常使用 / 出错恢复"差异，可在主线之后补三段式说明，但**主体必须是上面的单线性序列**。出错/掉线场景至少覆盖一条：[用户如何发现问题] → [用户做什么] → 系统 [恢复动作]。
 
 ## 客户视角（用户打开产品能感知到什么）
 [不写技术细节，只写客户会看到/感受到的变化]
@@ -360,6 +356,18 @@ node ~/.claude/skills/dev/scripts/add-feature.js \
 #   -d '{"name":"<name>","journey_id":"<id>","kind":"ability","area":"ZenithJoy"}'
 ```
 
+**两种方式参数对照（推荐脚本，自带语义查重 + 默认值）**：
+
+| 概念 | add-feature.js 参数 | Brain API 字段 | 说明 |
+|---|---|---|---|
+| 名称 | `--name "<feature_name>"` | `name` | 必填 |
+| 所属 Journey | `--journey-id "<id>"` | `journey_id` | 必填 |
+| 厚度 | `--thickness "thin"` | （无对应字段，写 `thickness`）| 脚本默认 thin |
+| 类型 | （脚本默认 ability）| `kind: "ability" \| "feature"` | API 必须显式写 kind |
+| 所属 Area | `--area "<area>"` | `area` | 如 ZenithJoy |
+
+> **推荐用 `add-feature.js`**：执行前自动语义查重（避免重复建 Ability）、默认 thin、默认 kind=ability，少踩坑。只有脚本不可用时才回退裸 Brain API（此时必须手动带 `kind`）。
+
 点火：
 ```bash
 curl -s -X POST localhost:5221/api/brain/tasks \
@@ -376,17 +384,20 @@ curl -s -X POST localhost:5221/api/brain/tasks \
       \"journey_id\": \"<notion_journey_id>\",
       \"feature_id\": \"<notion_feature_id>\",
       \"base_repo\": \"<见下方规则>\",
-      \"target_environment\": \"<windows_cloud|mac_web|local_api>\"
+      \"target_environment\": \"<mac_web|windows_cloud|windows_wechat|linux_server|local_api|playground>\"
     }
   }"
 ```
+
+> **target_environment 枚举（6 种，与 planner/proposer/evaluator 全链一致）**：`mac_web`（Cecelia Dashboard，本机 Playwright）/ `windows_cloud`（GHA windows-latest）/ `windows_wechat`（xian-rog self-hosted 真机微信）/ `linux_server`（SSH hk-vps/us-vps）/ `local_api`（本地 Brain curl+psql）/ `playground`（playground 训练 sprint）。
 
 **`base_repo` 规则：**
 
 | target_environment | base_repo 格式 |
 |---|---|
-| `windows_cloud` / `mac_web` | **必须 GitHub URL**（Actions runner 访问不到本地路径）|
-| `local_api` | 本地路径或 GitHub URL 均可 |
+| `windows_cloud` / `windows_wechat` / `mac_web` | **必须 GitHub URL**（Actions runner / 远端真机访问不到本地路径）|
+| `linux_server` | **必须 GitHub URL**（远端机器 SSH 后 clone）|
+| `local_api` / `playground` | 本地路径或 GitHub URL 均可 |
 
 > ❌ 错误：`windows_cloud` + `base_repo=/Users/administrator/...` → Harness 入队失败
 > ✅ 正确：`windows_cloud` + `base_repo=https://github.com/perfectuser21/zenithjoy-workspace.git`

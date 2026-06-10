@@ -5,10 +5,11 @@ description: |
   Harness Planner — Brain executor 在 harness_initiative 任务中自动调用的 Layer 1 节点。
   人类启动 harness/sprint 通过 /dev 路径C（POST localhost:5221/api/brain/tasks，task_type=harness_initiative）。
   Brain tick 自动 pick up 后调本 skill。直接调本 skill = 绕过 Brain 调度层，违反 zero-human-gate 原则。
-version: 8.9.0
+version: 8.10.0
 created: 2026-04-08
-updated: 2026-06-01
+updated: 2026-06-11
 changelog:
+  - 8.10.0: 链路审计修复 4 项 — (a) target_environment 推断改为明确 if-elif 优先级链（dashboard→mac_web / windows app→windows_cloud / 微信 RPA→windows_wechat / 服务器→linux_server / 纯 API→local_api / playground 训练→playground），删除含糊的"取起点最靠前"；(b) journey_id 大小写统一为 journey_id（小写）+ 注明来源 task.payload.journey_id；(c) sprint-prd.md 模板补 ## E2E 验收 占位区块（初稿可空，最终脚本由 proposer 产出）+ journey_id/step_id 来源说明；(d) 常见错误 #2 加 ❌/✅ 正反例
   - 8.9.0: 明确"只做Scope锚定"原则；sprint-prd.md模板加journey_id+step_id强制字段
   - 8.8.0: 删Response Schema必填段（职责归Proposer Step 1.1）；Step 0.1加initiative_runs Run历史查询
   - 8.7.0: thin-slice 行数上限从 ≤50 调整为 ≤100 — 实测含 smoke script 的真实 PRD 常见 80-110 行，50 行限制在 eval 中持续误报；保留"禁止 254 行 medium/thick PRD"的精神，只放宽数字
@@ -169,7 +170,7 @@ curl localhost:5221/api/brain/context
 
 **边界**：只读运行时上下文，不探索代码实现细节。
 
-**Journey Run 历史（initiative_runs）**：读 task payload 中的 `JOURNEY_ID`（或 `journey_id`），非空则：
+**Journey Run 历史（initiative_runs）**：读 `task.payload.journey_id`（统一小写 `journey_id`，来源 = /dev 路径 C 点火时写入的 `payload.journey_id`），非空则：
 
 ```bash
 curl "localhost:5221/api/brain/harness/runs?limit=10"
@@ -183,14 +184,17 @@ curl "localhost:5221/api/brain/harness/runs?limit=10"
 
 **journey_type**（决定"测什么"）：
 
+**明确 if-elif 优先级链（命中即停，不再用含糊的"取起点最靠前"）**：
+
 ```
-if 涉及 apps/dashboard/ → user_facing
-elif 仅涉及 packages/brain/ → autonomous
-elif 涉及 packages/engine/（hooks/skills）→ dev_pipeline
-elif 涉及远端 agent 协议 / bridge / cecelia-run → agent_remote
-elif 同时命中多个 → 取起点最靠前（UI > tick > task dispatch > bridge）
-else（无路径线索）→ 默认 autonomous
+if 涉及 apps/dashboard/                          → user_facing
+elif 涉及远端 agent 协议 / bridge / cecelia-run  → agent_remote
+elif 涉及 packages/engine/（hooks/skills）        → dev_pipeline
+elif 涉及 packages/brain/（或纯后端）             → autonomous
+else（无路径线索）                                → autonomous（默认）
 ```
+
+> 多路径命中时按上面顺序从上往下匹配，第一个命中的即结果（UI > agent 协议 > engine > brain）。
 
 **target_environment**（决定"在哪台机器跑 E2E"）：
 
@@ -203,17 +207,19 @@ else（无路径线索）→ 默认 autonomous
 | Brain 内部 / 纯后端 | `local_api` | 本地 evaluator | curl localhost:5221 + psql |
 | playground 训练 sprint | `playground` | 本地 | node playground/server.js |
 
-**推断规则**：
+**明确 if-elif 优先级链（命中即停，从上往下第一个命中即结果）**：
 
 ```
-if 涉及 apps/dashboard/ → mac_web
-if Windows App → windows_cloud（GitHub Actions，无论连公网还是内网）
-if 微信 RPA / wechat_rpa / Path4 个微 → windows_wechat（xian-rog self-hosted）
-if 仅 packages/brain/ → local_api
-if 涉及生产部署 → linux_server
-if is_skeleton=true or thin_prd 含 "playground" → playground
-else → local_api（默认）
+if is_skeleton=true 或 thin_prd 含 "playground"        → playground   （playground 训练优先判，避免被后面规则吞掉）
+elif 涉及 apps/dashboard/ 或前端页面 / 浏览器打开 Cecelia → mac_web
+elif Windows App（ZenithJoy Agent / Publisher 安装包等）  → windows_cloud（GitHub Actions windows-latest）
+elif 微信 RPA / wechat_rpa / listen_chat / Path4 个微    → windows_wechat（xian-rog self-hosted 真机）
+elif 涉及生产部署 / 远端服务器                            → linux_server（SSH hk-vps / us-vps）
+elif 仅 packages/brain/ 或纯 API / 后台任务              → local_api
+else                                                    → local_api（默认）
 ```
+
+> 优先级理由：playground 训练 sprint 必须最先判（否则"涉及 brain"会把它误判 local_api）；微信 RPA 必须在 windows_cloud 之后单独判（GHA 无微信，写错会全部假绿）。
 
 记录：`journey_type: <值>` + `target_environment: <值>`，写入 PRD 末尾。两个字段**缺一不可**，proposer 和 evaluator 都依赖这两个字段。
 
@@ -290,12 +296,21 @@ mkdir -p "$SPRINT_DIR"
 
 - `path/to/file`: {为何受影响}
 
+## E2E 验收
+
+> Planner 初稿此区块**可留空**（只写占位 + 期望验收点的自然语言描述）。**最终可执行的 E2E 脚本由 proposer 在 GAN 阶段产出**（按 target_environment 选 bash/.ps1 模板，写进 contract-draft.md 的 `## E2E 验收` 区块）。Planner 在此先框定"端到端要验到什么"，供 proposer 翻译成命令。
+
+```bash
+# 占位：proposer 将按 target_environment 填入真实脚本（local_api→curl+psql / mac_web→Playwright / windows_*→ps1）
+# 期望验收点（自然语言）：{从入口到出口，用户/系统可观察到的最终结果}
+```
+
 ## journey_type: autonomous|user_facing|dev_pipeline|agent_remote
 ## journey_type_reason: {1 句推断依据}
 ## target_environment: mac_web|windows_cloud|windows_wechat|linux_server|local_api|playground
 ## target_environment_reason: {1 句推断依据，含目标机器名（如 GitHub Actions、hk-vps、localhost:5174）}
-## journey_id: <Journey UUID，来自 PrepPRD 或 task.payload.journey_id>
-## step_id: <Step UUID 或 step code，如 L01-S5，来自 PrepPRD Golden Path 锚定结果>
+## journey_id: <Journey UUID，来源 = task.payload.journey_id（/dev 路径 C 点火写入），缺则取 PrepPRD 锚定结果>
+## step_id: <Step UUID 或 step code，如 L01-S5，来源 = PrepPRD Golden Path 锚定结果>
 ```
 
 ---
@@ -323,5 +338,7 @@ git push origin HEAD 2>/dev/null || echo "[harness-planner] push skipped (no cre
 
 1. **task-plan.json initiative_id 写 "pending"** → 必须使用 `$HARNESS_INITIATIVE_ID` 环境变量（已注入），写 "pending" 会导致 parsePrd 警告 + 下游 DB 写入错误
 2. **PRD 仍用功能需求列表格式** → 必须改为 Golden Path 格式（入口→步骤→出口）
+   - ❌ 功能需求列表：`FR-001 系统应支持登录 / FR-002 系统应支持下载 / FR-003 系统应支持发布`（罗列能力，无用户流，proposer 无法 1:1 映射 [BEHAVIOR]）
+   - ✅ Golden Path：`Step 1: 用户点"抖音登录" → 系统弹二维码 → 扫码后显示"已登录" / Step 2: 用户选视频点"发布" → 系统上传 → 显示帖子链接`（单线性步骤序列，每步 = 用户动作 + 系统可观察响应）
 3. **写实现细节**（"引入 X 库"、"用 async 模式"）→ 违反 What-only 原则
 4. **忘记 journey_type** → 必须在 PRD 末尾标注，Proposer 和 Evaluator 依赖此字段
