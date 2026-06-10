@@ -221,7 +221,7 @@ Step 3: 不确定时，默认 Task，问用户确认
 ### 查询方式
 
 ```bash
-curl -s http://localhost:5221/api/brain/capabilities | jq
+curl -s http://localhost:5221/api/brain/journey_features?limit=50 | jq
 ```
 
 ### 匹配规则

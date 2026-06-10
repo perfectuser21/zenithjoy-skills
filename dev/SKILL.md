@@ -356,7 +356,7 @@ node ~/.claude/skills/dev/scripts/add-feature.js \
   --name "<feature_name>" --journey-id "<notion_journey_id>" \
   --thickness "thin" --area "<area>"
 # 若脚本不存在，直接调 Brain API：
-# curl -s -X POST localhost:5221/api/brain/abilities -H "Content-Type: application/json" \
+# curl -s -X POST localhost:5221/api/brain/journey_features -H "Content-Type: application/json" \
 #   -d '{"name":"<name>","journey_id":"<id>","kind":"ability","area":"ZenithJoy"}'
 ```
 
