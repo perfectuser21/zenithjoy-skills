@@ -5,7 +5,7 @@ description: |
   Harness Planner — Brain executor 在 harness_initiative 任务中自动调用的 Layer 1 节点。
   人类启动 harness/sprint 通过 /dev 路径C（POST localhost:5221/api/brain/tasks，task_type=harness_initiative）。
   Brain tick 自动 pick up 后调本 skill。直接调本 skill = 绕过 Brain 调度层，违反 zero-human-gate 原则。
-version: 8.10.0
+version: 8.11.0
 created: 2026-04-08
 updated: 2026-06-11
 changelog:
@@ -177,6 +177,46 @@ curl "localhost:5221/api/brain/harness/runs?limit=10"
 ```
 
 取前 5 条，提取字段：`id` / `phase` / `started_at` / `completed_at` / `failure_reason`，用于感知本 Journey 已跑过的 Sprint 历史、当前卡点与失败原因，避免 PRD 重复已完成范围。
+
+---
+
+### Step 0.3: 读取 NFR 决策（decisions 副源）
+
+**目的**：将 decisions 表中已沉淀的 NFR 决策注入 sprint-prd.md，避免每次重新问用户。PrepPRD 显式写了的参数优先；decisions 只补 PrepPRD 没写到的。
+
+```bash
+# 读取当前 ability 的 NFR 决策（副源）
+curl -sf "localhost:5221/api/brain/decisions?category=nfr&limit=50" \
+  > /tmp/nfr_decisions.json 2>/dev/null || echo '[]' > /tmp/nfr_decisions.json
+
+# 读取本 sprint 的 thin_prd（主源）
+THIN_PRD=$(echo "$TASK_PAYLOAD" | jq -r '.thin_prd // ""')
+```
+
+**合并规则**（PrepPRD 主源 > decisions 副源）：
+
+| PrepPRD 是否写明 | decisions 是否有值 | 结论 |
+|------|------|------|
+| ✅ 明确写了（如"超时=5秒"）| 任意 | 用 PrepPRD 的值，decisions 忽略 |
+| ❌ 没写 | ✅ 有值 | 用 decisions 的值，注入 sprint-prd.md |
+| ❌ 没写 | ❌ 没值 | 留空（Proposer 阶段对用户提问） |
+
+**sprint-prd.md 注入**：在 `## E2E 验收` 之前插入 `## NFR 约束` 段：
+
+```markdown
+## NFR 约束
+
+<!-- 来源: decisions 表 category=nfr，PrepPRD 显式值优先 -->
+- 超时/延迟: <值，或"待定（PrepPRD 未指定）">
+- 频控: <值>
+- 版本要求: <如 WeChat=4.1.8，或空>
+- 可观测: <如"失败必须写 Brain log"，或空>
+```
+
+**自查 checklist**：
+- [ ] `/tmp/nfr_decisions.json` 已读取（即便为空数组也继续）
+- [ ] PrepPRD 已有的 NFR 参数不被 decisions 覆盖
+- [ ] sprint-prd.md 含 `## NFR 约束` 段
 
 ---
 
