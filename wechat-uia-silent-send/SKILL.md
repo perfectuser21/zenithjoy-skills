@@ -390,6 +390,14 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 
 | 日期 | 变更 | 触发原因 | 结论 |
 |------|------|----------|------|
+| 2026-06-18 | listen_chat 的 draft-generate body 带 `agent_id`；中台 `resolveTenantId` 缺显式 tenant 时按 agent_id 反查 tenant_id（PR #796） | 中台 draft-generate 加租户隔离要 `tenant_id/X-Tenant-Id`，listen_chat 不传 → 全部 400 NO_TENANT_CONTEXT，客服谁都不回 | ✅ 租户绑定时已定，不该每条消息让 caller 传 |
+| 2026-06-18 | 模块版本号 6 处一致 bump；改 agent core 还要 bump `services/agent/package.json` | 不 bump → 心跳报旧版，已装客户端不自动更新；core 版本不一致 CI「Lint Agent Version Bump」拦 | ✅ |
+| 2026-06-18 | 厘清「模块自动更新 ≠ core 更新」 | 模块版本 bump 只让客户端拉新 line04（含 listen_chat.py），改动若在 agent core（spawn 参数等）必须重下安装包 | ✅ |
+| 2026-06-18 | mmv 中台部署改 `pkill -9` + `bootout`/`bootstrap`/`kickstart`，并强制验证新 PID + required_version + 真 reply | `launchctl stop/start`/`kickstart -k` 卡旧进程 PID 不变，旧进程继续服务、required_version 不更新（坑了 3 次） | ✅ 建议 deploy 脚本 stop/start 换 bootout/bootstrap |
+| 2026-06-18 | apps/api/.env 补 `TOAPI_API_KEY`，key 进 1Password secret 源 + 部署确保写进 .env | .env 漏 TOAPI_API_KEY → AI 生成静默失败（aiError 不打日志）→ auto 返回 `{ok:true,status:pending_review}` 但 reply undefined → listen_chat skip | ✅ 别只手动加，下次部署/换机又丢 |
+| 2026-06-18 | 加 `REPLY_DIRECTION_CHECK` 开关默认 False（真机校准前关）（PR #797） | `_last_bubble_direction` 按假设写，真机把所有收到消息判 outgoing → 全 skip(direction='outgoing') → 永不回 | ✅ UIA 气泡方向必须真机 dump 校准 |
+| 2026-06-18 | 记录 license QUOTA_EXCEEDED：同机重装/换机注册 403 走 v1.1 兼容路径生成新 agent_id | free 装机上限 1，旧 agent 占着；同机反复重装会撞 | ⚠️ 测试环境注意 |
+| 2026-06-18 | `OFFSCREEN_X` 按机器调更负（machine.config.json 覆盖，如 -5200/-9000） | -2600 在双屏/高分屏不够，扫描读消息时窗口闪到前台 | ✅ |
 | 2026-06 | 引入 `WM_PASTE` 替代 SetValue（PR #717） | SetValue 报告不写入文本 | ❌ 回滚：handle=0 WM_PASTE 无声丢弃 |
 | 2026-06-09 | 恢复 SetValue + AttachThreadInput（PR #723） | WM_PASTE 确认无效 | ✅ |
 | 2026-06-09 | 删 SW_RESTORE，改直接 Invoke()（PR #727） | Enter 失败触发 SW_RESTORE→前台激活 | ✅ |
@@ -455,3 +463,27 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 
 **问题：改完模型/配置重启后客服"不理人"、回复空**
 → 多为 mmv API 重启后 env 没加载进进程（plist 环境变量丢）或多进程抢 5200。用 legacy `unload/load` + `pkill` 干净重启，用 draft-generate 真实 reply + llm_audit 验证（见「部署纪律」）。CS_LLM 这类配置要惰性读 env。
+
+**问题：客服全员不回，draft-generate 返回 400 NO_TENANT_CONTEXT**
+→ 中台加了租户隔离，但 listen_chat 没传任何租户标识。根治：listen_chat 的 post_draft_generate body 带 `agent_id`（agent 自身 id）；中台 `resolveTenantId` 缺显式 tenant 时 `SELECT tenant_id FROM zenithjoy.agents WHERE agent_id=$1` 反查。租户在绑定时已定，不要每条消息让 caller 传（PR #796）。
+
+**问题：改了 agent 代码但已装客户端不更新（心跳报旧版）**
+→ 必须 bump 模块版本号，6 处一致：`modules/line04/manifest.json` + `build-modules/line04/manifest.json` + `walking-skeleton.service.ts` 的 `required_version` + `walking-skeleton.service.test.ts` + `heartbeat-modules.test.ts` + `heartbeat-module-health-smoke.sh`。若改的是 agent core（`src/`），还要额外 bump `services/agent/package.json`（独立版本线，CI「Lint Agent Version Bump」会拦）。
+
+**问题：模块版本 bump 了，但 spawn 参数等改动没生效**
+→ 模块自动更新 ≠ core 更新。模块版本 bump 只让客户端拉新 line04 模块（含 listen_chat.py）；改动若在 agent core（spawn 参数等），要重新下载安装包，core 不随模块心跳更新。
+
+**问题：部署后 required_version 没变、客户端不更新、PID 没动**
+→ mmv `launchctl stop/start`/`kickstart -k` 常卡旧进程，PID 不变、旧进程继续服务。根治：`pkill -9 -f apps/api/dist/index.js` → `launchctl bootout gui/$UID/com.zenithjoy.api` → `launchctl bootstrap gui/$UID <plist>` → `launchctl kickstart`。**必须验证：新 PID 变了 + dist 的 required_version 对 + draft-generate 真返回 reply**。建议把 deploy 脚本的 stop/start 换成 bootout/bootstrap。
+
+**问题：客服"成功但不回"（status=pending_review，reply 为空）**
+→ apps/api/.env 漏 `TOAPI_API_KEY`（OPENROUTER 等都有独缺它）→ AI 生成失败 → mode=auto 返回 `{ok:true,status:pending_review}` 但 `reply` undefined → listen_chat skip(no reply)。**失败是静默的（aiError 不打日志）**。诊断：① 直接用 .env/plist 里的 key `curl https://toapis.com/v1/chat/completions` 验 key/模型(deepseek-v3.2)/网络；② 查 `llm_audit` 表（有 0-token 记录 = fetch 失败；无记录 = 没 key，在 fetch 前抛"apiKey 未配置"）。key 应进 secret 源（1Password）+ 部署确保写进 .env，别只手动加（下次部署/换机又丢）。
+
+**问题：所有人发消息都被判 outgoing（我方）→ 永不回**
+→ `_last_bubble_direction` 按假设（气泡水平中心相对聊天面板中线）写，真机上把所有收到的消息判成 outgoing → 全 `skip(direction='outgoing')`。已加 `REPLY_DIRECTION_CHECK` 开关默认 False（真机校准前关闭方向检测）。教训：UIA 气泡方向必须真机 dump 校准，不能凭假设写（PR #797）。
+
+**问题：注册报 403 / license QUOTA_EXCEEDED**
+→ free 装机上限 1，旧 agent 占着名额。同机重装/换机注册会 403，走 v1.1 兼容路径（生成新 agent_id）。测试时同机反复重装会反复撞这个。
+
+**问题：扫描读消息时微信窗口闪到前台**
+→ `OFFSCREEN_X=-2600` 在双屏/高分屏机器不够，离屏窗口仍露在可见区。按机器调更负的 `OFFSCREEN_X`（`machine.config.json` 覆盖，如 -5200/-9000）。

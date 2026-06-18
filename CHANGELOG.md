@@ -1,3 +1,8 @@
+## [2026-06-18] wechat-uia-silent-send — updated (补客服端到端调试 8 个坑)
+**症状**: 微信客服端到端联调连环踩坑——租户隔离回归后客服全员不回（400 NO_TENANT_CONTEXT）；改 agent 代码后已装客户端不更新；mmv 中台 launchctl 重启卡旧进程（坑 3 次）；.env 漏 TOAPI_API_KEY 导致"成功但不回"且失败静默；气泡方向检测假设错把所有来信判 outgoing 永不回；license QUOTA_EXCEEDED；OFFSCREEN_X 不够窗口闪前台。
+**根因**: (1) 中台 draft-generate 加租户隔离要 tenant_id/X-Tenant-Id，listen_chat 不传任何租户标识；(2) 模块版本号未 6 处一致 bump、core 改动未 bump package.json；(3) `launchctl stop/start`/`kickstart -k` 不杀旧进程 PID 不变；(4) .env 漏 TOAPI_API_KEY 且 aiError 不打日志 → reply undefined → skip；(5) `_last_bubble_direction` 凭假设写未真机校准；(6) free 装机上限 1 名额被占；(7) -2600 在双屏/高分屏离屏不够。
+**修改**: SKILL.md「变更记录」表顶部加 8 行（含 PR #796/#797）；「调试指引」补 8 条对应排查（agent_id 反查租户 / 6 处版本 bump + core bump package.json / 模块更新≠core更新 / pkill+bootout+bootstrap 干净重启并验证 PID+required_version+reply / TOAPI_API_KEY 缺失诊断 llm_audit / REPLY_DIRECTION_CHECK 默认 False + 真机 dump 校准 / QUOTA_EXCEEDED v1.1 兼容路径 / OFFSCREEN_X 按机器调 machine.config.json 覆盖）。
+
 ## [2026-06-18] dev — updated (PrepPRD 新增步骤0.5 对抗深挖)
 **症状**: /dev 流水线只围绕用户说出口的 golden path（FR）建，系统性漏掉"理所应当但没人写"的横切铁律和 NFR——生产里连续暴露 AI 回复自己、误回群聊、客服数据不按租户隔离三类弱智 bug，全是用户肉眼发现，流程没有任何环节负责挖
 **根因**: PrepPRD 阶段只有"展示 Golden Path 草稿"，没有对抗深挖步骤；缺少横切不变量登记表当逼问清单；单租户测试让隔离漏洞看不见
