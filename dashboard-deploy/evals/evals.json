@@ -18,6 +18,12 @@
       "prompt": "中台的前端没有更新，我看到的还是旧版本，你帮我推一下",
       "expected_output": "识别为 ZenithJoy 中台，执行部署流程，特别注意 rsync 到正确目录（autopilot-dashboard/dist 而不是 repo/dist），重启容器后公网验证",
       "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "我在 out/line02-acquisition.html 做了个智能获客的状态页，地址给我，我想在浏览器直接打开看，别给我本地文件路径",
+      "expected_output": "识别为'放单个页面看一眼'场景，走无 SW 独立端口静态服务（python3 -m http.server 换个端口），给一个能直接打开、不会被 service worker 打回主页的 URL；不是直接把 html 丢进 dashboard 的 dist，也不是只甩 file:// 本地路径",
+      "files": []
     }
   ]
 }

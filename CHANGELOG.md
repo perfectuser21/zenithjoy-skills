@@ -3,6 +3,11 @@
 **根因**: PrepPRD 阶段只有"展示 Golden Path 草稿"，没有对抗深挖步骤；缺少横切不变量登记表当逼问清单；单租户测试让隔离漏洞看不见
 **修改**: PrepPRD 新增「步骤0.5 对抗深挖」——5 轮换镜头（顺利路径/失败边界/横切铁律/NFR/知识记忆），按 /dev 路径缩放深度，先喂横切不变量登记表（decisions category=invariant）+ 历史 learnings，产出分【要用户拍的 policy】与【机器铁律自动标注】两流，并把生产新坑回灌登记表形成闭环；配套已种 10 条铁律（5 系统级 + 5 Line04 级）
 
+## [2026-06-18] dashboard-deploy — updated（合并 upgrade-dashboard，删重复）
+**症状**: 同一件事（部署 dashboard / 给页面一个能打开的地址）存在两个 skill——`upgrade-dashboard`（旧）和 `dashboard-deploy`（#34 已是合并版）。生效目录里挂的偏偏是过时的 `upgrade-dashboard`，正确的 `dashboard-deploy` 没接软链、从不触发；还有个死链 `zenithjoy-deploy` 残留。
+**根因**: `dashboard-deploy` 建好后没接进 `~/.claude/skills` / `~/.claude-account1/skills`；`upgrade-dashboard` 架构描述已过时（520/521 nginx + deploy-hk.sh + /home/xx 路径），与现实（hk-vps + autopilot-dashboard + Cloudflare Tunnel + perfect21:5211）不符。
+**修改**: 以 dashboard-deploy 为唯一 skill，从 upgrade-dashboard 捞两段有用内容补入（SW 注销 console 脚本 + nginx no-cache 配置）；删除 upgrade-dashboard 目录与软链、清死链 zenithjoy-deploy、把 dashboard-deploy 接进两个生效目录；新增 eval-4（单页预览给地址场景）。iteration-3 eval：合并版 20/20 (100%) vs 旧 upgrade-dashboard 12/20 (60%)。
+
 ## [2026-06-08] device-transfer — updated (eval iteration-1 + 触发词补全)
 **症状**: skill 存在但触发不稳定——Claude 在国内机器遇到下载失败/超时时不会自动调用，每次需要用户手动提醒
 **根因**: description 触发词只覆盖主动发起传输的场景，没有覆盖"中途遇到下载失败"的报错词；CLAUDE.md 也没有全局规则兜底
