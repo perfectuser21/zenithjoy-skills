@@ -6,7 +6,7 @@ description: |
   evaluator 在 CI 绿之后、PR merge 之前真启服务 + 跑 contract 的 manual:bash 命令验真行为。
   PASS → 允许 merge；FAIL → 不 merge，带反馈打回 Generator 在 PR 分支 fix loop（main 不变动）。
   单模式（harness v2 始终 IS_FINAL_E2E=true）：读 contract-draft.md 的 ## E2E 验收 脚本，按 target_environment 派发跑 Golden Path 端到端真实行为。
-version: 1.16.0
+version: 1.17.0
 created: 2026-05-06
 updated: 2026-06-11
 changelog:
@@ -379,6 +379,76 @@ exit 0
 | **UI 交互** | 可见状态断言：`toBeVisible` / `toHaveText` / 截图比对 | "UI 类 sprint 但脚本无可见状态断言（toBeVisible/toHaveText/截图）" |
 
 判断"sprint 涉及哪个领域"以 `${SPRINT_DIR}/sprint-prd.md` 的 Golden Path + journey_type + target_environment 为准。命中领域但脚本缺对应 oracle → FAIL，不允许放行。
+
+#### Step B-1.9: Machine Probe（windows 环境规范化）
+
+**仅当 `TARGET_ENV = windows_wechat | windows_cloud` 时执行**。目的：在正式派发 E2E 脚本之前，探测目标机器的真实环境（Chrome 路径、WeChat 版本、Node 版本），验证 NFR 约束，输出标准化环境变量供 E2E 脚本使用，替代硬编码路径。
+
+**Gate：E2E 脚本绝对路径检查**（所有 TARGET_ENV 都运行）：
+
+```bash
+# 禁止 E2E 脚本含绝对路径（/Users/ 或 C:\Users\ 或 C:\Program Files）
+if grep -qE '(/Users/[a-zA-Z]|C:\\\\Users\\\\|C:\\\\Program Files)' /tmp/e2e-verify.ps1 2>/dev/null \
+   || grep -qE '(/Users/[a-zA-Z])' /tmp/e2e-verify.sh 2>/dev/null; then
+  cat > "$WORKSPACE/.brain-result.json" << BREOF
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"absolute_path_in_e2e","log_excerpt":"E2E 脚本含硬编码绝对路径（/Users/ 或 C:\\Users\\）。请改用 \$CHROME_PATH / \$WECHAT_DATA 等标准化环境变量（由 Machine Probe 注入），不得写死路径。"}
+BREOF
+  exit 0
+fi
+```
+
+**Probe 脚本（windows_wechat | windows_cloud 专属）**：
+
+将以下内容写到 `${SPRINT_DIR}/windows-probe.ps1`，通过 GHA 在目标机器执行：
+
+```powershell
+# windows-probe.ps1 — 探测目标 Windows 机器环境，验证 NFR 约束
+$ErrorActionPreference = "Stop"
+
+# 探测基本环境
+$CHROME_PATH = ""
+$chromePaths = @(
+  "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+  "$env:ProgramFiles(x86)\Google\Chrome\Application\chrome.exe"
+)
+foreach ($p in $chromePaths) {
+  if (Test-Path $p) { $CHROME_PATH = $p; break }
+}
+$WECHAT_DATA = "$env:LOCALAPPDATA\Tencent\WeChat"
+$NODE_VERSION = (node --version 2>$null) -replace "`n",""
+$BRAIN_HOST = if ($env:BRAIN_HOST) { $env:BRAIN_HOST } else { "http://localhost:5221" }
+
+# 读取 sprint-prd.md 中的 NFR 约束（由 Planner Step 0.3 注入）
+$NFR_WECHAT_VERSION = $env:NFR_WECHAT_VERSION  # 由 evaluateContractNode 从 PRD 提取注入
+
+# 验证 NFR：WeChat 版本（仅 windows_wechat）
+if ($env:TARGET_ENV -eq "windows_wechat" -and $NFR_WECHAT_VERSION) {
+  $actualVer = (Get-ItemProperty "HKLM:\SOFTWARE\Tencent\WeChat" -ErrorAction SilentlyContinue).Version
+  if ($actualVer -ne $NFR_WECHAT_VERSION) {
+    Write-Error "NFR 不符: WeChat 要求 $NFR_WECHAT_VERSION，实际 $actualVer"
+    exit 1
+  }
+}
+
+# 输出 probe-result.json（E2E 脚本 source 此文件替代硬编码路径）
+@{
+  CHROME_PATH  = $CHROME_PATH
+  WECHAT_DATA  = $WECHAT_DATA
+  NODE_VERSION = $NODE_VERSION
+  BRAIN_HOST   = $BRAIN_HOST
+} | ConvertTo-Json | Out-File -FilePath "probe-result.json" -Encoding utf8
+
+Write-Host "✅ Machine Probe 完成: Chrome=$CHROME_PATH Node=$NODE_VERSION"
+```
+
+**Probe 失败处理**：若 GHA probe job 退出码非 0（NFR 不符 / 工具缺失）：
+
+```bash
+cat > "$WORKSPACE/.brain-result.json" << BREOF
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"machine_probe","log_excerpt":"Machine Probe 失败：目标机器 NFR 约束不满足（WeChat 版本不符/Chrome 未找到）。请先确认目标机器环境符合 sprint-prd.md ## NFR 约束 要求。"}
+BREOF
+exit 0
+```
 
 #### Step B-2: 执行 E2E 脚本
 
