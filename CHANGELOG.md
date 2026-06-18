@@ -1,3 +1,8 @@
+## [2026-06-18] harness-contract-proposer / harness-contract-reviewer — updated (补接缝断言规则)
+**症状**: 微信客服端到端调试发现，很多"修复"在假环境（CI/mock/开发机）绿了就标 done，碰真环境（真机微信几何/UIA、生产 mmv env、真实 agent 调用方）逐个炸，来回修二十几轮。
+**根因**: DoD 的验收标准定在了照不到真实世界的地方。两个 contract skill 已有"真实目标环境验证 + 禁止 mock Golden Path + 领域验证规则（视频 ffprobe/发布真出/DB/UI）"，但缺「真机 RPA / 生产 env」这一类领域，也缺「DoD 分逻辑断言 / 接缝断言」的概念——接缝点（真机 UIA、生产 env、真实调用方）没人强制要求在真目标上验。
+**修改**: proposer（9.2.0→9.3.0）领域验证规则表加「真机 RPA / 生产环境集成」一行（Final E2E 必须真目标验证，不是 CI 绿），新增「DoD 必须分两类断言（接缝 vs 逻辑）」小节（接缝清单 1-3 条 + logic-done-pending 状态 + 禁写死环境假设值）；reviewer（9.1.0→9.2.0）Golden Path 覆盖审查加两条打回信号（接缝只用 mock 断言 → 打回；写死环境假设值无真验 → 打回）+ 第 6 维核对清单加真机 RPA/生产 env 一行。reviewer 7 个维度名（接口约定）一个未动，只在描述/审查项里加内容。
+
 ## [2026-06-18] wechat-uia-silent-send — updated (补客服端到端调试 8 个坑)
 **症状**: 微信客服端到端联调连环踩坑——租户隔离回归后客服全员不回（400 NO_TENANT_CONTEXT）；改 agent 代码后已装客户端不更新；mmv 中台 launchctl 重启卡旧进程（坑 3 次）；.env 漏 TOAPI_API_KEY 导致"成功但不回"且失败静默；气泡方向检测假设错把所有来信判 outgoing 永不回；license QUOTA_EXCEEDED；OFFSCREEN_X 不够窗口闪前台。
 **根因**: (1) 中台 draft-generate 加租户隔离要 tenant_id/X-Tenant-Id，listen_chat 不传任何租户标识；(2) 模块版本号未 6 处一致 bump、core 改动未 bump package.json；(3) `launchctl stop/start`/`kickstart -k` 不杀旧进程 PID 不变；(4) .env 漏 TOAPI_API_KEY 且 aiError 不打日志 → reply undefined → skip；(5) `_last_bubble_direction` 凭假设写未真机校准；(6) free 装机上限 1 名额被占；(7) -2600 在双屏/高分屏离屏不够。
