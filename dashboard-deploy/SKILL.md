@@ -1,6 +1,6 @@
 ---
 name: dashboard-deploy
-description: 部署 ZenithJoy 或 Cecelia 的 Dashboard 前端，以及把单个页面/报表/HTML 视图放上 dashboard。每当用户说"部署 dashboard"、"上线前端"、"dashboard 挂了"、"推一下 ZD"、"把 Cecelia 的 dashboard 更新"、"deploy dashboard"、"前端没更新"、"刷新一下中台"、"网站打不开"、"502"，或者说"把这个页面放到 dashboard 上"、"放到 perfect21:5211 / autopilot 上"、"做个页面让我能打开"、"页面打开自动回主页 / 回首页 / 被打回主页"时，必须使用此 skill。ZenithJoy Dashboard 在 https://autopilot.zenjoymedia.media（HK VPS，客户端公网）；Cecelia Dashboard 在 http://perfect21:5211（本机局域网，不在公网）。两个都是 PWA 单页应用——直接丢静态 .html 会被 service worker 打回主页，必须看本 skill 的"放单个页面"章节。
+description: 部署 ZenithJoy 或 Cecelia 的 Dashboard 前端（含把单个页面/报表/HTML 视图放上 dashboard）。**只要用户提到部署、更新、上线、刷新前端或 dashboard，哪怕用缩写或随口说，都必须触发本 skill**。覆盖说法包括："部署 dashboard / 部署 DA / 部署一下 DA / 把 DA 部署一下 / 更新 DA / 推一下 DA / 发一下前端 / 上线前端 / 部署前端 / 部署中台 / 推一下 ZD / 更新 Cecelia 前端 / 把改动上线 / deploy dashboard / deploy DA"，以及"前端没更新 / DA 没更新 / dashboard 挂了 / 我改了页面怎么上线 / 刷新一下中台 / 网站打不开 / 502 / 页面打开自动回主页（回首页/被打回主页）"，还有"把这个页面/报表放到 dashboard 上 / 放到 perfect21:5211 / autopilot 上 / 做个页面让我能打开"。**"DA""ZD""中台""前端""dashboard"在这里都指同一类 dashboard 部署任务，别因为没出现"dashboard"原词就不触发。** ZenithJoy Dashboard 在 https://autopilot.zenjoymedia.media（HK VPS 公网）；Cecelia Dashboard 有两个实例（本机 perfect21:5211 + HK 生产），**必须走 Brain webhook 部署才能同时更新两个，手动 build 会漏掉 HK 生产实例**。两个都是 PWA，直接丢静态 .html 会被 service worker 打回主页。
 ---
 
 # Dashboard 部署
@@ -109,31 +109,46 @@ ssh hk-vps "curl -s -o /dev/null -w '%{http_code}' http://localhost/"
 
 ## Cecelia Dashboard
 
-**本地**：http://perfect21:5211/pipeline（局域网，不在公网）  
-**代码**：`~/perfect21/cecelia/apps/dashboard/`  
-**容器**：本机 `cecelia-frontend`（host 网络），bind mount 本地 dist → build 完自动生效
+> ⚠️ **两个实例，必须走 Brain webhook 部署（方式 A），别手动 build。**
+> Cecelia Dashboard 同时跑在两处：本机 `perfect21:5211`（容器 `cecelia-frontend`，bind-mount dist）+ **HK VPS 生产**（容器 `cecelia-core-hk`，5211→80，Cloudflare tunnel `cecelia-tunnel`，dist 在 `hk-vps:/opt/cecelia/frontend/dist`）。
+> 手动 `npm run build` **只更新本机，不同步 HK** → 用户走 HK/公网还是看到旧版（反复踩的坑）。Brain webhook 跑 `scripts/deploy-local.sh`，一条龙 build + 同步 HK + reload nginx，**两个实例一起更新**。
 
-### 方式 A：Brain webhook（推荐）
+**代码**：`~/perfect21/cecelia/apps/dashboard/`
+
+### ⚠️ 改 UI 改哪个文件：`apps/api/features`，不是 `frontend`
+
+`apps/dashboard` 经 vite 别名 `@features/core → ../api/features` 构建。改设备页、机器卡片等 core 功能，必须改 **`apps/api/features/<feature>/...`**。`frontend/src/features/core/...` 是**内容相同的另一份副本（非软链）**，改它**不生效**；两份建议同步改保持一致。改完看 `apps/dashboard/vite.config.*` 的 alias 确认服务源。
+
+### 方式 A：Brain webhook（唯一推荐，同步本机 + HK）
 
 ```bash
+TOKEN=$(docker exec cecelia-node-brain printenv DEPLOY_TOKEN)   # token 在 brain 容器 env，不在 ~/.credentials
 curl -s -X POST http://localhost:5221/api/brain/deploy \
-  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{"changed_paths": ["apps/dashboard/src/App.tsx"]}' | python3 -m json.tool
 
-# 轮询直到 idle
-until [ "$(curl -s http://localhost:5221/api/brain/deploy/status | python3 -c "import sys,json;print(json.load(sys.stdin).get('status','?'))")" = "idle" ]; do sleep 5; done
-echo "✅ 完成"
+# 轮询到 success（终态是 success，会再回 idle；别只等 idle）
+until s=$(curl -s localhost:5221/api/brain/deploy/status | python3 -c "import sys,json;print(json.load(sys.stdin).get('status'))"); [ "$s" = "success" ] || [ "$s" = "failed" ]; do echo "  $s"; sleep 5; done
+echo "部署结果: $s（success = 本机 + HK 都已更新）"
 ```
+> 没带 token 会被拒：`{"error":"Invalid or missing deploy token"}`。失败时看 `deploy/status` 里的 `log_path`。
 
-### 方式 B：手动 build（Brain 不可用时）
+### 方式 B：手动 build（仅 Brain 不可用、且只需更新本机时）
 
 ```bash
-cd ~/perfect21/cecelia && git pull origin main && npm run build --workspace=apps/dashboard
-# build 完 bind mount 自动生效，无需 restart
+cd ~/perfect21/cecelia && git pull origin main && \
+  NODE_OPTIONS=--max-old-space-size=3072 npm run build --workspace=apps/dashboard
+# 只更新本机 perfect21:5211，不碰 HK 生产。要更新 HK 必须用方式 A。
 ```
 
-### 验证
+### 验证（别只 curl 200，要确认服务器真换了 + 真渲染）
+
+PWA 是 `registerType:'autoUpdate'`，**服务器文件真更新后用户刷新即自动拿新版**。"还看到旧版" ≈ 服务器没真更新（多半漏了 HK）。
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}" http://localhost:5211/
+# 1) 对比本机和 HK 服务的主 bundle 是否同一 hash（不同 = HK 没更新）
+curl -s localhost:5211/ | grep -oE "index-[A-Za-z0-9]+\.js"
+ssh hk-vps 'curl -s localhost:5211/ | grep -oE "index-[A-Za-z0-9]+\.js"'
 ```
+
+更稳：**无头浏览器实际渲染验证**（playwright 在 `cecelia/frontend/node_modules`）——`chromium.launch()` → `goto(目标URL)` → 断言 `document.body.innerText` 含预期文字 + 截图。比口头让用户刷新可靠，能一锤定音区分"服务器问题"还是"用户浏览器 SW 缓存"。
