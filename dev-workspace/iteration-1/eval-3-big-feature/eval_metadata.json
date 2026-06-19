@@ -1,6 +1,0 @@
-{
-  "eval_id": 3,
-  "eval_name": "big-feature-kuaishou-publish",
-  "prompt": "我想做快手内容发布功能，现在只有抖音这边有，快手完全没有，需要能发图文和视频",
-  "assertions": []
-}

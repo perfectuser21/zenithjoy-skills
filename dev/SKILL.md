@@ -1,10 +1,11 @@
 ---
 name: dev
-version: 21.1.0
-updated: 2026-06-11
+version: 21.2.0
+updated: 2026-06-19
 description: Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→比对已有Steps展示Golden Path草稿→确认前置工作全部到位→用户确认PrepPRD→路由执行
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
+  - 21.2.0: decision 写入加内联警告注释（禁止把 category 改成 type；type 被 Brain API 忽略）；清理旧 eval 目录混入
   - 21.1.0: 步骤编号重排 — 步骤 0.5（对抗深挖）重命名为步骤 1，原步骤 1（前置工作核对）升为步骤 2，对齐逻辑顺序
   - 21.0.0: 步骤 0.5 升级为 GAN 对抗 + 并行补全 — Phase 1 Proposer/Challenger 串行（最多 5 轮收敛），Phase 2 三路并行（Agent B 正确路径/C 错误路径/D NFR）；路径 A/B 快跑版（Phase 1 仅 1 轮 + Phase 2 仅 Agent C）
   - 20.1.0: 链路审计修复 4 项 — target_environment 枚举补全为 6 种；PrepPRD Golden Path 改为单线性步骤序列；add-feature 脚本 vs Brain API 参数对照表
@@ -364,12 +365,13 @@ Phase 1 收敛后，派三路 Agent 并行执行，各自输出覆盖声明：
 PrepPRD 落地后，**立即执行**这条 bash 命令写 decision：
 
 ```bash
+# ⚠️ 原样复制，禁止把 category 改成 type（type 字段被 Brain API 忽略）
 curl -s -X POST localhost:5221/api/brain/strategic-decisions \
   -H "Content-Type: application/json" \
   -d "{\"topic\":\"<bug 根因简述>\",\"decision\":\"[修法摘要]\",\"reason\":\"[根因]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"bug-fix\"}"
 ```
 
-> **必填字段**：`decision`、`reason`、`made_by="user"`、`category="bug-fix"`（Brain API 只认 `category`，写 `type` 会被忽略）。Brain API 不可用时跳过。
+> Brain API 不可用时跳过。
 
 然后 **下一 tool call 必须是**：
 ```
@@ -385,12 +387,13 @@ systematic-debugging → engine-worktree → Superpowers autonomous 接力链 �
 PrepPRD 落地后，**立即执行**这条 bash 命令写 decision：
 
 ```bash
+# ⚠️ 原样复制，禁止把 category 改成 type（type 字段被 Brain API 忽略）
 curl -s -X POST localhost:5221/api/brain/strategic-decisions \
   -H "Content-Type: application/json" \
   -d "{\"topic\":\"<改动方向简述>\",\"decision\":\"[改动摘要]\",\"reason\":\"[原因]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"small-change\"}"
 ```
 
-> **必填字段**：`decision`、`reason`、`made_by="user"`、`category="small-change"`。Brain API 不可用时跳过。
+> Brain API 不可用时跳过。
 
 然后 **下一 tool call 必须是**：
 ```
@@ -427,12 +430,13 @@ Tier 1 固定默认：
 PrepPRD 落地后，**立即执行**这条 bash 命令写 decision：
 
 ```bash
+# ⚠️ 原样复制，禁止把 category 改成 type（type 字段被 Brain API 忽略）
 curl -s -X POST localhost:5221/api/brain/strategic-decisions \
   -H "Content-Type: application/json" \
   -d "{\"topic\":\"<功能方向简述>\",\"decision\":\"[功能方向摘要]\",\"reason\":\"[为什么做]\",\"made_by\":\"user\",\"author\":\"user\",\"category\":\"feature\"}"
 ```
 
-> **必填字段**：`decision`、`reason`、`made_by="user"`、`category="feature"`。Brain API 不可用时跳过。
+> Brain API 不可用时跳过。
 
 在 Notion 注册 Ability/Feature（如还没有）：
 ```bash
