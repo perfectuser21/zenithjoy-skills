@@ -1,3 +1,8 @@
+## [2026-06-19] dashboard-deploy — updated（修正 Cecelia 部署流程 + 触发词补 DA）
+**症状**: 部署 Cecelia dashboard 反复出问题——手动 `npm run build` 只更新本机、漏了 HK 生产实例，用户走公网还是看到旧版；改 UI 改错副本（改了 `frontend/` 而非真正服务源 `apps/api/features`，部署后页面没变化）；走 Brain webhook 时漏 deploy token 被拒。另外用户说"部署 DA"时 skill 经常不触发。
+**根因**: (1) Cecelia dashboard 有本机 perfect21:5211 + HK 生产（cecelia-core-hk）两个实例，只有 Brain webhook（跑 deploy-local.sh）才同步两个，手动 build 只动本机；(2) apps/dashboard 经 vite 别名 `@features/core→apps/api/features` 构建，改 `frontend/` 副本不生效；(3) Brain deploy 端点要 `DEPLOY_TOKEN`（在 brain 容器 env，不在 ~/.credentials）；(4) description 里压根没有"DA"这个用户最常用的 dashboard 缩写，必然漏触发。
+**修改**: Cecelia 章节重写——标注两个实例 + 强制走 Brain webhook（含 token 取法 `docker exec cecelia-node-brain printenv DEPLOY_TOKEN`）、新增「改 `apps/api/features` 不是 `frontend`」小节、轮询改等 `success`、验证改成本机vsHK bundle hash 对比 + 无头浏览器真实渲染断言；description 补「DA/ZD/中台/前端」同义说明 + 大量口语触发说法（部署一下 DA / 推一下 DA / 发一下前端 / DA 没更新）。触发优化 loop 在本环境测量失真（短部署指令 recall 测不准、test 段 0s），故按根因人工定描述，未盲信失真分数。
+
 ## [2026-06-18] harness-contract-proposer / harness-contract-reviewer — updated (补接缝断言规则)
 **症状**: 微信客服端到端调试发现，很多"修复"在假环境（CI/mock/开发机）绿了就标 done，碰真环境（真机微信几何/UIA、生产 mmv env、真实 agent 调用方）逐个炸，来回修二十几轮。
 **根因**: DoD 的验收标准定在了照不到真实世界的地方。两个 contract skill 已有"真实目标环境验证 + 禁止 mock Golden Path + 领域验证规则（视频 ffprobe/发布真出/DB/UI）"，但缺「真机 RPA / 生产 env」这一类领域，也缺「DoD 分逻辑断言 / 接缝断言」的概念——接缝点（真机 UIA、生产 env、真实调用方）没人强制要求在真目标上验。
