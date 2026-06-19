@@ -110,6 +110,23 @@ if rc.left > -2000:
 
 **关键**：绝不最小化（最小化 = UIA 死亡）。只要保持"已还原但在屏幕外"即可。
 
+### 唤起窗口（闪）的唯一来源 = 取消最小化（2026-06-19 xian-rog 真机定位）
+
+在 xian-rog 真机用**看门狗线程逐步追踪** `GetWindowRect().left`，逐调用记录窗口位置，实测定位出"用户看到微信闪一下"的唯一来源：
+
+- **从最小化态起步**：`start left=0`（窗口先蹦回屏内 `left=0`）→ 之后才被代码移到屏外。**用户看到的就是这一闪。**
+- **窗口已在屏外 + 非最小化起步**：全程 `left=-9000`，`_open_chat` 后 `-9000`、`_uia_send` 后仍 `-9000`，看门狗一次没出手（`pushes=0`）。**完全静默，用户全程看不到。**
+- **结论**：`_open_chat`（Select / PostMessage）和 `_uia_send` 本身**完全不抬窗口**。唯一抬窗口的是"还原最小化窗口"那一下——最小化窗口还原时必然先回到 `left=0` 屏内，再被移走，中间这一帧用户能看见。
+
+### 真静默的 4 条铁律（xian-rog 真机验证）
+
+1. **窗口必须【持续】待在屏外 + 【绝不最小化】。** 这才是 xian-pc 一直静默的真正原因——守护连续跑、窗口从不最小化，所以**根本没有"取消最小化"那一下**。一旦窗口被最小化，下次还原必然闪。
+2. **`OFFSCREEN_X` 必须是「该机器真屏外」的值。** `-2600` 在单屏机器够用，但 xian-rog（多屏 / 不同屏幕几何）上 **`-2600` 还在屏幕里** → 守护每轮把窗口挪到 `-2600` 就在用户眼前闪。必须用 `C:\Users\Public\zenithjoy\machine.config.json` 写 `{"OFFSCREEN_X": -9000}` 覆盖（实测 `-9000` 在 ROG 真屏外）。
+   - **这是「禁止写死环境假设值」的活案例**：屏外坐标本该按屏幕几何推导（取所有显示器最左边界再减去窗口宽度），不能写死 `-2600`。
+   - **正解（待实现）**：`OFFSCREEN_X` 从 `GetSystemMetrics` / `EnumDisplayMonitors` 推导最左虚拟屏边界，不硬编码。**当前临时解 = `machine.config.json` 每机覆盖。**
+3. **看门狗（watchdog）安全网**：开后台线程每 ~20ms 检查窗口 `left`，若 `> -2000` 立刻 `SetWindowPos(hwnd, 0, OFFSCREEN_X, OFFSCREEN_Y, 0, 0, 0x0015)` 摁回屏外。稳定屏外时 `pushes=0`；能兜住"取消最小化"等瞬时抬头（把可见时间压到 ≤1 帧）。
+4. **诊断手法**：在每步操作前后记录 `GetWindowRect().left`，看哪一步从 `OFFSCREEN_X` 变正——就能定位是哪个调用抬了窗口。实测**只有取消最小化会**。
+
 ---
 
 ## 正确路由：给对的人发消息（_open_chat）
@@ -383,6 +400,9 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 | `_open_chat` 死等固定 `sleep(2.0)` | 多人排队每条白等，改轮询 `_chat_title_matches` 切中即走 |
 | 客服回复用推理模型（deepseek-v4-flash 等）| 思考烧 token、慢、token 给小了 content 返回空；用非推理 deepseek-v3.2 |
 | 真机热改后不回灌 repo + build-modules | 重装/覆盖即丢，串台复发（见「部署纪律」）|
+| **让窗口最小化**（哪怕只是中途短暂最小化）| 下次还原必然先回 `left=0` 屏内再被移走 → 用户必看到一闪（隐性坑：`_open_chat`/`_uia_send` 本身都不抬窗，唯一抬窗就是取消最小化）|
+| `OFFSCREEN_X` 写死 `-2600` | 多屏/高分屏机器（如 xian-rog）上 `-2600` 仍在屏内 → 守护每轮都在用户眼前闪；须按机器 `machine.config.json` 覆盖（如 `-9000`），正解应从屏幕几何推导 |
+| `_last_bubble_direction` 找 `Text` 控件判方向 | 消息气泡是 `ListItem` 不是 `Text`，找 Text 永远抓到底部输入区 → 全判 outgoing → 谁都不回（REPLY_DIRECTION_CHECK 默认关的根因）|
 
 ---
 
@@ -390,6 +410,11 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 
 | 日期 | 变更 | 触发原因 | 结论 |
 |------|------|----------|------|
+| 2026-06-19 ⭐xian-rog真机 | **定位"微信闪一下"唯一来源 = 取消最小化**：看门狗逐步追踪 `GetWindowRect().left`，最小化起步 `start left=0`（蹦回屏内）才被移走→用户看这一闪；屏外+非最小化起步全程 `-9000`、watchdog `pushes=0` 完全静默 | 想搞清 ROG 上窗口为何偶尔闪 | ✅ `_open_chat`/`_uia_send` 都不抬窗，唯一抬窗=取消最小化 → 真静默铁律=持续屏外+绝不最小化 |
+| 2026-06-19 ⭐xian-rog真机 | `OFFSCREEN_X` 须是"该机真屏外"值：`-2600` 在 ROG 仍在屏内→守护每轮挪过去就闪；`machine.config.json` 写 `-9000` 覆盖 | ROG 多屏/不同几何 | ✅ 临时解=每机覆盖；正解=从 `GetSystemMetrics`/`EnumDisplayMonitors` 推导最左虚拟屏边界（待实现，禁写死 `-2600`）|
+| 2026-06-19 ⭐xian-rog真机 | 看门狗安全网：后台线程每 ~20ms 查 `left`，`> -2000` 立刻 `SetWindowPos(...,0x0015)` 摁回屏外；稳定时 `pushes=0`，兜瞬时抬头到 ≤1 帧 | 兜"取消最小化"等瞬时露头 | ✅ |
+| 2026-06-19 ⭐xian-rog真机 | **真机调试必须在 session 1**：SSH 在 session 0 看不到 session 1 微信（`Desktop(uia)` 返回 `NO_WINDOW`）；用 `PsExec.exe -i 1 -accepteula <bat>` 送脚本进 session 1，python stdout 重定向到文件再 `Get-Content` 读 | dump 不到 `mmui::MainWindow` | ✅ Windows SSH 输出 GBK，复杂脚本 scp 文件进去跑别内联 |
+| 2026-06-19 ⭐xian-rog真机 | **修正方向检测认知：消息气泡是 `ListItem` 不是 `Text`**（全窗口仅 3 个 Text=标题×2+输入区）；`_last_bubble_direction` 找 Text→抓到底部输入区→全判 outgoing→谁都不回 | 排查 REPLY_DIRECTION_CHECK 默认关的根因 | ⚠️ 待修：改找 ListItem，方向看行内气泡子元素左右偏移（ListItem 满宽 L/R 相同），真机校准后再开 REPLY_DIRECTION_CHECK |
 | 2026-06-18 | listen_chat 的 draft-generate body 带 `agent_id`；中台 `resolveTenantId` 缺显式 tenant 时按 agent_id 反查 tenant_id（PR #796） | 中台 draft-generate 加租户隔离要 `tenant_id/X-Tenant-Id`，listen_chat 不传 → 全部 400 NO_TENANT_CONTEXT，客服谁都不回 | ✅ 租户绑定时已定，不该每条消息让 caller 传 |
 | 2026-06-18 | 模块版本号 6 处一致 bump；改 agent core 还要 bump `services/agent/package.json` | 不 bump → 心跳报旧版，已装客户端不自动更新；core 版本不一致 CI「Lint Agent Version Bump」拦 | ✅ |
 | 2026-06-18 | 厘清「模块自动更新 ≠ core 更新」 | 模块版本 bump 只让客户端拉新 line04（含 listen_chat.py），改动若在 agent core（spawn 参数等）必须重下安装包 | ✅ |
@@ -429,6 +454,24 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 - 别混用 `bootout`/`bootstrap`/`kickstart`/`pkill` 试错式重启 —— 会造成**多进程抢端口（EADDRINUSE）+ plist 环境变量没加载进进程**，客服直接"不理人"。
 - GUI 会话域(gui/$UID) 和 SSH 会话域不同，SSH 的 launchctl 常常管不动 GUI 里加载的 job。**实测可靠：`launchctl unload <plist>` → `pkill -9 -f dist/index.js` → `launchctl load <plist>`，然后用真实请求（draft-generate 有没有 reply + llm_audit 有没有新行）验证，别信 `ps eww` 的 env 显示。**
 - **env 要惰性读**：`CS_LLM` 这类配置若是模块级 const，import 那刻就锁死 `process.env`；改成函数调用时读，测试/部署后改 env 才生效。
+
+## 真机调试必须在 session 1（PsExec -i 1）（2026-06-19 xian-rog）
+
+- SSH 落在 **session 0**，**看不到** session 1 的微信窗口。pywinauto `Desktop(uia)` 在 session 0 找不到 `mmui::MainWindow`，返回 `NO_WINDOW`。微信 + listen_chat 都跑在 **SessionId 1**。
+- **跑法**：下载 PsExec（sysinternals），`PsExec.exe -i 1 -accepteula <bat>` 把脚本送进 session 1。bat 里 python 把 stdout 重定向到文件，跑完再用 `Get-Content` 读文件。
+- **编码坑**：Windows SSH 输出是 GBK，PowerShell 内联多行 / `$_` / JSON 大括号容易被转义搞乱 → **复杂脚本用文件 `scp` 进去再跑，别内联。**
+
+---
+
+## 方向检测：消息是 ListItem 不是 Text（2026-06-19 xian-rog 真机 dump 修正）
+
+之前 `_last_bubble_direction` 按"找 `Text` 控件 + 水平中心相对面板中线"判方向，**完全错**：
+
+- **真机 dump 实测**：聊天面板里**消息气泡是 `ListItem` 控件**（`element_info.name` = 消息文本），**不是 `Text`**。整个窗口的 `Text` 只有 3 个（标题 ×2 + 底部输入区元素）。
+- `_last_bubble_direction` 当前找 `Text` → **永远找不到真消息** → 抓到底部输入区那个元素（位置在右侧）→ **永远判 outgoing** → 不回自己把所有人都判成"我方" → **谁都不回**。这就是 `REPLY_DIRECTION_CHECK` 默认关的根因。
+- **而且 ListItem 都是满宽整行（L/R 相同）**，**方向要看行内气泡子元素的左右偏移，不是 ListItem 自身的 L/R**（待真机进一步校准 incoming/outgoing 判据后才能重新开启 `REPLY_DIRECTION_CHECK`）。
+
+---
 
 ## 调试指引
 
@@ -486,4 +529,7 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 → free 装机上限 1，旧 agent 占着名额。同机重装/换机注册会 403，走 v1.1 兼容路径（生成新 agent_id）。测试时同机反复重装会反复撞这个。
 
 **问题：扫描读消息时微信窗口闪到前台**
-→ `OFFSCREEN_X=-2600` 在双屏/高分屏机器不够，离屏窗口仍露在可见区。按机器调更负的 `OFFSCREEN_X`（`machine.config.json` 覆盖，如 -5200/-9000）。
+→ 先查两件事：① `OFFSCREEN_X` 是否真在屏外——`-2600` 在双屏/高分屏（如 xian-rog）仍露在可见区，按机器用 `machine.config.json` 覆盖更负值（如 `-9000`）；② 窗口有没有被最小化——**唯一会抬窗口的就是"取消最小化"那一下**（`_open_chat`/`_uia_send` 本身都不抬窗），铁律是窗口持续屏外 + 绝不最小化（见「窗口可见性管理」）。看门狗每 ~20ms 摁回屏外做兜底。诊断手法：每步前后记 `GetWindowRect().left`，看哪步从 `OFFSCREEN_X` 变正。
+
+**问题：方向检测判反（所有人都被判 outgoing → 谁都不回）**
+→ 消息气泡是 `ListItem` 不是 `Text`（真机 dump 实测，全窗口只有 3 个 Text = 标题×2 + 输入区）。`_last_bubble_direction` 找 `Text` 永远抓到底部输入区元素 → 永判 outgoing。临时解：`REPLY_DIRECTION_CHECK` 默认关。根治：改找 `ListItem`，且方向看**行内气泡子元素的左右偏移**（ListItem 自身满宽 L/R 相同，没法判方向），需真机校准 incoming/outgoing 判据后再开启（见「方向检测」节）。
