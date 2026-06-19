@@ -1,3 +1,8 @@
+## [2026-06-19] dev — updated（立「哨兵(回归守卫)死规矩」）
+**症状**: 反复出现的病——bug 修了但没留下"会报警的守卫"，换台机器/换个人就再犯。守卫一直靠人/AI 每次自觉判断（=祈祷），没有像 test 那样的死规矩管谁写/啥时候/写哪/谁卡。环境接缝（真机/生产 env/真实调用方）尤其裸奔，因为 CI 是干净假环境根本测不到。
+**根因**: dev skill 只有 regression test（逻辑类守卫）一种形态，缺「环境类守卫=运行时/启动自检，打包进程序」的概念，更缺「机器闸门：PR 碰环境接缝却没带自检→CI 红」这条强制；接缝清单虽已在 pre-PRD/Contract 要求，但没规定每条必须配一个 proven-to-fire 的守卫。
+**修改**: dev/SKILL.md（21.2.0→21.3.0）PrepPRD 落地后新增「哨兵（回归守卫）死规矩」节——核心(每 bug/功能配对种类·在对环境跑·被机器卡的守卫) + 谁写(开发者AI同PR，永非用户)/啥时候(接缝清单每条配守卫，标done前必 proven-to-fire 亲眼看报红)/写哪(逻辑接缝→CI test；环境接缝→自检代码打包进程序，CI测不到) + 谁卡(CI闸门，同 lint-feature-has-smoke 性质，实现另一PR建) + 失控程度越高守卫越重(客户机Agent运行时自检>生产机启动自检>Dashboard真URL冒烟>纯逻辑CI test) + 一份代码两处用(检查代码只写一份在主repo，打包进Agent+参考机发版前先跑)；Bug PrepPRD 的 Regression Test 计划加守卫指针 + 验收项加 proven-to-fire。不动现有步骤编号/路径A·B·C/trigger frontmatter。
+
 ## [2026-06-19] dashboard-deploy — updated（修正 Cecelia 部署流程 + 触发词补 DA）
 **症状**: 部署 Cecelia dashboard 反复出问题——手动 `npm run build` 只更新本机、漏了 HK 生产实例，用户走公网还是看到旧版；改 UI 改错副本（改了 `frontend/` 而非真正服务源 `apps/api/features`，部署后页面没变化）；走 Brain webhook 时漏 deploy token 被拒。另外用户说"部署 DA"时 skill 经常不触发。
 **根因**: (1) Cecelia dashboard 有本机 perfect21:5211 + HK 生产（cecelia-core-hk）两个实例，只有 Brain webhook（跑 deploy-local.sh）才同步两个，手动 build 只动本机；(2) apps/dashboard 经 vite 别名 `@features/core→apps/api/features` 构建，改 `frontend/` 副本不生效；(3) Brain deploy 端点要 `DEPLOY_TOKEN`（在 brain 容器 env，不在 ~/.credentials）；(4) description 里压根没有"DA"这个用户最常用的 dashboard 缩写，必然漏触发。
