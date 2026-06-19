@@ -1,6 +1,0 @@
-{
-  "eval_id": 1,
-  "eval_name": "bug-path-cookie-error",
-  "prompt": "抖音文章发布一直报错 TypeError: Cannot read properties of undefined (reading 'cookie')，从昨天开始就这样了，之前是好的",
-  "assertions": []
-}
