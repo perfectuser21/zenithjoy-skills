@@ -2,50 +2,77 @@
   "skill_name": "dev",
   "evals": [
     {
-      "id": 1,
-      "prompt": "抖音文章发布一直报错 TypeError: Cannot read properties of undefined (reading 'cookie')，从昨天开始就这样了，之前是好的",
-      "expected_output": "查 10 张 Brain DB 表 → 判断为 Bug → 生成 Bug PrepPRD（含症状/根因假设/修法/regression test 计划）→ 等用户确认 → 写 decision(category=bug-fix) → 调用 systematic-debugging skill",
-      "files": [],
+      "id": 0,
+      "eval_name": "large-feature-adversarial",
+      "prompt": "我想在 ZenithJoy 里做一个「抖音定时发布」功能：用户在 Dashboard 设定发布时间，到时间自动把视频发到抖音，并把帖子链接写回 Brain DB。这个功能现在完全没有，需要从零开始。",
+      "expected_output": "应触发路径C，走步骤1 GAN对抗（Phase1 Proposer/Challenger至少1轮，Challenger输出结构化JSON；Phase2 B/C/D三路并行），补全错误路径和NFR，列出需用户拍板的决策点（不含工程标准决策），最终输出完整PrepPRD。",
       "assertions": [
-        {"name": "queries-brain-db", "description": "输出中包含 Brain DB 查询（localhost:5221/api/brain 或说明 API 不可用）"},
-        {"name": "classifies-as-bug", "description": "明确判断为 Bug 路径（出现 'Bug PrepPRD' 或 '路径 A' 或 'Bug'）"},
-        {"name": "preprd-has-symptom", "description": "Bug PrepPRD 包含'症状'段"},
-        {"name": "preprd-has-root-cause", "description": "Bug PrepPRD 包含'根因假设'段"},
-        {"name": "preprd-has-regression-test", "description": "Bug PrepPRD 包含'Regression Test'段"},
-        {"name": "routes-to-systematic-debugging", "description": "输出提到路由到 systematic-debugging"},
-        {"name": "writes-decision-bug-fix", "description": "输出包含 POST decisions 且 category=bug-fix"}
+        {
+          "id": "a1",
+          "name": "步骤1-GAN对抗-Phase1运行",
+          "description": "输出中出现Proposer/Challenger对抗至少1轮，Challenger输出含new_issues字段"
+        },
+        {
+          "id": "a2",
+          "name": "步骤1-Phase2-三路并行",
+          "description": "输出中出现Agent B(正确路径)/C(错误路径)/D(NFR)三路补全结果"
+        },
+        {
+          "id": "a3",
+          "name": "决策点-不含工程标准",
+          "description": "列出的用户拍板决策点是业务决策（延迟容忍/重试次数等），不是工程标准（HTTP状态码/超时阈值）"
+        },
+        {
+          "id": "a4",
+          "name": "PrepPRD-含错误路径",
+          "description": "PrepPRD Golden Path 包含至少1条失败场景（如抖音API超时/token失效的恢复步骤）"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "eval_name": "small-change-path-b",
+      "prompt": "改一下 Brain 的 /api/brain/tasks 接口，加一个 sort_by 参数，支持按 created_at 或 updated_at 排序，默认 created_at desc。",
+      "expected_output": "识别为路径B小改动。步骤1应快跑：Phase1跑1轮，Phase2仅Agent C（错误路径，如sort_by参数值非法）。最终输出小改动PrepPRD，无需大量用户决策。",
+      "assertions": [
+        {
+          "id": "b1",
+          "name": "路径B识别",
+          "description": "正确识别为路径B小改动，不误判为路径C大功能"
+        },
+        {
+          "id": "b2",
+          "name": "步骤1-缩短执行",
+          "description": "路径B下Phase1最多1轮，Phase2仅跑Agent C（错误路径），不展开三路并行"
+        },
+        {
+          "id": "b3",
+          "name": "小改动PrepPRD格式",
+          "description": "输出使用小改动PrepPRD模板，不使用大功能模板"
+        }
       ]
     },
     {
       "id": 2,
-      "prompt": "给 journey_features 表加个 priority 字段，P0/P1/P2，默认 P1",
-      "expected_output": "查 10 张 Brain DB 表 → 判断为小改动 → 生成小改动 PrepPRD（含改什么/为什么/影响范围/验收）→ 等用户确认 → 写 decision(category=small-change) → 调用 engine-worktree skill",
-      "files": [],
+      "eval_name": "bug-path-a",
+      "prompt": "有个 bug：harness pipeline 跑到 evaluator 阶段，如果 E2E 脚本超时退出（exit code 124），系统没有标记任务失败，而是继续等待并最终卡在 running 状态，需要人工干预。",
+      "expected_output": "识别为路径A Bug。步骤1快跑（Phase1+仅AgentC），输出Bug PrepPRD含根因假设、修法、regression test计划。",
       "assertions": [
-        {"name": "queries-brain-db", "description": "输出中包含 Brain DB 查询"},
-        {"name": "classifies-as-small-change", "description": "判断为小改动路径（出现'小改动 PrepPRD'）"},
-        {"name": "preprd-format-correct", "description": "PrepPRD 包含'改什么'和'影响范围'段"},
-        {"name": "preprd-mentions-migration", "description": "PrepPRD 提到 migration（加字段必须有 DB migration）"},
-        {"name": "routes-to-engine-worktree", "description": "输出提到路由到 engine-worktree"},
-        {"name": "writes-decision-small-change", "description": "输出包含 POST decisions 且 category=small-change"}
-      ]
-    },
-    {
-      "id": 3,
-      "prompt": "我想做快手内容发布功能，现在只有抖音这边有，快手完全没有，需要能发图文和视频",
-      "expected_output": "查 10 张 Brain DB 表（特别是 journeys/journey_steps/journey_features）→ 判断为大功能 → 多角色检测 → 语义查重 → 生成大功能 PrepPRD → 等用户确认 → 写 decision(category=feature) → Harness 点火",
-      "files": [],
-      "assertions": [
-        {"name": "queries-brain-db", "description": "包含 journeys 或 journey_features 查询"},
-        {"name": "classifies-as-big-feature", "description": "判断为大功能路径（出现 PrepPRD 大功能格式）"},
-        {"name": "multi-role-check-done", "description": "做了多角色检测（提到'角色'或'单一用户'或通过检测）"},
-        {"name": "semantic-dedup-done", "description": "做了语义查重（提到快手 vs 抖音的对比，决定新建步骤）"},
-        {"name": "preprd-has-journey-status", "description": "PrepPRD 包含 Journey 当前状态段"},
-        {"name": "preprd-has-features-list", "description": "PrepPRD 包含涉及的脚本(Feature)列表"},
-        {"name": "preprd-has-preconditions", "description": "PrepPRD 包含执行前提条件段"},
-        {"name": "base-repo-is-github-url", "description": "Harness 点火参数中 base_repo 使用 GitHub URL（而非本地路径）"},
-        {"name": "fires-harness", "description": "输出包含 harness_initiative"},
-        {"name": "writes-decision-feature", "description": "输出包含 POST decisions 且 category=feature"}
+        {
+          "id": "c1",
+          "name": "路径A识别",
+          "description": "正确识别为路径A Bug"
+        },
+        {
+          "id": "c2",
+          "name": "根因假设质量",
+          "description": "PrepPRD包含有效的根因假设（exit code 124处理/超时未转terminal状态等）"
+        },
+        {
+          "id": "c3",
+          "name": "regression-test计划",
+          "description": "PrepPRD包含能复现bug的failing test计划"
+        }
       ]
     }
   ]

@@ -1,0 +1,19 @@
+{
+  "assertions": [
+    {
+      "text": "p0: NFR章节存在 — 输出中包含 ## NFR 约束 章节标题",
+      "passed": true,
+      "evidence": "输出第13行明确包含 '## NFR 约束' 章节标题。"
+    },
+    {
+      "text": "p1: NFR-来源1-decisions-API — NFR章节包含来自decisions API的内容（nfr-001/nfr-002或频控/延迟决策）",
+      "passed": true,
+      "evidence": "NFR 约束章节包含 '频控: 每60秒最多调用抖音 API 3次（来源: decisions nfr-001）' 和 '超时/延迟: 允许最多5秒发布延迟（来源: decisions nfr-002）'，明确标注 decisions 来源。"
+    },
+    {
+      "text": "p2: NFR-双源合并 — NFR章节说明了两个来源（decisions + PrepPRD），而不只引用一个来源",
+      "passed": true,
+      "evidence": "NFR 约束章节注释 '<!-- 来源: decisions 表 category=nfr，PrepPRD 显式值优先 -->' 明确说明了 decisions 表和 PrepPRD 两个来源，并指出优先级关系。"
+    }
+  ]
+}

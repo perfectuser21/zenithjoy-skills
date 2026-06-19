@@ -1,0 +1,28 @@
+{
+  "skill_name": "harness-planner",
+  "evals": [
+    {
+      "id": 0,
+      "eval_name": "nfr-injection",
+      "prompt": "你是 harness-planner。现有一个 sprint 任务：\n\n**任务标题**：抖音定时发布 — thin 骨架\n**PrepPRD 摘要**：用户在 Dashboard 设置发布时间，系统在指定时间自动发布视频到抖音，并将帖子链接写回 Brain DB。\n\n请生成 sprint-prd.md 内容（不需要真实写文件，只在输出里展示内容）。版本 v8.11.0 规则：必须包含 `## NFR 约束` 章节，内容从两个来源合并：1) Brain decisions API (`category=nfr`) 的活跃决策；2) PrepPRD 里用户提到的延迟/规模/频控需求。\n\n**Brain API mock 数据**（本次不真实调用 API，假设 decisions?category=nfr 返回以下内容）：\n```json\n[\n  {\"id\": \"nfr-001\", \"topic\": \"抖音 API 频控\", \"decision\": \"每60秒最多调用3次\", \"category\": \"nfr\"},\n  {\"id\": \"nfr-002\", \"topic\": \"发布延迟容忍\", \"decision\": \"允许最多5秒延迟\", \"category\": \"nfr\"}\n]\n```\n\n请展示完整的 sprint-prd.md 内容，重点展示 NFR 约束章节如何合并两个来源。",
+      "expected_output": "sprint-prd.md 输出包含 `## NFR 约束` 章节，该章节同时包含：(1) 来自 decisions API 的频控决策（每60秒3次）和延迟决策（5秒），并注明来源 decision ID；(2) PrepPRD 中的用户需求（如有）。不能只有一个来源。",
+      "assertions": [
+        {
+          "id": "p0",
+          "name": "NFR章节存在",
+          "description": "输出中包含 `## NFR 约束` 或 `## NFR` 章节标题"
+        },
+        {
+          "id": "p1",
+          "name": "NFR-来源1-decisions-API",
+          "description": "NFR 章节包含来自 decisions API 的内容（如频控 nfr-001、延迟 nfr-002，或提及 decision ID）"
+        },
+        {
+          "id": "p2",
+          "name": "NFR-双源合并",
+          "description": "NFR 章节说明了两个来源（decisions + PrepPRD），而不只引用一个来源"
+        }
+      ]
+    }
+  ]
+}

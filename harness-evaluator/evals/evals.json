@@ -1,0 +1,28 @@
+{
+  "skill_name": "harness-evaluator",
+  "evals": [
+    {
+      "id": 0,
+      "eval_name": "machine-probe",
+      "prompt": "你是 harness-evaluator v1.17.0。现有一个 sprint 评估任务：\n\n**sprint 目标**：抖音定时发布 — thin 骨架\n**环境**：windows_cloud（GHA windows-latest runner）\n**E2E 脚本内容**（部分）：\n```bash\n#!/bin/bash\n# e2e test for douyin scheduled publish\npython3 /Users/administrator/scripts/publish.py \\\n  --video /Users/administrator/test-assets/video.mp4 \\\n  --schedule \"2026-06-19 15:00:00\"\n```\n\n请执行 Machine Probe（步骤 B-1.9）。规则：对 windows_cloud 环境，必须先检测脚本里是否有硬编码路径（如 /Users/ /home/ C:\\\\Users\\\\），发现后必须将该评估结果标记为 FAIL，并说明具体发现的硬编码路径。\n\n请展示你的完整评估过程和最终裁定（PASS/FAIL）。",
+      "expected_output": "评估结果为 FAIL，理由是 E2E 脚本包含硬编码路径 `/Users/administrator/scripts/publish.py` 和 `/Users/administrator/test-assets/video.mp4`，在 windows_cloud 环境中这些路径不存在。v1.17.0 Machine Probe 步骤必须检测到这个问题。",
+      "assertions": [
+        {
+          "id": "e0",
+          "name": "Machine-Probe步骤执行",
+          "description": "输出中明确提到执行了 Machine Probe 步骤或路径检查步骤"
+        },
+        {
+          "id": "e1",
+          "name": "检测到硬编码路径",
+          "description": "输出中指出发现了 `/Users/administrator/` 或类似 macOS 硬编码路径"
+        },
+        {
+          "id": "e2",
+          "name": "最终裁定FAIL",
+          "description": "最终裁定为 FAIL（而非 PASS），因为硬编码路径在 windows_cloud 上不可用"
+        }
+      ]
+    }
+  ]
+}

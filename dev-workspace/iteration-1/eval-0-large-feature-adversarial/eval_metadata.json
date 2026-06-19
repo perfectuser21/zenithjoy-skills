@@ -1,0 +1,11 @@
+{
+  "eval_id": 0,
+  "eval_name": "large-feature-adversarial",
+  "prompt": "我想在 ZenithJoy 里做一个「抖音定时发布」功能：用户在 Dashboard 设定发布时间，到时间自动把视频发到抖音，并把帖子链接写回 Brain DB。这个功能现在完全没有，需要从零开始。",
+  "assertions": [
+    {"id": "a1", "name": "步骤1-GAN对抗-Phase1运行", "description": "输出中出现Proposer/Challenger对抗至少1轮，Challenger输出含new_issues字段"},
+    {"id": "a2", "name": "步骤1-Phase2-三路并行", "description": "输出中出现Agent B(正确路径)/C(错误路径)/D(NFR)三路补全结果"},
+    {"id": "a3", "name": "决策点-不含工程标准", "description": "列出的用户拍板决策点是业务决策，不是工程标准（HTTP状态码/超时阈值）"},
+    {"id": "a4", "name": "PrepPRD-含错误路径", "description": "PrepPRD Golden Path 包含至少1条失败场景"}
+  ]
+}

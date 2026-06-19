@@ -1,0 +1,19 @@
+{
+  "assertions": [
+    {
+      "text": "e0: Machine-Probe步骤执行 — 输出中明确提到执行了Machine Probe步骤或路径检查步骤（with_skill应有，old_skill应无）",
+      "passed": true,
+      "evidence": "输出第104行包含 '## Step B-1.9：Machine Probe（重点步骤）'，明确执行了 Machine Probe 步骤，并在其下描述了 '绝对路径检查（所有 TARGET_ENV 均运行）' 的 gate 逻辑。"
+    },
+    {
+      "text": "e1: 检测到硬编码路径 — 输出中指出发现了/Users/administrator/或类似macOS硬编码路径（with_skill应有，old_skill可能因其他原因FAIL）",
+      "passed": true,
+      "evidence": "Machine Probe 扫描结果显示 '命中！检测到以下硬编码绝对路径：行3: python3 /Users/administrator/scripts/publish.py 行4: --video /Users/administrator/test-assets/video.mp4'。"
+    },
+    {
+      "text": "e2: 最终裁定FAIL — 最终裁定为FAIL（两者都可能FAIL，但原因不同）",
+      "passed": true,
+      "evidence": "最终裁定 JSON 为 '{\"verdict\": \"FAIL\", \"failed_step\": \"absolute_path_in_e2e\", ...}'，原因是 E2E 脚本含硬编码绝对路径 /Users/administrator/ 在 windows_cloud 环境不可用。"
+    }
+  ]
+}
