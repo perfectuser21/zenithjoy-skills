@@ -32,7 +32,7 @@ description: |
 
 微信窗口移到屏幕外（`(OFFSCREEN_X, 60)`，默认值举例 `-2600`），UIA 控件树完整可用。
 
-> **真静默 = 真屏外 + 绝不最小化（这才是主线，先记住）**：静默不是靠"挪到 -2600"这个数字，而是靠两件事——① 窗口【持续】待在【该机器真屏外】坐标（`OFFSCREEN_X`，默认 `-2600` 在多屏/高分屏机器仍在屏内，须每机覆盖；详见「真静默铁律」）；② 全程【绝不最小化】。唯一会让用户看到窗口"闪一下"的动作就是【取消最小化】（还原最小化窗口必先回 `left=0` 屏内再被移走，唯一来源=取消最小化）——`_open_chat`/`_uia_send` 本身都不抬窗。
+> **真静默 = 真屏外 + 绝不最小化（这才是主线，先记住）**：静默不是靠"挪到 -2600"这个数字，而是靠两件事——① 窗口【持续】待在【该机器真屏外】坐标（`OFFSCREEN_X` **从虚拟屏几何推导** = `GetSystemMetrics(SM_XVIRTUALSCREEN) - 窗宽 - 200`，保证整窗在所有显示器左侧之外，任何机器自适应；**别写死 -2600**——写死值无法适配未知几何机器，详见「真静默铁律」）；② 全程【绝不最小化】。唯一会让用户看到窗口"闪一下"的动作就是【取消最小化】（还原最小化窗口必先回 `left=0` 屏内再被移走，唯一来源=取消最小化）——`_open_chat`/`_uia_send` 本身都不抬窗。
 
 **表现**：用户看不到窗口弹出（前提：窗口真在屏外 + 全程不最小化，否则取消最小化会闪一下）。
 
@@ -109,8 +109,9 @@ GetWindowRect(main_hwnd, byref(rc))
 if rc.left > -2000:
     SWP_FLAGS = 0x0001 | 0x0004 | 0x0010  # NOSIZE | NOZORDER | NOACTIVATE
     SetWindowPos(main_hwnd, 0, OFFSCREEN_X, 60, 0, 0, SWP_FLAGS)
-    # OFFSCREEN_X 必须是该机器真屏外的值。默认 -2600 在多屏/高分屏机器仍在屏内，
-    # 须 machine.config.json 覆盖（如 -9000）/ 正解从屏幕几何推导——详见「真静默铁律」。
+    # OFFSCREEN_X 从虚拟屏几何推导，别写死：
+    #   OFFSCREEN_X = GetSystemMetrics(76 = SM_XVIRTUALSCREEN) - 窗宽 - 200
+    # 这样整窗保证落在所有显示器左侧之外，任何机器自适应——详见「真静默铁律」。
     # 窗口移到屏外后用户不可见，但 UIA 树活着，坐标相对于 (OFFSCREEN_X, 60) 起点计算
 ```
 
@@ -127,11 +128,39 @@ if rc.left > -2000:
 ### 真静默铁律（4 条，xian-rog 真机验证）
 
 1. **窗口必须【持续】待在屏外 + 【绝不最小化】。** 这才是 xian-pc 一直静默的真正原因——守护连续跑、窗口从不最小化，所以**根本没有"取消最小化"那一下**。一旦窗口被最小化，下次还原必然闪。
-2. **`OFFSCREEN_X` 必须是「该机器真屏外」的值。** `-2600` 在单屏机器够用，但 xian-rog（多屏 / 不同屏幕几何）上 **`-2600` 还在屏幕里** → 守护每轮把窗口挪到 `-2600` 就在用户眼前闪。必须用 `C:\Users\Public\zenithjoy\machine.config.json` 写 `{"OFFSCREEN_X": -9000}` 覆盖（实测 `-9000` 在 ROG 真屏外）。
-   - **这是「禁止写死环境假设值」的活案例**：屏外坐标本该按屏幕几何推导（取所有显示器最左边界再减去窗口宽度），不能写死 `-2600`。
-   - **正解（待实现）**：`OFFSCREEN_X` 从 `GetSystemMetrics` / `EnumDisplayMonitors` 推导最左虚拟屏边界，不硬编码。**当前临时解 = `machine.config.json` 每机覆盖。**
+2. **`OFFSCREEN_X` 必须从虚拟屏几何推导，绝不写死。** 写死 `-2600` 的**真实风险不是"-2600 在 ROG 屏内"**（2026-06-19 真机 `GetSystemMetrics` 实测：ROG 是**单屏 2560×1600，虚拟屏 `left=0 right=2560`，`-2600` 整窗在 `x<0` 本就屏外**——ROG 上的闪源是「取消最小化」让窗口先回 `left=0` 屏内，不是 `-2600` 这个值）。真实风险是 **写死值无法适配未知几何的机器**：比如某机左侧另接一块显示器，虚拟屏 `left` 为负（如 `-1920`），那 `-2600` 就可能落在那块屏里 → 可见。
+   - **这是「禁止写死环境假设值」的活案例**：屏外坐标本该按屏幕几何推导，不能写死。
+   - **正解**：`OFFSCREEN_X = GetSystemMetrics(SM_XVIRTUALSCREEN=76) - 窗宽 - 200`（窗宽取当前窗口宽或默认 1200），保证整窗落在**所有**显示器最左边界之外，任何机器自适应。实测 ROG 推导出 `-1400`（虚拟屏左界 0 − 窗宽 1200 − 200），静默自检 386 次采样、0 次进入可见区 → SILENT。换机/改动后跑「静默自检」出 SILENT 才算 done（见下节）。
 3. **看门狗（watchdog）安全网**：开后台线程每 ~20ms 检查窗口 `left`，若 `> -2000` 立刻 `SetWindowPos(hwnd, 0, OFFSCREEN_X, OFFSCREEN_Y, 0, 0, 0x0015)` 摁回屏外。稳定屏外时 `pushes=0`；能兜住"取消最小化"等瞬时抬头（把可见时间压到 ≤1 帧）。
 4. **诊断手法**：在每步操作前后记录 `GetWindowRect().left`，看哪一步从 `OFFSCREEN_X` 变正——就能定位是哪个调用抬了窗口。实测**只有取消最小化会**。
+
+### 静默自检（接缝断言，别靠肉眼）
+
+真机验证"静默"不能靠人眼看（一帧露头肉眼根本抓不住），必须用客观断言。**以后换任何机器 / 任何改动，跑静默自检出 `SILENT ✅` 才算 done——这是本功能的接缝断言**（对齐 CLAUDE.md「DoD 分逻辑断言/接缝断言」：窗口在真实显示器上碰真实世界的那个点，必须真目标验证，不能 mock/CI 绿了就宣布）。
+
+1. **推导 `OFFSCREEN_X`（确认非写死）**：
+   ```python
+   vleft = GetSystemMetrics(76)          # SM_XVIRTUALSCREEN = 虚拟屏最左边界
+   win_w = 当前窗口宽 or 1200            # 取 GetWindowRect 宽，拿不到用默认 1200
+   OFFSCREEN_X = vleft - win_w - 200     # 整窗保证在所有显示器左侧之外
+   print(f"derived OFFSCREEN_X={OFFSCREEN_X} (vleft={vleft}, win_w={win_w})")  # 打印确认非写死
+   ```
+
+2. **采样断言（发送全程不碰可见区）**：发送整个过程开一条后台线程，每 5ms 采样一次 `GetWindowRect`，判断窗口矩形 `rc` 是否与虚拟屏矩形相交：
+   ```python
+   # 虚拟屏矩形：vleft/vtop/vright/vbottom 由 GetSystemMetrics(76/77/78/79) 取
+   def visible(rc):
+       # 与虚拟屏矩形是否相交（不相交 = 整窗在屏外 = 不可见）
+       return not (rc.right <= vleft or rc.left >= vright
+                   or rc.bottom <= vtop or rc.top >= vbottom)
+   # 整个发送过程统计 intrude = 命中 visible(rc)==True 的采样次数
+   ```
+   - **断言 `intrude == 0`**（整个发送过程一次没碰可见区）→ 判 `SILENT ✅`。
+   - 否则 `NOT SILENT ❌`，报：露头次数 × 5ms ≈ 露头时长 + 最坏（最靠右的）`left`，用于定位是哪一步抬了窗。
+
+3. **实测样例（ROG）**：推导 `OFFSCREEN_X=-1400`、采样 386 次、`intrude=0` → `SILENT ✅`。
+
+> 代码侧实现见 `listen_chat` 的 `--verify-silent` 模式（另一 PR 加）：推导 OFFSCREEN_X + 起采样线程 + 跑一遍真实发送 + 打印 `SILENT`/`NOT SILENT` 裁决。
 
 ---
 
@@ -410,7 +439,7 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 | 客服回复用推理模型（deepseek-v4-flash 等）| 思考烧 token、慢、token 给小了 content 返回空；用非推理 deepseek-v3.2 |
 | 真机热改后不回灌 repo + build-modules | 重装/覆盖即丢，串台复发（见「部署纪律」）|
 | **让窗口最小化**（哪怕只是中途短暂最小化）| 下次还原必然先回 `left=0` 屏内再被移走 → 用户必看到一闪（隐性坑：`_open_chat`/`_uia_send` 本身都不抬窗，唯一抬窗就是取消最小化）|
-| `OFFSCREEN_X` 写死 `-2600` | 多屏/高分屏机器（如 xian-rog）上 `-2600` 仍在屏内 → 守护每轮都在用户眼前闪；须按机器 `machine.config.json` 覆盖（如 `-9000`），正解应从屏幕几何推导 |
+| `OFFSCREEN_X` 写死 `-2600`（或任何固定值） | 写死值无法适配未知几何机器：某机左侧另接显示器（虚拟屏 `left` 为负，如 `-1920`）时 `-2600` 可能落进那块屏 → 可见。正解 = `GetSystemMetrics(SM_XVIRTUALSCREEN=76) - 窗宽 - 200` 推导（ROG 上是单屏 0~2560，`-2600` 本就屏外，闪源是取消最小化不是这个值）。换机/改动后跑「静默自检」出 SILENT 才算 done |
 | `_last_bubble_direction` 找 `Text` 控件判方向 | 消息气泡是 `ListItem` 不是 `Text`，找 Text 永远抓到底部输入区 → 全判 outgoing → 谁都不回（REPLY_DIRECTION_CHECK 默认关的根因）|
 
 ---
@@ -420,7 +449,8 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 | 日期 | 变更 | 触发原因 | 结论 |
 |------|------|----------|------|
 | 2026-06-19 ⭐xian-rog真机 | **定位"微信闪一下"唯一来源 = 取消最小化**：看门狗逐步追踪 `GetWindowRect().left`，最小化起步 `start left=0`（蹦回屏内）才被移走→用户看这一闪；屏外+非最小化起步全程 `-9000`、watchdog `pushes=0` 完全静默 | 想搞清 ROG 上窗口为何偶尔闪 | ✅ `_open_chat`/`_uia_send` 都不抬窗，唯一抬窗=取消最小化 → 真静默铁律=持续屏外+绝不最小化 |
-| 2026-06-19 ⭐xian-rog真机 | `OFFSCREEN_X` 须是"该机真屏外"值：`-2600` 在 ROG 仍在屏内→守护每轮挪过去就闪；`machine.config.json` 写 `-9000` 覆盖 | ROG 多屏/不同几何 | ✅ 临时解=每机覆盖；正解=从 `GetSystemMetrics`/`EnumDisplayMonitors` 推导最左虚拟屏边界（待实现，禁写死 `-2600`）|
+| 2026-06-19 ⭐xian-rog真机 | **新增静默自检（接缝断言）**：几何推导 `OFFSCREEN_X = GetSystemMetrics(SM_XVIRTUALSCREEN=76) - 窗宽 - 200`（非写死）+ 发送全程每 5ms 采样 `GetWindowRect` 判与虚拟屏矩形是否相交，断言 `intrude==0` → `SILENT` | 「静默"不能靠肉眼」，要客观断言；写死值不可靠 | ✅ ROG 实测推导 `-1400`、386 次采样、`intrude=0` → SILENT；换机/改动跑出 SILENT 才算 done（代码侧 `listen_chat --verify-silent`，另一 PR）|
+| 2026-06-19 ⭐xian-rog真机 | **修正**：先前判"`-2600` 在 ROG 在屏内→才闪"**有误**（真机 `GetSystemMetrics` 实测 ROG 单屏 `0~2560`，`-2600` 本就屏外）；真闪源 = 取消最小化（窗口先回 `left=0` 屏内）。写死值的真实风险 = 未知几何机器（如左侧负坐标显示器，虚拟屏 `left=-1920` 时 `-2600` 可能落进那块屏）| 真机测量证伪旧判断 | ✅ 正解 = 从 `SM_XVIRTUALSCREEN` 推导 + 静默自检断言；删「machine.config.json 每机覆盖 -9000」临时解 |
 | 2026-06-19 ⭐xian-rog真机 | 看门狗安全网：后台线程每 ~20ms 查 `left`，`> -2000` 立刻 `SetWindowPos(...,0x0015)` 摁回屏外；稳定时 `pushes=0`，兜瞬时抬头到 ≤1 帧 | 兜"取消最小化"等瞬时露头 | ✅ |
 | 2026-06-19 ⭐xian-rog真机 | **真机调试必须在 session 1**：SSH 在 session 0 看不到 session 1 微信（`Desktop(uia)` 返回 `NO_WINDOW`）；用 `PsExec.exe -i 1 -accepteula <bat>` 送脚本进 session 1，python stdout 重定向到文件再 `Get-Content` 读 | dump 不到 `mmui::MainWindow` | ✅ Windows SSH 输出 GBK，复杂脚本 scp 文件进去跑别内联 |
 | 2026-06-19 ⭐xian-rog真机 | **修正方向检测认知：消息气泡是 `ListItem` 不是 `Text`**（全窗口仅 3 个 Text=标题×2+输入区）；`_last_bubble_direction` 找 Text→抓到底部输入区→全判 outgoing→谁都不回 | 排查 REPLY_DIRECTION_CHECK 默认关的根因 | ⚠️ 待修：改找 ListItem，方向看行内气泡子元素左右偏移（ListItem 满宽 L/R 相同），真机校准后再开 REPLY_DIRECTION_CHECK |
@@ -490,7 +520,7 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 → 等待不足。确认 `_open_chat` 内 sleep 2.0s，`_find_chat_input` 失败后再 sleep 2.0s 重试
 
 **问题：窗口仍然前台可见**
-→ 确认 `SW_SHOWNOACTIVATE(4)` 之后立即 `SetWindowPos(OFFSCREEN_X, 60)`，且 `OFFSCREEN_X` 是该机器真屏外的值（默认 -2600 在多屏/高分屏仍在屏内，须 machine.config.json 覆盖；详见「真静默铁律」）
+→ 确认 `SW_SHOWNOACTIVATE(4)` 之后立即 `SetWindowPos(OFFSCREEN_X, 60)`，且 `OFFSCREEN_X` 从虚拟屏几何推导（`GetSystemMetrics(SM_XVIRTUALSCREEN=76) - 窗宽 - 200`，别写死；详见「真静默铁律」）。跑「静默自检」确认 SILENT
 
 **问题：某人发消息无回复（日志静默）**
 → 可能是 replied 死锁 + _skip_logged 去重。应急：重启 daemon
@@ -537,7 +567,7 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 → free 装机上限 1，旧 agent 占着名额。同机重装/换机注册会 403，走 v1.1 兼容路径（生成新 agent_id）。测试时同机反复重装会反复撞这个。
 
 **问题：扫描读消息时微信窗口闪到前台**
-→ 先查两件事：① `OFFSCREEN_X` 是否真在屏外——`-2600` 在双屏/高分屏（如 xian-rog）仍露在可见区，按机器用 `machine.config.json` 覆盖更负值（如 `-9000`）；② 窗口有没有被最小化——**唯一会抬窗口的就是"取消最小化"那一下**（`_open_chat`/`_uia_send` 本身都不抬窗），铁律是窗口持续屏外 + 绝不最小化（见「窗口可见性管理」）。看门狗每 ~20ms 摁回屏外做兜底。诊断手法：每步前后记 `GetWindowRect().left`，看哪步从 `OFFSCREEN_X` 变正。
+→ 先查两件事：① `OFFSCREEN_X` 是否从虚拟屏几何推导——别写死 `-2600`（写死值在左侧接负坐标显示器的机器上可能落进那块屏 → 可见），正解 `GetSystemMetrics(SM_XVIRTUALSCREEN=76) - 窗宽 - 200`，跑「静默自检」出 SILENT 才放心；② 窗口有没有被最小化——**唯一会抬窗口的就是"取消最小化"那一下**（`_open_chat`/`_uia_send` 本身都不抬窗），铁律是窗口持续屏外 + 绝不最小化（见「窗口可见性管理」）。看门狗每 ~20ms 摁回屏外做兜底。诊断手法：每步前后记 `GetWindowRect().left`，看哪步从 `OFFSCREEN_X` 变正。
 
 **问题：方向检测判反（所有人都被判 outgoing → 谁都不回）**
 → 消息气泡是 `ListItem` 不是 `Text`（真机 dump 实测，全窗口只有 3 个 Text = 标题×2 + 输入区）。`_last_bubble_direction` 找 `Text` 永远抓到底部输入区元素 → 永判 outgoing。临时解：`REPLY_DIRECTION_CHECK` 默认关。根治：改找 `ListItem`，且方向看**行内气泡子元素的左右偏移**（ListItem 自身满宽 L/R 相同，没法判方向），需真机校准 incoming/outgoing 判据后再开启（见「方向检测」节）。
