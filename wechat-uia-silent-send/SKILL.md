@@ -441,6 +441,7 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 | **让窗口最小化**（哪怕只是中途短暂最小化）| 下次还原必然先回 `left=0` 屏内再被移走 → 用户必看到一闪（隐性坑：`_open_chat`/`_uia_send` 本身都不抬窗，唯一抬窗就是取消最小化）|
 | `OFFSCREEN_X` 写死 `-2600`（或任何固定值） | 写死值无法适配未知几何机器：某机左侧另接显示器（虚拟屏 `left` 为负，如 `-1920`）时 `-2600` 可能落进那块屏 → 可见。正解 = `GetSystemMetrics(SM_XVIRTUALSCREEN=76) - 窗宽 - 200` 推导（ROG 上是单屏 0~2560，`-2600` 本就屏外，闪源是取消最小化不是这个值）。换机/改动后跑「静默自检」出 SILENT 才算 done |
 | `_last_bubble_direction` 找 `Text` 控件判方向 | 消息气泡是 `ListItem` 不是 `Text`，找 Text 永远抓到底部输入区 → 全判 outgoing → 谁都不回（REPLY_DIRECTION_CHECK 默认关的根因）|
+| `_last_bubble_direction` / `REPLY_DIRECTION_CHECK` 气泡方向检测（任何形态） | **UIA 无方向信号**：真机 dump 证实 ListItem 是叶子(子元素=0，无行内气泡子元素)/聊天区无头像/收发 `automation_id` 完全相同/ListItem 满宽 → 收发无任何可区分特征 → 方向检测**物理不可能，永久废弃**（不重开）。**不回自己用未读角标**（自己发的不产生角标 → scan_unread 路径1 只对有角标会话动手）；自回复风暴是 content bug（故障模式1）不碰方向 |
 
 ---
 
@@ -453,13 +454,14 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 | 2026-06-19 ⭐xian-rog真机 | **修正**：先前判"`-2600` 在 ROG 在屏内→才闪"**有误**（真机 `GetSystemMetrics` 实测 ROG 单屏 `0~2560`，`-2600` 本就屏外）；真闪源 = 取消最小化（窗口先回 `left=0` 屏内）。写死值的真实风险 = 未知几何机器（如左侧负坐标显示器，虚拟屏 `left=-1920` 时 `-2600` 可能落进那块屏）| 真机测量证伪旧判断 | ✅ 正解 = 从 `SM_XVIRTUALSCREEN` 推导 + 静默自检断言；删「machine.config.json 每机覆盖 -9000」临时解 |
 | 2026-06-19 ⭐xian-rog真机 | 看门狗安全网：后台线程每 ~20ms 查 `left`，`> -2000` 立刻 `SetWindowPos(...,0x0015)` 摁回屏外；稳定时 `pushes=0`，兜瞬时抬头到 ≤1 帧 | 兜"取消最小化"等瞬时露头 | ✅ |
 | 2026-06-19 ⭐xian-rog真机 | **真机调试必须在 session 1**：SSH 在 session 0 看不到 session 1 微信（`Desktop(uia)` 返回 `NO_WINDOW`）；用 `PsExec.exe -i 1 -accepteula <bat>` 送脚本进 session 1，python stdout 重定向到文件再 `Get-Content` 读 | dump 不到 `mmui::MainWindow` | ✅ Windows SSH 输出 GBK，复杂脚本 scp 文件进去跑别内联 |
-| 2026-06-19 ⭐xian-rog真机 | **修正方向检测认知：消息气泡是 `ListItem` 不是 `Text`**（全窗口仅 3 个 Text=标题×2+输入区）；`_last_bubble_direction` 找 Text→抓到底部输入区→全判 outgoing→谁都不回 | 排查 REPLY_DIRECTION_CHECK 默认关的根因 | ⚠️ 待修：改找 ListItem，方向看行内气泡子元素左右偏移（ListItem 满宽 L/R 相同），真机校准后再开 REPLY_DIRECTION_CHECK |
+| 2026-06-19 ⭐xian-rog真机 | **方向检测物理不可能 → REPLY_DIRECTION_CHECK 永久废弃（终结结论）**：逐条 ListItem 内部全 dump 证伪——ListItem 是叶子(子元素=0，无"行内气泡子元素")/聊天区无头像/收发 `automation_id` 完全相同(都=`chat_bubble_item_view`)/ListItem 满宽 → **UIA 无任何方向信号**。不回自己一直靠未读角标(自己发的不产生角标→scan_unread 路径1 只对有角标会话动手)，与方向检测无关；自回复风暴是 content 追踪 bug(故障模式1)不碰方向 | 进一步真机 dump 证伪先前"改找 ListItem+校准重开"中间结论 | ✅ REPLY_DIRECTION_CHECK / 气泡方向检测永久废弃，不重开；不回自己靠未读角标 |
+| 2026-06-19 ⭐xian-rog真机 | **修正方向检测认知：消息气泡是 `ListItem` 不是 `Text`**（全窗口仅 3 个 Text=标题×2+输入区）；`_last_bubble_direction` 找 Text→抓到底部输入区→全判 outgoing→谁都不回 | 排查 REPLY_DIRECTION_CHECK 默认关的根因 | ⚠️ 此结论已被上一行进一步真机 dump 证伪：ListItem 叶子无子元素/无头像/收发 automation_id 相同 → UIA 无方向信号 → 方向检测物理不可能，REPLY_DIRECTION_CHECK 永久废弃；不回自己靠未读角标 |
 | 2026-06-18 | listen_chat 的 draft-generate body 带 `agent_id`；中台 `resolveTenantId` 缺显式 tenant 时按 agent_id 反查 tenant_id（PR #796） | 中台 draft-generate 加租户隔离要 `tenant_id/X-Tenant-Id`，listen_chat 不传 → 全部 400 NO_TENANT_CONTEXT，客服谁都不回 | ✅ 租户绑定时已定，不该每条消息让 caller 传 |
 | 2026-06-18 | 模块版本号 6 处一致 bump；改 agent core 还要 bump `services/agent/package.json` | 不 bump → 心跳报旧版，已装客户端不自动更新；core 版本不一致 CI「Lint Agent Version Bump」拦 | ✅ |
 | 2026-06-18 | 厘清「模块自动更新 ≠ core 更新」 | 模块版本 bump 只让客户端拉新 line04（含 listen_chat.py），改动若在 agent core（spawn 参数等）必须重下安装包 | ✅ |
 | 2026-06-18 | mmv 中台部署改 `pkill -9` + `bootout`/`bootstrap`/`kickstart`，并强制验证新 PID + required_version + 真 reply | `launchctl stop/start`/`kickstart -k` 卡旧进程 PID 不变，旧进程继续服务、required_version 不更新（坑了 3 次） | ✅ 建议 deploy 脚本 stop/start 换 bootout/bootstrap |
 | 2026-06-18 | apps/api/.env 补 `TOAPI_API_KEY`，key 进 1Password secret 源 + 部署确保写进 .env | .env 漏 TOAPI_API_KEY → AI 生成静默失败（aiError 不打日志）→ auto 返回 `{ok:true,status:pending_review}` 但 reply undefined → listen_chat skip | ✅ 别只手动加，下次部署/换机又丢 |
-| 2026-06-18 | 加 `REPLY_DIRECTION_CHECK` 开关默认 False（真机校准前关）（PR #797） | `_last_bubble_direction` 按假设写，真机把所有收到消息判 outgoing → 全 skip(direction='outgoing') → 永不回 | ✅ UIA 气泡方向必须真机 dump 校准 |
+| 2026-06-18 | 加 `REPLY_DIRECTION_CHECK` 开关默认 False（真机校准前关）（PR #797） | `_last_bubble_direction` 按假设写，真机把所有收到消息判 outgoing → 全 skip(direction='outgoing') → 永不回 | ⚠️ 已被 06-19 终结结论覆盖：UIA 无方向信号，方向检测物理不可能，REPLY_DIRECTION_CHECK 永久废弃（不再"校准后重开"）；不回自己靠未读角标 |
 | 2026-06-18 | 记录 license QUOTA_EXCEEDED：同机重装/换机注册 403 走 v1.1 兼容路径生成新 agent_id | free 装机上限 1，旧 agent 占着；同机反复重装会撞 | ⚠️ 测试环境注意 |
 | 2026-06-18 | `OFFSCREEN_X` 按机器调更负（machine.config.json 覆盖，如 -5200/-9000） | -2600 在双屏/高分屏不够，扫描读消息时窗口闪到前台 | ✅ |
 | 2026-06~06-09 | 试过 `WM_PASTE` 替代 `SetValue`（PR #717 加 → PR #723 回滚） | SetValue 曾报告不写入文本 | ✅ **现用 `SetValue` + AttachThreadInput**：WM_PASTE 在 handle=0 时被无声丢弃，确认无效已回滚 |
@@ -501,13 +503,27 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 
 ---
 
-## 方向检测：消息是 ListItem 不是 Text（2026-06-19 xian-rog 真机 dump 修正）
+## 方向检测：UIA 没有方向信号，物理不可能 → REPLY_DIRECTION_CHECK 永久废弃（2026-06-19 xian-rog 真机 dump 终结）
 
-之前 `_last_bubble_direction` 按"找 `Text` 控件 + 水平中心相对面板中线"判方向，**完全错**：
+**最终真相：微信 4.1.8 的 UIA 里【根本没有方向信号】。"读 UIA 判 incoming/outgoing"物理上不可能——不是阈值/校准问题，是没信号。** `_last_bubble_direction` / `REPLY_DIRECTION_CHECK` 是过度设计 + 物理不可能，**永久废弃**（不是"待校准后重开"）。
 
-- **真机 dump 实测**：聊天面板里**消息气泡是 `ListItem` 控件**（`element_info.name` = 消息文本），**不是 `Text`**。整个窗口的 `Text` 只有 3 个（标题 ×2 + 底部输入区元素）。
-- `_last_bubble_direction` 当前找 `Text` → **永远找不到真消息** → 抓到底部输入区那个元素（位置在右侧）→ **永远判 outgoing** → 不回自己把所有人都判成"我方" → **谁都不回**。这就是 `REPLY_DIRECTION_CHECK` 默认关的根因。
-- **而且 ListItem 都是满宽整行（L/R 相同）**，**方向要看行内气泡子元素的左右偏移，不是 ListItem 自身的 L/R**（待真机进一步校准 incoming/outgoing 判据后才能重新开启 `REPLY_DIRECTION_CHECK`）。
+### 真机 dump 实测证据（逐条 ListItem 内部全 dump）
+
+2026-06-19 xian-rog 真机进一步 dump 每条消息 ListItem 的完整内部，证明 UIA 无任何方向信号：
+
+- **消息 ListItem 是叶子节点：子元素数 = 0**。没有所谓"行内气泡子元素"可读——之前以为能靠"行内气泡子元素左右偏移"判方向，**根本不存在那个子元素**。
+- **没有头像元素**：聊天区找不到 Button/Image 头像，无法靠头像左右位置判方向。
+- **收发的 `automation_id` 完全相同**：我发的"测试消息X"和对方发的"你叫啥"，automation_id 一模一样，都是 `chat_message_list.qt_scrollarea_viewport.chat_bubble_item_view`。
+- **ListItem 满宽**（L/R 相同），自身矩形无左右差异。
+- **结论：UIA 里收发消息无任何可区分特征 → 方向检测物理不可能。**
+
+### 那"不回自己"靠什么？→ 未读角标机制（一直如此，无需方向检测）
+
+**"不回自己"从来不靠方向检测，靠【未读角标机制】**：你自己发的消息**不产生未读角标** → `scan_unread` 路径1 只对【有角标】的会话动手 → **天然不回自己**。这是已经在跑的机制，根本不需要任何方向信号。
+
+### 唯一真"回自己"风险 = 自回复风暴（故障模式1），是 content bug，不碰方向
+
+唯一会"回自己"的场景是 **scan_unread 路径2（内容变化路径）**：聊天窗开着时，AI 回完 → 预览内容变了 → 再触发回复。这是 **`last_content` 追踪 bug**（`last_content` 存完整回复原文 vs 预览是截断版，两者不等 → 误判内容变化）——见「两个已知故障模式·故障模式1」。**治它要修 content 追踪，跟方向检测毫无关系。**
 
 ---
 
@@ -561,7 +577,7 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 → apps/api/.env 漏 `TOAPI_API_KEY`（OPENROUTER 等都有独缺它）→ AI 生成失败 → mode=auto 返回 `{ok:true,status:pending_review}` 但 `reply` undefined → listen_chat skip(no reply)。**失败是静默的（aiError 不打日志）**。诊断：① 直接用 .env/plist 里的 key `curl https://toapis.com/v1/chat/completions` 验 key/模型(deepseek-v3.2)/网络；② 查 `llm_audit` 表（有 0-token 记录 = fetch 失败；无记录 = 没 key，在 fetch 前抛"apiKey 未配置"）。key 应进 secret 源（1Password）+ 部署确保写进 .env，别只手动加（下次部署/换机又丢）。
 
 **问题：所有人发消息都被判 outgoing（我方）→ 永不回**
-→ `_last_bubble_direction` 按假设（气泡水平中心相对聊天面板中线）写，真机上把所有收到的消息判成 outgoing → 全 `skip(direction='outgoing')`。已加 `REPLY_DIRECTION_CHECK` 开关默认 False（真机校准前关闭方向检测）。教训：UIA 气泡方向必须真机 dump 校准，不能凭假设写（PR #797）。
+→ `_last_bubble_direction` 按假设（气泡水平中心相对聊天面板中线）写，真机上把所有收到的消息判成 outgoing → 全 `skip(direction='outgoing')`。已加 `REPLY_DIRECTION_CHECK` 开关默认 False（PR #797）。**注意：后续真机 dump 已证实 UIA 根本没有方向信号 → 方向检测物理不可能，REPLY_DIRECTION_CHECK 永久废弃，不要再"校准后重开"；不回自己靠未读角标。详见「方向检测」节及上一条「方向检测判反」。**
 
 **问题：注册报 403 / license QUOTA_EXCEEDED**
 → free 装机上限 1，旧 agent 占着名额。同机重装/换机注册会 403，走 v1.1 兼容路径（生成新 agent_id）。测试时同机反复重装会反复撞这个。
@@ -570,4 +586,4 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 → 先查两件事：① `OFFSCREEN_X` 是否从虚拟屏几何推导——别写死 `-2600`（写死值在左侧接负坐标显示器的机器上可能落进那块屏 → 可见），正解 `GetSystemMetrics(SM_XVIRTUALSCREEN=76) - 窗宽 - 200`，跑「静默自检」出 SILENT 才放心；② 窗口有没有被最小化——**唯一会抬窗口的就是"取消最小化"那一下**（`_open_chat`/`_uia_send` 本身都不抬窗），铁律是窗口持续屏外 + 绝不最小化（见「窗口可见性管理」）。看门狗每 ~20ms 摁回屏外做兜底。诊断手法：每步前后记 `GetWindowRect().left`，看哪步从 `OFFSCREEN_X` 变正。
 
 **问题：方向检测判反（所有人都被判 outgoing → 谁都不回）**
-→ 消息气泡是 `ListItem` 不是 `Text`（真机 dump 实测，全窗口只有 3 个 Text = 标题×2 + 输入区）。`_last_bubble_direction` 找 `Text` 永远抓到底部输入区元素 → 永判 outgoing。临时解：`REPLY_DIRECTION_CHECK` 默认关。根治：改找 `ListItem`，且方向看**行内气泡子元素的左右偏移**（ListItem 自身满宽 L/R 相同，没法判方向），需真机校准 incoming/outgoing 判据后再开启（见「方向检测」节）。
+→ **根治：方向检测物理不可能（UIA 无方向信号），废弃 `REPLY_DIRECTION_CHECK`，不要再试图重开。** 真机逐条 ListItem 全 dump 证实：ListItem 是叶子（子元素=0，没有"行内气泡子元素"可读）、聊天区无头像、收发 `automation_id` 完全相同、ListItem 满宽 → UIA 里收发消息无任何可区分特征。**不回自己靠未读角标**（你自己发的消息不产生未读角标 → scan_unread 路径1 只对有角标会话动手 → 天然不回自己，无需方向检测）。唯一真"回自己"是**自回复风暴，另见故障模式1**（content 追踪 bug，不碰方向）。详见「方向检测」节。

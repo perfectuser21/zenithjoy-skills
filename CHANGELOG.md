@@ -1,3 +1,8 @@
+## [2026-06-19] wechat-uia-silent-send — updated（方向检测物理不可能→永久废弃 REPLY_DIRECTION_CHECK，不回自己靠未读角标，纠正"ListItem 子元素/校准后重开"中间错结论）
+**症状**: skill 里多处留着一个过时的中间错结论——"消息是 ListItem，方向看【行内气泡子元素的左右偏移】，真机校准 incoming/outgoing 判据后【再开启 REPLY_DIRECTION_CHECK】"。这会误导后人继续花时间去"校准后重开方向检测"，而这条路根本走不通。
+**根因**: 之前的认知只走到"消息气泡是 ListItem 不是 Text"就停了，推测能靠 ListItem 内部"行内气泡子元素左右偏移"判方向，标成"待校准后重开"。这是个被后续真机进一步 dump 证伪的中间结论，但 skill 没回头改。2026-06-19 xian-rog 真机逐条 ListItem 全 dump 证明：ListItem 是叶子（子元素=0，根本没有"行内气泡子元素"）、聊天区无头像、收发 `automation_id` 完全相同（都=`chat_message_list.qt_scrollarea_viewport.chat_bubble_item_view`）、ListItem 满宽 → 微信 4.1.8 的 UIA 里收发消息无任何可区分特征 = **没有方向信号**。方向检测是物理不可能，不是阈值/校准问题。
+**修改**: 把"方向检测"节、变更记录、调试指引、禁止使用表里所有"行内气泡子元素 / 校准后重开 REPLY_DIRECTION_CHECK"措辞改成最终真相——(1)「方向检测」节标题与正文改为"UIA 无方向信号→方向检测物理不可能→REPLY_DIRECTION_CHECK 永久废弃（非待校准后重开）"，补 dump 实测证据（子元素=0/无头像/automation_id 相同/满宽），并讲清"不回自己"一直靠**未读角标机制**（自己发的不产生未读角标→scan_unread 路径1 只对有角标会话动手），唯一"回自己"风险=自回复风暴（故障模式1，content 追踪 bug，不碰方向)；(2) 变更记录顶部加 2026-06-19 终结结论行，并把旧"⚠️待修:改找 ListItem+校准后重开"行标为"已被进一步 dump 证伪"；(3) 调试指引「方向检测判反」根治改为"物理不可能→废弃，不回自己靠未读角标，自回复风暴另见故障模式1"，旧 PR #797 那条加覆盖说明；(4) 禁止使用表加一行「REPLY_DIRECTION_CHECK 气泡方向检测=UIA 无方向信号，物理不可能，永久废弃；不回自己用未读角标」。不动 description frontmatter、不删未读角标机制（路径1）、不删故障模式1 描述。
+
 ## [2026-06-19] dashboard-deploy — updated（描述去掉误导词 DA，换用户真实说法 + 跑通触发 eval）
 **症状**: 上一版描述把"DA"当主触发词加进去，但用户澄清"DA"是语音/手滑的误导词、他根本不用，真实说法是 dashboard / 中控 / 前台 / 前端。另外 skill-creator 的触发 eval 在本机一直跑出 recall=0% 的假结果，没法量化验证。
 **根因**: (1) "DA"非用户真实词汇，是噪音；(2) skill-creator 的 run_eval 在本环境两个调用 bug——① subprocess 没设 `stdin=subprocess.DEVNULL`，裸 `claude` CLI 傻等 stdin 行为异常；② 测试用唯一命名临时命令，但真 skill 已安装，模型触发的是真名 `dashboard-deploy`，harness 找临时名永远不匹配 → 假 0%。
