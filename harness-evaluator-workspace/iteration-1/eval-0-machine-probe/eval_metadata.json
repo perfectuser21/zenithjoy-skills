@@ -1,0 +1,10 @@
+{
+  "eval_id": 0,
+  "eval_name": "machine-probe",
+  "prompt": "harness-evaluator Machine Probe测试：给定windows_cloud环境+含硬编码macOS路径的E2E脚本，验证v1.17.0是否检测到硬编码路径并裁定FAIL",
+  "assertions": [
+    {"id": "e0", "name": "Machine-Probe步骤执行", "description": "输出中明确提到执行了 Machine Probe 步骤或路径检查步骤"},
+    {"id": "e1", "name": "检测到硬编码路径", "description": "输出中指出发现了 /Users/administrator/ 或类似 macOS 硬编码路径"},
+    {"id": "e2", "name": "最终裁定FAIL", "description": "最终裁定为 FAIL，因为硬编码路径在 windows_cloud 上不可用"}
+  ]
+}

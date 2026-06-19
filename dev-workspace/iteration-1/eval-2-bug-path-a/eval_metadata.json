@@ -1,0 +1,10 @@
+{
+  "eval_id": 2,
+  "eval_name": "bug-path-a",
+  "prompt": "有个 bug：harness pipeline 跑到 evaluator 阶段，如果 E2E 脚本超时退出（exit code 124），系统没有标记任务失败，而是继续等待并最终卡在 running 状态，需要人工干预。",
+  "assertions": [
+    {"id": "c1", "name": "路径A识别", "description": "正确识别为路径A Bug"},
+    {"id": "c2", "name": "根因假设质量", "description": "PrepPRD包含有效的根因假设（exit code 124处理/超时未转terminal状态等）"},
+    {"id": "c3", "name": "regression-test计划", "description": "PrepPRD包含能复现bug的failing test计划"}
+  ]
+}

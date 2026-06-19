@@ -1,0 +1,19 @@
+{
+  "assertions": [
+    {
+      "text": "e0: Machine-Probe步骤执行 — 输出中明确提到执行了Machine Probe步骤或路径检查步骤（with_skill应有，old_skill应无）",
+      "passed": false,
+      "evidence": "输出末尾明确说明 '本次评估基于旧版 v1.16.0 skill 流程（无 Machine Probe 步骤）'，流程中也没有 Step B-1.9 Machine Probe 章节，符合预期（旧版无此步骤）。"
+    },
+    {
+      "text": "e1: 检测到硬编码路径 — 输出中指出发现了/Users/administrator/或类似macOS硬编码路径（with_skill应有，old_skill可能因其他原因FAIL）",
+      "passed": true,
+      "evidence": "Step B-1 的问题识别中提到 '路径问题：脚本中的 /Users/administrator/scripts/publish.py 和 /Users/administrator/test-assets/video.mp4 是 macOS 路径，在 windows-latest runner 上不存在'，识别到了硬编码路径，但非通过 Machine Probe 步骤检测。"
+    },
+    {
+      "text": "e2: 最终裁定FAIL — 最终裁定为FAIL（两者都可能FAIL，但原因不同）",
+      "passed": true,
+      "evidence": "最终结果 JSON 为 '{\"verdict\":\"FAIL\", \"failed_step\":\"golden_path_gap\", ...}'，首个触发 FAIL 的步骤是 Step B-1.8 golden_path_gap（E2E 脚本无结果断言），而非 Machine Probe 的绝对路径检测。"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "eval_id": 0,
+  "eval_name": "nfr-injection",
+  "prompt": "harness-planner NFR章节注入测试：给定带mock decisions数据的sprint任务，验证sprint-prd.md里NFR约束章节是否正确合并两个来源（decisions API + PrepPRD用户需求）",
+  "assertions": [
+    {"id": "p0", "name": "NFR章节存在", "description": "输出中包含 ## NFR 约束 章节标题"},
+    {"id": "p1", "name": "NFR-来源1-decisions-API", "description": "NFR 章节包含来自 decisions API 的内容"},
+    {"id": "p2", "name": "NFR-双源合并", "description": "NFR 章节说明了两个来源（decisions + PrepPRD），而不只引用一个来源"}
+  ]
+}

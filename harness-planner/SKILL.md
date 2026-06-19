@@ -9,7 +9,8 @@ version: 8.11.0
 created: 2026-04-08
 updated: 2026-06-11
 changelog:
-  - 8.10.0: 链路审计修复 4 项 — (a) target_environment 推断改为明确 if-elif 优先级链（dashboard→mac_web / windows app→windows_cloud / 微信 RPA→windows_wechat / 服务器→linux_server / 纯 API→local_api / playground 训练→playground），删除含糊的"取起点最靠前"；(b) journey_id 大小写统一为 journey_id（小写）+ 注明来源 task.payload.journey_id；(c) sprint-prd.md 模板补 ## E2E 验收 占位区块（初稿可空，最终脚本由 proposer 产出）+ journey_id/step_id 来源说明；(d) 常见错误 #2 加 ❌/✅ 正反例
+  - 8.11.0: 新增 Step 0.3 NFR 双源读取 — 从 decisions?category=nfr 取活跃 NFR 决策 + 从 PrepPRD 取用户显式 NFR，合并注入 sprint-prd.md ## NFR 约束章节；双源缺一不可
+  - 8.10.0: 链路审计修复 4 项 — target_environment 推断改为明确 if-elif 优先级链；journey_id 大小写统一；sprint-prd.md 模板补 ## E2E 验收 占位区块；常见错误 #2 加正反例
   - 8.9.0: 明确"只做Scope锚定"原则；sprint-prd.md模板加journey_id+step_id强制字段
   - 8.8.0: 删Response Schema必填段（职责归Proposer Step 1.1）；Step 0.1加initiative_runs Run历史查询
   - 8.7.0: thin-slice 行数上限从 ≤50 调整为 ≤100 — 实测含 smoke script 的真实 PRD 常见 80-110 行，50 行限制在 eval 中持续误报；保留"禁止 254 行 medium/thick PRD"的精神，只放宽数字
@@ -44,17 +45,13 @@ changelog:
 
 ---
 
-## Thin Slice 字数硬上限（v8.X — B14 加，2026-05-12）
-
-为防 planner 把 thin slice 写成 medium thick spec（W36 实证 254 行 PRD）：
+## Thin Slice 字数硬上限
 
 - **thin slice PRD ≤ 100 行**（含 smoke script 区块；禁止写历史背景、实现路径、OKR 叙事）
 - **thin slice DoD ≤ 8 条**（不分 BEHAVIOR/ARTIFACT 总数 ≤ 8）
 - 超 → planner 自审 reject + 强制砍范围 / 拆 multi-sprint
 
-**反例**：W36 planner 254 行 PRD + 32 DoD 条目，引用 W19-W26 全部历史 + B1-B13 全部 fix 上下文 → 不是 thin slice 是 medium thick。
-
-**正例**：含 Golden Path + Response Schema + smoke script 的完整 thin PRD，80-90 行以内。
+**正例**：含 Golden Path + E2E 验收占位 + smoke script 的完整 thin PRD，80-90 行以内。
 
 ---
 

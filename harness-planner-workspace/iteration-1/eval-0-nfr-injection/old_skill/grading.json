@@ -1,0 +1,19 @@
+{
+  "assertions": [
+    {
+      "text": "p0: NFR章节存在 — 输出中包含 ## NFR 约束 章节标题",
+      "passed": false,
+      "evidence": "输出中不存在 '## NFR 约束' 章节标题。输出包含 OKR对齐/背景/Golden Path/边界情况/范围限定/假设/预期受影响文件/E2E验收等章节，但无 NFR 约束章节。"
+    },
+    {
+      "text": "p1: NFR-来源1-decisions-API — NFR章节包含来自decisions API的内容（nfr-001/nfr-002或频控/延迟决策）",
+      "passed": false,
+      "evidence": "输出中不存在 NFR 章节，也没有 nfr-001/nfr-002 或来自 decisions API 的频控/延迟约束内容。"
+    },
+    {
+      "text": "p2: NFR-双源合并 — NFR章节说明了两个来源（decisions + PrepPRD），而不只引用一个来源",
+      "passed": false,
+      "evidence": "输出中不存在 NFR 章节，未提及 decisions 表和 PrepPRD 双源合并的任何内容。"
+    }
+  ]
+}

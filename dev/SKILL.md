@@ -5,7 +5,9 @@ updated: 2026-06-11
 description: Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→比对已有Steps展示Golden Path草稿→确认前置工作全部到位→用户确认PrepPRD→路由执行
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
-  - 20.1.0: 链路审计修复 4 项 — (a) 路径 C payload target_environment 枚举补全为 6 种（mac_web|windows_cloud|windows_wechat|linux_server|local_api|playground）；(b) PrepPRD Golden Path 模板改为单线性步骤序列（Step 1→2→…，每步=用户动作+系统可观察响应），与 proposer 1:1 映射对齐，三段式作补充；(c) abilities 注释改准确（表已删但 endpoint 仍可用、后端映射 journey_features）；(d) 加 add-feature 脚本 vs Brain API 参数对照表
+  - 21.1.0: 步骤编号重排 — 步骤 0.5（对抗深挖）重命名为步骤 1，原步骤 1（前置工作核对）升为步骤 2，对齐逻辑顺序
+  - 21.0.0: 步骤 0.5 升级为 GAN 对抗 + 并行补全 — Phase 1 Proposer/Challenger 串行（最多 5 轮收敛），Phase 2 三路并行（Agent B 正确路径/C 错误路径/D NFR）；路径 A/B 快跑版（Phase 1 仅 1 轮 + Phase 2 仅 Agent C）
+  - 20.1.0: 链路审计修复 4 项 — target_environment 枚举补全为 6 种；PrepPRD Golden Path 改为单线性步骤序列；add-feature 脚本 vs Brain API 参数对照表
 ---
 
 > **CRITICAL LANGUAGE RULE**: 所有输出简体中文。
@@ -53,9 +55,7 @@ curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
 ### 路径 C（大功能）— 5 个上下文源
 
 ```bash
-# 1: Journey 体系（journey_features 是唯一正表）
-# abilities 表已删（2026-06-09）；/api/brain/abilities endpoint 仍可用、后端已映射到 journey_features
-# 查询 Ability/Feature 推荐直接用 journey_features（语义最清晰）；abilities endpoint 是兼容别名
+# 1: Journey 体系（journey_features 是 Ability/Feature 唯一正表）
 curl -s "localhost:5221/api/brain/journeys"
 curl -s "localhost:5221/api/brain/journey_features?limit=50"
 

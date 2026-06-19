@@ -1,7 +1,7 @@
 # Skill Benchmark: harness-planner
 
 **Model**: <model-name>
-**Date**: 2026-05-30T07:01:03Z
+**Date**: 2026-06-19T02:07:39Z
 **Evals**: 1, 2 (3 runs each per configuration)
 
 ## Summary

@@ -10,7 +10,8 @@ version: 1.17.0
 created: 2026-05-06
 updated: 2026-06-11
 changelog:
-  - 1.16.0: 删除 Step B-1.7 弱oracle/作弊扫描（机械逻辑下沉 Contract Gate 代码层 #3348，4轮进化规则更强；原粗糙 grep 是死代码+误报复活点）。Deterministic Gate initiative 减肥收尾，践行"机械判定归代码、skill 留语义判断"原则
+  - 1.17.0: 新增 Step B-1.9 Machine Probe — windows_cloud/wechat 环境执行前检测 E2E 脚本硬编码绝对路径（/Users/ /home/ C:\Users\），发现即 FAIL；成功后输出标准化环境变量（CHROME_PATH/WECHAT_DATA/NODE_VERSION）供 E2E 脚本 source 替代硬编码路径
+  - 1.16.0: 删除 Step B-1.7 弱 oracle/作弊扫描（机械逻辑下沉 Contract Gate 代码层，践行"机械判定归代码、skill 留语义判断"原则）
   - 1.15.0: 链路审计修复 7 项 — (a) 清理模式 A/WS 拆分残留（description/常见错误/变量表统一为单模式 IS_FINAL_E2E=true 跑 contract-draft.md ## E2E 验收，全文清掉 ws_id/contract-dod-ws）；(b) 修 Step B-2 双重执行 bug（删无条件首跑，windows 环境不再 bash 不存在的 .sh，超时 124 判定并入 case 后统一）；(c) 新增 Step B-1.6 环境预检 + localhost 重写（容器内 sed 重写 + 二进制 command -v 缺失即 env_missing FAIL，禁止降级）；(d) 新增 Step B-1.7 弱 oracle/作弊扫描；(e) 新增 Step B-1.8 Golden Path 覆盖核对；(f) 新增「领域验证死规则」（视频 ffprobe / 发布真实出现 / DB 时间窗 / UI 可见断言）；(g) 修注入变量表 WECHAT_RPA_WORKFLOW/WORKSPACE_PATH/mac_web 注解
   - 1.14.0: windows_wechat E2E 路由 3 项修复 — P0: 删除 ;;&fallthrough，windows_wechat 合并入 OR pattern 触发 e2e-wechat-rpa.yml（xian-rog self-hosted）；P1: Step B-1 ps1 提取条件加入 windows_wechat；P2: B33 autonomous 检测排除 windows_cloud/windows_wechat（PowerShell E2E 不含 localhost:5221 是正常的）
   - 1.13.0: 截图路径从 ~/claude-output/ 改为 SPRINT_DIR/screenshots/（与 Report Step8 index.html 对齐）
@@ -60,9 +61,6 @@ generator 写代码 + push PR
 - evaluator（manual:bash）验"启动 server 真发请求看响应"，1-2min + ~$0.5
 - 两层验不同事，不可替代
 - memory 实证：CI 全绿但真启动 SyntaxError / host.docker.internal 不解析 / migration 漏跑 → 这些只 evaluator 抓
-
-**注意（撤销 2026-04-09 决策）**：
-2026-04-09 决策曾说"CI 是机械执行器，砍 evaluator"。该决策已撤销，见 memory `harness-pipeline-evaluator-as-pre-merge-gate.md`。
 
 ---
 
@@ -336,14 +334,6 @@ fi
 
 **死规则（加粗，必须遵守）**：**禁止在工具缺失时改写验证命令、降级验证、或跳过该步——`env_missing` 就是 FAIL，让 Brain 路由到正确环境，这不是 evaluator 该变通的事。** 例如脚本要 ffprobe 验视频但本机无 ffprobe → 直接 `env_missing` FAIL，绝不允许改成"检查文件大小"凑过。
 
-#### Step B-1.7: 弱 oracle / 作弊扫描 — 已下沉 Contract Gate 代码层
-
-> **本步骤已移除**（v1.16.0）。弱 oracle / 作弊检测（缺 jq -e 值校验、MOCK_/dry-run、吞错 || true、只查文件存在）
-> 已由 **Contract Gate**（`packages/brain/src/lib/contract-gate.js`，#3348）在 **GAN 收敛时 + evaluate spawn 前**
-> 确定性拦截，且经 4 轮规则进化（#3351/#3353/#3357/#3358）能识别状态码 oracle、捕获-断言、负向测试等
-> 合法写法——远比本步骤原有的粗糙 grep 强。合同被 spawn 到 evaluator 时必然已 gate-clean，
-> evaluator 无需也不应重复扫描（重复的粗糙规则反而会误伤 gate 放行的合法写法）。
-
 #### Step B-1.8: Golden Path 覆盖核对（LLM 判断步骤）
 
 **读 `${SPRINT_DIR}/sprint-prd.md` 的 Golden Path 段，逐步核对 E2E 脚本是否对每一步都有对应的真实命令 + 断言。任何一步未覆盖 → FAIL，feedback 列出未覆盖步骤。**
@@ -453,8 +443,6 @@ exit 0
 #### Step B-2: 执行 E2E 脚本
 
 **只执行一次**。按 `target_environment` 选择执行方式（v1.6 — 机器感知派发）。每个 case 分支自行设 `EXIT_CODE`；超时（exit 124）判定在 case 之后**统一**处理。
-
-> ⚠️ v1.15 删除了旧版的无条件首跑（旧版先无条件 `timeout 120 bash /tmp/e2e-verify.sh` 再按 case 重跑一遍 = 双重执行；且 windows_cloud/windows_wechat 时首跑会 `bash` 一个不存在的 `.sh`——脚本实际是 `.ps1`）。现在只在对应 case 分支里执行一次。
 
 ```bash
 # 读取 target_environment（从 PRD 或注入变量）
@@ -728,4 +716,4 @@ BREOF
 2. **feedback 笼统** → 必须指明具体文件/函数/值，附修复方向
 3. **输出带 markdown 代码块** → Brain 解析 verdict 字段时会失败
 4. **E2E 脚本提取不全** → 确认 `contract-draft.md` 的 `## E2E 验收` 区块边界正确，提取后 `/tmp/e2e-verify.sh`（或 `.ps1`）非空
-5. **跳过环境预检/弱 oracle 扫描直接执行** → 执行前必跑 Step B-1.6/B-1.7/B-1.8：工具缺失 = `env_missing` FAIL（禁止降级），弱 oracle/作弊命中 = FAIL，Golden Path 有步骤未覆盖 = FAIL
+5. **跳过环境预检直接执行** → 执行前必跑 Step B-1.6（环境预检）/ B-1.8（Golden Path 覆盖）/ B-1.9（Machine Probe）：工具缺失 = `env_missing` FAIL（禁止降级），硬编码路径 = FAIL，Golden Path 有步骤未覆盖 = FAIL
