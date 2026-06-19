@@ -1,5 +1,18 @@
 # CHANGELOG — wechat-uia-silent-send
 
+## 2026-06-19 — 文档去矛盾：真屏外+绝不最小化提为主线、-2600 写死改 OFFSCREEN_X、签名对齐真代码
+
+**症状**
+- skill 被反复打补丁，开头还是旧框架（"窗口在 -2600 = 屏外 = 用户完全看不到"），新真相（"-2600 在某些机器仍在屏内、真静默靠持续屏外+绝不最小化"）后贴在中段，整篇自相矛盾。
+- 多处把写死 `-2600` 当作"保证屏外"的正确值；`_open_chat` 函数签名各处不一致（`(mw, sender)` vs 真代码 `(mw, item, sender, expect_content="")`）；SW_SHOWNA(8) 禁止表说禁、真代码却在用，没解释；`_navigate_away` 既列为正确实现又是风暴根因；标题 Text 与消息气泡 ListItem 混淆。
+
+**根因**
+- 反复打补丁只往后追加新真相，从不回头清理与之冲突的旧表述——旧框架成了"先读到的主线"，读者一上来就被误导。
+
+**修改（文档）**
+- 消除 6 处矛盾：① 全篇把"保证屏外"的写死 `-2600` 改为 `OFFSCREEN_X`（默认 -2600 仅作举例），每处标注须真屏外+machine.config 覆盖+正解从屏幕几何推导；② 把"真静默=真屏外+绝不最小化"精炼版提到「模式二」开头当主线，"用户完全看不到"改为带前提的表述；③ `_navigate_away` 在调用链处加风暴副作用标注；④ `_open_chat` 签名各处统一为 `(mw, item, sender, expect_content="")` 并说明 item=ListItem；⑤ SW_SHOWNA(8) 禁止表加注"现有 _uia_send 仍有 ShowWindow(8) 属待清理历史残留、仅非最小化时无害、新代码勿用"；⑥ `_chat_title_matches` 处加注"标题是 Text、消息气泡是 ListItem，别混淆"。
+- 合并变更记录噪音：WM_PASTE"加进去（PR #717）→ 回滚（PR #723）"两行合成一行结论（现用 SetValue + AttachThreadInput，WM_PASTE handle=0 无声丢弃已回滚）。
+
 ## 2026-06-19 — ROG 真机定位"微信闪一下"唯一来源 + 修正方向检测认知（xian-rog 真机验证）
 
 **症状**

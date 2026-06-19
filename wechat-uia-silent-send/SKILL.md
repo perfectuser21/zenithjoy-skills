@@ -30,19 +30,23 @@ description: |
 
 ### 模式二：后台静默模式（当前实现，正确）
 
-微信窗口在屏幕外（-2600, 60），用户完全看不到任何操作，但 UIA 控件树完整可用。
+微信窗口移到屏幕外（`(OFFSCREEN_X, 60)`，默认值举例 `-2600`），UIA 控件树完整可用。
 
-**表现**：用户看不到任何窗口弹出，消息静默发出。
+> **真静默 = 真屏外 + 绝不最小化（这才是主线，先记住）**：静默不是靠"挪到 -2600"这个数字，而是靠两件事——① 窗口【持续】待在【该机器真屏外】坐标（`OFFSCREEN_X`，默认 `-2600` 在多屏/高分屏机器仍在屏内，须每机覆盖；详见「真静默铁律」）；② 全程【绝不最小化】。唯一会让用户看到窗口"闪一下"的动作就是【取消最小化】（还原最小化窗口必先回 `left=0` 屏内再被移走，唯一来源=取消最小化）——`_open_chat`/`_uia_send` 本身都不抬窗。
+
+**表现**：用户看不到窗口弹出（前提：窗口真在屏外 + 全程不最小化，否则取消最小化会闪一下）。
 
 **实现路径（完整调用链）**：
 ```
-_open_chat(mw, sender)        ← 切换到目标会话（含验证）
+_open_chat(mw, item, sender, expect_content="")  ← 切换到目标会话（含验证）；item = 会话列表里目标的 ListItem
     ↓
 _find_chat_input(mw)          ← 找到输入框（UIA Edit 控件）
     ↓
 _uia_send(uia_edit, mw, text) ← 写文字 + 发送（纯后台）
     ↓
 _navigate_away(mw)            ← 发完跳到文件传输助手（确保下条消息有未读角标）
+                                ⚠️ 跳文件传输助手会导致离屏下角标不清 → 自回复风暴
+                                  （见「两个已知故障模式·故障模式1」），是否保留/如何缓解见该节
 ```
 
 ---
@@ -104,8 +108,10 @@ if user32.IsIconic(main_hwnd):
 GetWindowRect(main_hwnd, byref(rc))
 if rc.left > -2000:
     SWP_FLAGS = 0x0001 | 0x0004 | 0x0010  # NOSIZE | NOZORDER | NOACTIVATE
-    SetWindowPos(main_hwnd, 0, -2600, 60, 0, 0, SWP_FLAGS)
-    # 窗口现在在屏幕外，用户不可见，但 UIA 树活着，坐标相对于 (-2600, 60) 起点计算
+    SetWindowPos(main_hwnd, 0, OFFSCREEN_X, 60, 0, 0, SWP_FLAGS)
+    # OFFSCREEN_X 必须是该机器真屏外的值。默认 -2600 在多屏/高分屏机器仍在屏内，
+    # 须 machine.config.json 覆盖（如 -9000）/ 正解从屏幕几何推导——详见「真静默铁律」。
+    # 窗口移到屏外后用户不可见，但 UIA 树活着，坐标相对于 (OFFSCREEN_X, 60) 起点计算
 ```
 
 **关键**：绝不最小化（最小化 = UIA 死亡）。只要保持"已还原但在屏幕外"即可。
@@ -118,7 +124,7 @@ if rc.left > -2000:
 - **窗口已在屏外 + 非最小化起步**：全程 `left=-9000`，`_open_chat` 后 `-9000`、`_uia_send` 后仍 `-9000`，看门狗一次没出手（`pushes=0`）。**完全静默，用户全程看不到。**
 - **结论**：`_open_chat`（Select / PostMessage）和 `_uia_send` 本身**完全不抬窗口**。唯一抬窗口的是"还原最小化窗口"那一下——最小化窗口还原时必然先回到 `left=0` 屏内，再被移走，中间这一帧用户能看见。
 
-### 真静默的 4 条铁律（xian-rog 真机验证）
+### 真静默铁律（4 条，xian-rog 真机验证）
 
 1. **窗口必须【持续】待在屏外 + 【绝不最小化】。** 这才是 xian-pc 一直静默的真正原因——守护连续跑、窗口从不最小化，所以**根本没有"取消最小化"那一下**。一旦窗口被最小化，下次还原必然闪。
 2. **`OFFSCREEN_X` 必须是「该机器真屏外」的值。** `-2600` 在单屏机器够用，但 xian-rog（多屏 / 不同屏幕几何）上 **`-2600` 还在屏幕里** → 守护每轮把窗口挪到 `-2600` 就在用户眼前闪。必须用 `C:\Users\Public\zenithjoy\machine.config.json` 写 `{"OFFSCREEN_X": -9000}` 覆盖（实测 `-9000` 在 ROG 真屏外）。
@@ -142,10 +148,11 @@ if rc.left > -2000:
 ### 正确实现（_open_chat + 三层验证）
 
 ```python
-def _open_chat(mw, sender, expect_content=""):
+def _open_chat(mw, item, sender, expect_content=""):
+    # item = 会话列表里目标的 ListItem（用于 Select / 点击切换）
     # === Step 1: 窗口状态准备 ===
     # 最小化 → SW_SHOWNOACTIVATE(4) 还原（不用SW_SHOWNA=8！）
-    # 在可见区域 → SetWindowPos 移到 (-2600, 60) 离屏
+    # 在可见区域 → SetWindowPos 移到 (OFFSCREEN_X, 60) 离屏（OFFSCREEN_X 须真屏外，默认 -2600，见「真静默铁律」）
 
     # === Step 2: 三种切换策略（按 attempt 轮换）===
     for attempt in range(3):
@@ -186,9 +193,11 @@ def _open_chat(mw, sender, expect_content=""):
 
 ### _chat_title_matches 实现
 
+> 注意：聊天面板顶部【标题】是 `Text` 控件（本函数读标题，没问题）；但聊天区的【消息气泡】是 `ListItem` 不是 `Text`（见「方向检测」节）——别混淆这两者。
+
 ```python
 def _chat_title_matches(mw, sender):
-    wr = mw.rectangle()  # 窗口矩形（注意：在离屏模式下如 (-2600,60,x,y)）
+    wr = mw.rectangle()  # 窗口矩形（注意：在离屏模式下如 (OFFSCREEN_X,60,x,y)，OFFSCREEN_X 默认 -2600）
     for t in mw.descendants(control_type="Text"):
         r = t.rectangle()
         # 标题在窗口上部（top < wr.top+150）且在会话列表右侧（left > wr.left+1/4宽）
@@ -391,7 +400,7 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 | `SendInput` | 同上 |
 | `mouse_event / _abs_click` | 需要前台焦点 |
 | `ShowWindow(SW_RESTORE=9)` | 把微信激活到前台 |
-| `ShowWindow(SW_SHOWNA=8)` 还原最小化 | 最小化窗口停在幽灵坐标，UIA 事件无订阅者 |
+| `ShowWindow(SW_SHOWNA=8)` 还原最小化 | 最小化窗口停在幽灵坐标，UIA 事件无订阅者。⚠️ 注意：现有 `_uia_send`（listen_chat.py ~line 591）仍有 `ShowWindow(main_hwnd, 8)` 调用，属待清理的历史残留——仅在窗口已非最小化时无害（SW_SHOWNA 只对最小化窗口才有幽灵坐标问题）；**新代码勿用** |
 | `SetForegroundWindow` / `_force_foreground` | 抢焦点，前台可见 |
 | `_set_clipboard_text + Ctrl+V` | 依赖前台焦点 |
 | `_set_clipboard_text + WM_PASTE(0x0302)` | Qt mmui::MainWindow handle=0 时被无声丢弃 |
@@ -423,8 +432,7 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 | 2026-06-18 | 加 `REPLY_DIRECTION_CHECK` 开关默认 False（真机校准前关）（PR #797） | `_last_bubble_direction` 按假设写，真机把所有收到消息判 outgoing → 全 skip(direction='outgoing') → 永不回 | ✅ UIA 气泡方向必须真机 dump 校准 |
 | 2026-06-18 | 记录 license QUOTA_EXCEEDED：同机重装/换机注册 403 走 v1.1 兼容路径生成新 agent_id | free 装机上限 1，旧 agent 占着；同机反复重装会撞 | ⚠️ 测试环境注意 |
 | 2026-06-18 | `OFFSCREEN_X` 按机器调更负（machine.config.json 覆盖，如 -5200/-9000） | -2600 在双屏/高分屏不够，扫描读消息时窗口闪到前台 | ✅ |
-| 2026-06 | 引入 `WM_PASTE` 替代 SetValue（PR #717） | SetValue 报告不写入文本 | ❌ 回滚：handle=0 WM_PASTE 无声丢弃 |
-| 2026-06-09 | 恢复 SetValue + AttachThreadInput（PR #723） | WM_PASTE 确认无效 | ✅ |
+| 2026-06~06-09 | 试过 `WM_PASTE` 替代 `SetValue`（PR #717 加 → PR #723 回滚） | SetValue 曾报告不写入文本 | ✅ **现用 `SetValue` + AttachThreadInput**：WM_PASTE 在 handle=0 时被无声丢弃，确认无效已回滚 |
 | 2026-06-09 | 删 SW_RESTORE，改直接 Invoke()（PR #727） | Enter 失败触发 SW_RESTORE→前台激活 | ✅ |
 | 2026-06-10 | SW_SHOWNA(8) 改为 SW_SHOWNOACTIVATE(4) | SW_SHOWNA 留窗口在幽灵坐标 | ✅ |
 | 2026-06-10 | 新增 `_open_chat()`：离屏+三策略切换+三方式验证 | Invoke 后台不切面板，发到文件传输助手 | ✅（三人路由验证通过）|
@@ -476,13 +484,13 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 ## 调试指引
 
 **问题：消息发到"文件传输助手"**
-→ `item.Invoke()` 后台不切面板，改用 `_open_chat(mw, sender)` + `_chat_title_matches()` 验证
+→ `item.Invoke()` 后台不切面板，改用 `_open_chat(mw, item, sender)` + `_chat_title_matches()` 验证
 
 **问题：找不到 chat_input_field**
 → 等待不足。确认 `_open_chat` 内 sleep 2.0s，`_find_chat_input` 失败后再 sleep 2.0s 重试
 
 **问题：窗口仍然前台可见**
-→ 确认 `SW_SHOWNOACTIVATE(4)` 之后立即 `SetWindowPos(-2600, 60)`
+→ 确认 `SW_SHOWNOACTIVATE(4)` 之后立即 `SetWindowPos(OFFSCREEN_X, 60)`，且 `OFFSCREEN_X` 是该机器真屏外的值（默认 -2600 在多屏/高分屏仍在屏内，须 machine.config.json 覆盖；详见「真静默铁律」）
 
 **问题：某人发消息无回复（日志静默）**
 → 可能是 replied 死锁 + _skip_logged 去重。应急：重启 daemon
