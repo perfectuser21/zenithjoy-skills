@@ -1,3 +1,8 @@
+## [2026-06-19] dashboard-deploy — updated（描述去掉误导词 DA，换用户真实说法 + 跑通触发 eval）
+**症状**: 上一版描述把"DA"当主触发词加进去，但用户澄清"DA"是语音/手滑的误导词、他根本不用，真实说法是 dashboard / 中控 / 前台 / 前端。另外 skill-creator 的触发 eval 在本机一直跑出 recall=0% 的假结果，没法量化验证。
+**根因**: (1) "DA"非用户真实词汇，是噪音；(2) skill-creator 的 run_eval 在本环境两个调用 bug——① subprocess 没设 `stdin=subprocess.DEVNULL`，裸 `claude` CLI 傻等 stdin 行为异常；② 测试用唯一命名临时命令，但真 skill 已安装，模型触发的是真名 `dashboard-deploy`，harness 找临时名永远不匹配 → 假 0%。
+**修改**: description 删除所有"DA"，触发词改为用户真实说法（dashboard/中控/前台/前端/ZD）。用修好的自测脚本（裸 claude + stdin=/dev/null + 匹配真 skill 名 + grep 流缓冲 + 检测到即 kill 防执行部署）跑 20 句真实词 eval：**recall 90%（9/10）、specificity 100%（10/10）、准确率 95%**（仅"dashboard 更新一下设备页"这种开发/部署两可的句子没触发）。skill-creator 上游与本副本逐字节相同，无可升级版本；两个 eval bug 待另行修进 run_eval。
+
 ## [2026-06-19] dev — updated（立「哨兵(回归守卫)死规矩」）
 **症状**: 反复出现的病——bug 修了但没留下"会报警的守卫"，换台机器/换个人就再犯。守卫一直靠人/AI 每次自觉判断（=祈祷），没有像 test 那样的死规矩管谁写/啥时候/写哪/谁卡。环境接缝（真机/生产 env/真实调用方）尤其裸奔，因为 CI 是干净假环境根本测不到。
 **根因**: dev skill 只有 regression test（逻辑类守卫）一种形态，缺「环境类守卫=运行时/启动自检，打包进程序」的概念，更缺「机器闸门：PR 碰环境接缝却没带自检→CI 红」这条强制；接缝清单虽已在 pre-PRD/Contract 要求，但没规定每条必须配一个 proven-to-fire 的守卫。
