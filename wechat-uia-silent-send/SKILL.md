@@ -387,9 +387,13 @@ if uia_edit is None:
 
 ### 两个已知故障模式
 
-**故障模式1：自回复风暴（发一条 AI 回 N 条）**
+> ✅ **状态更新（2026-06-20）：两个故障模式代码层均已修**（逐调用点核对 `listen_chat.py`）。真机回归未再独立复验，下次真机连发时确认一次即可。
+> - **故障模式1 已修**：`listen_chat.py:1660` 回复成功后 `last_content.pop(m["sender"], None)`（删除而非存入 reply 原文）→ Path2 不会被自回复触发；且 `last_content` 赋值点(行 ~422/426)始终存会话列表预览版，非完整回复。
+> - **故障模式2 已修**：`listen_chat.py:1410-1420` 改为**每轮心跳过期即清**（`now - last_replied_purge >= REPLIED_TTL` 就清，不等 1 小时），`_skip_logged` 配对清理；`_load_replied` 加载时即过滤过期条目。死锁风险消除。
 
-触发链：
+**故障模式1：自回复风暴（发一条 AI 回 N 条）** ✅ 已修（见上方状态更新）
+
+触发链（历史，已修）：
 1. AI 回复发出 → `_navigate_away()` 跳到文件传输助手
 2. WeChat 离屏后台下未清角标
 3. 下轮扫描：角标还在 → 触发角标路径 → 预览变成了 AI 的上条回复（截断版）
@@ -397,9 +401,9 @@ if uia_edit is None:
 5. `replied` 集合 key=(sender, 预览截断版) ≠ (sender, AI完整回复原文) → 不在replied → 再回一次
 6. 每 30s 循环一次，风暴持续
 
-**故障模式2：客户发消息不回复（replied 死锁）**
+**故障模式2：客户发消息不回复（replied 死锁）** ✅ 已修（见上方状态更新）
 
-触发链：
+触发链（历史，已修）：
 1. 某次回复被判"成功"（可能是假成功）→ `replied.add((sender, content))`
 2. 后续：sender 继续发同内容 → `key in replied` → 静默 continue（且已在 `_skip_logged`，无日志）
 3. TTL 120s 过期但内存清理要等 1 小时 → 该 sender 最长被封锁 1 小时
@@ -451,6 +455,7 @@ ssh xian-pc "powershell -NoProfile -Command \"\$j='{\\\"target\\\":\\\"\\u4e8e\\
 
 | 日期 | 变更 | 触发原因 | 结论 |
 |------|------|----------|------|
+| 2026-06-20 | **两个故障模式标"已修"（doc 追平 code）+ 第三处版本守卫修复**：① 全系统 bug 扫查发现「两个已知故障模式」一直标 ⚠️待修,但**代码层早已修**——故障模式1(自回复风暴)`listen_chat.py:1660` 回复后 `last_content.pop`(非存 reply 原文);故障模式2(replied 死锁)`listen_chat.py:1410-1420` 每轮即时过期清理(非每小时)。已在「两个已知故障模式」节标 ✅。② **微信版本守卫第三处家修复(PR #808)**:`services/agent/src/preflight/line04-preflight.ts`(`#676` 旧 per-Line preflight,无生产代码 import 但挂着 CI workflow/smoke/dashboard-E2E)的 `isWechatVersionSupported` 对 <4.1.8(连 3.x)全判 true → 改成只认 4.1.8.x,与 #804(preflight.py)/#805(modules/line04) 收口。至此**三处版本守卫实现全部只认 4.1.8.x**。 | 用户要求"把所有 bug 都检测一下整体看",派 3 路并行扫查 + 逐处亲验 | ✅ doc 追平 code(故障模式已修);版本守卫三处收口;真机回归这俩故障模式下次连发复验 |
 | 2026-06-20 | **澄清「真静默 vs 假静默」+ 纠正"持续屏外"的误读**：① 个人微信**从未有过"真·后台无窗口发送"(真静默)**——只有模式一(前台注入,已废弃)→模式二(离屏 UIA,当前)两种;真·后台直发只在**官方 API 通道(企微/iLink)**才有,不在这套个人微信 RPA 里。② **代码实际行为 = 每次操作临时挪屏外、操作完还原回原状态**:`reply_in_chat`(~行931/966)与 `scan_unread`(~行398/427)成对调 `_ensure_tray_visible`(记原状态+挪屏外,带 DWM cloak) → 操作 → `finally: _restore_window_state`(还原:visible→`_saved_visible_pos` 原屏幕坐标 / minimized→原最小化+修回 rcNormalPosition / tray→放回托盘)。**所以是"操作时挪屏外(尽量不闪)、操作完放回用户原来的位置、用户随时可点开看"**,不是把窗口锁死屏外。③ **「真静默铁律 持续屏外」是追求"零闪"的可选部署建议**(守护连续跑+窗口一直留屏外,连"挪进挪出"那一帧都省),**不是代码强制态**——别读成"代码一直把窗口藏屏外让用户看不到"。 | 用户追问"代码到底有没有写过真静默/是不是一直假静默",逐调用点核对发现先前口述自相矛盾 | ✅ 以代码调用点为准:per-操作挪+还原(尊重用户窗口原状态)。真静默只有官方 API 通道有;"持续屏外"=可选零闪建议非代码现状;"假静默(闪一下回原位+随时可看)"是个人微信 UIA 路天花板,够用 |
 | 2026-06-20 ⭐xian-rog真机 (PR #806) | **开机自检接入只读静默检 `listen_chat --verify-silent --no-send`**:只读模式跳过"选会话+发消息"(`sent:false,target:null`),只移屏外+采样 2s 验"窗口持续屏外",**不发任何消息**。真机双向 proven-to-fire:推导 OFFSCREEN_X=-1400 采样374/碰0 → SILENT;machine.config 强制 OFFSCREEN_X=100 屏内 → 采样378/碰378 → NOT SILENT 报红。结果经 line04 preflight 透出 `module_status.reason`(微信版本号+静默状态)→ 车队看板。 | 哨兵 P0:把"静默接缝"接入开机自检上报(之前完全没接) | ✅ 只读不发守住"只读检不实发";⚠️ **已知待办:`--verify-silent` 自检跑完不调 `_restore_window_state`,会把窗口留屏外**(诊断工具行为≠回复路径)——后续给自检补"量完还原原位",免得在客户机做开机自检把人家微信窗口弄屏外 |
 | 2026-06-19 ⭐xian-rog真机 | **新增静默自检（接缝断言）**：几何推导 `OFFSCREEN_X = GetSystemMetrics(SM_XVIRTUALSCREEN=76) - 窗宽 - 200`（非写死）+ 发送全程每 5ms 采样 `GetWindowRect` 判与虚拟屏矩形是否相交，断言 `intrude==0` → `SILENT` | 「静默"不能靠肉眼」，要客观断言；写死值不可靠 | ✅ ROG 实测推导 `-1400`、386 次采样、`intrude=0` → SILENT；换机/改动跑出 SILENT 才算 done（代码侧 `listen_chat --verify-silent`，另一 PR）|
