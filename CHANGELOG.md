@@ -1,3 +1,7 @@
+## [2026-06-24] codex-login — created
+**症状**: 西安 Mac 上 codex team3(subodou)账号登不上、跑任务报认证失败;排查耗时极长,反复在"网络/出口/中转/账号"之间打转。
+**根因**: ①team3 access_token 过期 + 老 refresh_token 已被轮换作废(refresh_token_reused),只能重登;②国内机器连 auth.openai.com(登录/刷新端点)被地域封 403,但 API 端点其实是通的——缺这条认知导致误判为"网络全坏";③缺一份"怎么修登录"的 runbook。
+**修改**: 新建 codex-login skill,固化:四条心智模型(地域只封登录端点/refresh_token 一次性轮换/干净出口判定)、三种失败分诊、codex login + localhost:1455 回调投递重登法、防复发(单机持有+只读同步)、报错速查表。
 ## [2026-06-19] dashboard-deploy — updated（触发率冲到 100%：补"改了内容要它生效=部署 vs 新建/修bug=开发"区分）
 **症状**: 去 DA 换真实词后触发 eval 已 90%，但还差 1 句——"Cecelia 的 dashboard 更新一下，设备页加了新字段"没触发（介于开发和部署两可），用户要 100%。
 **根因**: 描述没明确区分"已改好的内容要部署生效"(=触发) 和"还在新建组件/修bug"(=开发不触发)，模型对"改了X更新一下"这类摇摆。
