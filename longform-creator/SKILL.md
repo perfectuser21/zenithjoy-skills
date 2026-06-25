@@ -1,3 +1,8 @@
+---
+name: longform-creator
+description: longform-creator — 公众号长文创作器。创作公众号长文内容（文字 + 配图），保存到 NAS，不负责发布。触发词：/longform-creator、做公众号文章、创作长文、写公众号、做图文内容、创作文章。
+---
+
 # longform-creator — 公众号长文创作器
 
 ## 触发词

@@ -1,0 +1,78 @@
+name: lint-skills
+
+# zenithjoy-skills 仓库的 lint 闸门。
+# 这是文档/Skill 集合仓库（无后端、无服务），只做机器能客观判断的事：
+#   - 每个 skill 的 SKILL.md frontmatter 校验（name/id、description、version 格式）
+#   - 根目录 CHANGELOG.md 存在
+#   - 跨 skill 触发词重复冲突检测
+# 同时跑 fixture 测试，证明 lint 真能拦坏 skill（self-test）。
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: lint-skills-${{ github.ref }}
+  cancel-in-progress: true
+
+# auto-merge 需要 contents:write（合并 + 删分支）与 pull-requests:write
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  lint-skills:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Self-test — fixture 证明闸门能拦坏 skill
+        run: python3 .github/workflows/scripts/test/test_lint_skills.py
+
+      - name: Lint 全部 skill
+        run: python3 .github/workflows/scripts/lint-skills.py
+
+  # ─── 选择性 auto-merge：cp-* 分支 PR 且 lint 闸门绿 → 自动 squash 合并 ───
+  # 自指安全：auto-merge needs lint-skills，坏 gate 自己也过不了，不会乱合。
+  auto-merge:
+    needs: [lint-skills]
+    if: needs.lint-skills.result == 'success' && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Auto-merge cp-* PR（含重试）
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # 只自动合并 cp-* 分支 PR，其余跳过
+          HEAD_BRANCH="${{ github.head_ref }}"
+          if ! echo "$HEAD_BRANCH" | grep -qE '^cp-'; then
+            echo "ℹ️  非 cp-* 分支（$HEAD_BRANCH），跳过 auto-merge"
+            exit 0
+          fi
+
+          MERGED=false
+          for attempt in 1 2; do
+            echo "Auto-merge 尝试 $attempt / 2"
+            if gh pr merge "$PR_NUMBER" --squash --delete-branch --repo "$GITHUB_REPOSITORY"; then
+              MERGED=true
+              echo "✅ Auto-merge 成功（尝试 $attempt）"
+              break
+            fi
+            echo "⚠️  尝试 $attempt 失败，重试..."
+            [ "$attempt" -lt 2 ] && sleep 10
+          done
+
+          if [ "$MERGED" != "true" ]; then
+            echo "❌ Auto-merge 失败（已重试 2 次）"
+            exit 1
+          fi
