@@ -1,0 +1,6 @@
+# 本地 /dev 会话标记，不入库
+.dev-mode.*
+
+# Python 运行产物
+__pycache__/
+*.pyc
