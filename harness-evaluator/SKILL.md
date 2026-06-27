@@ -6,10 +6,11 @@ description: |
   evaluator 在 CI 绿之后、PR merge 之前真启服务 + 跑 contract 的 manual:bash 命令验真行为。
   PASS → 允许 merge；FAIL → 不 merge，带反馈打回 Generator 在 PR 分支 fix loop（main 不变动）。
   单模式（harness v2 始终 IS_FINAL_E2E=true）：读 contract-draft.md 的 ## E2E 验收 脚本，按 target_environment 派发跑 Golden Path 端到端真实行为。
-version: 1.17.0
+version: 1.18.0
 created: 2026-05-06
 updated: 2026-06-11
 changelog:
+  - 1.18.0: Slice3 固化 — bash/mac_web/local_api 分支补 cp+git add e2e-verify.sh 进 sprint 目录（镜像 windows 分支），让 bash golden-path E2E 脚本随 PR 永久入库、merge 后进回归套件重跑（堵"脚本只活 /tmp 跑一次蒸发"的地基洞主洞）
   - 1.17.0: 新增 Step B-1.9 Machine Probe — windows_cloud/wechat 环境执行前检测 E2E 脚本硬编码绝对路径（/Users/ /home/ C:\Users\），发现即 FAIL；成功后输出标准化环境变量（CHROME_PATH/WECHAT_DATA/NODE_VERSION）供 E2E 脚本 source 替代硬编码路径
   - 1.16.0: 删除 Step B-1.7 弱 oracle/作弊扫描（机械逻辑下沉 Contract Gate 代码层，践行"机械判定归代码、skill 留语义判断"原则）
   - 1.15.0: 链路审计修复 7 项 — (a) 清理模式 A/WS 拆分残留（description/常见错误/变量表统一为单模式 IS_FINAL_E2E=true 跑 contract-draft.md ## E2E 验收，全文清掉 ws_id/contract-dod-ws）；(b) 修 Step B-2 双重执行 bug（删无条件首跑，windows 环境不再 bash 不存在的 .sh，超时 124 判定并入 case 后统一）；(c) 新增 Step B-1.6 环境预检 + localhost 重写（容器内 sed 重写 + 二进制 command -v 缺失即 env_missing FAIL，禁止降级）；(d) 新增 Step B-1.7 弱 oracle/作弊扫描；(e) 新增 Step B-1.8 Golden Path 覆盖核对；(f) 新增「领域验证死规则」（视频 ffprobe / 发布真实出现 / DB 时间窗 / UI 可见断言）；(g) 修注入变量表 WECHAT_RPA_WORKFLOW/WORKSPACE_PATH/mac_web 注解
@@ -245,6 +246,12 @@ BREOF
     exit 0
   fi
   chmod +x /tmp/e2e-verify.sh
+  # Slice3 固化：把 bash golden-path E2E 脚本 cp 进 sprint 目录随 PR 一起 merge（镜像上方 windows 分支），
+  # 否则脚本只活在 /tmp 跑一次就蒸发、merge 后无任何东西守护端到端行为（地基洞主洞）。
+  cp /tmp/e2e-verify.sh "${SPRINT_DIR}/e2e-verify.sh"
+  git add "${SPRINT_DIR}/e2e-verify.sh" 2>/dev/null || true
+  git commit -m "chore(harness): 固化 e2e-verify.sh 进 sprint（回归套件，merge 后永久重跑）" --no-verify 2>/dev/null || true
+  git push origin HEAD 2>/dev/null || true
 fi
 ```
 
