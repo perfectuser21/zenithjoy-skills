@@ -18,6 +18,14 @@ if [ -z "$PR_NUMBER" ]; then
   exit 0
 fi
 
+# Harness 容器（generator/evaluator/planner）不启用 auto-merge
+# Brain 的 evaluator pre-merge gate 负责验证后才 merge（HARNESS_NODE 由 harness-task.graph.js 注入）
+if [[ -n "${HARNESS_NODE:-}" ]]; then
+  echo "[post-pr-create] HARNESS_NODE=${HARNESS_NODE}: 跳过 auto-merge，evaluator PASS 后 Brain 执行 merge" >&2
+  echo "PR #${PR_NUMBER} (${REPO}) 已创建，等待 Brain harness 处理。" >&2
+  exit 0
+fi
+
 # 立刻 enable auto-merge
 gh pr merge "$PR_NUMBER" --repo "$REPO" --auto --squash 2>/dev/null || true
 
