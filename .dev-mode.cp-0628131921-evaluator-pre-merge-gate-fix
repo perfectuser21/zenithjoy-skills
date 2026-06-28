@@ -1,0 +1,7 @@
+branch: cp-0628131921-evaluator-pre-merge-gate-fix
+task: evaluator-pre-merge-gate-fix
+harness_mode: false
+step_1_research: done
+step_2_plan: done
+step_3_code: in_progress
+step_4_ship: pending
