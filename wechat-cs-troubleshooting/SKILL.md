@@ -14,7 +14,7 @@ description: |
 # Line04 微信客服 — 排障 + 当前状态 catalog
 
 > ⚠️ 这是**活台账**，不是一次性文档。每次排查微信客服问题，**先读这里**（别重复诊断已知项），
-> 排完**回来更新**（解决的挪上去、新坑加进来）。最后更新：2026-06-29。
+> 排完**回来更新**（解决的挪上去、新坑加进来）。最后更新：2026-06-29（晚·CRM扫好友破坏回复真相）。
 
 ## 0. 系统一句话 + 关键事实
 - **rog（xian-rog）= Lead 自检机**，agent 的 `.env` **手动改成连 staging**（`wss://staging-autopilot.zenjoymedia.media`）。
@@ -31,6 +31,13 @@ description: |
 - **修法**：listener 检测"窗口找到但整树塌缩（descendants≤2）持续 90s" → 重启微信（标志已置位态下 mmui 重建完整树）。冷却 600s + 单进程上限 5 次。
 - **版本/PR**：PR #950，line04 **1.0.71**。实地验证：重启后 descendants 1→71、ListItem 0→6；rog OTA 到 1.0.72 后 `sessions=5` 稳定可读、`unread>=1` 出现 615 次。
 - 详见 memory `line04_wechat_uia_tree_collapse_rootcause_0629`。
+- ⚠️ **#950 的重启是双刃剑（见 §1.5 + §2.A）**：心跳块的塌缩判定**裸读隐藏态**会误报塌缩→误重启正在工作的微信。PR #965（1.0.76）加了「可读守卫」缓解，但**不够**——真正的反复重启来自 CRM 扫好友破坏 UIA（§2.A）。
+
+### 1.5 心跳 `sessions_seen`/`tree_size` 是【隐藏态裸读】，恒偏 0/塌缩 — 别当真相
+- **现象**：心跳 `GET /api/wechat/listener-heartbeat` 的 `sessions=0` **即便系统正在连续 DELIVERED 也恒为 0**。
+- **根因**：主循环心跳块 `len(mw.descendants(control_type="ListItem"))` / `len(mw.descendants())` **没先 `_ensure_tray_visible`**——微信窗口在托盘/cloak/离屏态时裸读，a11y 列表不暴露→恒读 0/≤2。而 scan_unread 读会话**有** ensure_visible，所以能读到、能回复。**两个读不在一个状态，心跳那个不可信**。
+- **判读得到会话用 `zj-listener.log` 的 `reply_in_chat: ...DELIVERED`，不要用心跳 sessions_seen**。
+- **修法**：PR #965（1.0.76）`_should_restart_for_collapsed_tree` 加可读守卫——scan_unread 在可见态读到健康树（`_LAST_VISIBLE_TREE_SIZE` 非塌缩）则更新 `last_readable_scan_at`，90s 内读到过就**绝不重启**。grep `last_readable_scan_at`。
 
 ### 1.2 送达验证假阴性（消息真发了却误报 send_failed）
 - **根因**：`_uia_send` 成功后 `_read_session_preview` **只读一次**会话预览；微信会话预览**异步更新** + 刚切完会话 UIA 读偶发空 → `_delivery_confirmed` 一次没命中就判未送达。
@@ -45,10 +52,22 @@ description: |
 
 ## 2. ❌ 未解决（按"卡人程度"排序，含根因 + 计划）
 
-### A. 🔴 离屏 `_open_chat` 切不到会话 → 回不了（当前回复链断在这）
-- **现象**：日志大量 `_open_chat: 全部策略都无法切到 'X'（离屏）`，会话项坐标 ~32000（屏幕外）；同时新消息检测不到（`unread=0`）。结果"看运气"——会话项正好在屏内才回得了。
-- **根因**：微信虚拟列表把没渲染/滚动出视野的会话项 rectangle 返回离屏占位坐标（~32000）→ PostMessage 点击打空 → 切不过去；scan_unread 也只读到屏内那几条。
-- **计划**：补回跑通版（git 74654efd §5）的"**离屏坐标 >20000 → 重扫 ListItem 找 sender 新 item 引用 + 把窗口拉回可见前台**"修法（1.0.72 没带全）。**真机反复调，看到连续 DELIVERED 才算好，不提前报喜。**
+### A. 🔴🔴「回一次就不理」真因 = CRM 扫好友破坏微信 UIA（rog 0629 晚铁证；正在修，见两份 hand-off）
+- **现象**：用户体感"回一次就不理"；用户还观察到 listener「反复跑进学习指导群」。
+- **真相（日志时间线坐实，不是猜）**：
+  ```
+  19:01:53 scan_unread 真送达 DELIVERED ✅（回复路径本身是好的、在连续送达）
+  19:01:55 scan_recent_contacts(CRM扫好友) → _scroll_session_list_wheel 连刷几十次 + 逐个开会话/群(坐标31989,32000)
+  19:01:56 UIA 屏幕阅读器标志已失效   ← CRM 扫描的滚动/开会话把 SPI 标志弄丢
+  19:01:59 UIA树塌缩→已重启微信        ← 标志丢→树【真】塌→#950 重启→多分钟死区→用户那刻发消息没回
+  ```
+- **根因**：CRM 扫好友（`scan_recent_contacts`+`_scroll_session_list_wheel`+逐个 `_open_chat`，#901/#903 为「扫全好友」加的）和回复路径**共用同一个微信窗口、不能并行**。它一启动/一登录就**开机必跑**（`not friend_scan_done_once`）+ 周期跑，滚遍列表+开群 → 丢 SPI 标志 → 树真塌 → 触发 #950 重启 → 死区。**#811（git 74654efd「B 方案·窗口可见+不抢焦点」）没有 CRM 扫好友，所以超级稳定**——后续 #901/#903/#950 把扫全+自愈重启压到核心回复路径上，把它搞退化。
+- **离屏坐标 ~32000 / `_scroll_session_list_wheel: SetCursorPos 失败（无输入权）`**：是 CRM 扫好友在 rog autologon session **无输入桌面权** + Qt 虚拟列表只渲染可见项导致的，**只发生在 CRM 扫描路径**，不是回复路径本身的问题。
+- **修法（两刀，见 repo `docs/handoff-line04-reply-crm-isolate-{1,2}-*.md`）**：
+  - **第一刀 PR #965（1.0.76，已合并）**：可读守卫（§1.5），治"心跳假塌缩误重启"。**只治了一半**。
+  - **做法一·快（hand-off 1）**：CRM 扫好友加开关默认 OFF，回复机只在中台「立即扫好友」时跑；回复循环回 #811 纯粹态（只读→回，绝不滚/开群）。
+  - **做法二·彻底（hand-off 2）**：把「客服回复」「好友CRM采集」拆成**两个独立 Ability**，共用微信窗口靠**一把锁时分复用、回复优先**，采集只由中台 task 触发、跑完恢复可读态。
+- **真机反复调，看到连续 DELIVERED + 日志无 CRM 滚动刷屏 + 无 `launch_weixin=True` 重启 才算好，不提前报喜。**
 
 ### B. 🔴 新装 agent 不杀旧 listener → 假"未安装" + 抢窗口（所有客户都会撞）
 - **现象**：苏的客服模块显示"未安装"，但他自己 agent 日志写着 `line04 v1.0.70 已激活 + 健康上报 ok=true`。
