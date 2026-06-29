@@ -1,3 +1,8 @@
+## [2026-06-29] wechat-cs-troubleshooting — created
+**症状**: 微信客服一连串问题（不回复 / 读不到会话 / 客服模块显示未安装 / 客户全黑名单改不了 / staging 看不到机器 / 新装 agent 旧进程没杀）反复排查，多个不同根因的 bug 被混在一起说，已修的和没修的分不清，用户每次都要重新理一遍"到底解决了没"。
+**根因**: 缺一份把 line04 微信客服系统【已解决 vs 未解决】分清的活台账——读会话（UIA 树塌缩，已修 1.0.72）、回复（离屏 _open_chat，未修）、未安装假象（preflight 并发/旧 listener 没杀，未修）、全黑名单（接管默认 bug，未修）、环境错位（安装包写死生产 vs staging 库）各是独立根因，没台账就反复重诊、反复混淆。
+**修改**: 新建 wechat-cs-troubleshooting skill（知识 catalog，非客观输出，eval N/A）。固化：系统三层链路 + 关键环境事实、已解决项（根因+修法+PR/版本）、未解决项（按卡人程度排序，含根因+计划）、session-1 诊断复用法（schtasks /it、GBK 日志 base64 读法）、排障起手式（怀疑顺序）。声明为活台账，每次排查后回来更新。
+
 ## [2026-06-24] codex-login — created
 **症状**: 西安 Mac 上 codex team3(subodou)账号登不上、跑任务报认证失败;排查耗时极长,反复在"网络/出口/中转/账号"之间打转。
 **根因**: ①team3 access_token 过期 + 老 refresh_token 已被轮换作废(refresh_token_reused),只能重登;②国内机器连 auth.openai.com(登录/刷新端点)被地域封 403,但 API 端点其实是通的——缺这条认知导致误判为"网络全坏";③缺一份"怎么修登录"的 runbook。
