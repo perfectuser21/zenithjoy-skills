@@ -5,10 +5,11 @@ description: |
   Harness Planner — Brain executor 在 harness_initiative 任务中自动调用的 Layer 1 节点。
   人类启动 harness/sprint 通过 /dev 路径C（POST localhost:5221/api/brain/tasks，task_type=harness_initiative）。
   Brain tick 自动 pick up 后调本 skill。直接调本 skill = 绕过 Brain 调度层，违反 zero-human-gate 原则。
-version: 8.11.0
+version: 8.12.0
 created: 2026-04-08
-updated: 2026-06-11
+updated: 2026-07-02
 changelog:
+  - 8.12.0: 新增 Step 0.4 加载整条 line 的历史约束（A1，harness 验证模型重构）— step/journey_feature/area 三源 invariant + 按 journey 聚合的累积 FR，注入 sprint-prd.md「## Invariant 约束」「## 累积 FR」两段（格式即 E1 的解析契约）；修 Step 0.3 坏查询 — 旧 GET /decisions?category=nfr 读的是 decision_log 审计表且忽略 category 参数，改用 golden-path-decisions + abilities/:id/decisions 精确端点
   - 8.11.0: 新增 Step 0.3 NFR 双源读取 — 从 decisions?category=nfr 取活跃 NFR 决策 + 从 PrepPRD 取用户显式 NFR，合并注入 sprint-prd.md ## NFR 约束章节；双源缺一不可
   - 8.10.0: 链路审计修复 4 项 — target_environment 推断改为明确 if-elif 优先级链；journey_id 大小写统一；sprint-prd.md 模板补 ## E2E 验收 占位区块；常见错误 #2 加正反例
   - 8.9.0: 明确"只做Scope锚定"原则；sprint-prd.md模板加journey_id+step_id强制字段
@@ -181,10 +182,29 @@ curl "localhost:5221/api/brain/harness/runs?limit=10"
 
 **目的**：将 decisions 表中已沉淀的 NFR 决策注入 sprint-prd.md，避免每次重新问用户。PrepPRD 显式写了的参数优先；decisions 只补 PrepPRD 没写到的。
 
+> ⚠️ **禁止使用 `GET /api/brain/decisions?category=nfr`**：该路由读的是 `decision_log`（LLM 决策审计日志，9 万+ 行），不是 `decisions` 表，且完全忽略 `category` 参数——拉回来的是审计噪音，不是 NFR。必须用下面按 task / ability 精确 join 的端点。
+
 ```bash
-# 读取当前 ability 的 NFR 决策（副源）
-curl -sf "localhost:5221/api/brain/decisions?category=nfr&limit=50" \
+# 锚点：task_id 来自 prompt「本次任务参数」注入；先拉任务详情提取 ability_id / journey_id
+# （Step 0.4 也复用这三个变量）
+TASK_ID=<本次任务参数里的 task_id>
+TASK_JSON=$(curl -sf "localhost:5221/api/brain/tasks/$TASK_ID" || echo '{}')
+ABILITY_ID=$(echo "$TASK_JSON" | jq -r '.ability_id // .payload.ability_id // ""')
+JOURNEY_ID=$(echo "$TASK_JSON" | jq -r '.payload.journey_id // ""')
+
+# ① step 级 NFR：本 ability golden_path 各步骤上挂的 NFR（副源）
+curl -sf "localhost:5221/api/brain/tasks/$TASK_ID/golden-path-decisions?category=nfr" \
   > /tmp/nfr_decisions.json 2>/dev/null || echo '[]' > /tmp/nfr_decisions.json
+
+# ② journey_feature 级 NFR：ability 本体上挂的（该端点不支持 category 参数，用 jq 过滤）
+if [ -n "$ABILITY_ID" ]; then
+  curl -sf "localhost:5221/api/brain/abilities/$ABILITY_ID/decisions" > /tmp/nfr_feature_raw.json 2>/dev/null \
+    || echo '[]' > /tmp/nfr_feature_raw.json
+  jq '[.[] | select(.category=="nfr")]' /tmp/nfr_feature_raw.json > /tmp/nfr_feature.json 2>/dev/null \
+    || echo '[]' > /tmp/nfr_feature.json
+else
+  echo '[]' > /tmp/nfr_feature.json
+fi
 
 # 读取本 sprint 的 thin_prd（主源）
 THIN_PRD=$(echo "$TASK_PAYLOAD" | jq -r '.thin_prd // ""')
@@ -211,9 +231,75 @@ THIN_PRD=$(echo "$TASK_PAYLOAD" | jq -r '.thin_prd // ""')
 ```
 
 **自查 checklist**：
-- [ ] `/tmp/nfr_decisions.json` 已读取（即便为空数组也继续）
+- [ ] `/tmp/nfr_decisions.json` + `/tmp/nfr_feature.json` 已读取（即便为空数组也继续）
 - [ ] PrepPRD 已有的 NFR 参数不被 decisions 覆盖
 - [ ] sprint-prd.md 含 `## NFR 约束` 段
+
+---
+
+### Step 0.4: 加载整条 line 的 invariant + 累积 FR（历史约束进合同）
+
+**目的**：planner 每个 sprint 不能只看自己的新合同——必须带着**整条 line 的历史约束**进 GAN 对抗，否则已验收的行为会被新 sprint 回退/破坏（"一会儿好一会儿坏"的根源就是验收一次性、没沉淀）。invariant 是铁律（只增不减，不可被 PrepPRD 覆盖）；累积 FR 是本 line 已验收的行为清单（本 sprint 不得回退/重复实现）。
+
+复用 Step 0.3 已提取的 `TASK_ID` / `ABILITY_ID` / `JOURNEY_ID`：
+
+```bash
+# ① step 级 invariant：本 ability golden_path 各步骤上挂的铁律
+curl -sf "localhost:5221/api/brain/tasks/$TASK_ID/golden-path-decisions?category=invariant" \
+  > /tmp/inv_step.json 2>/dev/null || echo '[]' > /tmp/inv_step.json
+
+# ② journey_feature 级 invariant（如 Line04 五条客服铁律所在层）
+if [ -n "$ABILITY_ID" ]; then
+  curl -sf "localhost:5221/api/brain/invariants?target_type=journey_feature&target_id=$ABILITY_ID" \
+    > /tmp/inv_feature.json 2>/dev/null || echo '[]' > /tmp/inv_feature.json
+else
+  echo '[]' > /tmp/inv_feature.json
+fi
+
+# ③ area 级 invariant（如租户隔离，target_type=NULL 挂 area 上）
+curl -sf "localhost:5221/api/brain/invariants?level=area" \
+  > /tmp/inv_area.json 2>/dev/null || echo '[]' > /tmp/inv_area.json
+
+# ④ 累积 FR：本 line 已验收 ability 的 golden_path（端点已按 owner_task_id 分组、order_no 有序）
+if [ -n "$JOURNEY_ID" ]; then
+  curl -sf "localhost:5221/api/brain/journeys/$JOURNEY_ID/golden-paths" > /tmp/line_fr_raw.json 2>/dev/null \
+    || echo '[]' > /tmp/line_fr_raw.json
+  jq '[.[] | select(.ability_status=="done" or .ability_status=="working")]' /tmp/line_fr_raw.json \
+    > /tmp/line_fr.json 2>/dev/null || echo '[]' > /tmp/line_fr.json
+else
+  echo '[]' > /tmp/line_fr.json   # 无 journey_id（非路径 C 点火）→ 优雅降级为仅 step/feature/area 级，不报错
+fi
+```
+
+**端点选择的 why（禁止改用别的写法）**：
+- `GET /invariants` 读的是 `decisions` 表 `category='invariant' AND status='active'`。`GET /decisions?category=invariant` 是坏门（读错 decision_log 表，见 Step 0.3 警告），拉回来的审计行会污染合同。
+- `GET /journeys/:id/golden-paths` 内部走 `golden_path.owner_task_id → tasks.ability_id → journey_features.journey_id` 三表桥，返回 `[{ability_name, ability_status, steps:[{order_no, note}]}]`，已按 ability（owner_task_id）分组。
+
+**sprint-prd.md 注入**：在 `## NFR 约束` 之后、`## E2E 验收` 之前插入两段。**无数据时占位写"（本 line 暂无历史）"，不留空段、不报错**（对齐 Step 0.3"空数组也继续"纪律）：
+
+```markdown
+## Invariant 约束（铁律，proposer/evaluator 不得违反）
+
+<!-- 来源: decisions category=invariant，step + journey_feature + area 三源合并去重 -->
+- [不进群] 只私聊；群聊一律跳过（来源: journey_feature）
+- [防假成功] 发送后必须确认真实发出，气泡未刷新不得判成功（来源: journey_feature）
+- [租户隔离] 记忆按租户×联系人隔离（来源: area）
+
+## 累积 FR（本 line 已验收行为，本 sprint 不得回退/重复）
+
+<!-- 来源: 本 line 已完成 ability 的 golden_path，按 ability 分组、order_no 排序 -->
+- <ability A>: Step1 ... → Step2 ... → Step3 ...
+- <ability B>: Step1 ... → Step2 ...
+```
+
+**格式契约（E1 依赖，不可变）**：Invariant 段每条一行，格式 `- [标签] 铁律文字（来源: <层级>）`。标签取 decision `topic` 里 `]` 之后的短语（如 `[Line04]不进群` → `不进群`），没有则自拟 2-6 字概括。下游 GAN（E1）按此格式把每条 invariant 翻成 proposer 对抗断言 / evaluator 红线检查，改格式会打断解析。
+
+**膨胀控制**：invariant 全量注入（铁律不裁剪）；累积 FR 每个 ability 只列一行摘要（名称 + 关键步骤 note 串联，单行 ≤120 字），超过 20 个 ability 时保留最近 20 个并注明"（另有 N 个 ability 略）"。这两段是系统注入的历史约束，**不计入 Thin Slice 100 行上限**。
+
+**自查 checklist**：
+- [ ] `/tmp/inv_step.json` / `/tmp/inv_feature.json` / `/tmp/inv_area.json` / `/tmp/line_fr.json` 已读取（空数组也继续）
+- [ ] 三源 invariant 已按 decision `id` 去重合并
+- [ ] sprint-prd.md 含 `## Invariant 约束` 段与 `## 累积 FR` 段（无数据用占位文字，非空段）
 
 ---
 
