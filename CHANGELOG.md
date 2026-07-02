@@ -1,3 +1,8 @@
+## [2026-07-02] harness-planner — updated（v8.12.0：A1 加载整条 line 历史约束进合同 + 修 Step 0.3 NFR 坏查询）
+**症状**: harness 一会儿好一会儿坏——每个 sprint 的 planner 只看自己新合同，Line04 五条客服铁律（不进群/不回自己/防假成功/后台静默/租户隔离）和本 line 已验收行为对 proposer/generator/evaluator 完全不可见，新 sprint 会回退/破坏已验收的行为；且 Step 0.3 的 NFR 查询 `GET /decisions?category=nfr` 是假通的门。
+**根因**: ①planner 全流程没有任何一步读 invariant / 累积 FR（验收一次性，没沉淀复用）；②`GET /api/brain/decisions` 路由实际读的是 `decision_log`（LLM 审计日志 9 万+ 行）而非 `decisions` 表，且忽略 category 参数——拉回的是审计噪音。
+**修改**: 新增 Step 0.4「加载整条 line 的 invariant + 累积 FR」——step（golden-path-decisions）/ journey_feature（invariants?target_type=journey_feature）/ area（invariants?level=area）三源 invariant 合并去重 + `GET /journeys/:id/golden-paths` 聚合累积 FR，注入 sprint-prd.md「## Invariant 约束」「## 累积 FR」两段（每行 `- [标签] 铁律文字（来源: 层级）`，此格式即 E1 的解析契约）；无数据写占位"（本 line 暂无历史）"优雅降级；两段不计入 Thin Slice 100 行上限。Step 0.3 坏查询改为 golden-path-decisions?category=nfr + abilities/:id/decisions（jq 过滤）双源，并加禁止使用坏端点的警告。Eval 11/11 (100%)（旧版基线 6/11），核心行为断言：Line04 五条铁律真实从 DB 走到合同。
+
 ## [2026-06-29] wechat-cs-troubleshooting — created
 **症状**: 微信客服一连串问题（不回复 / 读不到会话 / 客服模块显示未安装 / 客户全黑名单改不了 / staging 看不到机器 / 新装 agent 旧进程没杀）反复排查，多个不同根因的 bug 被混在一起说，已修的和没修的分不清，用户每次都要重新理一遍"到底解决了没"。
 **根因**: 缺一份把 line04 微信客服系统【已解决 vs 未解决】分清的活台账——读会话（UIA 树塌缩，已修 1.0.72）、回复（离屏 _open_chat，未修）、未安装假象（preflight 并发/旧 listener 没杀，未修）、全黑名单（接管默认 bug，未修）、环境错位（安装包写死生产 vs staging 库）各是独立根因，没台账就反复重诊、反复混淆。
