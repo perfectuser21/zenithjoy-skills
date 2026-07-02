@@ -1,3 +1,8 @@
+## [2026-07-02] harness-planner — updated（v8.12.1：补回 review_required 字段，修 SSOT↔镜像历史漂移）
+**症状**: cecelia real-env-smoke 的 b22-review-required-smoke 失败：harness-planner SKILL.md 缺 review_required 字段——发生在镜像同步 v8.12.0（cecelia #3510）之后。
+**根因**: review_required（B22：planner 判断 evaluator PASS 后是否需人工确认）当年直接改在 cecelia 镜像里、从未进 SSOT——SSOT 与镜像早已分叉；用 SSOT 覆盖镜像时把该字段覆盖丢了，而 Brain graph 仍消费 planner verdict JSON 的 review_required。
+**修改**: SSOT Step 3 最后一条消息补回 review_required 字段 + 判断规则（true=新功能/UI/行为变更需人工确认；false=bugfix/重构/配置/文档自动合；默认 false）。教训：镜像同步前先 diff 双向差异，镜像可能藏有 SSOT 没有的功能字段。
+
 ## [2026-07-02] harness-planner — updated（v8.12.0：A1 加载整条 line 历史约束进合同 + 修 Step 0.3 NFR 坏查询）
 **症状**: harness 一会儿好一会儿坏——每个 sprint 的 planner 只看自己新合同，Line04 五条客服铁律（不进群/不回自己/防假成功/后台静默/租户隔离）和本 line 已验收行为对 proposer/generator/evaluator 完全不可见，新 sprint 会回退/破坏已验收的行为；且 Step 0.3 的 NFR 查询 `GET /decisions?category=nfr` 是假通的门。
 **根因**: ①planner 全流程没有任何一步读 invariant / 累积 FR（验收一次性，没沉淀复用）；②`GET /api/brain/decisions` 路由实际读的是 `decision_log`（LLM 审计日志 9 万+ 行）而非 `decisions` 表，且忽略 category 参数——拉回的是审计噪音。
