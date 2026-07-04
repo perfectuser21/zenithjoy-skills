@@ -118,11 +118,12 @@ prompt: 调用 Skill(harness-planner)。上下文：
 
 ```bash
 DOD="<SPRINT_DIR>/contract-dod.md"
-# ① [BEHAVIOR] 条目 ≥4（proposer Step 2b 模板下限）
+DRAFT="<SPRINT_DIR>/contract-draft.md"
+# ① [BEHAVIOR] 条目 ≥4（proposer Step 2b 模板下限，住 dod）
 [ "$(grep -c '\[BEHAVIOR\]' "$DOD")" -ge 4 ] || { echo "FAIL: [BEHAVIOR] 条目不足 4"; }
-# ② 含 ## E2E 验收 段
-grep -q '## E2E 验收' "$DOD" || { echo "FAIL: 缺 ## E2E 验收 段"; }
-# ③ 含 manual:bash 可执行验收命令
+# ② 含 ## E2E 验收 段（proposer 实际结构：E2E 段住 contract-draft.md，非 dod）
+grep -q '## E2E 验收' "$DRAFT" || { echo "FAIL: contract-draft.md 缺 ## E2E 验收 段"; }
+# ③ 含 manual:bash 可执行验收命令（住 dod）
 grep -q 'manual:bash' "$DOD" || { echo "FAIL: 缺 manual:bash 验收命令"; }
 ```
 
