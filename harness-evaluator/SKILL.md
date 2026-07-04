@@ -6,10 +6,11 @@ description: |
   evaluator 在 CI 绿之后、PR merge 之前真启服务 + 跑 contract 的 manual:bash 命令验真行为。
   PASS → 允许 merge；FAIL → 不 merge，带反馈打回 Generator 在 PR 分支 fix loop（main 不变动）。
   单模式（harness v2 始终 IS_FINAL_E2E=true）：读 contract-draft.md 的 ## E2E 验收 脚本，按 target_environment 派发跑 Golden Path 端到端真实行为。
-version: 1.18.0
+version: 1.19.0
 created: 2026-05-06
 updated: 2026-06-11
 changelog:
+  - 1.19.0: 追加「Relay 出口 + CANNOT_VERIFY 第三态」（T5，additive）——无法验证的断言进 unverifiable[] 交 controller 兜底，禁止臆断 FAIL（治误判 FAIL→无限 fix loop 谱系）；verdict JSON 结构不变（v1 双轨兼容）
   - 1.18.0: Slice3 固化 — bash/mac_web/local_api 分支补 cp+git add e2e-verify.sh 进 sprint 目录（镜像 windows 分支），让 bash golden-path E2E 脚本随 PR 永久入库、merge 后进回归套件重跑（堵"脚本只活 /tmp 跑一次蒸发"的地基洞主洞）
   - 1.17.0: 新增 Step B-1.9 Machine Probe — windows_cloud/wechat 环境执行前检测 E2E 脚本硬编码绝对路径（/Users/ /home/ C:\Users\），发现即 FAIL；成功后输出标准化环境变量（CHROME_PATH/WECHAT_DATA/NODE_VERSION）供 E2E 脚本 source 替代硬编码路径
   - 1.16.0: 删除 Step B-1.7 弱 oracle/作弊扫描（机械逻辑下沉 Contract Gate 代码层，践行"机械判定归代码、skill 留语义判断"原则）
@@ -724,3 +725,26 @@ BREOF
 3. **输出带 markdown 代码块** → Brain 解析 verdict 字段时会失败
 4. **E2E 脚本提取不全** → 确认 `contract-draft.md` 的 `## E2E 验收` 区块边界正确，提取后 `/tmp/e2e-verify.sh`（或 `.ps1`）非空
 5. **跳过环境预检直接执行** → 执行前必跑 Step B-1.6（环境预检）/ B-1.8（Golden Path 覆盖）/ B-1.9（Machine Probe）：工具缺失 = `env_missing` FAIL（禁止降级），硬编码路径 = FAIL，Golden Path 有步骤未覆盖 = FAIL
+
+
+---
+
+## Relay 模式出口 + CANNOT_VERIFY 第三态（T5，harness-controller 派发时生效）
+
+**verdict JSON 结构与上面全部流程一字不变**（v1 双轨兼容）。追加两条规则：
+
+### 1. 无法验证 ≠ FAIL（第三态）
+
+某条 [BEHAVIOR] 断言若**无法在当前环境/改动内验证**（断言落在未改文件、依赖未部署的服务、需要跨 sprint 上下文），**禁止臆断 FAIL**——把它记入 verdict JSON 的 `unverifiable` 数组（新增字段，v1 消费方忽略未知字段无害）：
+
+```json
+{"verdict":"PASS","unverifiable":[{"item":"<断言原文>","reason":"<为何验不了>"}], ...}
+```
+
+整体 verdict **只由可验证项决定**。这是治"evaluator 把验不了的东西判 FAIL → generator 无限 fix loop"的结构性修法（对齐 Superpowers 6.0 的 Cannot-verify-from-diff 裁决）。
+
+### 2. RELAY_STATUS 尾行
+
+报告最末尾追加：`RELAY_STATUS: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED`
+- unverifiable 非空 → **必须 DONE_WITH_CONCERNS**（controller 握有跨阶段上下文，负责逐条兜底核对后才放行 merge）
+- 环境预检失败无法开跑 → NEEDS_CONTEXT（列缺什么）而非 FAIL

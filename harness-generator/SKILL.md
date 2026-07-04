@@ -5,10 +5,11 @@ description: |
   读取 GAN 对抗已批准的 contract-draft.md + tests/*.test.ts + contract-dod.md，按 TDD 纪律两次 commit（commit 1 = 测试 Red / commit 2 = 实现 Green）。
   融入 4 个 superpowers：test-driven-development / verification-before-completion / systematic-debugging / requesting-code-review。
   CONTRACT IS LAW：合同里有的全实现，合同外一字不加；测试文件从合同原样复制，commit 1 后不可修改（CI 强校验）。一个 Sprint = 一个 Generator = 一个 PR。
-version: 7.5.0
+version: 7.6.0
 created: 2026-04-08
 updated: 2026-06-11
 changelog:
+  - 7.6.0: 追加「Relay 模式出口协议」（T5，additive）——被 harness-controller 派发时在报告末尾输出 RELAY_STATUS 四态；原 verdict JSON 一字不变（v1 LangGraph 双轨兼容）
   - 7.5.0: 🚫 删除 Step 7.5 的 gh pr merge --auto 自合并 — generator 职责到 CI 全绿为止，merge 由 Brain mergePrNode 在 evaluator PASS 后执行；否则 evaluator pre-merge gate 被绕过（2026-06-11 PR #3342 实证：CI 绿即自动合并，evaluator 从未运行）。循环退出条件从 MERGED 改为 CI 全绿（保留 MERGED/CLOSED 容错出口）
   - 7.4.0: 链路审计修复 5 项 — (a) 回流「防照抄示例占位 PR URL」保护到 Step 8（含 verdict JSON schema 表 DONE/FIXED/FAILED 三态）；(b) Step 6.5 镜像注释改指向 evaluator 新增 Step B-1.6（名称引用，不写行号）；(c) Step 3 Red 验证从 grep 日志符号改为 `npx vitest run --reporter=json` 统计 failed/passed（确定性）；(d) Step 6.5 失败补「重试工作流」（修实现→commit→重跑，连续 3 轮仍 FAIL 标 [BEHAVIOR_FAIL] 并 push 交 evaluator）
   - 7.3.0: Step 6.5 加 localhost→host.docker.internal 替换逻辑（与 Evaluator 镜像，修复容器内 Brain API BEHAVIOR 命令必然超时 FAIL 的问题）
@@ -580,3 +581,24 @@ commit 2: feat(harness): skeleton implementation (Skeleton Green)
 | "跑测试挺慢，跳过这一步吧" | 违反 verification-before-completion，禁止"看起来应该过了"的假设 |
 
 # GREEN commit 前真验：见 Step 6.5 Contract Self-Verification（v6.1+）
+
+
+---
+
+## Relay 模式出口协议（T5，harness-controller 派发时生效）
+
+当你是 harness-controller 的 subagent（派发 prompt 声明"按 Relay 出口协议报告"）时：
+**上面所有流程与 verdict JSON 输出一字不变**（双轨期 v1 图仍消费原 JSON），只在报告最末尾追加一行：
+
+```
+RELAY_STATUS: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED
+```
+
+| 状态 | 何时用 | 必须附带 |
+|---|---|---|
+| DONE | 完成且验收证据齐（PR 存在/Red-Green/自验过） | pr_url + 两个 commit SHA |
+| DONE_WITH_CONCERNS | 完成但有疑虑（如 [BEHAVIOR_FAIL] 标记 push、文件超 500 行） | 疑虑清单 |
+| NEEDS_CONTEXT | 缺信息无法开工/继续 | 确切缺什么（controller 补料后原模型重派） |
+| BLOCKED | 干不了 | 原因分类：缺上下文 / 需更强推理 / 任务太大该拆 / 合同本身错该上报 |
+
+**铁律**：卡住绝不静默原地重试——报 BLOCKED 让 controller 改变某样东西（补料/换模型/拆任务），这是"绝不让同一 agent 无变化重试"协议的工人侧义务。
