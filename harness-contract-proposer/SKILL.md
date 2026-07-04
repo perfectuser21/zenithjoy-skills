@@ -4,10 +4,11 @@ description: |
   Harness Contract Proposer — Harness v5 GAN Layer 2a：
   读 PRD，GAN 对抗写 Golden Path 合同（每步含真实验证命令）；
   Reviewer APPROVED 后倒推拆 task-plan.json。
-version: 9.4.0
+version: 9.5.0
 created: 2026-04-08
-updated: 2026-06-29
+updated: 2026-07-05
 changelog:
+  - 9.5.0: EVA 提分三件套（GAPS #1/#9）— (a) GAP #1①：Step 2b 后新增「合同格式确定性自查」bash 脚本块（grep -c [BEHAVIOR] ≥4 / contract-draft.md 存在 ## E2E 验收 段 / contract-dod.md 无预勾 [x] / BEHAVIOR 条目带 Test: manual:），任一不过必须重写，禁止交付脱模板合同——机器卡，不靠自觉；(b) GAP #1③：Test Contract 表新增「BEHAVIOR 覆盖名必须是对应 it()/测试名的子串」规则进正文 + 正反例（07-04 四跑 4/4 踩坑）；(c) GAP #9：文末新增「Relay 模式出口协议」附录（RELAY_STATUS 四态，照抄 generator T5 格式）；.brain-result.json 路径改 ${WORKSPACE_PATH:-/workspace} 宿主 fallback（对齐 evaluator 写法）
   - 9.4.0: 变体C 补后端启动 + 禁 page.route() — 变体C 模板新增 Step 2.5 启动 apps/api server（port 3000）+ 等待就绪；Playwright spec 必须打真实后端，禁止使用 page.route() 拦截 API 请求；新增「变体C 死规则」段（5 条禁令）；修 contract-draft.md ## E2E 验收 禁止写"不依赖真后端/stub"字样
   - 9.3.0: 补「接缝断言」规则（修真环境逐个炸根因）— (a)「领域验证规则（全局强制）」表新增「真机 RPA / 生产环境集成」一行：微信/抖音真机操控、依赖生产中台 env 的链路，Final E2E 必须在【真目标】上验证（真机微信真收真回屏幕不闪 / 生产 env 真出 reply），不是 mock/CI 绿；(b) 新增「DoD 必须分两类断言（接缝 vs 逻辑）」小节：逻辑断言(环境无关)CI/单测验绿=真done；接缝断言(环境相关:真机UIA/生产env/真实调用方)必须真目标验，产出合同时列「接缝清单」(1-3条)每条写明真目标验证方式，未真验标 logic-done-pending 不得标 done；写断言前必答「这功能在哪几个点碰真实世界」；禁止写死环境假设值(屏幕外坐标/UIA阈值/假设调用方传X/假设env有Y)，必从环境推导或真机校准
   - 9.2.0: 新增「Contract Gate 合规惯用法速查表」— 四轮规则进化（#3351/#3353/#3357/#3358）认可的标准断言写法与 gate-allow 豁免语法，写断言前必读；目标是合同首轮即 gate-clean，终结每条 GAN 用 2-4 轮反馈重新发现惯用法的浪费
@@ -783,6 +784,15 @@ echo "✅ 生产环境 Golden Path 验证通过"
 | 整个 Sprint | `tests/xxx.test.ts` | {行为列表} | → N failures |
 ````
 
+**Test Contract 表「BEHAVIOR 覆盖」命名死规则（v9.5 — 07-04 四跑 4/4 踩坑）**：
+
+「BEHAVIOR 覆盖」列写的每个覆盖名，**必须是 tests/*.test.ts 里对应 `it()`（或 `test()`）测试名的字面子串**。下游按字符串匹配把 DoD 条目对回测试用例——覆盖名和 it() 名对不上，映射就断，generator 自验与 evaluator 核对全部空转。
+
+- ✅ **正例**：测试写 `it('POST /api/brain/tasks 返回 201 且带 task_id', ...)`，表里「BEHAVIOR 覆盖」写 `返回 201 且带 task_id`（it() 名的字面子串，能 grep 到）
+- ❌ **反例**：测试写 `it('POST /api/brain/tasks 返回 201 且带 task_id', ...)`，表里写 `创建任务成功`（语义相同但不是 it() 名子串，字符串匹配失败 → 映射断裂）
+
+**写法顺序建议**：先写 tests/*.test.ts 的 it() 名，再从 it() 名里**截取子串**填表——不要凭记忆重新措辞。写完自查：表里每个覆盖名跑 `grep -F '<覆盖名>' tests/*.test.ts` 必须命中。
+
 **验证命令写作规范**（Reviewer 重点检查，GAN 对抗焦点）：
 
 - 命令必须可直接执行（含 $DB/$TASK_ID 等环境变量须可替换）
@@ -1065,6 +1075,42 @@ DODEOF
 
 ---
 
+### Step 2b-check: 合同格式确定性自查（v9.5 — 机器卡，不靠自觉，产出后必跑）
+
+**背景（07-04 四跑实证）**：4 份 contract-dod.md 无一份符合上面 Step 2b 模板；2/4 连 `## E2E 验收` 段都没有；1 跑甚至预勾 `[x]`。合同一脱模板，下游 generator 自验、evaluator manual:bash 真跑、reviewer 第 1/6 维全部空转——这是全链验收失效的单点根因。所以模板合规不能靠 LLM 自觉，必须用确定性脚本卡住。
+
+**contract-draft.md 和 contract-dod.md 写完后，必须原样执行以下脚本（不许省略、不许只"心里过一遍"）**：
+
+```bash
+# ===== 合同格式确定性自查（任一 FAIL → 合同作废，按 Step 2 / Step 2b 模板重写后重跑本脚本）=====
+SELF_CHECK_FAIL=0
+
+# 1. [BEHAVIOR] 条目数 ≥ 4（Step 2b 硬阈值）
+BC=$(grep -c '\[BEHAVIOR\]' "${SPRINT_DIR}/contract-dod.md")
+[ "$BC" -ge 4 ] || { echo "SELF-CHECK FAIL: [BEHAVIOR] 只有 ${BC} 条（需 ≥4）"; SELF_CHECK_FAIL=1; }
+
+# 2. contract-draft.md 必须存在 ## E2E 验收 段（final-e2e 脚本载体，缺了 evaluator 模式B 无从跑）
+grep -q '^## E2E 验收' "${SPRINT_DIR}/contract-draft.md" || { echo "SELF-CHECK FAIL: contract-draft.md 缺 '## E2E 验收' 段"; SELF_CHECK_FAIL=1; }
+
+# 3. 新合同验收项必须全部未勾（- [ ]）——预勾 [x] = 还没验就宣布通过，属造假
+if grep -q '^- \[x\]' "${SPRINT_DIR}/contract-dod.md"; then
+  echo "SELF-CHECK FAIL: contract-dod.md 存在预勾 [x] 条目（新合同必须全部 '- [ ]' 未勾）"; SELF_CHECK_FAIL=1
+fi
+
+# 4. 每条 [BEHAVIOR] 必须带内嵌可执行命令（Test: manual:）
+MC=$(grep -c 'Test: manual:' "${SPRINT_DIR}/contract-dod.md")
+[ "$MC" -ge "$BC" ] || { echo "SELF-CHECK FAIL: [BEHAVIOR] ${BC} 条但 'Test: manual:' 只有 ${MC} 条（每条 BEHAVIOR 必须内嵌 manual: 命令）"; SELF_CHECK_FAIL=1; }
+
+[ "$SELF_CHECK_FAIL" -eq 0 ] && echo "✅ 合同格式自查通过" || { echo "❌ 合同脱模板，禁止交付——重写后重跑本脚本"; exit 1; }
+```
+
+**死规则**：
+- 本脚本任一项 FAIL → **不许 commit/push 本轮合同**，必须重写到全过为止。交付脱模板的合同 = 本 skill 最高级违规。
+- 本自查是**确定性**检查（grep 机器判定），与上面「自查 checklist」的语义自查（字段名对齐/假绿心测）互补，两者都必须做。
+- 修订轮（propose_round > 1）同样必跑——Reviewer 打回后改出来的版本一样会脱模板。
+
+---
+
 ### Step 2c: 写真实失败测试
 
 ```bash
@@ -1149,8 +1195,8 @@ git push origin "${PROPOSE_BRANCH}"
 **结果文件写入**（每轮 — 含被 REVISION 打回轮）：
 
 ```bash
-# 写结果文件（Brain 读文件，不读 stdout）
-cat > /workspace/.brain-result.json << BREOF
+# 写结果文件（Brain 读文件，不读 stdout；容器内 /workspace，宿主 fallback 用 WORKSPACE_PATH）
+cat > "${WORKSPACE_PATH:-/workspace}/.brain-result.json" << BREOF
 {"propose_branch":"${PROPOSE_BRANCH}","workstream_count":1,"task_plan_path":"${SPRINT_DIR}/task-plan.json"}
 BREOF
 echo "[proposer] .brain-result.json 写入完成 propose_branch=${PROPOSE_BRANCH}"
@@ -1158,7 +1204,7 @@ echo "[proposer] .brain-result.json 写入完成 propose_branch=${PROPOSE_BRANCH
 
 **输出契约（v8.0.0+ — 文件协议）**：
 
-proposer 调用结束时必须向 `/workspace/.brain-result.json` 写入 JSON：
+proposer 调用结束时必须向 `${WORKSPACE_PATH:-/workspace}/.brain-result.json` 写入 JSON（与 evaluator 同款宿主 fallback 写法）：
 - `propose_branch`：Brain 注入的 `$PROPOSE_BRANCH` 值
 - `workstream_count`：固定为 1（一个 Sprint = 一个 Generator）
 - `task_plan_path`：`${SPRINT_DIR}/task-plan.json`
@@ -1204,3 +1250,23 @@ Brain 读此文件获取结果，不解析 stdout。`$PROPOSE_BRANCH` 由 Brain 
 4. **user_facing 模式B E2E 不含 Playwright 断言** → 只有 curl 没有 `toBeVisible/toHaveText` 等 UI 断言 = 假 E2E，Reviewer 打回
 5. **禁止在 main 分支操作**
 6. **windows_wechat 路由错误**（v9.0）→ Golden Path 含微信操作但 `target_environment` 写成 `windows_cloud` → BEHAVIOR 在 GHA runner（无微信）上全部假绿，Reviewer 打回；反之亦然（非微信功能写 `windows_wechat` 也错）
+
+---
+
+## Relay 模式出口协议（T5，harness-controller 派发时生效）
+
+当你是 harness-controller 的 subagent（派发 prompt 声明"按 Relay 出口协议报告"）时：
+**上面所有流程与结果文件输出一字不变**（双轨期 v1 图仍消费 `.brain-result.json`），只在报告最末尾追加一行：
+
+```
+RELAY_STATUS: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED
+```
+
+| 状态 | 何时用 | 必须附带 |
+|---|---|---|
+| DONE | 合同三产物齐（contract-draft.md + contract-dod.md + tests/）且 Step 2b-check 确定性自查全过、task-plan.json 已生成 | propose_branch + 自查脚本输出（✅ 合同格式自查通过） |
+| DONE_WITH_CONCERNS | 合同已交付但有疑虑（如 registry 为空全靠 [NEW_PATTERN] 推导、PRD 缺 Response Schema 段、接缝清单存在未真验项） | 疑虑清单 |
+| NEEDS_CONTEXT | 缺信息无法起草/修订（如 sprint-prd.md 缺失、PROPOSE_ROUND/SPRINT_DIR 未注入、Reviewer 反馈拿不到） | 确切缺什么（controller 补料后原模型重派） |
+| BLOCKED | 干不了 | 原因分类：缺上下文 / 需更强推理 / 任务太大该拆 / PRD 本身矛盾该上报 |
+
+**铁律**：卡住绝不静默原地重试——报 BLOCKED 让 controller 改变某样东西（补料/换模型/拆任务），这是"绝不让同一 agent 无变化重试"协议的工人侧义务。Step 2b-check 自查不过属于**自己能修**的问题，重写到过为止，不算 BLOCKED。
