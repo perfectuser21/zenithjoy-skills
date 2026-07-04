@@ -6,9 +6,10 @@ description: |
   移植 Superpowers 6.0 subagent-driven-development 零件：进度台账 / 文件接力 / 四态出口协议 / 单评审双裁决 / compaction 恢复。
   点火方：Brain harness dispatch（无头）或人工前台（同一份 skill 两种触发，行为一致）。
   /dev 仍是唯一需求入口：本 skill 消费 /dev 路径C 的交接契约（PrepPRD + 铁律清单 + NFR），不做需求对抗。
-version: 1.2.0
+version: 1.2.1
 created: 2026-07-04
 changelog:
+  - 1.2.1: 台账 append 旁增加进度上报 PATCH(phase 中间态 planning/gan/generate/evaluate)——dashboard 进度条数据源;白名单扩展由 cecelia 侧 relay-watchdog PR 提供
   - 1.2.0: vendored Superpowers 6.0 三个确定性文件接力脚本(scripts/task-brief|review-package|sdd-workspace,MIT)——review diff 强制走 review-package(记录 BASE,禁 HEAD~1);工作区统一 .harness
   - 1.1.1: Step 4 补 evaluator unverifiable[] 兜底职责（T5 配套：controller 逐条核对无法验证项后才放行，对齐 SDD 6.0 Cannot-verify 裁决）
   - 1.1.0: N4 三跑实证修订——①merge 前禁退出(run-3 恢复session早退实证)②台账每步硬性 bash③report 回写 initiative_runs phase(治巡逻误报 Stuck)④CI 门禁三件套前置进 generator 验收(三跑均在 CI 才踩)
@@ -58,10 +59,14 @@ report: done
 
 **外部真相优先**：台账说 generator done 但 `gh pr view` 说 PR 不存在 → 信 gh，重跑该阶段并在台账 append 更正行（不删旧行）。
 
-**台账写入是硬性动作，不是可选项**（N4 三跑均未写台账，恢复全靠翻 git——本版修正）。每阶段完成必须执行：
+**台账写入是硬性动作，不是可选项**（N4 三跑均未写台账，恢复全靠翻 git——本版修正）。每阶段完成必须执行**两个动作**（台账 + 进度上报，后者是 dashboard 进度条的数据源）：
 
 ```bash
 echo "<阶段>: done (<关键证据>)" >> .harness/progress.md
+# 进度上报（阶段→phase 映射：planner 完成→gan 开始报 gan;GAN 完成→generate;generator 完成→evaluate;
+# judge PASS 后→由 report 步骤报 done。失败终局报 failed。上报失败不阻塞流程,warn 即可）
+curl -s -m 10 -X PATCH "$BRAIN/api/brain/orchestrator/relay-runs/${HARNESS_INITIATIVE_ID}" \
+  -H "Content-Type: application/json" -d '{"phase":"<下一阶段:planning|gan|generate|evaluate>"}' || true
 ```
 
 ## Step 1: Planner（写 PRD）
