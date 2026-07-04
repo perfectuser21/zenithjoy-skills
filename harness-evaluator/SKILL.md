@@ -6,10 +6,11 @@ description: |
   evaluator 在 CI 绿之后、PR merge 之前真启服务 + 跑 contract 的 manual:bash 命令验真行为。
   PASS → 允许 merge；FAIL → 不 merge，带反馈打回 Generator 在 PR 分支 fix loop（main 不变动）。
   单模式（harness v2 始终 IS_FINAL_E2E=true）：读 contract-draft.md 的 ## E2E 验收 脚本，按 target_environment 派发跑 Golden Path 端到端真实行为。
-version: 1.19.0
+version: 1.20.0
 created: 2026-05-06
-updated: 2026-06-11
+updated: 2026-07-05
 changelog:
+  - 1.20.0: EVA 提分（GAPS #2）——新增「Relay 入口协议」（对称 T5 出口段）：controller 用 Task 派发时从 prompt 参数取 SPRINT_DIR/PR_BRANCH/TARGET_ENV/合同路径，env 与 prompt 参数二选一均可启动，Step 0 FATAL 仅限 v1 env 路径；反作弊红线显式接回 relay 路径（E2E 段缺失/[BEHAVIOR] manual:bash 从未真跑 → 必 FAIL，禁拿 vitest 结果冒充 Golden Path 验收）；WORKSPACE 解析补宿主 fallback（/workspace 不存在时落 $PWD）。additive，双门/SHA锚定/verdict JSON 语义不变
   - 1.19.0: 追加「Relay 出口 + CANNOT_VERIFY 第三态」（T5，additive）——无法验证的断言进 unverifiable[] 交 controller 兜底，禁止臆断 FAIL（治误判 FAIL→无限 fix loop 谱系）；verdict JSON 结构不变（v1 双轨兼容）
   - 1.18.0: Slice3 固化 — bash/mac_web/local_api 分支补 cp+git add e2e-verify.sh 进 sprint 目录（镜像 windows 分支），让 bash golden-path E2E 脚本随 PR 永久入库、merge 后进回归套件重跑（堵"脚本只活 /tmp 跑一次蒸发"的地基洞主洞）
   - 1.17.0: 新增 Step B-1.9 Machine Probe — windows_cloud/wechat 环境执行前检测 E2E 脚本硬编码绝对路径（/Users/ /home/ C:\Users\），发现即 FAIL；成功后输出标准化环境变量（CHROME_PATH/WECHAT_DATA/NODE_VERSION）供 E2E 脚本 source 替代硬编码路径
@@ -75,7 +76,7 @@ generator 写代码 + push PR
 
 | 变量 | 含义 |
 |------|------|
-| `IS_FINAL_E2E` | harness v2 始终注入 `true`（单模式 E2E）；缺失或非 `true` = Brain dispatch 异常，直接 FATAL（见 Step 0） |
+| `IS_FINAL_E2E` | harness v2 始终注入 `true`（单模式 E2E）；v1 env 路径下缺失或非 `true` = Brain dispatch 异常，直接 FATAL（见 Step 0）；**relay prompt 派发时必然缺失，视为 `true`，不 FATAL**（见「Relay 入口协议」） |
 | `SPRINT_DIR` | Sprint 目录，如 `sprints/run-20260506-1400` |
 | `TASK_ID` | Brain 中当前 evaluate task 的 UUID |
 | `JOURNEY_TYPE` | `user_facing` / `autonomous` / `dev_pipeline` / `agent_remote` |
@@ -86,6 +87,38 @@ generator 写代码 + push PR
 | `DB` | PostgreSQL 连接串，如 `postgresql://localhost/cecelia` |
 
 **注**：DoD 文件中的 `Test:` 命令若引用 `$TARGET_TASK_ID`，该 ID 来自 DoD 文件内部（合同写入时硬编码或由 Generator 写入），Evaluator 直接执行 DoD 中的命令原文，不需单独注入。
+
+---
+
+## Relay 入口协议（v1.20 — 对称于文末 T5 出口段，harness-controller 派发时生效）
+
+**背景**：上表 env 由 v1 LangGraph 图（cecelia-run / evaluateContractNode）注入。relay 模式下 controller 用 Task 工具派发 subagent，**不注入这套 env**——此时参数改由 controller 在派发 prompt 文本中给出。**env 与 prompt 参数二选一，任一齐备即可启动主体流程**；两者都缺才算无法启动（走 NEEDS_CONTEXT，见 T5 出口段）。
+
+### 参数解析顺序（每个变量独立解析）
+
+1. env 已注入 → 用 env 值（v1 路径）
+2. env 缺失 → 从派发 prompt 里取（controller Step 4 派发模板会写明）：
+   - `SPRINT_DIR` — sprint 目录路径
+   - `PR_BRANCH` — 待验证的 PR 分支名
+   - `TARGET_ENV` — 目标环境（缺省 `local_api`）
+   - 合同路径 — `contract-draft.md` / `contract-dod.md` 所在（通常 = `${SPRINT_DIR}/contract-draft.md`、`${SPRINT_DIR}/contract-dod.md`）
+   - `TASK_ID` — 可选；relay 下缺失时 verdict JSON 的 task_id 填 sprint 目录名
+3. 两处都没有且属必需（SPRINT_DIR / PR_BRANCH / 合同路径）→ 报 `RELAY_STATUS: NEEDS_CONTEXT` 并列出缺什么，**禁止自由发挥、禁止猜路径**
+
+### relay 下的模式与 FATAL 边界
+
+- relay 派发**必然不带** `IS_FINAL_E2E` env。此时 **`IS_FINAL_E2E` 视为 `true`**（harness v2 单模式），直接进入模式 B。
+- **Step 0 的「未注入即 FATAL」只适用于 v1 env 路径**（有 Brain dispatch 迹象但 env 不齐 = dispatch 异常）；relay prompt 派发时不触发该 FATAL。
+- WORKSPACE 解析（relay 宿主执行时 `/workspace` 不存在）：
+
+```bash
+WORKSPACE="${WORKSPACE_PATH:-/workspace}"
+[ -d "$WORKSPACE" ] || WORKSPACE="$PWD"   # relay 宿主 fallback
+```
+
+### relay 下不许跳过的事（红线接回）
+
+**主体流程 Step 0a → B-3 在 relay 下照跑，一步不少**：切 PR 分支、E2E 段提取 + 固化（B-1 / Slice3 cp 进 sprint 目录）、位置词验证（B-1.5）、环境预检（B-1.6）、Golden Path 覆盖对照表（B-1.8）、领域死规则、真跑 E2E 脚本（B-2）、结果文件写入。**「反作弊红线」四条在 relay 路径同等生效**（见下节加粗段）。relay 不是简化模式——它只改变参数来源，不改变验收标准。
 
 ---
 
@@ -109,6 +142,11 @@ generator 写代码 + push PR
 - 合同里若有 `jq -e '.result == 35'` → evaluator 真跑 → exit 1 → FAIL ✓ 抓住
 - 合同里若只有 `curl -f /multiply` 没 jq -e → evaluator 跑 → exit 0 → 假 PASS ❌ 漏判
 - → 这是 **contract reviewer 第 6 维 verification_oracle_completeness** 该卡的事，但 evaluator 看到 [BEHAVIOR] 命令缺 jq -e 时必须**在 feedback 里写明 "弱 oracle，schema drift 漏判风险"** 让上游知道
+
+**红线适用范围（v1.20 — 两种入口同等生效）**：以上 4 条红线在 **v1 env 注入路径** 与 **relay prompt 派发路径**（见「Relay 入口协议」）下**同等生效，无任何豁免**。relay 下 2026-07-04 实证的两个假绿面在此点名封死：
+
+- **合同 `## E2E 验收` 段缺失 → 必 FAIL**（failed_step=setup，同 Step B-1 现有语义）。relay 下不许因"没有 env 协议"就跳过 B-1 提取直接给 PASS。
+- **合同 [BEHAVIOR] 的 manual:bash 命令一条都没真跑 → 必 FAIL**。看到 vitest / CI 全绿就给 PASS = 违反红线 1；vitest 是 generator 自写单测，**不是 Golden Path 验收 oracle**。relay 下没有 .brain-result.json 消费方也一样：verdict 的唯一合法来源是真跑合同断言的退出码。
 
 ---
 
@@ -184,17 +222,30 @@ W41 fix loop 5 round 评测：如果用 chromium default profile，第 5 round e
 
 ```bash
 # WORKSPACE_PATH 由 host-executor 注入（mac_web 直接在宿主运行时为 worktreePath）
-# Docker 路径默认 /workspace，宿主路径由注入变量覆盖
+# Docker 路径默认 /workspace；relay 宿主执行时 /workspace 不存在 → fallback $PWD（v1.20）
 WORKSPACE="${WORKSPACE_PATH:-/workspace}"
+[ -d "$WORKSPACE" ] || WORKSPACE="$PWD"
 
-# harness v2 始终注入 IS_FINAL_E2E=true；若未注入说明 Brain dispatch 异常
-[[ "$IS_FINAL_E2E" == "true" ]] || {
-  echo "FATAL: IS_FINAL_E2E 未注入，Brain dispatch 异常，请检查 harness-initiative.graph.js" >&2
-  cat > "$WORKSPACE/.brain-result.json" << BREOF
+# ── v1.20 relay 分支：env 未注入但派发 prompt 给了 SPRINT_DIR 等参数 = relay 模式 ──
+# 见「Relay 入口协议」段：relay 下 IS_FINAL_E2E 视为 true，不触发下面的 FATAL；
+# 从 prompt 参数中把 SPRINT_DIR/PR_BRANCH/TARGET_ENV/合同路径赋成 shell 变量后继续主体流程。
+# 下面的 FATAL 只适用于 v1 env 路径（Brain dispatch 注入了部分 env 但缺 IS_FINAL_E2E = dispatch 异常）。
+
+# harness v2 始终注入 IS_FINAL_E2E=true；若 v1 路径未注入说明 Brain dispatch 异常
+if [[ "$IS_FINAL_E2E" != "true" ]]; then
+  if [[ -n "$SPRINT_DIR" ]]; then
+    # relay 模式：SPRINT_DIR 已按「Relay 入口协议」从派发 prompt 赋值 → 参数齐备即可启动
+
+    IS_FINAL_E2E=true
+    echo "relay 模式 — IS_FINAL_E2E 视为 true"
+  else
+    echo "FATAL: IS_FINAL_E2E 未注入且无 relay prompt 参数，Brain dispatch 异常，请检查 harness-initiative.graph.js" >&2
+    cat > "$WORKSPACE/.brain-result.json" << BREOF
 {"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"dispatch_error","log_excerpt":"IS_FINAL_E2E 未注入，Brain evaluateContractNode 配置异常"}
 BREOF
-  exit 1
-}
+    exit 1
+  fi
+fi
 echo "模式 B — 最终 E2E"
 ```
 
@@ -694,7 +745,7 @@ BREOF
 
 ## 输出规范
 
-**输出协议（v1.5.0+ — 文件协议）**：最终结果写入 `"$WORKSPACE/.brain-result.json"`（Docker 默认 `/workspace/.brain-result.json`，mac_web host 执行时为 `$WORKSPACE_PATH/.brain-result.json`），Brain 读文件不读 stdout。
+**输出协议（v1.5.0+ — 文件协议）**：最终结果写入 `"$WORKSPACE/.brain-result.json"`（Docker 默认 `/workspace/.brain-result.json`，mac_web host 执行时为 `$WORKSPACE_PATH/.brain-result.json`，relay 宿主执行且两者皆无时 fallback `$PWD/.brain-result.json`，见 Step 0），Brain 读文件不读 stdout。
 
 示例（PASS）：
 
@@ -730,6 +781,8 @@ BREOF
 ---
 
 ## Relay 模式出口 + CANNOT_VERIFY 第三态（T5，harness-controller 派发时生效）
+
+> 入口侧协议见前文「Relay 入口协议」（v1.20）——入口取参 + 红线接回，出口按本段。
 
 **verdict JSON 结构与上面全部流程一字不变**（v1 双轨兼容）。追加两条规则：
 
