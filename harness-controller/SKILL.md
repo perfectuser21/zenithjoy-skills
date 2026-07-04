@@ -6,9 +6,10 @@ description: |
   移植 Superpowers 6.0 subagent-driven-development 零件：进度台账 / 文件接力 / 四态出口协议 / 单评审双裁决 / compaction 恢复。
   点火方：Brain harness dispatch（无头）或人工前台（同一份 skill 两种触发，行为一致）。
   /dev 仍是唯一需求入口：本 skill 消费 /dev 路径C 的交接契约（PrepPRD + 铁律清单 + NFR），不做需求对抗。
-version: 1.2.1
+version: 1.3.0
 created: 2026-07-04
 changelog:
+  - 1.3.0: EVA 提分五处 additive（GAP #1②/#3/#5/#6/#7①）——①Step 2 合同格式硬检查(BEHAVIOR≥4/E2E段/manual:bash 确定性bash) ②Step 6 merge 前 head==锚定sha 硬检查 + Step 7 PATCH 补 verdict/cost/pr_url ③Step 1 planner 验收扩至尾部两字段+NFR段+行数 ④台账升级每阶段一行+附件(.harness/verdicts/<phase>-<sha7>.json 随 PR 入库) ⑤恢复规则补 generator (Red) commit TDD 纪律核对
   - 1.2.1: 台账 append 旁增加进度上报 PATCH(phase 中间态 planning/gan/generate/evaluate)——dashboard 进度条数据源;白名单扩展由 cecelia 侧 relay-watchdog PR 提供
   - 1.2.0: vendored Superpowers 6.0 三个确定性文件接力脚本(scripts/task-brief|review-package|sdd-workspace,MIT)——review diff 强制走 review-package(记录 BASE,禁 HEAD~1);工作区统一 .harness
   - 1.1.1: Step 4 补 evaluator unverifiable[] 兜底职责（T5 配套：controller 逐条核对无法验证项后才放行，对齐 SDD 6.0 Cannot-verify 裁决）
@@ -41,7 +42,9 @@ TASK=$(curl -s "$BRAIN/api/brain/tasks/$HARNESS_TASK_ID")
 
 # 0.2 台账（compaction/崩溃恢复的锚，SDD 6.0 模式）
 LEDGER=".harness/progress.md"
-mkdir -p .harness && printf '*\n' > .harness/.gitignore
+mkdir -p .harness .harness/verdicts
+# .harness 整体忽略，但 verdicts/（裁决留痕附件）放行随 PR 入库
+printf '*\n!.gitignore\n!verdicts/\n!verdicts/**\n' > .harness/.gitignore
 cat "$LEDGER" 2>/dev/null || echo "(新 sprint，无台账)"
 ```
 
@@ -49,15 +52,29 @@ cat "$LEDGER" 2>/dev/null || echo "(新 sprint，无台账)"
 
 ```
 planner: done (sprint-prd.md@<commit7>, invariants=N, fr=N)
-gan: done (contract-draft.md@<branch> r<N>, verdict=APPROVED, 铁律覆盖=N/N)
+gan: done (contract-draft.md@<branch> r<N>, verdict=APPROVED, 铁律覆盖=N/N, rubric=.harness/verdicts/gan-<sha7>.json)
 generator: done (pr=#<num>, red=<sha7>, green=<sha7>)
-evaluator: done (verdict=PASS, sha=<pr_head7>)
+evaluator: done (verdict=PASS, sha=<pr_head7>, verdict_file=.harness/verdicts/evaluate-<sha7>.json)
 judge: done (verdict=PASS, sha=<pr_head7>)
 merge: done (pr=#<num> MERGED)
 report: done
 ```
 
+**台账升级：每阶段一行 + 附件（裁决留痕归档，把 N/A 变成分）**——relay 各棒的结构化产出（rubric scores、Golden Path 对照表、unverifiable[]、双门结果）只活在 subagent 报告文本里就等于没发生，评不了也审计不了。约定：
+- 附件路径统一 `.harness/verdicts/<phase>-<sha7>.json`（phase = gan / evaluate 等，sha7 = 锚定 commit 前 7 位），**随 PR 入库**
+- gan 行必附 reviewer 最终轮 rubric JSON 路径；evaluator 行必附 verdict JSON 路径（含 verdict/unverifiable[]/双门结果）
+- controller 在验收对应阶段时负责把 subagent 报告里的结构化 JSON 落到该路径，再写台账行——**没有附件文件的 gan/evaluator done 行视为台账不完整**
+- 为让 verdicts 随 PR 入库，Step 0 的 `.harness/.gitignore` 需放行该目录（见 Step 0 代码）
+
 **外部真相优先**：台账说 generator done 但 `gh pr view` 说 PR 不存在 → 信 gh，重跑该阶段并在台账 append 更正行（不删旧行）。
+
+**恢复时 generator TDD 纪律核对（#3540/#3542 实证：watchdog 重点火接续的跑无 (Red) commit——恢复 session 从中途接手时把"合同起草 commit"当 Red）**：generator 阶段部分完成（PR 已存在但台账无 generator done 行）时，接续前先跑：
+
+```bash
+git log --grep='(Red)' --oneline <PR分支>
+```
+
+查不到 (Red) commit → **不默认通过**，派 fix 轮要求 generator 补 TDD 纪律说明（说明 Red 基线在哪个 commit / 为何缺失 + 补跑合同测试证明先红后绿），核对通过后才继续接手。
 
 **台账写入是硬性动作，不是可选项**（N4 三跑均未写台账，恢复全靠翻 git——本版修正）。每阶段完成必须执行**两个动作**（台账 + 进度上报，后者是 dashboard 进度条的数据源）：
 
@@ -82,6 +99,10 @@ prompt: 调用 Skill(harness-planner)。上下文：
 ```
 
 - harness-planner v8.12+ 自带整条 line 的 invariant 三源 + 累积 FR 加载——**验收时检查 sprint-prd.md 含「## Invariant 约束」「## 累积 FR」两段**，缺了 = planner 报告不实，打回重跑
+- **验收清单扩展（4 跑实证：仅走完整点火链的 run1 齐全，恢复/二次点火路径下 planner 拿薄 prompt 大面积漏项）**，以下四项与"两段"同权，任一缺 = planner 报告不实，打回重跑：
+  1. **尾部两字段**：PRD 末尾含 `journey_type:` 与 `target_environment:`（proposer 选模板、evaluator 派机器都依赖它们，缺了下游全瞎）
+  2. **NFR 段**：含 `## NFR` 段，或显式写明"NFR: N/A"（静默缺失不算过）
+  3. **PRD 行数（thin-slice 上限）**：`wc -l` 校验不超 thin-slice 上限（run4 曾 278 行失守）；超限 → 打回要求裁剪或标注"不计入"理由
 - 四态处置：见「四态协议」节
 - 完成 → 台账 append → Step 2
 
@@ -93,6 +114,19 @@ prompt: 调用 Skill(harness-planner)。上下文：
 2. 派 **reviewer** fresh subagent：`调用 Skill(harness-contract-reviewer)`，输入 = PRD + 合同路径。产出 rubric 打分 + verdict
 3. **controller 只认结构化 verdict**：APPROVED → 出环；REVISION → feedback 落文件、回 1
 4. **铁律覆盖硬检查（controller 自查，不信 reviewer 自觉）**：PrepPRD 交接的每条铁律，在 contract-dod.md 里 grep 到对应断言才算过；缺 → 作为 feedback 打回 proposer（这是"0→1 积累必须加载"的机械保证）
+5. **合同格式硬检查（确定性 bash，机器卡，不靠自觉）**：铁律覆盖只查"内容有没有"，本条查"格式对不对"——run4 实证：contract-dod.md 无一条 `[BEHAVIOR]` 也通过了旧检查。以下三项任一不过 → 打回 proposer 重出，**不许进 Step 3**：
+
+```bash
+DOD="<SPRINT_DIR>/contract-dod.md"
+# ① [BEHAVIOR] 条目 ≥4（proposer Step 2b 模板下限）
+[ "$(grep -c '\[BEHAVIOR\]' "$DOD")" -ge 4 ] || { echo "FAIL: [BEHAVIOR] 条目不足 4"; }
+# ② 含 ## E2E 验收 段
+grep -q '## E2E 验收' "$DOD" || { echo "FAIL: 缺 ## E2E 验收 段"; }
+# ③ 含 manual:bash 可执行验收命令
+grep -q 'manual:bash' "$DOD" || { echo "FAIL: 缺 manual:bash 验收命令"; }
+```
+
+任一行输出 FAIL → 把 FAIL 原文作为 feedback 落文件、回本节第 1 步重派 proposer；三项全过才允许台账记 gan done
 
 守护（照抄旧图语义）：proposer 连续 2 轮没 push 产物 / reviewer 连续 3 轮无 verdict / 成本超预算 → 终局 FAIL 上报
 
@@ -134,6 +168,13 @@ prompt: 调用 Skill(harness-generator)。CONTRACT_BRANCH=<branch> SPRINT_DIR=<d
 ## Step 6: Review 门（仅 review_required=true）+ Merge
 
 - review_required → 起预览环境 + Bark 通知主理人（附 approve 命令），阻塞等 task_events 批准事件
+- **merge 前 SHA 锚定硬检查（确定性 bash，c66bbedc 实证：锚定后又进代码 commit、未重评直接 merge）**——"新 commit 旧 verdict 作废"不只写在 Step 4，merge 这里必须机械复核：
+
+```bash
+[ "$(gh pr view <pr> --json headRefOid -q .headRefOid)" = "$ANCHORED_SHA" ] || 回 Step 4 重评
+```
+
+  不相等 → **禁止 merge**，回 Step 4 以当前 head 重评（evaluator + judge 都要），台账 append 重评行后才可回到本步
 - merge（唯一权威路径）：evaluator PASS + judge PASS（+ 人工批准如需）→ `gh pr merge --squash --delete-branch`
   - BEHIND → `gh pr update-branch` ≤3 次；**update 改变 head sha → evaluator/judge verdict 以新 sha 重锚**（轻量 rebase 不重评，台账记 re-anchor 行）
   - CONFLICTING → 终局 FAIL 上报
@@ -148,8 +189,11 @@ prompt: 调用 Skill(harness-generator)。CONTRACT_BRANCH=<branch> SPRINT_DIR=<d
 ```bash
 curl -s -X PATCH "$BRAIN/api/brain/orchestrator/relay-runs/${HARNESS_INITIATIVE_ID}" \
   -H "Content-Type: application/json" \
-  -d '{"phase":"done"}'   # 终局失败改 {"phase":"failed","failure_reason":"<一句话>"}
+  -d '{"phase":"done","verdict":"PASS","cost":<总成本USD数字>,"pr_url":"<pr_url>"}'
+  # 终局失败改 {"phase":"failed","failure_reason":"<一句话>","verdict":"FAIL","cost":<总成本>,"pr_url":"<有PR则填>"}
 ```
+
+**PATCH body 三个新字段是硬性要求，不许只 PATCH phase**（#3540 为此加的字段，1.2.1 及以前只写 phase → dashboard verdict 全空、cost 全 0）：`verdict` = 最终裁决（PASS/FAIL）、`cost` = 全程累计成本、`pr_url` = PR 链接（从台账/`gh pr view --json url` 取）。
 
 台账 append `report: done`，确认 PR 状态 = MERGED（硬约束 6），输出最终摘要，session 结束。
 
