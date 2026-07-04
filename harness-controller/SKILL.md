@@ -6,9 +6,10 @@ description: |
   移植 Superpowers 6.0 subagent-driven-development 零件：进度台账 / 文件接力 / 四态出口协议 / 单评审双裁决 / compaction 恢复。
   点火方：Brain harness dispatch（无头）或人工前台（同一份 skill 两种触发，行为一致）。
   /dev 仍是唯一需求入口：本 skill 消费 /dev 路径C 的交接契约（PrepPRD + 铁律清单 + NFR），不做需求对抗。
-version: 1.1.1
+version: 1.2.0
 created: 2026-07-04
 changelog:
+  - 1.2.0: vendored Superpowers 6.0 三个确定性文件接力脚本(scripts/task-brief|review-package|sdd-workspace,MIT)——review diff 强制走 review-package(记录 BASE,禁 HEAD~1);工作区统一 .harness
   - 1.1.1: Step 4 补 evaluator unverifiable[] 兜底职责（T5 配套：controller 逐条核对无法验证项后才放行，对齐 SDD 6.0 Cannot-verify 裁决）
   - 1.1.0: N4 三跑实证修订——①merge 前禁退出(run-3 恢复session早退实证)②台账每步硬性 bash③report 回写 initiative_runs phase(治巡逻误报 Stuck)④CI 门禁三件套前置进 generator 验收(三跑均在 CI 才踩)
   - 1.0.0: 首版——SDD 模式移植（主理人 2026-07-04 拍板：单 session skill 接力，不自造 orchestrator，Brain 核心不动）
@@ -166,5 +167,11 @@ curl -s -X PATCH "$BRAIN/api/brain/orchestrator/relay-runs/${HARNESS_INITIATIVE_
 ## 文件接力纪律（SDD 6.0）
 
 - 阶段间传**文件路径**，不往 subagent prompt 里粘贴大产物（合同/PRD/diff）
-- review 用的 diff 以"派发前记录的 BASE"生成，**绝不用 HEAD~1**（多 commit 会静默截断）
+- review 用的 diff 以"派发前记录的 BASE"生成，**绝不用 HEAD~1**（多 commit 会静默截断）——用本 skill 自带脚本，不手拼：
+
+```bash
+# 派 generator/review 前记录 BASE=$(git rev-parse HEAD)
+bash <skill目录>/scripts/review-package "$BASE" HEAD   # → .harness/review-<base7>..<head7>.diff(commits+stat+U10 diff 单文件)
+bash <skill目录>/scripts/task-brief <PLAN文件> <N>      # → .harness/task-N-brief.md(单任务切片,喂 subagent 用路径)
+```
 - controller 自己不读全量 diff/合同——保持协调上下文恒定小，长跑不 compaction；万一 compaction，Step 0 台账恢复
