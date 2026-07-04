@@ -5,10 +5,11 @@ description: |
   读取 GAN 对抗已批准的 contract-draft.md + tests/*.test.ts + contract-dod.md，按 TDD 纪律两次 commit（commit 1 = 测试 Red / commit 2 = 实现 Green）。
   融入 4 个 superpowers：test-driven-development / verification-before-completion / systematic-debugging / requesting-code-review。
   CONTRACT IS LAW：合同里有的全实现，合同外一字不加；测试文件从合同原样复制，commit 1 后不可修改（CI 强校验）。一个 Sprint = 一个 Generator = 一个 PR。
-version: 7.6.0
+version: 7.7.0
 created: 2026-04-08
-updated: 2026-06-11
+updated: 2026-07-05
 changelog:
+  - 7.7.0: Step 6 Code Review 由「调 requesting-code-review 派 review subagent」改为「generator 内联自审 diff」（NESTED-SUB-AUDIT-20260705 F1/F2）——relay 下 generator 是 controller 的 sub，无 Task 工具不能再派 sub，原步骤静默跳过导致 push 前 code review 漏检进 PR；内联版按同一检查清单自审。Step 7 PR body 模板同步（F2）
   - 7.6.0: 追加「Relay 模式出口协议」（T5，additive）——被 harness-controller 派发时在报告末尾输出 RELAY_STATUS 四态；原 verdict JSON 一字不变（v1 LangGraph 双轨兼容）
   - 7.5.0: 🚫 删除 Step 7.5 的 gh pr merge --auto 自合并 — generator 职责到 CI 全绿为止，merge 由 Brain mergePrNode 在 evaluator PASS 后执行；否则 evaluator pre-merge gate 被绕过（2026-06-11 PR #3342 实证：CI 绿即自动合并，evaluator 从未运行）。循环退出条件从 MERGED 改为 CI 全绿（保留 MERGED/CLOSED 容错出口）
   - 7.4.0: 链路审计修复 5 项 — (a) 回流「防照抄示例占位 PR URL」保护到 Step 8（含 verdict JSON schema 表 DONE/FIXED/FAILED 三态）；(b) Step 6.5 镜像注释改指向 evaluator 新增 Step B-1.6（名称引用，不写行号）；(c) Step 3 Red 验证从 grep 日志符号改为 `npx vitest run --reporter=json` 统计 failed/passed（确定性）；(d) Step 6.5 失败补「重试工作流」（修实现→commit→重跑，连续 3 轮仍 FAIL 标 [BEHAVIOR_FAIL] 并 push 交 evaluator）
@@ -273,17 +274,21 @@ npx vitest run "${SPRINT_DIR}/tests/" --reporter=verbose 2>&1 | tee /tmp/green-e
 
 Test Evidence 要贴进 PR body 的 `## Test Evidence` 章节（Red → Green 对比）。
 
-### Step 6: ★ Code Review 阶段（push 前调 subagent 审 diff）
+### Step 6: ★ Code Review 阶段（push 前内联自审 diff）
 
-**调用 skill: `superpowers:requesting-code-review`** — 调 review subagent 审 diff。
+> **relay 铁律**：你（generator）是 controller 派出的 **sub-agent，没有 Task 工具，不能再派 sub**。因此这里**不调 `superpowers:requesting-code-review`（它会 dispatch 一个 review 子 agent，在 relay 下物理失效、静默跳过 → high 级问题漏检进 PR）**。改由你**自己内联**按 requesting-code-review 的检查清单审自己的 diff。
 
 ```bash
 git diff origin/main...HEAD -- . ':!DoD.md' ':!docs/learnings/'
-# subagent 返回 issues list（high/medium/low 分级）
-# high → 修；medium → PR 里记录；low → 忽略
 ```
 
-Review Summary 贴进 PR body。
+对上面 diff 逐条自审（requesting-code-review 检查清单内联版）：
+- **正确性**：边界/空值/并发/错误路径是否处理；有没有把测试写宽松放水
+- **安全**：凭据硬编码、SQL 注入、租户/权限缺失、日志泄密
+- **可维护**：重复代码、命名、死代码、未用 import、遗留 console.log
+- **测试**：新逻辑是否被合同测试真正覆盖（不是只加行数）
+
+分级处理：**high → 当场修**（修完重跑 Step 3/6.5 验证）；**medium → 记进 PR body 的 Review Summary**；**low → 忽略**。自审结论（含 high 修了什么 / medium 遗留项）写进 PR body。
 
 ### Step 6.5: ★ Contract Self-Verification（v6.1 新增 — push 前必须自跑合同 [BEHAVIOR] 全过）
 
@@ -396,7 +401,7 @@ PR_URL=$(gh pr create --title "feat(harness): <Sprint 目标>" --body "$(cat <<'
 \`\`\`
 
 ## Review Summary
-<贴 subagent 的 high/medium issues 摘要>
+<贴 Step 6 内联自审的 high（已修）/medium（遗留）issues 摘要>
 
 ## Learning
 docs/learnings/cp-xxx-xxx.md
