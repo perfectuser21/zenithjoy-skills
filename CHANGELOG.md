@@ -1,3 +1,8 @@
+## [2026-07-05] repo-audit — updated（check-ci.sh coverage 门禁判定扩展到 vitest/jest config）
+**症状**: zenithjoy 给 dashboard vitest.config.ts 加了 coverage thresholds（真实门禁、proven-to-fire），check-ci.sh 仍报 no_coverage_gate 误报。
+**根因**: 脚本只 grep .github/workflows/ 找 thresholds，而 vitest 的门禁惯例写在 vitest.config.* 里（`vitest run --coverage` 自动读 config），workflow 里根本不会出现该关键词。
+**修改**: THRESHOLD 判定增加第二来源——find 仓库内 vitest.config.*/jest.config.*（排除 node_modules，maxdepth 4）grep thresholds/coverageThreshold；任一来源命中即视为有门禁，并在 ✅ 输出里打印门禁所在文件。局限（保留 heuristic）：不校验每个跑 --coverage 的 app 都各自有门禁。
+
 ## [2026-07-05] dev / harness-planner / harness-controller / harness-evaluator / harness-generator / cecelia-harness-debug — updated（relay lockdown 契约对齐 + Brain 契约 CI 守卫）
 **症状**: cecelia #3554（2026-07-05）上线 orchestrator 硬校验后，/dev 路径C 点火模板缺 `orchestrator: "skill-relay"` 字段——任何新 harness_initiative 会被 Brain 秒拒（terminal failed / missing_orchestrator_flag），路径C 实质断链；同时多个 harness skill 仍以 LangGraph 图为现行编排语义描述自己（planner 自称"Brain executor Layer 1 节点"、evaluator 称 env 由图注入等），与 relay 单 session 现实矛盾。
 **根因**: skills 仓库与 cecelia Brain 分属两 repo，契约变更靠人脑同步；#3554 的 ROLLOUT NOTE 明确要求先改 skills 侧再部署 Brain，实际 Brain 先部署了，协调发布断档；且此类跨 repo 漂移没有任何机器守卫，只能靠人发现。

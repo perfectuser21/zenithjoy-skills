@@ -25,9 +25,12 @@ else
 fi
 
 # 3. no_coverage_gate
+# thresholds 通常写在 vitest/jest config 里而非 workflow（vitest run --coverage 会读 config），
+# 所以两处都找；heuristic 局限：只要任一 config 有 thresholds 即视为有门禁（不校验逐 app 覆盖）
 COVERAGE=$(grep -rn "\-\-coverage" $WORKFLOW_DIR/ 2>/dev/null)
-THRESHOLD=$(grep -rn "thresholds\|coverageThreshold" $WORKFLOW_DIR/ 2>/dev/null)
-[ -n "$COVERAGE" ] && [ -z "$THRESHOLD" ] && echo "🔴 no_coverage_gate: 有 --coverage 无门禁" && HITS=$((HITS+1)) || echo "✅ coverage_gate"
+THRESHOLD_WF=$(grep -rn "thresholds\|coverageThreshold" $WORKFLOW_DIR/ 2>/dev/null)
+THRESHOLD_CFG=$(find "$REPO" -maxdepth 4 \( -name "vitest.config.*" -o -name "jest.config.*" \) -not -path "*/node_modules/*" 2>/dev/null | xargs grep -l "thresholds\|coverageThreshold" 2>/dev/null)
+[ -n "$COVERAGE" ] && [ -z "$THRESHOLD_WF$THRESHOLD_CFG" ] && echo "🔴 no_coverage_gate: 有 --coverage 无门禁" && HITS=$((HITS+1)) || echo "✅ coverage_gate（门禁在: $(echo $THRESHOLD_CFG | tr '\n' ' ' | head -c 120)）"
 
 # 4. lint_too_lenient
 echo "$( grep -rn "max-warnings" $WORKFLOW_DIR/ 2>/dev/null )" | grep -qE "max-warnings [2-9][0-9]|max-warnings [0-9]{3}" && echo "🔴 lint_too_lenient: $(grep -rn "max-warnings" $WORKFLOW_DIR/ | grep -oE 'max-warnings [0-9]+')" && HITS=$((HITS+1)) || echo "✅ lint_warnings"
