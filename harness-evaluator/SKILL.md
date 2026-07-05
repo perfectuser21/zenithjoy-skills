@@ -92,7 +92,7 @@ generator 写代码 + push PR
 
 ## Relay 入口协议（v1.20 — 对称于文末 T5 出口段，harness-controller 派发时生效）
 
-**背景**：上表 env 由 v1 LangGraph 图（cecelia-run / evaluateContractNode）注入。relay 模式下 controller 用 Task 工具派发 subagent，**不注入这套 env**——此时参数改由 controller 在派发 prompt 文本中给出。**env 与 prompt 参数二选一，任一齐备即可启动主体流程**；两者都缺才算无法启动（走 NEEDS_CONTEXT，见 T5 出口段）。
+**背景**：上表 env 原由 v1 LangGraph 图（cecelia-run / evaluateContractNode）注入——该图 2026-07-05 起已废弃（cecelia #3554），env 注入路径仅作历史兼容保留。relay 模式（现行唯一编排）下 controller 用 Task 工具派发 subagent，**不注入这套 env**——此时参数改由 controller 在派发 prompt 文本中给出。**env 与 prompt 参数二选一，任一齐备即可启动主体流程**；两者都缺才算无法启动（走 NEEDS_CONTEXT，见 T5 出口段）。
 
 ### 参数解析顺序（每个变量独立解析）
 
