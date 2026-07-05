@@ -19,6 +19,8 @@ description: |
 
 > **语言规则**: 所有输出简体中文。
 > **执行规则**: 严格按 7 层顺序排查，禁跳层。每层 5 min 内出结论。
+>
+> ⚠️ **架构变更（2026-07-05，cecelia #3554）**：harness 编排已从 LangGraph 图全面切换为 **skill-relay 单 session 接力**（harness-controller）。本文凡提及"graph 定义 / 图节点 / Brain executor 节点"的诊断项，按 relay 语义重解读：编排层 bug 查 harness-controller session 的 `.harness/` 台账与 `relay-runs` 端点（`GET /api/brain/orchestrator/relay-runs`），不查图。不带 `payload.orchestrator='skill-relay'` 的 harness_initiative 会被 Brain 直接标 terminal failed（`missing_orchestrator_flag`）——排查"任务秒 failed"先看这个。
 
 ## 角色
 

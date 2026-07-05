@@ -1,10 +1,11 @@
 ---
 name: dev
-version: 21.3.0
-updated: 2026-06-19
+version: 21.4.0
+updated: 2026-07-05
 description: Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→比对已有Steps展示Golden Path草稿→确认前置工作全部到位→用户确认PrepPRD→路由执行
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
+  - 21.4.0: 路径C点火 payload 补 orchestrator=skill-relay 硬性字段 — cecelia #3554（2026-07-05）起 Brain 硬校验 payload.orchestrator==='skill-relay'，缺失/非法直接 terminal failed（missing_orchestrator_flag），LangGraph 图不再隐式兜底
   - 21.3.0: 新增「哨兵（回归守卫）死规矩」节（谁写/啥时候/写哪/CI闸门卡 + 失控程度越高守卫越重 + 一份代码两处用）；Bug PrepPRD 加 proven-to-fire 守卫指针与验收项
   - 21.2.0: decision 写入加内联警告注释（禁止把 category 改成 type；type 被 Brain API 忽略）；清理旧 eval 目录混入
   - 21.1.0: 步骤编号重排 — 步骤 0.5（对抗深挖）重命名为步骤 1，原步骤 1（前置工作核对）升为步骤 2，对齐逻辑顺序
@@ -526,6 +527,7 @@ curl -s -X POST localhost:5221/api/brain/tasks \
     \"description\": \"<thin_prd>\",
     \"priority\": \"P1\",
     \"payload\": {
+      \"orchestrator\": \"skill-relay\",
       \"sprint_dir\": \"<sprint_dir>\",
       \"thin_prd\": \"<thin_prd>\",
       \"prep_prd_body\": \"<PrepPRD全文Markdown>\",
@@ -550,7 +552,9 @@ curl -s -X POST localhost:5221/api/brain/tasks \
 > ❌ 错误：`windows_cloud` + `base_repo=/Users/administrator/...` → Harness 入队失败
 > ✅ 正确：`windows_cloud` + `base_repo=https://github.com/perfectuser21/zenithjoy-workspace.git`
 
-Brain tick 自动 pick up，`curl localhost:5221/api/brain/tasks/<task_id>` 查进度。
+> ⚠️ **`orchestrator: "skill-relay"` 是硬性字段，禁止省略**（2026-07-05 cecelia #3554 起）：Brain 对 `harness_initiative` 做硬校验，`payload.orchestrator !== 'skill-relay'` 的任务立即 terminal failed（`missing_orchestrator_flag`）。这不是可选配置——旧 LangGraph 图编排已废弃（实测 relay 3/3~4/4 merged vs 旧图 30 天基线 21.7% 成功率），不存在隐式兜底。
+
+Brain tick 自动 pick up 后 spawn 单 session skill-relay（harness-controller 接力跑完 planner → GAN → generator → evaluator → report），`curl localhost:5221/api/brain/tasks/<task_id>` 查任务状态，`curl localhost:5221/api/brain/orchestrator/relay-runs/summary` 查 relay 各 phase 汇总。
 
 ---
 

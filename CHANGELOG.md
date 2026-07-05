@@ -1,3 +1,8 @@
+## [2026-07-05] dev / harness-planner / harness-controller / harness-evaluator / harness-generator / cecelia-harness-debug — updated（relay lockdown 契约对齐 + Brain 契约 CI 守卫）
+**症状**: cecelia #3554（2026-07-05）上线 orchestrator 硬校验后，/dev 路径C 点火模板缺 `orchestrator: "skill-relay"` 字段——任何新 harness_initiative 会被 Brain 秒拒（terminal failed / missing_orchestrator_flag），路径C 实质断链；同时多个 harness skill 仍以 LangGraph 图为现行编排语义描述自己（planner 自称"Brain executor Layer 1 节点"、evaluator 称 env 由图注入等），与 relay 单 session 现实矛盾。
+**根因**: skills 仓库与 cecelia Brain 分属两 repo，契约变更靠人脑同步；#3554 的 ROLLOUT NOTE 明确要求先改 skills 侧再部署 Brain，实际 Brain 先部署了，协调发布断档；且此类跨 repo 漂移没有任何机器守卫，只能靠人发现。
+**修改**: ①dev v21.4.0 点火 payload 补 `orchestrator: "skill-relay"` 硬性字段 + 警示说明；②harness-planner v8.13.0 / harness-controller v1.3.1 / harness-evaluator / harness-generator / cecelia-harness-debug 全部改为 relay 唯一编排语义，LangGraph 表述统一加废弃标注；③新增 `.github/workflows/scripts/check-brain-contract.sh` 契约一致性守卫并接进 lint-skills CI（proven-to-fire：首跑即抓到 generator/evaluator 两处人工漏网的残留），后续 cecelia 侧契约变更 PR 必须同步更新该脚本断言。
+
 ## [2026-07-02] harness-planner — updated（v8.12.1：补回 review_required 字段，修 SSOT↔镜像历史漂移）
 **症状**: cecelia real-env-smoke 的 b22-review-required-smoke 失败：harness-planner SKILL.md 缺 review_required 字段——发生在镜像同步 v8.12.0（cecelia #3510）之后。
 **根因**: review_required（B22：planner 判断 evaluator PASS 后是否需人工确认）当年直接改在 cecelia 镜像里、从未进 SSOT——SSOT 与镜像早已分叉；用 SSOT 覆盖镜像时把该字段覆盖丢了，而 Brain graph 仍消费 planner verdict JSON 的 review_required。
