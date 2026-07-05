@@ -7,9 +7,10 @@ description: |
   移植 Superpowers 6.0 subagent-driven-development 零件：进度台账 / 文件接力 / 四态出口协议 / 单评审双裁决 / compaction 恢复。
   点火方：Brain harness dispatch（无头）或人工前台（同一份 skill 两种触发，行为一致）。
   /dev 仍是唯一需求入口：本 skill 消费 /dev 路径C 的交接契约（PrepPRD + 铁律清单 + NFR），不做需求对抗。
-version: 1.3.1
+version: 1.3.2
 created: 2026-07-04
 changelog:
+  - 1.3.2: Step 3 generator 验收 PR 存在后立即早上报 pr_url（PATCH relay-runs phase=generate + pr_url，非阻塞；端点未上线时 400 忽略）；CI 配套硬规矩 + Step 3 prompt 测试文件措辞改为"由 evaluator CONTRACT-IS-LAW 与 judge 复核把关；CI 机械闸 lint-contract-test-immutability 落地后由其强制"（消除虚假 CI 强校验宣称，对齐 zenithjoy 当前 lint 实际能力）
   - 1.3.1: description 更新 — 由"替代 LangGraph 图的编排位置"改为"唯一编排路径"（cecelia #3554 硬校验 orchestrator=skill-relay，图废弃进入观察期）
   - 1.3.0: EVA 提分五处 additive（GAP #1②/#3/#5/#6/#7①）——①Step 2 合同格式硬检查(BEHAVIOR≥4/E2E段/manual:bash 确定性bash) ②Step 6 merge 前 head==锚定sha 硬检查 + Step 7 PATCH 补 verdict/cost/pr_url ③Step 1 planner 验收扩至尾部两字段+NFR段+行数 ④台账升级每阶段一行+附件(.harness/verdicts/<phase>-<sha7>.json 随 PR 入库) ⑤恢复规则补 generator (Red) commit TDD 纪律核对
   - 1.2.1: 台账 append 旁增加进度上报 PATCH(phase 中间态 planning/gan/generate/evaluate)——dashboard 进度条数据源;白名单扩展由 cecelia 侧 relay-watchdog PR 提供
@@ -142,11 +143,21 @@ grep -q 'manual:bash' "$DOD" || { echo "FAIL: 缺 manual:bash 验收命令"; }
 ```
 prompt: 调用 Skill(harness-generator)。CONTRACT_BRANCH=<branch> SPRINT_DIR=<dir>。
   铁律：commit 1 = 合同测试原样 checkout(Red)，commit 2+ = 实现(Green)；
-  测试文件 commit 1 后绝对不可改（CI 强校验）；push 前自跑合同 [BEHAVIOR] 全过。
+  测试文件 commit 1 后不可改（由 evaluator CONTRACT-IS-LAW 与 judge 复核把关；CI 机械闸 lint-contract-test-immutability 落地后由其强制）；push 前自跑合同 [BEHAVIOR] 全过。
   报告：四态 + pr_url + Red/Green commit SHA
 ```
 
 - generator 内部 TDD 纪律由 harness-generator skill 承载（不变）；controller 验收三件事：**PR 真实存在**（gh pr view）、**commit 顺序含 (Red)/(Green)**、**CI 在跑**
+- **PR 存在后立即早上报 pr_url**（验收 `gh pr view` 成功后执行，非阻塞；端点未上线返回 400 忽略即可）：
+
+```bash
+PR_URL_EARLY=$(gh pr view --json url -q .url 2>/dev/null || echo "")
+if [ -n "$PR_URL_EARLY" ]; then
+  curl -s -m 10 -X PATCH "$BRAIN/api/brain/orchestrator/relay-runs/${HARNESS_INITIATIVE_ID}" \
+    -H "Content-Type: application/json" \
+    -d "{\"phase\":\"generate\",\"pr_url\":\"$PR_URL_EARLY\"}" || true
+fi
+```
 - **CI 门禁三件套 push 前自查**（N4 三跑全在 CI 才踩这些门，各浪费一轮修复——左移到此）：①contract-draft.md 含 Test Contract 表且 [BEHAVIOR] 覆盖文本与测试 it() 名称子串匹配 ②feat 改动带 packages/brain/scripts/smoke/<feature>-smoke.sh（CI 兼容纯检查）③DoD 条目全勾 [x]。任一缺失 → 让 generator 补完再 push
 - CI 失败 → 派 fix subagent（同 skill Mode 2，带失败日志），fix 轮次计入台账，上限 20
 - 完成（CI 全绿）→ 台账 append → Step 4
@@ -212,7 +223,7 @@ curl -s -X PATCH "$BRAIN/api/brain/orchestrator/relay-runs/${HARNESS_INITIATIVE_
 ## CI 配套硬规矩（controller 的检查责任）
 
 1. 合同测试 merge 后**永久留在 repo** 跑 regression——merge 前确认测试文件在 PR diff 里且路径在 CI 收集范围
-2. tdd-commit-order / 测试文件 commit-1 后不可改——CI 强校验，controller 不得用任何方式绕过
+2. tdd-commit-order（提交顺序）由 lint-tdd-commit-order CI 强校验；测试文件 commit 1 后不可改——由 evaluator CONTRACT-IS-LAW 与 judge 复核把关，CI 机械闸 lint-contract-test-immutability 落地后由其强制；controller 不得绕过任何已有门禁
 3. feat PR 必须带 smoke 脚本（CI lint 强制）
 4. **禁 `gh pr merge --admin`**，禁绕 CI
 

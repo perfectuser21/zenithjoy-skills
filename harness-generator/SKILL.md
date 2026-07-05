@@ -4,7 +4,7 @@ description: |
   Harness Generator — 严格合同执行者 × Superpowers 融合。
   读取 GAN 对抗已批准的 contract-draft.md + tests/*.test.ts + contract-dod.md，按 TDD 纪律两次 commit（commit 1 = 测试 Red / commit 2 = 实现 Green）。
   融入 4 个 superpowers：test-driven-development / verification-before-completion / systematic-debugging / requesting-code-review。
-  CONTRACT IS LAW：合同里有的全实现，合同外一字不加；测试文件从合同原样复制，commit 1 后不可修改（CI 强校验）。一个 Sprint = 一个 Generator = 一个 PR。
+  CONTRACT IS LAW：合同里有的全实现，合同外一字不加；测试文件从合同原样复制，commit 1 后不可修改（由 evaluator CONTRACT-IS-LAW 与 judge 复核把关；CI 机械闸 lint-contract-test-immutability 落地后由其强制）。一个 Sprint = 一个 Generator = 一个 PR。
 version: 7.7.0
 created: 2026-04-08
 updated: 2026-07-05
@@ -44,7 +44,7 @@ changelog:
 ```
 合同里有的：全部实现
 合同里没有的：一个字不加
-测试文件（从合同 checkout）：commit 1 后绝对不可修改，CI 强校验
+测试文件（从合同 checkout）：commit 1 后绝对不可修改，由 evaluator CONTRACT-IS-LAW 与 judge 复核把关；CI 机械闸 lint-contract-test-immutability 落地后由其强制
 发现其他问题：写进 PR description，不实现
 ```
 
@@ -247,11 +247,11 @@ git add <实现文件> docs/learnings/cp-*.md <配置文件>
 git commit -m "feat(harness): sprint implementation (Green)"
 ```
 
-**硬约束**（CI 强校验）：
+**硬约束**：
 
-1. commit 1 之后，任何 commit 都**不许修改** `sprints/*/tests/**/*.test.ts`
+1. commit 1 之后，任何 commit 都**不许修改** `sprints/*/tests/**/*.test.ts`（由 evaluator CONTRACT-IS-LAW 与 judge 复核把关；CI 机械闸 lint-contract-test-immutability 落地后由其强制）
 2. commit 2+ 必须包含实现代码（`packages/` 或 `apps/` 目录变更），不能只改 docs
-3. commit 1 message 含 `(Red)`，commit 2 message 含 `(Green)`
+3. commit 1 message 含 `(Red)`（lint-tdd-commit-order CI 校验），commit 2 message 含 `(Green)`
 
 **Skeleton 模式**：`IS_SKELETON=true` 时：
 - commit message 改为：`feat(harness): skeleton implementation (Skeleton Green)`
@@ -377,7 +377,7 @@ if [ "$ROUND" -ge 3 ]; then
 fi
 ```
 
-**死规则**：重试期间**只能改实现代码**，绝不允许改 contract / 改测试文件来迁就（违反 CONTRACT IS LAW，CI 强校验测试 diff）。
+**死规则**：重试期间**只能改实现代码**，绝不允许改 contract / 改测试文件来迁就（违反 CONTRACT IS LAW，测试文件不可改由 evaluator CONTRACT-IS-LAW 与 judge 复核把关；CI 机械闸 lint-contract-test-immutability 落地后由其强制）。
 
 ### Step 7: Push + PR
 
@@ -568,7 +568,7 @@ commit 2: feat(harness): skeleton implementation (Skeleton Green)
 
 1. **禁止自写 contract-draft.md** —— 合同是上游 GAN 阶段产出，Generator 只读
 2. **禁止加合同外内容** —— 安全阀/额外测试/顺手修复全不加；测试文件也是合同一部分
-3. **禁止修改从合同 checkout 的测试文件** —— 测试一旦 commit 1 Red，就**不可改**（CI 强校验 git log：测试文件 diff 在 commit 2+ 里必须为空）
+3. **禁止修改从合同 checkout 的测试文件** —— 测试一旦 commit 1 Red，就**不可改**（由 evaluator CONTRACT-IS-LAW 与 judge 复核把关；CI 机械闸 lint-contract-test-immutability 落地后由其强制）
 4. **禁止自判 PASS** —— Evaluator / CI 才是判官
 5. **禁止在 main 分支操作**
 6. **禁止广泛文件搜索** —— `find /Users`、`find /home` 或任何绝对路径搜索；只能在当前目录内（`find .`）
