@@ -1,7 +1,7 @@
 ---
 name: engine-pr-watchdog
-version: 3.1.0
-updated: 2026-05-29
+version: 3.2.0
+updated: 2026-07-06
 description: PR 合并守卫。任何 PR 开完后立刻调用，监控所有 repo 的 open PR，阻塞轮询 CI + 合并状态，CI 失败自动修复，直到全部 PR 合并才退出。不使用 ScheduleWakeup，不提前 exit。
 trigger: 任何 PR 开完之后（gh pr create 之后），立刻调用本 skill。engine-ship 完成后也调用。
 ---
@@ -14,7 +14,7 @@ trigger: 任何 PR 开完之后（gh pr create 之后），立刻调用本 skill
 - CI 失败 → 自动诊断修复 → 继续轮询
 - CI 通过但未 merge → 确认 auto-merge 已启用 → 继续轮询
 - 分支 BEHIND → rebase → 继续轮询
-- 已 merge → 清理 → 继续看下一个 PR
+- 已 merge → 清理 + **写 handoff 交接单（三入口统一终态）** → 继续看下一个 PR
 - 全部合并 → 退出
 - **禁止使用 ScheduleWakeup。禁止提前 exit。**
 
@@ -185,6 +185,45 @@ fi
 echo "✅ PR #$PR_NUMBER 合并清理完成"
 ```
 
+### Step 5.5: 写 handoff 交接单（必做——三入口统一终态）
+
+> **规矩（Alex 2026-07-06 拍板）**：/dev 三条路径（A Bug / B 小改动 / C Harness）的落尾都必须是
+> handoff。路径 C 由 harness reportNode 自动产；路径 A/B 的公共尾巴就是本 skill——merge 确认后
+> 在这里产。**没有下一步就在 next_steps 写「完成，无下一步」，不要在对话里催用户"现在就改吗"。**
+> 协议 = packages/brain/src/handoff.js saveHandoff：tasks.result.handoff（SSOT）+ docs/handoffs/ 镜像。
+
+用 python3 按协议双写（TASK_ID 从 .dev-mode 拿；内容由你根据本次 PR 实际情况填写，禁止套空话）：
+
+```python
+# python3 - <<'EOF' 形式执行；镜像目录 = <主仓>/docs/handoffs/
+import json, subprocess, datetime, os
+h = {
+  "schema_version": 1,
+  "task_id": TASK_ID,                # .dev-mode 的 task_id
+  "initiative_id": None, "journey_id": JOURNEY_ID_OR_NONE,
+  "title": PR_TITLE, "verdict": "PASS",   # 未合并被关/放弃 → FAIL，同样必须写
+  "done": [...],                     # 本次真正交付了什么（面向下一个大脑，不是给人客套）
+  "not_done": [...],                 # 显式声明范围外/遗留（没有写 []）
+  "next_steps": [...],               # 没有下一步 → ["完成，无下一步"]
+  "data_sources": [...],             # 下一个大脑要加载的文件/表/键
+  "decision_refs": [...], 
+  "artifacts": {"pr_urls": [PR_URL], "sprint_dir": None, "branch": BRANCH, "docs": []},
+  "created_at": datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+}
+payload = json.dumps(h, ensure_ascii=False).replace("'", "''")
+subprocess.run(['psql','-h','localhost','-p','5432','-U','postgres','-d','cecelia','-c',
+  f"UPDATE tasks SET result = COALESCE(result,'{{}}'::jsonb) || jsonb_build_object('handoff', '{payload}'::jsonb), updated_at=NOW() WHERE id='{h['task_id']}'::uuid"], check=True)
+# 镜像 markdown：格式照 handoff.js renderHandoffMarkdown（# Handoff：标题 + 完成/没完成/下一步/数据源/决策引用/产物指针）
+# 文件名 docs/handoffs/<YYYYMMDDHHmm>-<task_id前8>.md
+EOF
+```
+
+要求：
+1. **PASS/FAIL 都写**——PR 被关闭/放弃也要 FAIL handoff，说明为什么
+2. TASK_ID 缺失（.dev-mode 无 task_id）→ 跳过 DB 写，只写 docs/handoffs/ 镜像并在文件里注明 task_id=unknown
+3. 写完 handoff 才算本 PR 真正收尾；多 PR 场景每个 PR 各写各的
+```
+
 ---
 
 ## 防护规则
@@ -199,4 +238,4 @@ echo "✅ PR #$PR_NUMBER 合并清理完成"
 
 ## 完成标志
 
-所有活跃 PR 均为 MERGED 或 CLOSED，worktree 已清理，Brain 已回写。
+所有活跃 PR 均为 MERGED 或 CLOSED，worktree 已清理，Brain 已回写，**每个 PR 的 handoff 已写（tasks.result.handoff + docs/handoffs/ 镜像）**。
