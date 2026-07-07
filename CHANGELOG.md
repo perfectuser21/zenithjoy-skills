@@ -1,3 +1,7 @@
+## [2026-07-07] daily-report — created
+**症状**: 用户上传的客户日报 skill（v1.1-7.6）只在会话里流转，无仓库注册、无版本管理、无评测留痕。
+**根因**: skill 由外部制作，从未走 skill-creator 注册流程进入 zenithjoy-skills。
+**修改**: 经 5 轮 Eval 迭代（15 样本小型回归 × 7 模型 × 159 Run）后以 v1.5.0 注册。相对上传版：推进信号判档规则、价格量级禁令、隐含资源承诺越界判定、H2 收口矛盾修复、Eval 纯二值化+3遍多数投票、收口优先范围限定、资料缺失标准句式库、scripts/post_check.py 后置编造检查器。评测结论：Claude/Sonnet/GPT-5.5 通过；gpt-5.4-mini 独立模式 45/45 零编造；DeepSeek v4-pro 需独立模式+检查器兜底。完整报告: https://docs.zenjoymedia.media/daily-report-skill-eval-0707/
 ## [2026-07-05] repo-audit — updated（check-ci.sh coverage 门禁判定扩展到 vitest/jest config）
 **症状**: zenithjoy 给 dashboard vitest.config.ts 加了 coverage thresholds（真实门禁、proven-to-fire），check-ci.sh 仍报 no_coverage_gate 误报。
 **根因**: 脚本只 grep .github/workflows/ 找 thresholds，而 vitest 的门禁惯例写在 vitest.config.* 里（`vitest run --coverage` 自动读 config），workflow 里根本不会出现该关键词。

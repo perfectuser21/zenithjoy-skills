@@ -1,0 +1,12 @@
+interface:
+  display_name: 日报skill-v1.1-7.6
+  short_description: 生成客户日报、销售复盘日报和 Eval 二值断言评测报告。
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
