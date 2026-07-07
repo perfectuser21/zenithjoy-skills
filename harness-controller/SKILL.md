@@ -7,9 +7,10 @@ description: |
   移植 Superpowers 6.0 subagent-driven-development 零件：进度台账 / 文件接力 / 四态出口协议 / 单评审双裁决 / compaction 恢复。
   点火方：Brain harness dispatch（无头）或人工前台（同一份 skill 两种触发，行为一致）。
   /dev 仍是唯一需求入口：本 skill 消费 /dev 路径C 的交接契约（PrepPRD + 铁律清单 + NFR），不做需求对抗。
-version: 1.3.2
+version: 1.4.0
 created: 2026-07-04
 changelog:
+  - 1.4.0: Step 0 新增 0.3 前台点火防护（07-06 infrastructure 任务 8e281976 实证分裂：payload 缺 orchestrator 字段被 Brain 41 秒标 terminal failed，前台 session 浑然不觉继续裸跑）——人工前台接管必做两步：a.确认任务未被标 failed（missing_orchestrator_flag 秒杀）b.PATCH status=in_progress 认领防 tick 双 spawn；并写明前台无 initiative_run 行时 relay-runs 上报 404 是预期行为
   - 1.3.2: Step 3 generator 验收 PR 存在后立即早上报 pr_url（PATCH relay-runs phase=generate + pr_url，非阻塞；端点未上线时 400 忽略）；CI 配套硬规矩 + Step 3 prompt 测试文件措辞改为"由 evaluator CONTRACT-IS-LAW 与 judge 复核把关；CI 机械闸 lint-contract-test-immutability 落地后由其强制"（消除虚假 CI 强校验宣称，对齐 zenithjoy 当前 lint 实际能力）
   - 1.3.1: description 更新 — 由"替代 LangGraph 图的编排位置"改为"唯一编排路径"（cecelia #3554 硬校验 orchestrator=skill-relay，图废弃进入观察期）
   - 1.3.0: EVA 提分五处 additive（GAP #1②/#3/#5/#6/#7①）——①Step 2 合同格式硬检查(BEHAVIOR≥4/E2E段/manual:bash 确定性bash) ②Step 6 merge 前 head==锚定sha 硬检查 + Step 7 PATCH 补 verdict/cost/pr_url ③Step 1 planner 验收扩至尾部两字段+NFR段+行数 ④台账升级每阶段一行+附件(.harness/verdicts/<phase>-<sha7>.json 随 PR 入库) ⑤恢复规则补 generator (Red) commit TDD 纪律核对
@@ -50,6 +51,25 @@ mkdir -p .harness .harness/verdicts
 printf '*\n!.gitignore\n!verdicts/\n!verdicts/**\n' > .harness/.gitignore
 cat "$LEDGER" 2>/dev/null || echo "(新 sprint，无台账)"
 ```
+
+**0.3 前台点火防护（人工前台接管必做；Brain dispatch 注入 env 的无头跑跳过）**
+
+前台点火 = 你自己 POST 注册了 harness_initiative 任务后，本 session 直接接管当 controller（不等 Brain tick 派发）。这条路径有两种分裂风险，07-06 infrastructure 任务 8e281976 实证过第一种：payload 缺 `orchestrator:"skill-relay"` 字段 → Brain executor 硬校验 41 秒把任务标 terminal failed（missing_orchestrator_flag），而前台 session 浑然不觉继续裸跑，Brain 记账与实际执行彻底分裂。第二种：任务停在 queued 会被下一个 tick 捡走 spawn 无头容器，与前台形成双跑。所以接管前必做：
+
+```bash
+# a. 确认任务活着（payload 必须含 orchestrator:"skill-relay"，/dev v21.4.0+ 模板已带；缺了会被秒杀）
+STATUS=$(curl -s "$BRAIN/api/brain/tasks/$HARNESS_TASK_ID" | jq -r '.status // .task.status // empty')
+if [ "$STATUS" = "failed" ]; then
+  echo "任务已被 Brain 标 failed（大概率 payload 缺 orchestrator 字段）——修 payload 重新注册，禁止带着死任务裸跑"
+  exit 1
+fi
+
+# b. 立即认领（queued→in_progress 是合法迁移；dispatcher 只 spawn queued 任务，认领后不会双跑）
+[ "$STATUS" = "queued" ] && curl -s -X PATCH "$BRAIN/api/brain/tasks/$HARNESS_TASK_ID" \
+  -H "Content-Type: application/json" -d '{"status":"in_progress"}'
+```
+
+前台点火没有 initiative_runs 行（该行由 Brain spawnSkillRelaySession INSERT，前台不经过它），因此各阶段的进度上报 `PATCH relay-runs` 会 404（"v2 run not found"）——这是**预期行为**，`|| true` 吞掉即可，不代表流程出错，也不会被 relay-watchdog 误重点火（它只扫 initiative_runs 行）。Brain 侧前台建档端点落地后本段更新。
 
 **恢复规则**：台账里标 `done` 的阶段直接跳过；从第一个无记录阶段续跑。台账记录格式（每阶段一行，append-only）：
 
