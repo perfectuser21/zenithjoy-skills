@@ -7,9 +7,10 @@ description: |
   移植 Superpowers 6.0 subagent-driven-development 零件：进度台账 / 文件接力 / 四态出口协议 / 单评审双裁决 / compaction 恢复。
   点火方：Brain harness dispatch（无头）或人工前台（同一份 skill 两种触发，行为一致）。
   /dev 仍是唯一需求入口：本 skill 消费 /dev 路径C 的交接契约（PrepPRD + 铁律清单 + NFR），不做需求对抗。
-version: 1.4.0
+version: 1.5.0
 created: 2026-07-04
 changelog:
+  - 1.5.0: CI 配套硬规矩扩两条——第 3 条补 zenithjoy smoke 棘轮基线联动（PR #1156 起 baseline-lint 机械强制新 smoke 进 smoke-baseline.txt）；新增第 5 条 E2E 验收脚本必须有 CI 回归宿主（merge 前确认 e2e-verify 脚本入库且被 e2e-*.yml paths 或 nightly glob 收集，堵"E2E 只活一次"的持续回归洞，与合同测试第 1 条对称）
   - 1.4.0: Step 0 新增 0.3 前台点火防护（07-06 infrastructure 任务 8e281976 实证分裂：payload 缺 orchestrator 字段被 Brain 41 秒标 terminal failed，前台 session 浑然不觉继续裸跑）——人工前台接管必做两步：a.确认任务未被标 failed（missing_orchestrator_flag 秒杀）b.PATCH status=in_progress 认领防 tick 双 spawn；并写明前台无 initiative_run 行时 relay-runs 上报 404 是预期行为
   - 1.3.2: Step 3 generator 验收 PR 存在后立即早上报 pr_url（PATCH relay-runs phase=generate + pr_url，非阻塞；端点未上线时 400 忽略）；CI 配套硬规矩 + Step 3 prompt 测试文件措辞改为"由 evaluator CONTRACT-IS-LAW 与 judge 复核把关；CI 机械闸 lint-contract-test-immutability 落地后由其强制"（消除虚假 CI 强校验宣称，对齐 zenithjoy 当前 lint 实际能力）
   - 1.3.1: description 更新 — 由"替代 LangGraph 图的编排位置"改为"唯一编排路径"（cecelia #3554 硬校验 orchestrator=skill-relay，图废弃进入观察期）
@@ -244,8 +245,9 @@ curl -s -X PATCH "$BRAIN/api/brain/orchestrator/relay-runs/${HARNESS_INITIATIVE_
 
 1. 合同测试 merge 后**永久留在 repo** 跑 regression——merge 前确认测试文件在 PR diff 里且路径在 CI 收集范围
 2. tdd-commit-order（提交顺序）由 lint-tdd-commit-order CI 强校验；测试文件 commit 1 后不可改——由 evaluator CONTRACT-IS-LAW 与 judge 复核把关，CI 机械闸 lint-contract-test-immutability 落地后由其强制；controller 不得绕过任何已有门禁
-3. feat PR 必须带 smoke 脚本（CI lint 强制）
+3. feat PR 必须带 smoke 脚本（CI lint 强制）；zenithjoy 侧该 smoke 必须同步加进 `.github/workflows/scripts/smoke-baseline.txt`（棘轮闸 baseline-lint 机械强制，PR #1156 起——新债不欠，漏加 = `Smoke Glob Gate Passed` 红合不进）
 4. **禁 `gh pr merge --admin`**，禁绕 CI
+5. **E2E 验收脚本必须有 CI 回归宿主**（与第 1 条对称——合同测试留 repo 还不够，E2E 脚本也不能"只活一次"）：merge 前确认 contract-draft.md `## E2E 验收` 落地的脚本（e2e-verify.ps1 / e2e-verify.sh）已随 PR 入库到 `sprints/<sprint_dir>/`，且被某个 workflow 收集（现有 e2e-*.yml 的 paths 命中、或 nightly e2e glob 收集范围内）。evaluator 跑过一次 ≠ 有人持续守着；查不到收集宿主 → 让 generator 补 workflow 接线后才许 merge
 
 ## 文件接力纪律（SDD 6.0）
 
