@@ -1,3 +1,7 @@
+## [2026-07-07] skill-creator — updated
+**症状**: sync-skill-to-notion.py 注册新 skill 时，数据被误写进 _smoke-test-skill 脏记录（daily-report 注册时实锤，此前 harness-controller 描述也曾污染同一条）。
+**根因**: Brain API GET /api/brain/skills 无视 name= 查询参数返回全表，脚本取 existing[0] 直接 PATCH——找不到目标时误伤列表第一条；且 limit=5 使已存在 skill 也可能查不到导致重复建行。
+**修改**: 改为全量拉取(limit=1000)后客户端按名字精确匹配（兼容 / 前缀），匹配不到才 POST 新建。函数级三用例验证：新建走POST/已存在走PATCH/斜杠前缀兼容。
 ## [2026-07-07] daily-report — created
 **症状**: 用户上传的客户日报 skill（v1.1-7.6）只在会话里流转，无仓库注册、无版本管理、无评测留痕。
 **根因**: skill 由外部制作，从未走 skill-creator 注册流程进入 zenithjoy-skills。
