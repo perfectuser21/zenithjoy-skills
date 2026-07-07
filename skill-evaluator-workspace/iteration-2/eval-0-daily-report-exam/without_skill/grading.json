@@ -1,0 +1,66 @@
+{
+  "run_id": "iteration-2/eval-0-daily-report-exam/without_skill",
+  "expectations": [
+    {
+      "text": "功能地图识别出至少 4 条功能线（单客户日报/批量或整批日报/汇总日报/详细版等）",
+      "passed": false,
+      "evidence": "Run B 无功能地图产物，report.md 只有包结构与缺陷清单，未枚举功能线；按『无功能地图产物断言判 false』判 FAIL。"
+    },
+    {
+      "text": "发现 H3：按客户名读数据库这一核心前提没有任何数据接口定义，主路径不可执行",
+      "passed": true,
+      "evidence": "report.md D1『核心卖点按客户名自动抓取资料没有任何可执行的数据获取机制……头号功能事实上不可用』，命中答案 H3。"
+    },
+    {
+      "text": "发现 H1：eval 规则多处重复且不一致",
+      "passed": true,
+      "evidence": "report.md D5『Eval 框架大面积逐字重复……11 项断言表全包出现 ≥4 次』，命中答案 H1。"
+    },
+    {
+      "text": "发现 H2r：价格类内部矛盾残留——钱总 golden 期望给价格区间，与 §11.2/§14 反编造铁律冲突",
+      "passed": true,
+      "evidence": "report.md D10『§11.2 与 Golden Answer 示例存在表述张力……钱总示例第 8 条写给大概区间，与 §11.2 未提供不得给区间并列易困惑』，命中答案 H2r。"
+    },
+    {
+      "text": "发现 H4：通过标准依赖核心项/大部分等未定义概念，不可机械执行",
+      "passed": false,
+      "evidence": "report.md 全篇未提及 eval 通过口径『核心项/大部分』未定义的问题，grep 无命中。"
+    },
+    {
+      "text": "修正版答案 14 项（answer-key-v2.md）总召回不少于 8 项",
+      "passed": true,
+      "evidence": "命中 H1/H2r/H3/M2/M3/M5/M7/L1/L2 共 9 项，达到阈值。"
+    },
+    {
+      "text": "生成至少 5 道 yes/no 梳理向导题，且包含编造红线题",
+      "passed": false,
+      "evidence": "Run B 无梳理向导产物，未生成任何 yes/no 向导题；按规则判 FAIL。"
+    },
+    {
+      "text": "生成断言合同且包含至少一条 HF 一票否决项",
+      "passed": false,
+      "evidence": "Run B 无断言合同产物，report.md 未产出可机械判定的断言清单或 HF 项；按规则判 FAIL。"
+    },
+    {
+      "text": "报告给出明确三档裁决（通过/部分通过/不通过），且功能地图在报告第一屏",
+      "passed": false,
+      "evidence": "report.md 结论为『可作为内容规格验收通过，不建议作为可上线 Skill 验收通过』的二分表述，非通过/部分通过/不通过三档；且第一屏无功能地图。"
+    },
+    {
+      "text": "被测 skill 包解包后的文件未被修改（只读红线守住）",
+      "passed": true,
+      "evidence": "diff -rq 原 zip 解包 vs without_skill/subject/daily-report-v1-2 退出码 0，字节级一致，未改动。"
+    }
+  ],
+  "recall": {
+    "hit": ["H1", "H2r", "H3", "M2", "M3", "M5", "M7", "L1", "L2"],
+    "miss": ["H4", "M4", "M6", "L3", "L4"]
+  },
+  "summary": {
+    "passed": 5,
+    "failed": 5,
+    "total": 10,
+    "pass_rate": 0.5
+  },
+  "summary_text": "without_skill 卷通过 5/10：缺陷召回本身很强（9/14，甚至抓到 with_skill 漏掉的 H2r 价格矛盾和 M5 description 问题），只读红线守住，H1/H3 硬缺陷都命中。失分集中在没有结构化产物——无功能地图、无梳理向导、无断言合同，且未给三档裁决、漏掉 H4 核心项未定义。它是一份好的自由体审查报告，但不符合验收 skill 要求的固定产物骨架。"
+}
