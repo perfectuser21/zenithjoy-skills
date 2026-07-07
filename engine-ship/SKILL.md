@@ -1,7 +1,7 @@
 ---
 name: engine-ship
-version: 16.2.0
-updated: 2026-05-07
+version: 16.3.0
+updated: 2026-07-07
 description: Cecelia /dev 接力链终棒。Superpowers finishing 完成 push+PR 后，写 Learning + 触发 Brain fire-learnings-event + 标记 step_4_ship=done。完成后下一 tool call 必须 Skill(engine-pr-watchdog)。
 trigger: Superpowers finishing-a-development-branch 完成后，按 /dev SKILL.md Phase 5 硬规则点火
 ---
@@ -71,6 +71,19 @@ git push origin HEAD
 
 - `.dev-mode` 里 `step_4_ship: done`（两模式都必须）
 - harness_mode=false 时额外：`docs/learnings/<branch>.md` 存在且已 push
+
+---
+
+## Handoff 终态（v16.3 — decision cf998025）
+
+**路径 A/B（engine-ship 是终棒前一棒）**：engine-pr-watchdog Step 5.5 在 PR merge 后自动写 handoff 终态单：
+- PASS/FAIL 均写（FAIL 的 handoff 价值更大）
+- `tasks.result.handoff` 是 SSOT；`docs/handoffs/<timestamp>-<task_id_slice>.md` 是镜像
+- `next_steps` 为空时显式写"完成，无下一步"，不许留空
+
+**路径 C（Harness）**：reportNode 在 evaluator PASS 后自动产 handoff，engine-ship 无需额外操作。
+
+**engine-ship 本身不写 handoff**——它只负责 push/PR/Learning/Brain 回写，handoff 由 engine-pr-watchdog 收尾。
 
 ---
 

@@ -5,8 +5,11 @@ description: |
   包含 10 张手动写入表的 Brain API 规范和 Output Template，以及 AI Notes 的 5 种 Type 写法。
   Notion 同步是自动副作用（Brain tick 每5分钟 push），不需要手动操作。
   触发场景：写 Journey / Step / Feature / Sprint / 任何 Note 类型 / Issue / Learning / Decision 时。
-version: 1.0.0
+version: 1.1.0
 created: 2026-06-01
+updated: 2026-07-07
+changelog:
+  - 1.1.0: decisions 表 judgment category 约定（decision e035dad8）— 登记判定点时 category 必须使用 "judgment"，正文必须包含候选方法/所选方法/依据/误判后果四字段；与 nfr / invariant 并列为三种强制 category
 ---
 
 > **核心原则：Brain DB 是唯一真相源。所有写入先走 Brain API，Notion 自动同步，禁止直接写 Notion。**
@@ -289,6 +292,34 @@ Name 自动生成格式：`{JourneyCode}-S{step_order}`（如 `L01-S4`、`ZjOps-
   "content": "## DOD\n- [ ] ARTIFACT: ...\n- [ ] BEHAVIOR: ...",
   "initiative_id": "sprint-task-uuid"
 }
+```
+
+---
+
+## decisions 表 category 约定（v1.1 — decision e035dad8）
+
+decisions 表的 `category` 字段有三种强制分类，写法见下。**禁止把 category 改成 type（type 被 Brain API 忽略，category 才是路由键）。**
+
+| category | 用途 | content 必须包含的字段 |
+|----------|------|----------------------|
+| **`invariant`** | 铁律 — 永远成立的系统约束 | `## 铁律` `## 违反后果` `## 适用范围` |
+| **`nfr`** | 非功能需求 — 性能/可靠性/规模约束 | `## 指标` `## 阈值` `## 测量方式` |
+| **`judgment`** | 判定点 — 实现对模糊现实的判断假设（decision e035dad8）| `## 判定场景` `## 候选方法` `## 所选方法` `## 选择依据` `## 误判后果` |
+
+### judgment category 写法示例
+
+```bash
+curl -s -X POST localhost:5221/api/brain/strategic-decisions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "topic": "RPA 消息是否发出的判定方法",
+    "decision": "DB 写入记录 + 时间窗口断言",
+    "reason": "截图比对不稳定（屏幕分辨率/字体渲染差异），UIA 事件可能在异步窗口丢失；DB 记录 + created_at 时间窗是最可靠的接缝断言",
+    "made_by": "user",
+    "author": "user",
+    "category": "judgment",
+    "content": "## 判定场景\nRPA 发送微信消息后，如何确认消息已真实发出\n\n## 候选方法\n1. 截图比对 2. UIA 事件监听 3. DB 写入记录+时间窗\n\n## 所选方法\nDB 写入记录 + `created_at > NOW() - interval 5 minutes`\n\n## 选择依据\n截图比对不稳定；UIA 异步窗口可能丢事件；DB 记录最可验证\n\n## 误判后果\n误判已发 → 用户未收到消息，客服失联"
+  }'
 ```
 
 ---

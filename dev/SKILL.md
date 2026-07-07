@@ -1,10 +1,11 @@
 ---
 name: dev
-version: 21.4.0
-updated: 2026-07-05
+version: 21.5.0
+updated: 2026-07-07
 description: Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→比对已有Steps展示Golden Path草稿→确认前置工作全部到位→用户确认PrepPRD→路由执行
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
+  - 21.5.0: 大功能 PrepPRD 补四要素提示段（decision 27b57469/e035dad8/cf998025）— PrepPRD 验收标准前加「四要素简评」必答项（八要素一行判断/判定点有无/失败语义声明/输入对抗面），引导 proposer 后续在合同里展开；注明 engine-ship 完成后由 engine-pr-watchdog 自动写 handoff 终态（路径 A/B）
   - 21.4.0: 路径C点火 payload 补 orchestrator=skill-relay 硬性字段 — cecelia #3554（2026-07-05）起 Brain 硬校验 payload.orchestrator==='skill-relay'，缺失/非法直接 terminal failed（missing_orchestrator_flag），LangGraph 图不再隐式兜底
   - 21.3.0: 新增「哨兵（回归守卫）死规矩」节（谁写/啥时候/写哪/CI闸门卡 + 失控程度越高守卫越重 + 一份代码两处用）；Bug PrepPRD 加 proven-to-fire 守卫指针与验收项
   - 21.2.0: decision 写入加内联警告注释（禁止把 category 改成 type；type 被 Brain API 忽略）；清理旧 eval 目录混入
@@ -336,6 +337,12 @@ Phase 1 收敛后，派三路 Agent 并行执行，各自输出覆盖声明：
 
 ### 基础设施
 - [x] [服务/端口] — [已就绪 / 启动命令]
+
+## 四要素简评（逐项必答，proposer 合同阶段展开详情 — decision 27b57469/e035dad8）
+- 八要素核查：FR ✅/⚠️ | NFR ✅/⚠️ | 铁律 [已注入/无] | 判定点 [N条/无] | 保质期 [描述/无限期] | 死亡告警 [描述/N/A] | 失败语义 [有/N/A] | 效果确认 [方式/无对外动作]
+- 判定点：[有 — 简述模糊判定场景] / [无]
+- 失败语义：[简述关键失败信号] / N/A
+- 输入对抗面：[对外 agent — 简述风险面] / N/A — 非对外 agent
 
 ## 验收标准（Final E2E）
 - [ ] [可验证的条件，如：ffprobe 验证输出视频有视频流+音频流+时长>0]

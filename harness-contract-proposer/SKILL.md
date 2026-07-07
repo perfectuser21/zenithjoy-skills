@@ -4,10 +4,11 @@ description: |
   Harness Contract Proposer — Harness v5 GAN Layer 2a：
   读 PRD，GAN 对抗写 Golden Path 合同（每步含真实验证命令）；
   Reviewer APPROVED 后倒推拆 task-plan.json。
-version: 9.5.0
+version: 9.6.0
 created: 2026-04-08
-updated: 2026-07-05
+updated: 2026-07-07
 changelog:
+  - 9.6.0: 四要素结构段强制入合同（decision 27b57469/e035dad8/cf998025）— contract-draft.md 末尾必须包含四段：① 八要素效果核查 checklist（FR/NFR/铁律/判定点/保质期/死亡告警/失败语义/效果确认，逐项必答可 N/A）② 判定点登记表（候选方法/所选/依据/误判后果）③ 失败语义声明 ④ 输入对抗面（对外 agent 必填，纯内部 N/A）；自查 checklist 加第 8 条验证四段存在
   - 9.5.0: EVA 提分三件套（GAPS #1/#9）— (a) GAP #1①：Step 2b 后新增「合同格式确定性自查」bash 脚本块（grep -c [BEHAVIOR] ≥4 / contract-draft.md 存在 ## E2E 验收 段 / contract-dod.md 无预勾 [x] / BEHAVIOR 条目带 Test: manual:），任一不过必须重写，禁止交付脱模板合同——机器卡，不靠自觉；(b) GAP #1③：Test Contract 表新增「BEHAVIOR 覆盖名必须是对应 it()/测试名的子串」规则进正文 + 正反例（07-04 四跑 4/4 踩坑）；(c) GAP #9：文末新增「Relay 模式出口协议」附录（RELAY_STATUS 四态，照抄 generator T5 格式）；.brain-result.json 路径改 ${WORKSPACE_PATH:-/workspace} 宿主 fallback（对齐 evaluator 写法）
   - 9.4.0: 变体C 补后端启动 + 禁 page.route() — 变体C 模板新增 Step 2.5 启动 apps/api server（port 3000）+ 等待就绪；Playwright spec 必须打真实后端，禁止使用 page.route() 拦截 API 请求；新增「变体C 死规则」段（5 条禁令）；修 contract-draft.md ## E2E 验收 禁止写"不依赖真后端/stub"字样
   - 9.3.0: 补「接缝断言」规则（修真环境逐个炸根因）— (a)「领域验证规则（全局强制）」表新增「真机 RPA / 生产环境集成」一行：微信/抖音真机操控、依赖生产中台 env 的链路，Final E2E 必须在【真目标】上验证（真机微信真收真回屏幕不闪 / 生产 env 真出 reply），不是 mock/CI 绿；(b) 新增「DoD 必须分两类断言（接缝 vs 逻辑）」小节：逻辑断言(环境无关)CI/单测验绿=真done；接缝断言(环境相关:真机UIA/生产env/真实调用方)必须真目标验，产出合同时列「接缝清单」(1-3条)每条写明真目标验证方式，未真验标 logic-done-pending 不得标 done；写断言前必答「这功能在哪几个点碰真实世界」；禁止写死环境假设值(屏幕外坐标/UIA阈值/假设调用方传X/假设env有Y)，必从环境推导或真机校准
@@ -915,6 +916,12 @@ PRD `## Response Schema` 段定义的字段名（key 字面值）是**不可改�
 5. **断言（v7.6 新加 — Bug 9）**：`grep -c '^- \[ \] \[BEHAVIOR\]' contract-dod.md` ≥ 4。少于 4 → contract 作废，按 Step 2b 模板补齐到 ≥ 4 条不同场景（schema 字段 + keys 完整性 + 禁用字段反向 + error path 至少各 1）
 6. **假绿自查（v7.12 新加 — Bug 10）**：对每条 `[BEHAVIOR]` 命令，心想"如果对应代码**一行都没写**，这条命令会 FAIL 吗？"。答案是 YES → 真红，合格；答案是 NO（mkdir/touch/health check/404-acceptable 都能通过）→ **假绿，必须改写**
 7. **Golden Path 溯源（v9.0 新加）**：对每条 `[BEHAVIOR]`，回答「这是 Golden Path 哪一步的用户可观察输出？」——答不出来 → 删掉该条目或补对应 Golden Path 步骤；命令里含 `MOCK_*` 环境变量或 mock 对象 → 不合格；Golden Path 含微信操作但 `target_environment` 写 `windows_cloud` → 路由错误，必须改 `windows_wechat`
+8. **四要素结构段存在性（v9.6 新加 — 机器验证）**：`contract-draft.md` 必须含以下四个 section 标题，缺一项 → 合同作废补齐后重跑
+   ```bash
+   for section in "八要素效果核查" "判定点登记表" "失败语义声明" "输入对抗面"; do
+     grep -q "§ $section" "${SPRINT_DIR}/contract-draft.md" || { echo "SELF-CHECK FAIL: 缺四要素段「$section」"; SELF_CHECK_FAIL=1; }
+   done
+   ```
 
 任一断言 fail → contract 草案作废，**用 PRD 字面字段名 + ≥ 4 条 [BEHAVIOR] 重写**。
 
@@ -1101,6 +1108,11 @@ fi
 MC=$(grep -c 'Test: manual:' "${SPRINT_DIR}/contract-dod.md")
 [ "$MC" -ge "$BC" ] || { echo "SELF-CHECK FAIL: [BEHAVIOR] ${BC} 条但 'Test: manual:' 只有 ${MC} 条（每条 BEHAVIOR 必须内嵌 manual: 命令）"; SELF_CHECK_FAIL=1; }
 
+# 5. 四要素结构段存在性（v9.6 — decision 27b57469/e035dad8）
+for section in "八要素效果核查" "判定点登记表" "失败语义声明" "输入对抗面"; do
+  grep -q "§ $section" "${SPRINT_DIR}/contract-draft.md" || { echo "SELF-CHECK FAIL: contract-draft.md 缺四要素段「$section」"; SELF_CHECK_FAIL=1; }
+done
+
 [ "$SELF_CHECK_FAIL" -eq 0 ] && echo "✅ 合同格式自查通过" || { echo "❌ 合同脱模板，禁止交付——重写后重跑本脚本"; exit 1; }
 ```
 
@@ -1241,6 +1253,51 @@ Brain 读此文件获取结果，不解析 stdout。`$PROPOSE_BRANCH` 由 Brain 
 | 确属误报/特例 | 在合同中加独立一行：`gate-allow: <rule-id> <一句话理由>`（豁免留痕，gate 输出会展示）。rule-id 见命中反馈，如 weak-oracle/curl-no-jq、cheat/or-true | 反复改写法绕规则字面而不改实质 |
 
 **写完合同自查**：每条 [BEHAVIOR]/E2E 命令对照上表过一遍，比被 gate 打回一轮便宜得多。
+
+## ⚡ 四要素结构段（v9.6 强制 — decision 27b57469 / e035dad8 / cf998025）
+
+**`contract-draft.md` 的 `## E2E 验收` 之后必须包含以下四段。逐项必答，不适用时填 `N/A — <一句话理由>`，禁止整段留空。** 自查 checklist 第 8 条会机器验证这四段是否存在。
+
+### § 八要素效果核查（checklist，decision 27b57469）
+
+> 八要素 = FR / NFR / 铁律 / 判定点 / 保质期 / 死亡告警 / 失败语义 / 效果确认（已发送 ≠ 已生效）
+
+| 要素 | 本 Sprint 评估 |
+|------|--------------|
+| **FR（功能需求）** | 已覆盖 / 部分覆盖 — `<理由>` / N/A — `<理由>` |
+| **NFR（非功能需求）** | 已覆盖 / N/A — `<理由>` |
+| **铁律（Invariants）** | 注入合同：`<清单>` / 无相关铁律 / N/A |
+| **判定点** | 已登记 N 条（见下表）/ 无模糊判定点 / N/A |
+| **保质期（Expiry）** | 有效直到：`<日期/条件>` / 无限期 / N/A |
+| **死亡告警（Death Alarm）** | 告警机制：`<描述>` / 已有体外哨兵覆盖 / N/A |
+| **失败语义** | 已声明（见下段）/ N/A — `<理由>` |
+| **效果确认（已发送≠已生效）** | 回执验证：`<方式>` / 无对外动作 / N/A |
+
+### § 判定点登记表（decision e035dad8）
+
+> 判定点 = 实现对模糊现实的判断假设，FR/NFR 之外的第三类：**怎么知道**。无模糊判定点时填"本 Sprint 无新增判定点"。
+
+| 判定点 | 候选方法 | 所选方法 | 选择依据 | 误判后果 |
+|--------|---------|---------|---------|---------|
+| ... | ... | ... | ... | ... |
+
+### § 失败语义声明
+
+> 每条 [BEHAVIOR] 命令在失败场景下必须返回非 0 exit。此处显式声明失败语义，供 evaluator 判读。
+
+| 失败场景 | 可见信号（exit code / DB / 告警）| 不算失败（边界说明）|
+|---------|--------------------------------|-------------------|
+| ... | ... | ... |
+
+### § 输入对抗面（decision 27b57469，对外 agent 必填）
+
+> 适用：接受外部用户/平台输入的系统（Line04 面客渠道、webhook 入口、任何 agent_remote 类型）。纯内部自动化系统填 `N/A — 非对外 agent`。
+
+| 攻击向量 | 风险等级 | 防护措施 |
+|---------|---------|---------|
+| ... | ... | ... |
+
+---
 
 ## 禁止事项
 
