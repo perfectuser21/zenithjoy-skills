@@ -1,10 +1,11 @@
 ---
 name: dev
-version: 21.4.0
-updated: 2026-07-05
+version: 21.5.0
+updated: 2026-07-07
 description: Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→比对已有Steps展示Golden Path草稿→确认前置工作全部到位→用户确认PrepPRD→路由执行
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
+  - 21.5.0: 路径A/B 终态 handoff 说明（decisions cf998025）— engine-pr-watchdog 3.2.0 起，路径 A/B merge 后自动写 handoff（SSOT: tasks.result.handoff + 镜像 docs/handoffs/），无下一步写明「完成」；engine-ship 说明同步更新；无行为变更，仅文档对齐
   - 21.4.0: 路径C点火 payload 补 orchestrator=skill-relay 硬性字段 — cecelia #3554（2026-07-05）起 Brain 硬校验 payload.orchestrator==='skill-relay'，缺失/非法直接 terminal failed（missing_orchestrator_flag），LangGraph 图不再隐式兜底
   - 21.3.0: 新增「哨兵（回归守卫）死规矩」节（谁写/啥时候/写哪/CI闸门卡 + 失控程度越高守卫越重 + 一份代码两处用）；Bug PrepPRD 加 proven-to-fire 守卫指针与验收项
   - 21.2.0: decision 写入加内联警告注释（禁止把 category 改成 type；type 被 Brain API 忽略）；清理旧 eval 目录混入
@@ -437,6 +438,8 @@ Skill({"skill":"superpowers:systematic-debugging"})
 
 systematic-debugging → engine-worktree → Superpowers autonomous 接力链 → fix PR → engine-ship → engine-pr-watchdog
 
+> **终态 handoff**（decisions cf998025）：engine-pr-watchdog 3.2.0 起在 merge 确认后自动写 handoff（SSOT: `tasks.result.handoff` + 镜像 `docs/handoffs/<timestamp>-<taskId>.md`）。无下一步时写明「完成，无下一步」。路径 A merge 后即为本任务终态。
+
 ---
 
 ### 路径 B：小改动
@@ -475,6 +478,8 @@ Tier 1 固定默认：
 - finishing → Option 2 (push+PR)
 - finishing 完成 → 下一 tool call 必须 `Skill({"skill":"engine-ship"})` → engine-ship 完成 → 下一 tool call 必须 `Skill({"skill":"engine-pr-watchdog"})`
 - BLOCKED 第 3 次 → `superpowers:dispatching-parallel-agents`
+
+> **终态 handoff**（decisions cf998025）：engine-pr-watchdog 3.2.0 起在 merge 确认后自动写 handoff（SSOT: `tasks.result.handoff` + 镜像 `docs/handoffs/<timestamp>-<taskId>.md`）。无下一步时写明「完成，无下一步」。路径 B merge 后即为本任务终态。
 
 **smoke.sh 强制（feat: 类 PR）：**
 - ZenithJoy：必须有 `.github/workflows/scripts/smoke/<feature>-smoke.sh`

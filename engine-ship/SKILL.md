@@ -1,7 +1,7 @@
 ---
 name: engine-ship
-version: 16.2.0
-updated: 2026-05-07
+version: 16.3.0
+updated: 2026-07-07
 description: Cecelia /dev 接力链终棒。Superpowers finishing 完成 push+PR 后，写 Learning + 触发 Brain fire-learnings-event + 标记 step_4_ship=done。完成后下一 tool call 必须 Skill(engine-pr-watchdog)。
 trigger: Superpowers finishing-a-development-branch 完成后，按 /dev SKILL.md Phase 5 硬规则点火
 ---
@@ -77,3 +77,13 @@ git push origin HEAD
 ## TERMINAL IMPERATIVE
 
 engine-ship 是 /dev 接力链倒数第二棒。**完成后下一 tool call 必须是 `Skill({"skill":"engine-pr-watchdog"})`**，由它接管 CI 监控 + 自动合并 + cleanup。CI 红 → engine-pr-watchdog 内部调 `superpowers:systematic-debugging`。
+
+## 终态 Handoff 说明（decisions cf998025 — engine-pr-watchdog 3.2.0）
+
+engine-pr-watchdog 3.2.0 起，merge 确认后**自动写 handoff**，路径 A/B 无需手动写：
+- **SSOT**：`tasks.result.handoff`（Brain DB，task_id 对应行）
+- **镜像**：`docs/handoffs/<timestamp>-<taskId>.md`（仓库内，可 grep 查历史）
+- **格式协议**：`packages/brain/src/handoff.js`（saveHandoff 函数）
+- **无下一步时**：next_steps 字段显式写「完成，无下一步」，禁止留空
+
+engine-ship 本身不写 handoff，只负责 Learning + fire-event + done-marker；handoff 是 engine-pr-watchdog 在 merge 后的收尾职责。

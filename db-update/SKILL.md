@@ -5,8 +5,11 @@ description: |
   包含 10 张手动写入表的 Brain API 规范和 Output Template，以及 AI Notes 的 5 种 Type 写法。
   Notion 同步是自动副作用（Brain tick 每5分钟 push），不需要手动操作。
   触发场景：写 Journey / Step / Feature / Sprint / 任何 Note 类型 / Issue / Learning / Decision 时。
-version: 1.0.0
+version: 1.1.0
 created: 2026-06-01
+updated: 2026-07-07
+changelog:
+  - 1.1.0: decisions 写入 judgment category 约定（decisions 27b57469/e035dad8）— 新增「判定点相关决策写法」段：判定点被纠正时经 ❌→Invariant Gate 写 category=invariant；新发现判定假设写 category=judgment；action_receipts 写法示例（migration 315 新表）
 ---
 
 > **核心原则：Brain DB 是唯一真相源。所有写入先走 Brain API，Notion 自动同步，禁止直接写 Notion。**
@@ -313,6 +316,74 @@ done
 | api_registry | 代码扫描自动填 |
 | db_schema_registry | migrations 扫描自动填 |
 | test_registry | 测试文件扫描自动填 |
+
+---
+
+## 判定点相关决策写法（decisions 27b57469/e035dad8 — migration 315）
+
+### decisions 表 — category=judgment（新发现判定假设）
+
+当 Proposer 首次在合同里登记一个判定点（对模糊现实的判断假设），写入 decisions 表：
+
+```bash
+curl -s -X POST localhost:5221/api/brain/strategic-decisions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "topic": "<判定点简述，如：微信群是否发送成功的判定方法>",
+    "decision": "<所选方法及依据>",
+    "reason": "<为什么选此方法而非候选方法>",
+    "category": "judgment",
+    "made_by": "cecelia",
+    "author": "cecelia"
+  }'
+```
+
+`category=judgment` 约定（decisions e035dad8）：用于标记系统自行选择的判定假设，供 Invariant Gate 追踪与 Alex 复盘纠正。
+
+### decisions 表 — category=invariant（判定点被 Alex 纠正后）
+
+当 Alex 纠正了某个判定方法（经 ❌→Invariant Gate 流程），写入 decisions 表固化为铁律：
+
+```bash
+curl -s -X POST localhost:5221/api/brain/strategic-decisions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "topic": "<纠正后的判定方法>",
+    "decision": "<正确判定方法>",
+    "reason": "Alex 纠正：<旧方法> 误判后果=<后果>；改为 <新方法>",
+    "category": "invariant",
+    "made_by": "user",
+    "author": "user"
+  }'
+```
+
+`category=invariant` 表示此判定方法已升级为铁律，后续合同的判定点登记表必须引用。
+
+### action_receipts 表 — 对外动作效果回执（migration 315 新表）
+
+每个对外动作（发飞书/发 Bark/调 API/触发部署）完成后写回执，对应八要素的「效果确认」要素：
+
+```bash
+# 发送动作后立即写 pending
+curl -s -X POST localhost:5221/api/brain/action-receipts \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action_id": "<唯一动作 ID，如 task_id+动作类型>",
+    "kind": "<动作类型：bark_notify|feishu_msg|deploy_trigger|api_call>",
+    "target": "<接收方：手机/飞书群/服务名>",
+    "receipt_status": "pending"
+  }'
+
+# 确认生效后更新为 confirmed（或 failed/timeout）
+curl -s -X PATCH localhost:5221/api/brain/action-receipts/<action_id> \
+  -H "Content-Type: application/json" \
+  -d '{
+    "receipt_status": "confirmed",
+    "evidence": {"screenshot": "...", "response_code": 200}
+  }'
+```
+
+**receipt_status 合法值**：`pending` | `confirmed` | `failed` | `timeout`（已发送≠已生效，必须等待回执）
 
 ---
 
