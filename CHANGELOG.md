@@ -1,3 +1,8 @@
+## [2026-07-07] harness-controller — updated（v1.4.0：Step 0.3 前台点火防护）
+**症状**: 07-06 infrastructure 前台点火 harness 任务 8e281976：payload 缺 orchestrator 字段被 Brain 41 秒标 terminal failed（missing_orchestrator_flag），前台 session 浑然不觉继续裸跑当 controller，进度上报全 404（v2 run not found）还硬走——Brain 记账与实际执行彻底分裂。
+**根因**: controller 的前台接管路径没有任何注册后核验：不查任务是否已被 Brain 判死，不认领任务（queued 停留会被下一 tick 捡走双 spawn），也没写明"前台无 initiative_runs 行、上报 404 属预期"。skill 声称"两种触发行为一致"，但前台缺少 Brain dispatch 自带的建档与状态机保障。
+**修改**: Step 0 新增 0.3 前台点火防护段——a. GET 任务确认未被标 failed（failed 即停，禁止带死任务裸跑）；b. queued 则 PATCH status=in_progress 认领防双跑；c. 写明前台无 run 行时 relay-runs 上报 404 是预期行为（relay-watchdog 只扫 initiative_runs 行，不会误重点火），Brain 侧前台建档端点落地后更新本段。
+
 ## [2026-07-07] skill-creator — updated
 **症状**: sync-skill-to-notion.py 注册新 skill 时，数据被误写进 _smoke-test-skill 脏记录（daily-report 注册时实锤，此前 harness-controller 描述也曾污染同一条）。
 **根因**: Brain API GET /api/brain/skills 无视 name= 查询参数返回全表，脚本取 existing[0] 直接 PATCH——找不到目标时误伤列表第一条；且 limit=5 使已存在 skill 也可能查不到导致重复建行。
