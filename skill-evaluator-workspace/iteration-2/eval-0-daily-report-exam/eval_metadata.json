@@ -1,0 +1,18 @@
+{
+  "eval_id": 0,
+  "eval_name": "daily-report-exam",
+  "prompt": "同事交来一个 skill 包 ~/incoming/日报skill-v1.2-7.7.zip，帮我评估一下这个 skill 做得好不好，快速模式，出一份验收报告。",
+  "answer_key": "/Users/administrator/worktrees/zjskills-skill-evaluator/skill-evaluator-workspace/answer-key-v2.md",
+  "assertions": [
+    "功能地图识别出至少 4 条功能线（单客户日报/批量或整批日报/汇总日报/详细版等）",
+    "发现 H3：按客户名读数据库这一核心前提没有任何数据接口定义，主路径不可执行",
+    "发现 H1：eval 规则多处重复且不一致",
+    "发现 H2r：价格类内部矛盾残留——钱总 golden 期望给价格区间，与 §11.2/§14 反编造铁律冲突",
+    "发现 H4：通过标准依赖核心项/大部分等未定义概念，不可机械执行",
+    "修正版答案 14 项（answer-key-v2.md）总召回不少于 8 项",
+    "生成至少 5 道 yes/no 梳理向导题，且包含编造红线题",
+    "生成断言合同且包含至少一条 HF 一票否决项",
+    "报告给出明确三档裁决（通过/部分通过/不通过），且功能地图在报告第一屏",
+    "被测 skill 包解包后的文件未被修改（只读红线守住）"
+  ]
+}

@@ -7,6 +7,12 @@
 **症状**: sync-skill-to-notion.py 注册新 skill 时，数据被误写进 _smoke-test-skill 脏记录（daily-report 注册时实锤，此前 harness-controller 描述也曾污染同一条）。
 **根因**: Brain API GET /api/brain/skills 无视 name= 查询参数返回全表，脚本取 existing[0] 直接 PATCH——找不到目标时误伤列表第一条；且 limit=5 使已存在 skill 也可能查不到导致重复建行。
 **修改**: 改为全量拉取(limit=1000)后客户端按名字精确匹配（兼容 / 前缀），匹配不到才 POST 新建。函数级三用例验证：新建走POST/已存在走PATCH/斜杠前缀兼容。
+
+## [2026-07-07] skill-evaluator — created
+**症状**: 员工在 Codex/ChatGPT 上做的 skill 交来后无人能系统验收：说不清包几条功能线、输入依赖是否真实存在、有没有内部矛盾/编造红线；0707 日报 skill 四轮人肉评估花了一整天才理清。
+**根因**: 缺一个把"功能地图解构 + 逻辑校验 + 断言合同 + 评估管线"固化成流程的验收工具，每次评估都从零手搓。
+**修改**: 新建 skill-evaluator（SKILL.md + 6 references）：Step0 归一化（Codex/ChatGPT/Claude 三格式）→ 功能地图（逐线输入依赖审计）→ yes/no 梳理向导（答案转二值断言合同，无头保守替判）→ 8 类逻辑校验（含"样例也是条款"矛盾扫查、全文件清扫、单列纪律）→ full 模式三配置模拟+3遍投票评分 → 验收报告（功能地图第一屏）。Eval：拿日报 skill v1.2 当考题（14 项已验证缺陷为标准答案），3 轮迭代 8/10→9/10→10/10，最终召回 11/14（H 级 4/4 全中），baseline 对照 5/10；全程只读红线守住。
+
 ## [2026-07-07] daily-report — created
 **症状**: 用户上传的客户日报 skill（v1.1-7.6）只在会话里流转，无仓库注册、无版本管理、无评测留痕。
 **根因**: skill 由外部制作，从未走 skill-creator 注册流程进入 zenithjoy-skills。

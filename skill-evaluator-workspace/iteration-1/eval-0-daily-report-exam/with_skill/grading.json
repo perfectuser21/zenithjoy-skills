@@ -1,0 +1,60 @@
+{
+  "run_id": "eval-0-daily-report-exam/with_skill",
+  "expectations": [
+    {
+      "text": "功能地图识别出至少 4 条功能线（单客户日报/批量或整批日报/汇总日报/变更记录等）",
+      "passed": true,
+      "evidence": "function-map.md 明列「共 8 条功能线」，含单客户日报、多客户两层日报（批量）、汇总-only 日报、详细逐客户分析等，远超 4 条。"
+    },
+    {
+      "text": "发现 H3：按客户名读数据库这一核心前提没有任何数据接口定义，主路径不可执行",
+      "passed": true,
+      "evidence": "defects.md H1「数据源接口全包缺失…无 API 路径、无数据库 schema、无连接器声明…主路径在裸宿主里不可执行」，与答案 H3 同问题。"
+    },
+    {
+      "text": "发现 H1：eval 规则多处重复且不一致",
+      "passed": true,
+      "evidence": "defects.md M1「11 项二值断言表（SKILL §16.5、eval-v2-sop §十、eval-v2-scorecard §二，三处几乎逐字重复）…改一处必漏多处」，与答案 H1 同问题。"
+    },
+    {
+      "text": "发现 H2：问价格优先收口条款与价格禁令内部矛盾",
+      "passed": false,
+      "evidence": "全部 5 个产物均无「问价格=应优先收口」与 §11.2/判档矛盾的表述（grep「收口」命中 0）；Run A 抓的是钱总 golden 给价格区间 vs 反编造，与答案 H2 的收口逻辑矛盾是两件事。"
+    },
+    {
+      "text": "发现 H4：通过标准依赖核心项/大部分等未定义概念，不可机械执行",
+      "passed": true,
+      "evidence": "defects.md H2「通过标准写『核心项全部通过』『大部分通过』，但 11 项断言表从未标注核心项、大部分无阈值…最终裁决靠主观」，与答案 H4 同问题。"
+    },
+    {
+      "text": "15 项已知缺陷（H1-H4/M1-M7/L1-L4）总召回不少于 8 项",
+      "passed": false,
+      "evidence": "仅命中 5 项（H1/H3/H4/M2/M3），不足 8 项。M1 四感、M4 空壳、M5 description、M6 路由、M7 周边界、L1/L2/L4 均未提（grep 四感/eval-run-result/description/本月第 均命中 0）。"
+    },
+    {
+      "text": "生成至少 5 道 yes/no 梳理向导题，且包含编造红线题",
+      "passed": true,
+      "evidence": "wizard-questions.md 共 8 题（Q1-Q8）；Q2「缺产品价格时允许给价格区间/量级吗…量级也是编造」即编造红线题。"
+    },
+    {
+      "text": "生成断言合同且包含至少一条 HF 一票否决项",
+      "passed": true,
+      "evidence": "contract-assertions.md 含 HF1/HF2/HF3，级别标注「一票否决」，HF1=未提供价格却输出量级=硬失败。"
+    },
+    {
+      "text": "报告给出明确三档裁决（通过/部分通过/不通过），且功能地图在报告第一屏",
+      "passed": true,
+      "evidence": "report.md §一总览「裁决：部分通过——附条件」（三档之一），且功能地图表格就置于 §一（第一屏）。"
+    },
+    {
+      "text": "被测 skill 包解包后的文件未被修改（只读红线守住）",
+      "passed": true,
+      "evidence": "with_skill/subject/daily-report-v1-2 与原 zip 解包内容 diff -rq 退出码 0，17 个文件逐字节一致，无编辑痕迹。"
+    }
+  ],
+  "recall": {
+    "hit": ["H1", "H3", "H4", "M2", "M3"],
+    "miss": ["H2", "M1", "M4", "M5", "M6", "M7", "L1", "L2", "L3", "L4"]
+  },
+  "summary": "with_skill 抓住了两条最重要的结构性缺陷（H3 数据接口缺失致主路径不可执行、H4 核心项/大部分未定义），并完整产出功能地图/向导/断言合同/缺陷清单四件套，10 条断言过 8 条。但对文档一致性类中低缺陷收敛过度、遗漏偏多（M1/M4/M5/M6/M7/L1-L4），15 项只召回 5 项，未达 8 项门槛。另发现一条不在标准答案内的真缺陷（钱总 golden 给价格区间违反反编造铁律），属额外命中。"
+}

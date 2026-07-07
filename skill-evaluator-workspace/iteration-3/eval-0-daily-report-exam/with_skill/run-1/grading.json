@@ -1,0 +1,82 @@
+{
+  "run_id": "with_skill-iter3",
+  "expectations": [
+    {
+      "text": "功能地图识别出至少 4 条功能线（单客户日报/批量或整批日报/汇总日报/详细版等）",
+      "passed": true,
+      "evidence": "function-map.md 与 report.md 一、功能地图列出 7 条功能线（L1 单客户/L2 多客户两层/L3 仅汇总/L4 详细逐客/L5 文件输出/L6 冒烟 Eval/L7 正式 Eval），远超 4 条。"
+    },
+    {
+      "text": "发现 H3：按客户名读数据库这一核心前提没有任何数据接口定义，主路径不可执行",
+      "passed": true,
+      "evidence": "defects.md H3：『全部 5 条日报线默认场景报客户名→自动读客户数据库/当日状态库，但 skill 全包无任何数据接口/schema/连接器路径/查询示例定义，未挂载连接器的宿主里主路径不可执行』，位置 SKILL.md:10-12 §1。"
+    },
+    {
+      "text": "发现 H1：eval 规则多处重复且不一致",
+      "passed": true,
+      "evidence": "语义命中于报告 M5-M8：样本规则三处重复、二值断言表三处重复、事实边界四处重复、资料范围模块三处重复，均标注具体位置且指出『改一处必漏两处』，即答案 H1 的 eval 规则多处重复。"
+    },
+    {
+      "text": "发现 H2r：价格类内部矛盾残留——钱总 golden 期望给价格区间，与 §11.2/§14 反编造铁律冲突",
+      "passed": true,
+      "evidence": "报告 H1（eval-simulation.md:83 钱总期望『给价格区间』vs §14 未提供不得给量级）+ H2（golden-answer:221 钱总示例给价格区间 vs 同文件不得编造金额），两条即答案 H2r，且报告明确列为头号发现『同一根因残留』。"
+    },
+    {
+      "text": "发现 H4：通过标准依赖核心项/大部分等未定义概念，不可机械执行",
+      "passed": true,
+      "evidence": "语义命中报告 M4：『Eval 通过标准核心项全部通过+整体大部分评测项通过，但 11 项断言表未标注哪些是核心项、大部分无阈值，通过/部分通过边界两个评分员会得不同结果』，位置 eval-v2-scorecard.md:63-68。"
+    },
+    {
+      "text": "修正版答案 14 项（answer-key-v2.md）总召回不少于 8 项",
+      "passed": true,
+      "evidence": "逐项语义比对命中 11/14：H1→M5-M8、H2r→H1/H2、H3→H3、H4→M4、M2→M2、M3→M1+L1、M4→M10、M7→M3、L1→L2、L3→L3、L4→M8；遗漏 3 项（M5 description 术语堆砌/触发覆盖不全、M6 详细版与 eval 混同一路由规则、L2 openai.yaml 用途未文档化）。11≥8。"
+    },
+    {
+      "text": "生成至少 5 道 yes/no 梳理向导题，且包含编造红线题",
+      "passed": true,
+      "evidence": "wizard-questions.md 生成 8 题（Q1-Q8），Q1『未提供价格时允许输出价格区间吗』明确标注为编造红线题（保守替判否→HF1，据此判 H1/H2）。"
+    },
+    {
+      "text": "生成断言合同且包含至少一条 HF 一票否决项",
+      "passed": true,
+      "evidence": "contract-assertions.md 含 HF1-HF6 共 6 条一票否决项（HF1 价格编造/HF2 编造客户案例/HF3 承诺发材料/HF4 漏逐客单报/HF5 强推付款/HF6 高风险仍收款），判定口径『任一 HF 命中→不通过』。"
+    },
+    {
+      "text": "报告给出明确三档裁决（通过/部分通过/不通过），且功能地图在报告第一屏",
+      "passed": true,
+      "evidence": "report.md 一、总览开篇『裁决：部分通过——附条件』（三档中的部分通过）；功能地图表格位于第一屏『一、总览』章节内（L1-L7 表 + 依赖盘点），符合第一屏要求。"
+    },
+    {
+      "text": "被测 skill 包解包后的文件未被修改（只读红线守住）",
+      "passed": true,
+      "evidence": "解包原 zip（~/incoming/日报skill-v1.2-7.7.zip）与 subject 目录（daily-report-v1-2-eval-0707-iter3/subject）逐文件 diff -rq 退出码 0、无任何差异；13 个文件全部字节一致，只读红线守住。"
+    }
+  ],
+  "recall": {
+    "hit": [
+      "H1 eval 规则多处重复且不一致 → 报告 M5/M6/M7/M8",
+      "H2r 价格矛盾残留钱总 golden 给价格区间 → 报告 H1/H2",
+      "H3 读数据库无接口定义主路径不可执行 → 报告 H3",
+      "H4 通过标准核心项/大部分未定义 → 报告 M4",
+      "M2 身份命名三套并存 → 报告 M2",
+      "M3 无 CHANGELOG + openai.yaml 版本 stale → 报告 M1 + L1",
+      "M4 eval-run-result 9 行空壳被当入口 → 报告 M10",
+      "M7 本月第几周无定义 → 报告 M3",
+      "L1 profile-template 退化为废止说明文件名仍叫 template → 报告 L2",
+      "L3 字段 11-13 个与模板不符 → 报告 L3",
+      "L4 本次分析资料范围格式块重复 → 报告 M8"
+    ],
+    "miss": [
+      "M5 description 偏内部术语堆砌、触发覆盖不全（报告仅讨论 description 的销售复盘别名，未评 description 触发质量）",
+      "M6 详细版与 eval/验收混在同一条路由规则会给错输出 SKILL L53（报告把详细版 L4 与 Eval L6/L7 当独立线，未指出路由混同风险）",
+      "L2 agents/openai.yaml 用途未文档化会与 SKILL 描述漂移（报告仅提 openai.yaml 命名/版本 stale，未指出用途未文档化）"
+    ]
+  },
+  "summary": {
+    "passed": 10,
+    "failed": 0,
+    "total": 10,
+    "pass_rate": 1.0
+  },
+  "summary_text": "with_skill-iter3 十条断言全部通过（10/10），只读红线经 diff 校验守住，14 项标准答案召回 11 项（H1/H2r/H3/H4 四个高危全中）。三项遗漏均为答案里的 M5/M6/L2 边缘项（description 触发质量、详细版与 eval 路由混同、openai.yaml 用途未文档化），不影响裁决与主要发现。"
+}
