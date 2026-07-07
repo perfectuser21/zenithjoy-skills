@@ -162,7 +162,8 @@ def sync_to_notion(name, description, action, eval_score, api_key):
 def sync_to_brain(name, description, eval_score, action):
     """Sync to Brain DB skill_registry via Brain API."""
     # Check if skill already exists
-    existing = brain_request("GET", f"/api/brain/skills?name={urllib.parse.quote(name)}&limit=5")
+    # name= 参数被 API 无视，limit=5 会漏掉已存在记录 → 全量拉取后客户端精确匹配
+    existing = brain_request("GET", "/api/brain/skills?limit=1000")
 
     payload = {
         "name": name,
@@ -178,6 +179,9 @@ def sync_to_brain(name, description, eval_score, action):
 
     # Brain API returns a list directly
     existing_list = existing if isinstance(existing, list) else (existing.get("skills") or existing.get("data") or [])
+    # Brain API 会无视 name= 参数返回全表（2026-07-07 实测），必须客户端精确匹配，
+    # 否则找不到时会误 PATCH 列表第一条（曾把 daily-report 写进 _smoke-test-skill）
+    existing_list = [s for s in existing_list if (s.get("name") or "").lstrip("/") == name.lstrip("/")]
     if existing_list:
         skill_id = existing_list[0]["id"]
         result = brain_request("PATCH", f"/api/brain/skills/{skill_id}", payload)
