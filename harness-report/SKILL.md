@@ -6,10 +6,11 @@ description: |
   → 更新Notion Feature Registry → 飞书通知 → 写本地harness-report.md备份。
   Phase B（Sprint状态同步）：写本地Brain DB → 通过 db-update skill 触发 notion-push-sync.js 的 8 个 push 函数（journeys/journey_features/issues/skill_registry/journey_steps/journey_step_links/decisions/initiative_contracts）→ git commit。
   由 harness-evaluator PASS 后 Brain reportNode 自动 spawn；relay 模式由 harness-controller 调 Skill 触发（变量走「Relay 入口段」自取）；也可手动触发补同步。
-version: 6.3.0
+version: 6.4.0
 created: 2026-04-08
-updated: 2026-07-05
+updated: 2026-07-08
 changelog:
+  - 6.4.0: 跨 repo 化刀3 — Step 3 截图上传宿主与 Step 9 访问地址参数化：新增 REPORT_HOST_SSH（默认 us-vps）/ REPORT_HOST_URL（默认 http://38.23.47.81:9998），正文引用变量，默认值保持现值（cecelia 本机场景零变化），第三方 repo 用 env 覆盖即可换报告宿主；Brain API（localhost:5221）调用不动（主理人拍板：Brain 是唯一中枢）
   - 6.3.0: EVA 提分（GAPS #4）— (a) 新增「Relay 入口段」：注入变量断供时自取而非 WARN 跳过（PR_URL←台账/gh pr view、FEATURE_NAME←sprint-prd 标题、TOTAL_COST←relay-runs API、SCREENSHOTS←sprint 目录扫描、FEATURE_ID/SUB_AREA/HARNESS_INITIATIVE_ID←task API），env 注入与自取二选一；(b) 出口协议改三态：关键步（task.result 回写 / harness-report.md / learning.md）失败 → DONE_WITH_CONCERNS，不再静默 DONE；非关键步（Notion/飞书/Dashboard）失败仍可 DONE 但必须在结果里列明；(c) Phase A 完成标志改为事后核验实际产物（查 task.result、探文件存在）而非信任过程 echo
   - 6.2.0: 链路审计修复 5 项 — (a)「同步 8 个 Notion DB」改为明确清单（notion-push-sync.js 的 8 个 push 函数）+ 注明入口是 db-update skill；(b) journey_steps 措辞改"保留只读兼容（仍同步存量），新增数据禁止写入"；(c) 开头加「触发条件」（evaluator PASS 后 Brain reportNode 自动 spawn；手动用于补同步）；(d) Phase A 开头加前置文件存在性检查（缺失则对应步骤跳过 + WARN）；(e) 路径拼装统一 ${SPRINT_DIR%/}/xxx 防双斜杠
   - 6.1.0: 新增Step6全量Registry回写+Step7结构化Learning+Step8 index.html可视化；截图路径统一到SPRINT_DIR/screenshots/
@@ -219,14 +220,17 @@ echo "✅ Step 2.5: Notion Task Notes 已写入（status=Done）"
 ### Step 3: 上传截图 + 写 Report Note
 
 ```bash
-# 上传截图到 us-vps
+# 上传截图到报告宿主（跨 repo 化刀3 参数化：默认 us-vps / 38.23.47.81 保持 cecelia 本机场景零变化，
+# 第三方 repo 用 env 覆盖 REPORT_HOST_SSH / REPORT_HOST_URL 即可换宿主）
+REPORT_HOST_SSH="${REPORT_HOST_SSH:-us-vps}"
+REPORT_HOST_URL="${REPORT_HOST_URL:-http://38.23.47.81:9998}"
 SPRINT_SLUG=$(basename "$SPRINT_DIR")
 VPS_SCREENSHOT_DIR="/opt/zenithjoy/screenshots/${SPRINT_SLUG}"
 SCREENSHOT_URLS=""
-ssh us-vps "mkdir -p ${VPS_SCREENSHOT_DIR}" 2>/dev/null || echo "WARN: VPS 目录创建失败（非阻断）"
+ssh "$REPORT_HOST_SSH" "mkdir -p ${VPS_SCREENSHOT_DIR}" 2>/dev/null || echo "WARN: 报告宿主目录创建失败（非阻断）"
 for f in "${SPRINT_DIR}/screenshots/"*.png; do
   [ -f "$f" ] || continue
-  scp "$f" "us-vps:${VPS_SCREENSHOT_DIR}/" 2>/dev/null || echo "WARN: 截图上传失败 $f（非阻断）"
+  scp "$f" "${REPORT_HOST_SSH}:${VPS_SCREENSHOT_DIR}/" 2>/dev/null || echo "WARN: 截图上传失败 $f（非阻断）"
   FNAME=$(basename "$f")
   SCREENSHOT_URLS="${SCREENSHOT_URLS} https://api.zenithjoy.com/screenshots/${SPRINT_SLUG}/${FNAME}"
 done
@@ -574,7 +578,7 @@ fs.writeFileSync(path.join(sprintDir, 'index.html'), html, 'utf8');
 console.log('index.html generated');
 " && echo "✅ Step 9a: index.html 已生成到 ${SPRINT_DIR}/index.html"
 
-echo "📎 访问地址: http://38.23.47.81:9998/sprints/${SPRINT_NAME}/index.html"
+echo "📎 访问地址: ${REPORT_HOST_URL:-http://38.23.47.81:9998}/sprints/${SPRINT_NAME}/index.html"
 ```
 
 ---
