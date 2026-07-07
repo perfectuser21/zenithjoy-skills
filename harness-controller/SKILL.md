@@ -7,9 +7,10 @@ description: |
   移植 Superpowers 6.0 subagent-driven-development 零件：进度台账 / 文件接力 / 四态出口协议 / 单评审双裁决 / compaction 恢复。
   点火方：Brain harness dispatch（无头）或人工前台（同一份 skill 两种触发，行为一致）。
   /dev 仍是唯一需求入口：本 skill 消费 /dev 路径C 的交接契约（PrepPRD + 铁律清单 + NFR），不做需求对抗。
-version: 1.5.0
+version: 1.6.0
 created: 2026-07-04
 changelog:
+  - 1.6.0: 跨 repo 化刀3——①Step 5 judge 主路径切 Brain API（curl POST /api/brain/harness/judge，worktree 传宿主绝对路径 $HARNESS_WORKTREE_HOST，brain@1.242.0 spawn 注入；FIXED 由 API 归一 PASS；CLI 降为 cecelia 本机兜底不删）②CI 门禁三件套②按 base_repo 映射 smoke 约定（cecelia/zenithjoy/第三方各走各的，第三方无约定跳过）
   - 1.5.0: CI 配套硬规矩扩两条——第 3 条补 zenithjoy smoke 棘轮基线联动（PR #1156 起 baseline-lint 机械强制新 smoke 进 smoke-baseline.txt）；新增第 5 条 E2E 验收脚本必须有 CI 回归宿主（merge 前确认 e2e-verify 脚本入库且被 e2e-*.yml paths 或 nightly glob 收集，堵"E2E 只活一次"的持续回归洞，与合同测试第 1 条对称）
   - 1.4.0: Step 0 新增 0.3 前台点火防护（07-06 infrastructure 任务 8e281976 实证分裂：payload 缺 orchestrator 字段被 Brain 41 秒标 terminal failed，前台 session 浑然不觉继续裸跑）——人工前台接管必做两步：a.确认任务未被标 failed（missing_orchestrator_flag 秒杀）b.PATCH status=in_progress 认领防 tick 双 spawn；并写明前台无 initiative_run 行时 relay-runs 上报 404 是预期行为
   - 1.3.2: Step 3 generator 验收 PR 存在后立即早上报 pr_url（PATCH relay-runs phase=generate + pr_url，非阻塞；端点未上线时 400 忽略）；CI 配套硬规矩 + Step 3 prompt 测试文件措辞改为"由 evaluator CONTRACT-IS-LAW 与 judge 复核把关；CI 机械闸 lint-contract-test-immutability 落地后由其强制"（消除虚假 CI 强校验宣称，对齐 zenithjoy 当前 lint 实际能力）
@@ -179,7 +180,7 @@ if [ -n "$PR_URL_EARLY" ]; then
     -d "{\"phase\":\"generate\",\"pr_url\":\"$PR_URL_EARLY\"}" || true
 fi
 ```
-- **CI 门禁三件套 push 前自查**（N4 三跑全在 CI 才踩这些门，各浪费一轮修复——左移到此）：①contract-draft.md 含 Test Contract 表且 [BEHAVIOR] 覆盖文本与测试 it() 名称子串匹配 ②feat 改动带 packages/brain/scripts/smoke/<feature>-smoke.sh（CI 兼容纯检查）③DoD 条目全勾 [x]。任一缺失 → 让 generator 补完再 push
+- **CI 门禁三件套 push 前自查**（N4 三跑全在 CI 才踩这些门，各浪费一轮修复——左移到此）：①contract-draft.md 含 Test Contract 表且 [BEHAVIOR] 覆盖文本与测试 it() 名称子串匹配 ②feat 改动带本 repo 约定的 smoke 脚本（按 base_repo 映射：cecelia = packages/brain/scripts/smoke/<feature>-smoke.sh 且登记 packages/quality/smoke-allowlist.txt；zenithjoy = .github/workflows/scripts/smoke/<feature>-smoke.sh 且进 smoke-baseline.txt 棘轮；其他第三方 repo 无此约定 → 本条跳过，以该 repo CI 实际门禁为准）③DoD 条目全勾 [x]。任一缺失 → 让 generator 补完再 push
 - CI 失败 → 派 fix subagent（同 skill Mode 2，带失败日志），fix 轮次计入台账，上限 20
 - 完成（CI 全绿）→ 台账 append → Step 4
 
@@ -196,7 +197,21 @@ fi
 
 ## Step 5: Judge（独立裁判，硬门禁）
 
-- 只对 evaluator PASS 复核：`node scripts/harness-judge-cli.mjs --task-id <id> --sprint-dir <dir> --pr <url>`（thin wrapper，N3 提供；DeepSeek + Golden Path 逐步覆盖校验，逻辑=harness-judge.js 原样）
+- 只对 evaluator PASS 复核。**主路径：curl Brain judge API**（跨 repo 化刀3：controller 跑在 relay 容器/第三方 repo 时，cecelia 相对路径脚本不存在，API 是唯一稳定入口；DeepSeek + Golden Path 逐步覆盖校验，逻辑=harness-judge.js 原样）：
+
+```bash
+# worktree 必须传宿主绝对路径：容器内用 $HARNESS_WORKTREE_HOST（Brain spawn 注入，brain@1.242.0 起）；
+# 本机前台直跑时即 worktree 绝对路径本身。禁止传容器内 /workspace（Brain 容器读不到）。
+JUDGE_RESP=$(curl -s -m 300 -X POST "${BRAIN_URL:-http://localhost:5221}/api/brain/harness/judge" \
+  -H "Content-Type: application/json" \
+  -d "{\"task_id\":\"$HARNESS_TASK_ID\",\"sprint_dir\":\"$SPRINT_DIR\",\"worktree\":\"${HARNESS_WORKTREE_HOST:-$PWD}\"}")
+VERDICT=$(echo "$JUDGE_RESP" | jq -r '.verdict // empty')
+FEEDBACK=$(echo "$JUDGE_RESP" | jq -r '.feedback // ""')
+# HTTP 恒 200：VERDICT=PASS（API 已把 FIXED 归一为 PASS）→ 放行；FAIL/ERROR/空 → 一律按 FAIL 处理
+```
+
+  - agent_verdict 缺省时 API 自读 `<worktree>/.brain-result.json`；可选字段：agent_verdict / agent_feedback / prompt_dir / transcript_file
+  - 兜底（仅 cecelia 本机直跑且 Brain API 不可达时）：`node scripts/harness-judge-cli.mjs --task-id <id> --sprint-dir <dir> --pr <url>`（CLI 保留不删，但第三方 repo 容器内不得作为主路径）
 - judge FAIL → 带 feedback 回 Step 3（打回重写）；judge PASS → 台账 append（锚 sha）→ Step 6
 - **禁止**：跳过 judge / 替 judge 降级 / 在 judge 前 merge
 
