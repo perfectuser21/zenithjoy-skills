@@ -1,3 +1,8 @@
+## [2026-07-08] wechat-cs-troubleshooting — updated（新增 §2.I：卡住打不开 vs 读不到会话）
+**症状**: 2026-07-08 排查 P0 客服丢消息/自愈重启两个 bug 期间，CI `job3 真机气泡可读性 gate` 在 xian-rog 上连续两次（含一次 rerun）报 `bubbles=0`/`session list 里找不到 文件传输助手`——表面看和 §1.1 UIA 树塌缩、§A CRM 破坏 UIA 是同一症状（读不到会话）。
+**根因**: 已用代码走读排除是当次 PR 代码把 rog 微信杀挂（改动只在 `run_real_listen()` 主循环，job2 的 dryrun 路径 `run_dryrun_inject()` 完全不碰）。用户下午上机核实：这次是**微信窗口本身直接卡死打不开**，跟"窗口在但 UIA 读不出内容"是两种完全不同的根因，旧台账没有区分这两态，容易误诊。
+**修改**: §2 新增条目 I，明确记录"卡住打不开"和"读不到会话"是两个不同现象、排障时要先分清；并指出现有自愈只覆盖"进程在但UIA读不到"和"树塌缩"两态，都假设窗口是活的，"窗口完全无响应"目前没有自愈路径，后续复现需要补窗口无响应检测。
+
 ## [2026-07-07] harness-controller — updated（v1.4.0：Step 0.3 前台点火防护）
 **症状**: 07-06 infrastructure 前台点火 harness 任务 8e281976：payload 缺 orchestrator 字段被 Brain 41 秒标 terminal failed（missing_orchestrator_flag），前台 session 浑然不觉继续裸跑当 controller，进度上报全 404（v2 run not found）还硬走——Brain 记账与实际执行彻底分裂。
 **根因**: controller 的前台接管路径没有任何注册后核验：不查任务是否已被 Brain 判死，不认领任务（queued 停留会被下一 tick 捡走双 spawn），也没写明"前台无 initiative_runs 行、上报 404 属预期"。skill 声称"两种触发行为一致"，但前台缺少 Brain dispatch 自带的建档与状态机保障。
