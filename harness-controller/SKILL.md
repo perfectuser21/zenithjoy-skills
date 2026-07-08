@@ -10,7 +10,7 @@ description: |
 version: 1.7.0
 created: 2026-07-04
 changelog:
-  - 1.7.0: Step 6 merge 后追加 staging_e2e 派生（POST /api/brain/harness/staging-e2e，best-effort 不阻塞）——覆盖本 session 自己 merge 与外部已合并两条路径，这是 staging→production 放行层当前唯一的任务产生入口（此前该层因旧 LangGraph 图停用而悬空 10 天，cecelia decision 76ab76ea 拍板恢复）
+  - 1.7.0: Step 6 merge 后追加 staging_e2e 派生（POST /api/brain/harness/staging-e2e，best-effort 不阻塞）——覆盖本 session 自己 merge 与外部已合并两条路径，这是 staging→production 放行层当前唯一的任务产生入口（此前该层因旧 LangGraph 图（已废弃，不再被 invoke）停用而悬空 10 天，cecelia decision 76ab76ea 拍板恢复）
   - 1.6.0: 跨 repo 化刀3——①Step 5 judge 主路径切 Brain API（curl POST /api/brain/harness/judge，worktree 传宿主绝对路径 $HARNESS_WORKTREE_HOST，brain@1.242.0 spawn 注入；FIXED 由 API 归一 PASS；CLI 降为 cecelia 本机兜底不删）②CI 门禁三件套②按 base_repo 映射 smoke 约定（cecelia/zenithjoy/第三方各走各的，第三方无约定跳过）
   - 1.5.0: CI 配套硬规矩扩两条——第 3 条补 zenithjoy smoke 棘轮基线联动（PR #1156 起 baseline-lint 机械强制新 smoke 进 smoke-baseline.txt）；新增第 5 条 E2E 验收脚本必须有 CI 回归宿主（merge 前确认 e2e-verify 脚本入库且被 e2e-*.yml paths 或 nightly glob 收集，堵"E2E 只活一次"的持续回归洞，与合同测试第 1 条对称）
   - 1.4.0: Step 0 新增 0.3 前台点火防护（07-06 infrastructure 任务 8e281976 实证分裂：payload 缺 orchestrator 字段被 Brain 41 秒标 terminal failed，前台 session 浑然不觉继续裸跑）——人工前台接管必做两步：a.确认任务未被标 failed（missing_orchestrator_flag 秒杀）b.PATCH status=in_progress 认领防 tick 双 spawn；并写明前台无 initiative_run 行时 relay-runs 上报 404 是预期行为
