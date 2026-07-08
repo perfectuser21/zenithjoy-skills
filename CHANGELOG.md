@@ -1,3 +1,8 @@
+## [2026-07-08] daily-report-cs — renamed to line04-cs-reply
+**症状**: daily-report-cs 名字前缀跟 daily-report（日报生成 skill）太像，容易被误认成同一套东西的两个模式，实际它是完全不同职责的"Line04 客服实时对话"内核。
+**根因**: 命名未按 Line 层级化约定，两个语义不同的 skill（"customer report" vs "customer talking"）撞了几乎相同的名字。
+**修改**: `daily-report-cs/` 目录整体改名 `line04-cs-reply/`，version 1.0.0 → 1.1.0，明确标注已接入生产 wechat-draft.ts（PR #1181）。后续朋友圈回复板块升级时按同一命名法沿用 `line04-cs-moments`。
+
 ## [2026-07-08] line-strategist — created
 **症状**: 系统缺"谁决定下一个任务"的角色——派发链纯 FIFO 无 ability/line 感知,PR 终局后无人根据结果判定下一步,推进方向全靠主理人人脑。
 **根因**: 推进项模型 PR3(军师 producer)此前设计为"全局大军师日批",2026-07-08 主理人 9 条决策重定型为 Line 级原子军师+事件驱动,需要一个承载该角色的 skill。
