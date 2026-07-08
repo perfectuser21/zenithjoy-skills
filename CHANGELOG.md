@@ -1,3 +1,8 @@
+## [2026-07-08] line-strategist — created
+**症状**: 系统缺"谁决定下一个任务"的角色——派发链纯 FIFO 无 ability/line 感知,PR 终局后无人根据结果判定下一步,推进方向全靠主理人人脑。
+**根因**: 推进项模型 PR3(军师 producer)此前设计为"全局大军师日批",2026-07-08 主理人 9 条决策重定型为 Line 级原子军师+事件驱动,需要一个承载该角色的 skill。
+**修改**: 新建 line-strategist skill:事件驱动决策环(防抖→四查快照→优先级阶梯不跳级→自审 confidence 阈值→执行→决策留痕晨报聚合),跨 line 登记不执行,DRY_RUN 干跑模式。Eval 12/12 (100%) vs 基线 10/12。
+
 ## [2026-07-08] harness-controller — updated
 **症状**: controller merge PR 后不会产生 staging_e2e 任务，staging→production 放行层自 07-05 relay 迁移后已悬空超过 10 天（消费该任务的旧 LangGraph 图早已停用），zenithjoy 侧新代码上线后缺少 staging E2E 回归验证这道关卡。
 **根因**: 唯一能派生 staging_e2e 任务的代码（原 mergePrNode._spawnStagingE2eTask）躺在已停用的 harness-task.graph.js 里，relay 单 session skill 接力模式取代 LangGraph 编排后没人调它。
