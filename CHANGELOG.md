@@ -1,3 +1,8 @@
+## [2026-07-08] skill-evaluator — updated（新增 Form B 结构化输出模式 report_data）
+**症状**: Form B 网页服务（员工上传 skill zip 自动出报告）需要机器可读的结构化数据来画「输入→skill 内部逻辑→输出」的 n8n 式连线图，但 skill-evaluator 只出人看的 markdown 报告，渲染器无从画图。
+**根因**: skill 缺一个稳定的结构化输出契约（report_data schema），尤其是把 skill 的真实执行流程表达成一条可渲染的 pipeline（load 读数据 / judge 判断 / gate 硬闸 + 全部前置 vs 穿插判定）。
+**修改**: 新增 references/report-data-schema.md 锁定 report_data pipeline schema（input / loadMode / kernelName / pipeline[按来源方式 库·文档·API·上下文 + 具体来源名] / outputs / verdict / stats / nextSteps / health），SKILL.md 加 Step 7b 结构化输出模式 + description 提及。验证：headless claude 拉起改后 skill 靠自读 schema 即吐出合法 report_data（16 步 pipeline 全合规、JSON 直接解析零加固），渲染器正常出图（40 节点 + 箭头 + 三段带 + 全图弹窗），未走 fallback。
+
 ## [2026-07-08] daily-report-cs — renamed to line04-cs-reply
 **症状**: daily-report-cs 名字前缀跟 daily-report（日报生成 skill）太像，容易被误认成同一套东西的两个模式，实际它是完全不同职责的"Line04 客服实时对话"内核。
 **根因**: 命名未按 Line 层级化约定，两个语义不同的 skill（"customer report" vs "customer talking"）撞了几乎相同的名字。

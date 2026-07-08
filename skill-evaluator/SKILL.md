@@ -7,6 +7,7 @@ description: |
   产出四样东西：① 功能地图（这个 skill 包几条功能线、每条线的输入依赖/输出/依赖健康度）
   ② yes/no 梳理向导（把 skill 没说清的地方变成是/否题，答案自动转成二值断言合同）
   ③ 7 类逻辑校验缺陷清单 ④ 验收报告（full 模式加三配置真实模拟 + 3 遍多数投票评分，成本时长置顶）。
+  被 Form B 网页服务或评估 worker 无头调用时（"机器可读 / 输出 report_data / --json"），改出结构化 report_data JSON（含执行序列 pipeline），供渲染器画逻辑连线图。
   不适用场景：创建或修改 skill（走 skill-creator）、评测 LLM 模型本身好坏（走 llm-benchmark）、
   评审代码 PR（走 code-review）。
 ---
@@ -110,6 +111,14 @@ quick 模式到此为止，跳到 Step 7 出报告。
 1. 用户要公网链接 → 走 docs-center skill 发布。
 2. 评估记录回挂：`POST localhost:5221/api/brain/skills`（skill_registry，含归属链和裁决），Notion 同步是自动副作用。
 3. 提醒作者：报告里每条 H 级缺陷都值得回 skill-creator 走一轮修复迭代。
+
+## Step 7b：结构化输出模式（Form B 网页服务）
+
+以上产出的是**人看的 markdown 报告**（Form A）。当本 skill 被 **Form B 网页服务**调用——即被要求「机器可读 / 输出 report_data / --json」，或由评估 worker 无头拉起时——**不出 markdown，只出一个结构化 JSON 对象**，供渲染器画「输入 → skill 内部逻辑 → 输出」的 n8n 式执行流程连线图。
+
+读 `references/report-data-schema.md` 执行，核心是把 skill 拆成一条**真实执行序列 `pipeline`**：客户给一个输入 → skill 顺着 pipeline 一步步跑（load 读数据 / judge 判断 / gate 硬闸）→ 产出几份输出。把 pipeline 排准、把 `loadMode`（全部前置 vs 穿插判定）判对，图才画得对。
+
+Step 1-6 的评估结论（功能线、依赖缺失、红线、成熟度、缺陷）照常做——它们填进 report_data 的 `verdict / stats / summary / nextSteps / health`；只是最终**呈现形态**从 markdown 换成结构化 JSON。首字符 `{`、末字符 `}`，无解释文字、无代码围栏。
 
 ## 工作区结构（固定）
 
