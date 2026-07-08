@@ -1,3 +1,8 @@
+## [2026-07-08] daily-report-cs — created
+**症状**: daily-report skill 生成的是"聊天记录→日报"，报告体、全量 system prompt（~15k tokens），不适合实时客服场景（客户一句话进来要几秒内回一句话），且完整版报告类字段（两层日报/资料范围模块/变更记录）客服场景用不上。
+**根因**: 判断内核（A1-A4/四感/推进信号/询价分级/高风险识别/事实边界+资料缺失句式库）本身是通用的，缺的是"单轮、短输出、可控延迟"的裁剪版本。
+**修改**: 从 daily-report v1.5 裁出判断内核，砍掉日报结构件，输出格式改为"一条可发送回复+内部判断标签 JSON"。15 客户×3 模型档实测：gpt-5.4-mini 首响 p50≈2s、总时长 p50≈3.5s、零编造，配合代码层兜底（JSON 缺失重试+post_check 编造检测出口+escalate 安全默认值）后，高风险客户转人工 3 遍复测 100% 稳定命中，内部标签准确率追平更贵的 reasoning 档模型。测过 Claude Haiku 4.5 / Gemini 3.5 Flash / Gemini 3.1 Flash-Lite / DeepSeek v4-flash 作为更快候选，均未跑赢 mini（Haiku 4.5 在当前 prompt 封装方式下有 60% 概率拒绝执行/输出元评论，暂不可用）。
+
 ## [2026-07-08] wechat-cs-troubleshooting — updated（新增 §2.I：卡住打不开 vs 读不到会话）
 **症状**: 2026-07-08 排查 P0 客服丢消息/自愈重启两个 bug 期间，CI `job3 真机气泡可读性 gate` 在 xian-rog 上连续两次（含一次 rerun）报 `bubbles=0`/`session list 里找不到 文件传输助手`——表面看和 §1.1 UIA 树塌缩、§A CRM 破坏 UIA 是同一症状（读不到会话）。
 **根因**: 已用代码走读排除是当次 PR 代码把 rog 微信杀挂（改动只在 `run_real_listen()` 主循环，job2 的 dryrun 路径 `run_dryrun_inject()` 完全不碰）。用户下午上机核实：这次是**微信窗口本身直接卡死打不开**，跟"窗口在但 UIA 读不出内容"是两种完全不同的根因，旧台账没有区分这两态，容易误诊。
