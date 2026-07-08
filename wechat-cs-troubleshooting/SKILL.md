@@ -14,7 +14,7 @@ description: |
 # Line04 微信客服 — 排障 + 当前状态 catalog
 
 > ⚠️ 这是**活台账**，不是一次性文档。每次排查微信客服问题，**先读这里**（别重复诊断已知项），
-> 排完**回来更新**（解决的挪上去、新坑加进来）。最后更新：2026-07-08 上午（新增 §2.J：自愈重启后"欢迎回来"确认屏无自动点击，导致生产中断实锤，issue e78d98bc）。
+> 排完**回来更新**（解决的挪上去、新坑加进来）。最后更新：2026-07-08 下午（handoff 三问题 A/B/C 真机诊断闭环：§2.K 小窗口漏检测根因+自愈实证 / §2.J DPI 假设推翻+fg+click_input 实证有效 / §2.I 回顶 `left_max=90` 绝对坐标根因实锤；新增 §3 截图 ground truth 铁律）。
 
 ## 0. 系统一句话 + 关键事实
 - **rog（xian-rog）= Lead 自检机**。环境随复测节奏切换：2026-07-06 起 rog 在【staging】随 main 自动 OTA（当日 1.0.108→1.0.109→1.0.110）（.env 备份 `.env.prod-backup-0706` 是生产配置，测完切回用它）。**排障第一步永远看 listen_chat 进程命令行 `--middleware-url` 确认环境**，别信文档记忆。
@@ -126,7 +126,7 @@ description: |
 - **现象（2026-07-06，rog 生产 1.0.102）**：给'苏小x'和'于瑾'的待发回复从 10:55 前起**每轮秒失败** `无法切到会话，中止本轮（防串台）`，连续 4+ 小时死循环不过期；同期给默忆/于锦 DELIVERED 正常（500 行窗口内 72 次），说明链路整体是通的。
 - **三层根因叠加**：
   1. **会话列表滚动坏死**：`_scroll_session_list_wheel: SetCursorPos 失败（无输入权）→ 回退 PostMessage 合成滚轮 → 拿不到会话列表中心坐标，跳过本次滚动`——滚动从不生效；
-  2. **回顶也坏**：`_reset_session_list_to_top: 导航按钮不全，跳过切tab`——视口外会话永远拿不到 item（对比：徐先生的 item 离屏 32000 但存在，Select() 重扫能救；苏小x/于瑾连 item 都没有→秒失败无重试日志）；
+  2. **回顶也坏**：`_reset_session_list_to_top: 导航按钮不全，跳过切tab`——视口外会话永远拿不到 item（对比：徐先生的 item 离屏 32000 但存在，Select() 重扫能救；苏小x/于瑾连 item 都没有→秒失败无重试日志）。**→ 根因已实锤（07-08 下午真机取证）**：`_find_left_nav_button_point` 的 `left_max=90` 判的是**屏幕绝对坐标** `rect.left<90`，只有窗口贴屏幕左边缘（最大化 left=0）才成立；窗口在屏中间（实测 left=964）时 通讯录/微信 按钮永远"不全"。修法=改窗口相对坐标 `r.left - win.left < 90`。**且 PostMessage 合成点击对 mmui 导航按钮不抢前台时无效**（两次截图实证不动），点击必须先 `AttachThreadInput+SetForegroundWindow` 拉前台（见 §2.J 实证）；
   3. **疑似 sender 名字识别错**：列表里有会话叫'苏'而目标是'苏小x'；'于锦'能送达而'于瑾'永远失败——待发目标名可能来自气泡误读/截断，目标会话根本不存在。
 - **伴生问题**：失败的待发回复**无过期/无上限**，永远重试；`[scan] badge-miss 本轮 1-4 人` 高频出现（角标检测丢，1.0.106 复测已知家族）。
 - **注意**：1.0.107 的 7 修 + 1.0.108 的 3 修**都不覆盖本条**——OTA 到 1.0.108 后此故障预期仍在，要单独立案修（滚动输入权/回顶/名字识别/队列过期）。
@@ -137,15 +137,29 @@ description: |
 ### J. 🔴 UIA 自愈重启后可能卡进"欢迎回来"确认屏，无自动点击 → 生产客服中断（2026-07-08 实锤，issue e78d98bc）
 - **现象**：`is_privacy_locked()` 检测到的 `mmui::LoginWindow title='微信'` 状态，实测常常不是真正的隐私锁密码验证，而是重启后的"欢迎回来"确认屏（显示"当前登录用户 X"+"进入微信"/"切换账号"/"仅传输文件"三按钮，**不需要密码**）。2026-07-08 rog 生产：UIA 死区自愈重启微信 → 触发该屏 → listener 心跳持续 `locked=True sessions=0`，生产完全收不到客户消息，直到人工点了"进入微信"才恢复。
 - **根因**：代码只做检测，没做自愈/自动点击。
-- **已知踩坑（自动点击三次尝试均未命中，供下次复用排除）**：
-  1. `pywinauto click_input()` 无效——session-1 计划任务 token 可能没有真实输入权；
-  2. UIA `InvokePattern`（`c.invoke()`）报告成功但控件无视觉/功能响应——mmui 自绘控件常见坑，invoke 只翻内部状态不 repaint；
-  3. 复用 `listen_chat.py` 现成的 `_click_screen_point`（PostMessage 到 `MMUIRenderSubWindow` 子窗口）方案，坐标算出来但未命中，疑似 DPI 缩放导致 UIA `rectangle()` 逻辑坐标与物理坐标不一致（`ScreenToClient` 前应先 `SetProcessDPIAware`/`SetProcessDpiAwarenessContext`，未验证）。
-- **计划**：①先修 DPI 坐标映射再重试 PostMessage 自动点击 ②在自动点击多次失败时至少要报警通知人工介入，不能静默 `sessions=0` 挂在那。
+- **✅ 诊断闭环（2026-07-08 下午，控制性复现实证——欢迎回来屏被复现并被自动点击成功恢复）**：
+  - **DPI 假设推翻**：pywinauto 0.6.9 import 时自动把进程 DPI awareness 0→2（per-monitor aware），listener/诊断脚本坐标系一致（dpi=144 但无错位）。旧三条踩坑的真正原因：
+    1. `click_input()` 之前"无效"不是 token 没输入权，是**没先把窗口拉前台**；
+    2. UIA `InvokePattern` 对 mmui 自绘控件确认无效（07-08 exp4 复测仍不动）；
+    3. PostMessage 到 `MMUIRenderSubWindowHW` 对 mmui **按钮**类控件不抢前台时无效（两次截图实证；会话列表 item 的真切换靠 `Select()`，不是 PostMessage）。
+  - **实证有效修法（exp8 全链路验证）**：`AttachThreadInput+SetForegroundWindow+BringWindowToTop` 拉前台（listener 已有 `_set_foreground_window` 同款）→ `button.click_input()` 真实鼠标注入 → 点击"进入微信"后 **~10s** 主窗口出现（+4s 采样 LoginWindow 还在属正常，验证等待要给够 15s+）。
+  - **欢迎回来屏 UIA 树结构（可直接编程识别）**：`mmui::LoginWindow title='微信'`，含 Text `当前登录用户X` + Button `进入微信`/`切换账号`/`仅传输文件`（name 全部正常暴露），子窗口=`Qt51514QWindowIcon`+`MMUIRenderSubWindowHW`。
+  - **复现法**：`taskkill /f /im Weixin.exe` → listener 自愈重启 → 欢迎回来屏出现（本次 ~3.5 分钟内出现；注意并非每次重启都触发，15:04 的自愈重启就直接登录了）。
+- **剩余计划**：把上述实证修法写进 listener 自愈（识别 LoginWindow+进入微信按钮 → fg+click_input → 等 15s 验证 MainWindow → 失败 N 次报警），走 /dev + failing test。注意重启后主窗口**非最大化**，自愈完必须接 §2.K 的 SW_MAXIMIZE。
+
+### K. 🔴 主窗口非最大化 → 完全检测不到新消息（P0，issue 99741ff9，07-08 下午根因实锤）
+- **现象**：窗口 630×622 小尺寸时心跳持续 `sessions=4 unread=0`，对新消息 20 分钟毫无反应；`ShowWindow(SW_MAXIMIZE)` 后几秒内 sessions 4→26 立即恢复检测。
+- **根因（真机取证，比"虚拟列表少渲染"更狠）**：窗口宽 <~700px 时微信进入**单栏模式**（同手机布局：只显示打开的聊天+返回按钮，会话列表整个不在 UIA 树里）——此时 `scan_unread` 读到的 4 个 "ListItem" 其实是**聊天气泡**（"你叫什么/你人呢"），不是会话。日志表面"一切正常心跳"，极其隐蔽。
+- **连带发现①**：微信重启后（自愈/OTA）主窗口**默认非最大化** → 每次自愈重启都会自动掉进本故障。
+- **连带发现②（新故障模式）**：listener 停在**通讯录 tab** 时同样静默停摆——把联系人列表当会话扫（实测心跳 `sessions=20` 全是联系人，unread 永远 0），listener 无 tab 感知。自愈时应顺手点回微信 tab（点"微信"导航按钮幂等无害）。
+- **实证修法**：`ShowWindow(hwnd, SW_MAXIMIZE)` 从 session-1 计划任务直接可用（07-08 两次实证：4→26、重启后 15 个会话可见）。心跳应检测 `IsZoomed()`/窗口尺寸，过小自动最大化+告警。走 /dev + failing test。
 
 ---
 
 ## 3. 诊断复用法（别再纯 SSH 猜）
+
+### ⚠️ 铁律：UIA 判据必须用截图 ground truth 交叉验证
+07-08 下午连吃三次假判据的亏：①"新的朋友"在通讯录 tab 的 UIA 树里**不存在**（判"没切过去"其实切过去了）②"通讯录管理"按钮会被滚出虚拟列表（判"不在通讯录"其实还在）③导航按钮的 `legacy_state/is_selected/toggle` 全部 unsupported（mmui 不暴露选中态）。**任何"点击是否生效/在哪个 tab"的结论必须配 `PIL ImageGrab.grab()` 截图人工确认**（session-1 可用，缩半存 `C:\Users\Public\wxdiag_*.png` base64 回传）。exp4 曾因假判据把微信留在通讯录 tab 干扰生产 20 分钟。
 
 ### 能力边界
 SSH 连 Windows 机 = **session 0**，**够不到 session 1 的 GUI/UIA**。诊断 session 1 的微信窗口必须有 session-1 内执行通道。
