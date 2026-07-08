@@ -1,4 +1,8 @@
-# daily-report-cs CHANGELOG
+# line04-cs-reply CHANGELOG
+
+## v1.1.0 (2026-07-08)
+
+改名：daily-report-cs → line04-cs-reply（按 Line 层级化命名法，与 daily-report 区分开——本 skill 是 Line04 客服实时对话判断内核，不是日报生成）。已接入生产 `apps/api/src/services/wechat-draft.ts`（PR #1181），替换原有自由发挥生成逻辑。
 
 ## v1.0.0 (2026-07-08)
 

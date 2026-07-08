@@ -1,7 +1,7 @@
 ---
-name: daily-report-cs
-version: 1.0.0
-description: 实时微信客服单轮回复判断内核（从 daily-report v1.5 判断规则裁剪而来）。输入客户状态包+客户最新一句话，输出一条可直接发送的客服回复+内部判断标签（阶段/信号/询价/风险/转人工），不生成日报，面向低延迟单轮场景。
+name: line04-cs-reply
+version: 1.1.0
+description: Line04 微信客服单轮回复判断内核（从 daily-report v1.5 判断规则裁剪而来，原名 daily-report-cs）。输入客户状态包+客户最新一句话，输出一条可直接发送的客服回复+内部判断标签（阶段/信号/询价/风险/转人工），不生成日报，面向低延迟单轮场景。已接入生产 wechat-draft.ts（PR #1181）。
 ---
 
 # 客服实时回复判断内核
