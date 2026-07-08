@@ -1,3 +1,8 @@
+## [2026-07-08] harness-controller — updated
+**症状**: controller merge PR 后不会产生 staging_e2e 任务，staging→production 放行层自 07-05 relay 迁移后已悬空超过 10 天（消费该任务的旧 LangGraph 图早已停用），zenithjoy 侧新代码上线后缺少 staging E2E 回归验证这道关卡。
+**根因**: 唯一能派生 staging_e2e 任务的代码（原 mergePrNode._spawnStagingE2eTask）躺在已停用的 harness-task.graph.js 里，relay 单 session skill 接力模式取代 LangGraph 编排后没人调它。
+**修改**: harness-controller Step 6 merge 确认后（自己 merge 或发现已被外部合并两条路径都算）新增 best-effort 调用 cecelia 新上线的 `POST /api/brain/harness/staging-e2e` 端点，恢复该层任务产生入口；version 1.6.0 → 1.7.0。
+
 ## [2026-07-08] wechat-cs-troubleshooting — updated（新增 §2.J：自愈重启后欢迎回来确认屏无自动点击）
 **症状**: rog 生产实测：清理进程残留后通过正规入口重启 line04 客服，UIA 死区自愈逻辑自动触发一次微信重启，重启后卡进 `mmui::LoginWindow`（title=微信）的"欢迎回来"确认屏（账号已登录，仅需点"进入微信"，不需要密码），listener 心跳持续 `locked=True sessions=0`，生产完全收不到客户消息，直到人工点击"进入微信"才恢复。
 **根因**: `find_weixin.py` 的 `is_privacy_locked()` 只做检测，没有自愈/自动点击逻辑；该状态和真正的隐私锁密码验证共用同一窗口 class/title，代码目前无法区分也无法自动跳过。
