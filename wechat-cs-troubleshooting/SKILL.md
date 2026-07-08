@@ -14,10 +14,13 @@ description: |
 # Line04 微信客服 — 排障 + 当前状态 catalog
 
 > ⚠️ 这是**活台账**，不是一次性文档。每次排查微信客服问题，**先读这里**（别重复诊断已知项），
-> 排完**回来更新**（解决的挪上去、新坑加进来）。最后更新：2026-07-08 下午（新增 §2.I rog 微信"卡住打不开"与"读不到会话"的区分）。
+> 排完**回来更新**（解决的挪上去、新坑加进来）。最后更新：2026-07-08 上午（新增 §2.J：自愈重启后"欢迎回来"确认屏无自动点击，导致生产中断实锤，issue e78d98bc）。
 
 ## 0. 系统一句话 + 关键事实
-- **rog（xian-rog）= Lead 自检机**，agent 的 `.env` **手动改成连 staging**（`wss://staging-autopilot.zenjoymedia.media`）。
+- **rog（xian-rog）= Lead 自检机**。环境随复测节奏切换：2026-07-06 起 rog 在【staging】随 main 自动 OTA（当日 1.0.108→1.0.109→1.0.110）（.env 备份 `.env.prod-backup-0706` 是生产配置，测完切回用它）。**排障第一步永远看 listen_chat 进程命令行 `--middleware-url` 确认环境**，别信文档记忆。
+- **改 rog `.env` 后必须杀掉旧 start.bat 监督 cmd 再重启**：start.bat 常驻监督循环持有它启动时的 env 快照，只杀 agent.exe 会被它用【旧环境】拉回去（0706 实锤：改完 .env 杀 agent，30 秒后被 15:05 的老 cmd 用生产 env 复活）。正确顺序 = 杀 `cmd.exe *start.bat*` + 全部 `zenithjoy-agent.exe` + `python *listen_chat.py*` → `schtasks /run /tn ZenithJoyAgent`（session-1 交互令牌，重读 .env）。
+- **`.env` 是 UTF-8**，PowerShell 改它要 `Get-Content/Set-Content -Encoding UTF8`；用 `-Encoding ascii` 会把 `ZJ_MAIN_DATA_DIR` 的中文路径写成 `???`。
+- **health json `login_present` 字段语义 = "是否弹着扫码登录窗"，false=已登录=健康态**（dashboard 需扫码标志依赖它，1.0.108 起心跳 login 派生真实登录态、此字段语义不动）。别再把 false 当"没登录"误报。
 - **客户机（同事的）默认连【生产】`autopilot.zenjoymedia.media`** —— 安装包 `start.bat` 写死的，不是 staging。
 - 回复链三层，**任一层断都不回复**：① listen_chat 读会话未读 → ② 中台 `draft-generate` 出草稿（whitelist/接管/LLM）→ ③ UIA `_open_chat` 切会话 + `_uia_send` 发 + 读回验证 DELIVERED。
 - **staging 库 = `zenithjoy_test`（本机 :5201）；生产 = autopilot 独立库**。同一个 license/email **两库各有一份副本**（staging 从生产播种），登录/验证两边都过，但读写不同库 —— **排障第一件事：确认看的是哪个环境**，别拿 staging 旧数据当生产真相。
@@ -31,13 +34,6 @@ description: |
 - **修法**：listener 检测"窗口找到但整树塌缩（descendants≤2）持续 90s" → 重启微信（标志已置位态下 mmui 重建完整树）。冷却 600s + 单进程上限 5 次。
 - **版本/PR**：PR #950，line04 **1.0.71**。实地验证：重启后 descendants 1→71、ListItem 0→6；rog OTA 到 1.0.72 后 `sessions=5` 稳定可读、`unread>=1` 出现 615 次。
 - 详见 memory `line04_wechat_uia_tree_collapse_rootcause_0629`。
-- ⚠️ **#950 的重启是双刃剑（见 §1.5 + §2.A）**：心跳块的塌缩判定**裸读隐藏态**会误报塌缩→误重启正在工作的微信。PR #965（1.0.76）加了「可读守卫」缓解，但**不够**——真正的反复重启来自 CRM 扫好友破坏 UIA（§2.A）。
-
-### 1.5 心跳 `sessions_seen`/`tree_size` 是【隐藏态裸读】，恒偏 0/塌缩 — 别当真相
-- **现象**：心跳 `GET /api/wechat/listener-heartbeat` 的 `sessions=0` **即便系统正在连续 DELIVERED 也恒为 0**。
-- **根因**：主循环心跳块 `len(mw.descendants(control_type="ListItem"))` / `len(mw.descendants())` **没先 `_ensure_tray_visible`**——微信窗口在托盘/cloak/离屏态时裸读，a11y 列表不暴露→恒读 0/≤2。而 scan_unread 读会话**有** ensure_visible，所以能读到、能回复。**两个读不在一个状态，心跳那个不可信**。
-- **判读得到会话用 `zj-listener.log` 的 `reply_in_chat: ...DELIVERED`，不要用心跳 sessions_seen**。
-- **修法**：PR #965（1.0.76）`_should_restart_for_collapsed_tree` 加可读守卫——scan_unread 在可见态读到健康树（`_LAST_VISIBLE_TREE_SIZE` 非塌缩）则更新 `last_readable_scan_at`，90s 内读到过就**绝不重启**。grep `last_readable_scan_at`。
 
 ### 1.2 送达验证假阴性（消息真发了却误报 send_failed）
 - **根因**：`_uia_send` 成功后 `_read_session_preview` **只读一次**会话预览；微信会话预览**异步更新** + 刚切完会话 UIA 读偶发空 → `_delivery_confirmed` 一次没命中就判未送达。
@@ -48,26 +44,63 @@ description: |
 - 白名单：`zenithjoy.wechat_cs_account_config` 加联系人；auto_agent_enabled=on；营业时间（**按服务器中国时间判定**）。
 - LLM 模型：CS 默认 `WECHAT_CS_MODEL||'deepseek-v3.2'`，网关 toapis.com 该模型**无可用渠道**（LLM 503）→ staging 改 `WECHAT_CS_MODEL=deepseek-v4-flash`（实测可用）。**注：这是 staging plist env，被 `ensure_staging_plist` 重生会冲掉，要进 deploy-lib staging_overrides 才持久。**
 
+### 1.4 微信自升回 4.1.10 → UIA 树又塌（关更新只在装机时跑）
+- **根因**：`wechat_update_lock` 原先只在 preflight `installWeChat`（降级安装）路径里调；微信已经是 4.1.8 时不触发 → 腾讯静默自升回 4.1.10 → §1.1 树塌复发。
+- **修法**：放进 **listen_chat 主循环每 5 分钟 `run_update_lock(dry_run=False)`** 持续压（常驻进程比开机一次的 preflight 更稳）+ 降级装机后立刻锁；`interpret_lock_verify` 诚实判 locked=True/False。
+- **版本/PR**：PR #984，line04 **1.0.81**。真机"重启不自升"待 lead 验。
+
+### 1.5 一人连发多条只回第一条 / scan 慢（scan_unread 只读最后一条预览）
+- **根因**：`scan_unread` 只读 ListItem name 的 `[N条]`+最后一条预览，不读会话内全部 N 条 → AI 漏上下文；且 path-2 全量遍历内容变化 ~64s = 延迟主源。
+- **修法**：(a) 只处理有 `[N条]` 红点的会话，移除 path-2（减延迟）；(b) N>1 时 `_open_chat` 开会话 `read_chat_panel_messages(mw,n)` 读全 N 条 → `aggregate_messages` 合并成一次回复上下文。纯函数 `parse_unread_count`/`aggregate_messages` 有 TDD。
+- **版本/PR**：PR #984，line04 **1.0.81**。**注：这只解决"读"——§2.A 离屏 `_open_chat` 切不到会话仍是独立未解决项。**
+
+### 1.6 没配接管 → 客户全黑名单改不了（原 §2.D）
+- **根因**：`customer-roster.ts` managed 判定缺省 takeoverMode 退化成"whitelist 空=全黑"；接管开关 `PUT /api/crm/customers/manage` 号→租户解析 403/不建行。
+- **修法**：缺省→**blacklist 主模型（绑定即全接管，开箱即回）**；manage 统一 `requireCsWriteAccess`（service_agents ∪ cs-前缀链多通道，deny-by-default）+ `INSERT ... ON CONFLICT DO UPDATE` 自动建行。
+- **版本/PR**：**PR #954**（同根因早已合并，台账一度漏标）。vitest 48/48。后续 backlog：草稿待审 / 公司模板继承。
+
+### 1.7 staging 客服模型 env 被部署冲掉
+- **修法**：`WECHAT_CS_MODEL=gpt-5.4-mini` 进 deploy-lib `staging_overrides`（与 BETTER_AUTH/AGENT_PUBLIC 同模式），ensure_staging_plist 重生 plist 时自动带上，不再手补。
+- **版本/PR**：PR #982。
+
 ---
+
+### 1.8 桌面租约打错地址 → 1.0.108 全环境零回复（+ Broker 不可达降级放行）
+- **根因**：`desktop_lease_acquire/release` 用 middleware_url 拼 `/api/agent/desktop-lease-broker/*`，但 Broker 挂在 agent core 本机 local-discovery（`127.0.0.1:${ZENITHJOY_LOCAL_PORT|58432}`）。中台无此路由→404→acquire 恒 False→[防假成功] 跳过所有发送；副作用=失败重试循环反复操作微信窗口（屏幕持续跳动）。
+- **修法**：#1142（1.0.109，并行会话）地址改 `_get_local_discovery_base()`；#1141（1.0.110）补降级放行（Broker 联系不上→degrade-allow 照常发送+警告，决策 f26e099c；granted:false 仍跳过）+ 去 middleware_url 死参数 + AST 守卫（test_desktop_lease_ipc.py，永久禁 desktop_lease_* 引用 middleware_url）。
+- **版本/PR**：#1142 + #1141，line04 **1.0.110**。教训：**同一天两个 session 并行修同一 bug**——动手前先 `gh pr list` 查在飞 PR。
+
+### 1.9 getCSConfig 漏查 takeover_mode/blacklist → "全接管"形同虚设，只回遗留白名单
+- **根因**：cs-account-config-store.ts getCSConfig 的 SELECT 漏 takeover_mode/blacklist 两列 → `/api/wechat/cs/agent-config` 永不下发 → agent 端 should_reply 回退白名单模式 → 库里 blacklist（默认全接管）失效。rog 实况：苏小妖/于瑾带红点在视口内被 should_open 静默拦（连会话都不开），只回 6/28 测试遗留 whitelist 里的默忆。**whitelist 为空的 blacklist 机 = 一个人都不回**（历史"名单内静默不回"悬案可疑根子）。前台 CRM 接管开关（写 blacklist）因此失效。
+- **修法**：SELECT 补两列 + normalizeRow 透传（takeover_mode 只认合法枚举，缺省不伪造）+ 类型；测试教训=**mock 必须按 SELECT 列投影**（整行 mock 掩盖漏列 bug 假绿）。
+- **版本/PR**：#1146（中台侧，与模块版本无关，staging 部署即生效）。诊断法：`curl ':5201/api/wechat/cs/agent-config?machine_id=<mid>'` 看响应是否含 takeover_mode。
 
 ## 2. ❌ 未解决（按"卡人程度"排序，含根因 + 计划）
 
-### A. 🔴🔴「回一次就不理」真因 = CRM 扫好友破坏微信 UIA（rog 0629 晚铁证；正在修，见两份 hand-off）
-- **现象**：用户体感"回一次就不理"；用户还观察到 listener「反复跑进学习指导群」。
-- **真相（日志时间线坐实，不是猜）**：
-  ```
-  19:01:53 scan_unread 真送达 DELIVERED ✅（回复路径本身是好的、在连续送达）
-  19:01:55 scan_recent_contacts(CRM扫好友) → _scroll_session_list_wheel 连刷几十次 + 逐个开会话/群(坐标31989,32000)
-  19:01:56 UIA 屏幕阅读器标志已失效   ← CRM 扫描的滚动/开会话把 SPI 标志弄丢
-  19:01:59 UIA树塌缩→已重启微信        ← 标志丢→树【真】塌→#950 重启→多分钟死区→用户那刻发消息没回
-  ```
-- **根因**：CRM 扫好友（`scan_recent_contacts`+`_scroll_session_list_wheel`+逐个 `_open_chat`，#901/#903 为「扫全好友」加的）和回复路径**共用同一个微信窗口、不能并行**。它一启动/一登录就**开机必跑**（`not friend_scan_done_once`）+ 周期跑，滚遍列表+开群 → 丢 SPI 标志 → 树真塌 → 触发 #950 重启 → 死区。**#811（git 74654efd「B 方案·窗口可见+不抢焦点」）没有 CRM 扫好友，所以超级稳定**——后续 #901/#903/#950 把扫全+自愈重启压到核心回复路径上，把它搞退化。
-- **离屏坐标 ~32000 / `_scroll_session_list_wheel: SetCursorPos 失败（无输入权）`**：是 CRM 扫好友在 rog autologon session **无输入桌面权** + Qt 虚拟列表只渲染可见项导致的，**只发生在 CRM 扫描路径**，不是回复路径本身的问题。
-- **修法（两刀，见 repo `docs/handoff-line04-reply-crm-isolate-{1,2}-*.md`）**：
-  - **第一刀 PR #965（1.0.76，已合并）**：可读守卫（§1.5），治"心跳假塌缩误重启"。**只治了一半**。
-  - **做法一·快（hand-off 1）**：CRM 扫好友加开关默认 OFF，回复机只在中台「立即扫好友」时跑；回复循环回 #811 纯粹态（只读→回，绝不滚/开群）。
-  - **做法二·彻底（hand-off 2）**：把「客服回复」「好友CRM采集」拆成**两个独立 Ability**，共用微信窗口靠**一把锁时分复用、回复优先**，采集只由中台 task 触发、跑完恢复可读态。
-- **真机反复调，看到连续 DELIVERED + 日志无 CRM 滚动刷屏 + 无 `launch_weixin=True` 重启 才算好，不提前报喜。**
+> ⚠️⚠️ **2026-07-01 通宵真机跑通了（默忆收到 AI 回复），但一大半靠 rog 热修/手动撑着，不是永久代码。重启/OTA/部署会打回原形。** 详见 repo `docs/handoff-line04-rpa-realmachine-guard-0701.md`。以下是暴露出的、要在代码里真修的：
+
+### 🔴🔴 #998「scan_unread 滚动找未读」是错的回归（最紧急，影响所有客户机）
+- **现象**：agent 回复前"拉到会话列表最底部 + 进到群对话窗口"（用户真机亲眼见）→ 重犯做法二删掉的"回一次就不理"。
+- **根因**：#998（1.0.83）为治"扫不到视口外未读"给 scan_unread 加了滚动，把 CRM 式"滚动+开群"塞回了回复主循环。**守卫 test_reply_loop_purity.py 本来锁死"回复循环不准滚动"，我做 #998 时把它放松了 → 回归进 repo。**
+- **修法**：代码里 **revert #998**（回不滚动的工作版）+ 恢复 AST 守卫。rog 上已 scp 成 #998 之前的非滚动版热修（repo/生产还是坏的滚动版）。**别再往 scan_unread 加滚动；unread 靠"新消息置顶 + 自检节流不霸屏"就够。**
+
+### 🔴 状态判定不可靠（今晚最痛，要在代码判准）
+- send 了判成 failed（`_uia_send` 读回 preview='' 就判未送达 → 冷却重发 → 可能给同一人发两遍）；明明登录却 login=False；没登录被当"隐私锁屏"；树塌↔可读反复横跳。
+- **修法**：真送达读回做鲁棒（空预览多轮询/换读法/兜底，别一空就判失败）；登录判定可靠区分 已登录/没登录/隐私锁/找不到窗口。
+
+### 🔴 多微信实例 / agent 自拉没登录的微信
+- agent 会自己 launch 一个微信；同账号两开时它读错那个"没登录"的（login=False sessions=0）。正确骨架=**单个登录微信 + agent 先起置无障碍标志、微信后登 → 树完整**。
+- **修法（=⑤自愈）**：agent 检测多实例→收敛到单登录；树塌→带标志重启重建；自己拉了没登录的→纠正。
+
+### 🟠 NO_TENANT_CONTEXT（agent 未注册进中台 agents 表）
+- agent 心跳没写进 `agents` 表 / 没带租户 → 中台反查不到租户，draft-generate 返回 400 NO_TENANT_CONTEXT。rog 上已手插 agents 行热修。**修法**：查心跳注册为什么没成 / 中台从 machine_id 稳健反查租户。
+
+
+
+### A. 🔴 离屏 `_open_chat` 切不到会话 → 回不了（当前回复链断在这）
+- **现象**：日志大量 `_open_chat: 全部策略都无法切到 'X'（离屏）`，会话项坐标 ~32000（屏幕外）；同时新消息检测不到（`unread=0`）。结果"看运气"——会话项正好在屏内才回得了。
+- **根因**：微信虚拟列表把没渲染/滚动出视野的会话项 rectangle 返回离屏占位坐标（~32000）→ PostMessage 点击打空 → 切不过去；scan_unread 也只读到屏内那几条。
+- **计划**：补回跑通版（git 74654efd §5）的"**离屏坐标 >20000 → 重扫 ListItem 找 sender 新 item 引用 + 把窗口拉回可见前台**"修法（1.0.72 没带全）。**真机反复调，看到连续 DELIVERED 才算好，不提前报喜。**
 
 ### B. 🔴 新装 agent 不杀旧 listener → 假"未安装" + 抢窗口（所有客户都会撞）
 - **现象**：苏的客服模块显示"未安装"，但他自己 agent 日志写着 `line04 v1.0.70 已激活 + 健康上报 ok=true`。
@@ -78,9 +111,7 @@ description: |
 - **根因**：`module-manager.ts:471-472` preflight 撞上自己还在跑时 `return {ok:false, reason:'preflight_already_running'}` → 中台/前端读到 `ok:false` 显示"未安装"，**其实模块装好了、listener 健康**。
 - **计划**：并发"跳过"不该上报 `ok:false`，应保留上次状态。
 
-### D. 🟠 没配接管 → 客户全是黑名单 + 改不了（所有运营都会撞）
-- **根因**：`customer-roster.ts:117-119` managed 判定：`takeoverMode='blacklist'→managed=∉黑名单（全接管）`；`'whitelist' 或【缺省】→managed=∈白名单`。运营**没配过接管**（`wechat_cs_account_config` 没那行/解析不到）→ takeoverMode 缺省 → `managed=∈whitelist` → **whitelist 空 → 所有客户 managed=false → 前台全显"黑名单/未接管"**。改不了 = 接管开关 `PUT /api/crm/customers/manage` 写配置时租户解析 403/404（号→租户解析不一致那一类）。
-- **计划**：默认（缺省 takeoverMode）改成 **blacklist 主模型（全接管）** 或显式"未配置"态，绝不静默变"白名单空=全黑"；+ 修接管开关写入（号→租户解析统一 + 配不存在自动建行）。
+### D. ✅ 已解决 → 见 §1.6（缺省→blacklist 全接管 + manage 自动建行，PR #954）
 
 ### E. 🟠 生产 LLM `deepseek-v3.2` 死渠道（只修了 staging）
 - toapis.com 网关该模型无渠道 → AI 生成失败 → 不回复。**生产没碰**，要动生产 env（用户点头）。
@@ -91,13 +122,26 @@ description: |
 ### G. 🟡 listAllMachines 漏"绑了但没 license_machines"的机器
 - 运营 scope 的 `cs/machines` 是 **license_machines 驱动**；机器在 `service_agents`（已绑）但没 license_machines 行 → 运营列表不显示（实测 d026489c/07c37bd4 就这样）。计划：scope 改成 license_machines ∪ service_agents。
 
+### I. 🔴 固定目标"切会话秒失败"死循环（0706 rog 实锤，同事不回复的直接原因）
+- **现象（2026-07-06，rog 生产 1.0.102）**：给'苏小x'和'于瑾'的待发回复从 10:55 前起**每轮秒失败** `无法切到会话，中止本轮（防串台）`，连续 4+ 小时死循环不过期；同期给默忆/于锦 DELIVERED 正常（500 行窗口内 72 次），说明链路整体是通的。
+- **三层根因叠加**：
+  1. **会话列表滚动坏死**：`_scroll_session_list_wheel: SetCursorPos 失败（无输入权）→ 回退 PostMessage 合成滚轮 → 拿不到会话列表中心坐标，跳过本次滚动`——滚动从不生效；
+  2. **回顶也坏**：`_reset_session_list_to_top: 导航按钮不全，跳过切tab`——视口外会话永远拿不到 item（对比：徐先生的 item 离屏 32000 但存在，Select() 重扫能救；苏小x/于瑾连 item 都没有→秒失败无重试日志）；
+  3. **疑似 sender 名字识别错**：列表里有会话叫'苏'而目标是'苏小x'；'于锦'能送达而'于瑾'永远失败——待发目标名可能来自气泡误读/截断，目标会话根本不存在。
+- **伴生问题**：失败的待发回复**无过期/无上限**，永远重试；`[scan] badge-miss 本轮 1-4 人` 高频出现（角标检测丢，1.0.106 复测已知家族）。
+- **注意**：1.0.107 的 7 修 + 1.0.108 的 3 修**都不覆盖本条**——OTA 到 1.0.108 后此故障预期仍在，要单独立案修（滚动输入权/回顶/名字识别/队列过期）。
+
 ### H. 🟡 4.1.10 上能否回复 — 未验证
 - rog 是 **4.1.8.107**，两次成功（默忆/于瑾 DELIVERED）都在 4.1.8 + 会话项在屏内时。客户机若是 4.1.10，UIA 离屏行为是否更糟**没数据**。需在 4.1.10 真机验。
 
-### I. 🔴 rog 微信"卡住打不开"（不是"找不到会话"，两者要分清）——2026-07-08 下午实况
-- **现象**：CI `job3 — 真机气泡可读性 gate（xian-rog 真微信）` 报 `session list 里找不到 文件传输助手`、`bubbles=0`，看起来像是"读不到会话"（对应 §1.1 UIA 树塌缩 / §A CRM 破坏 UIA）。但 2026-07-08 下午人工上机核实：**这次根因不是"树塌缩/读不到"，是微信窗口本身直接卡死打不开**（点击/唤起无响应），性质完全不同——前者是"窗口在、UIA 读不出内容"，这次是"窗口这一层就没反应"。同一个 `bubbles=0` 症状，两种完全不同的根因，**排障时必须先分清是"打不开"还是"打得开但读不到"，别看到 bubbles=0 就直接套 §1.1/§A 的修法**。
-- **旁证**：同一天两个 PR（#1160 图片消息丢失修复、#1163 UIA 死区自愈重启修复）先后跑 job3，#1160 通过、#1163 连续两次（含一次 rerun）失败且报错完全一致——中间代码改动（`_restart_wechat_for_uia` 加一行 taskkill WeChatAppEx.exe）只在 `run_real_listen()` 主循环里才会被调用，而 job2 的 `--dryrun --inject-message` 路径（`run_dryrun_inject()`）完全不碰这个函数，排除是 PR 代码把 rog 微信杀挂的可能，坐实是 rog 机器**当时独立发生**的窗口卡死，与代码改动无关。
-- **计划**：卡死打不开目前只能人工上机重启微信/机器恢复，没有自愈路径覆盖"窗口完全无响应"这一态（现有自愈只覆盖"进程在但 UIA 读不到" `window_lost_since` 和"树塌缩" `collapsed_tree_since` 两种，都假设窗口本身是活的）。后续如果这类"真卡死"复现，需要在 listener 里补一层"窗口无响应检测"（如探测窗口是否响应 `WM_NULL`/`SendMessageTimeout`），现在没有。
+### J. 🔴 UIA 自愈重启后可能卡进"欢迎回来"确认屏，无自动点击 → 生产客服中断（2026-07-08 实锤，issue e78d98bc）
+- **现象**：`is_privacy_locked()` 检测到的 `mmui::LoginWindow title='微信'` 状态，实测常常不是真正的隐私锁密码验证，而是重启后的"欢迎回来"确认屏（显示"当前登录用户 X"+"进入微信"/"切换账号"/"仅传输文件"三按钮，**不需要密码**）。2026-07-08 rog 生产：UIA 死区自愈重启微信 → 触发该屏 → listener 心跳持续 `locked=True sessions=0`，生产完全收不到客户消息，直到人工点了"进入微信"才恢复。
+- **根因**：代码只做检测，没做自愈/自动点击。
+- **已知踩坑（自动点击三次尝试均未命中，供下次复用排除）**：
+  1. `pywinauto click_input()` 无效——session-1 计划任务 token 可能没有真实输入权；
+  2. UIA `InvokePattern`（`c.invoke()`）报告成功但控件无视觉/功能响应——mmui 自绘控件常见坑，invoke 只翻内部状态不 repaint；
+  3. 复用 `listen_chat.py` 现成的 `_click_screen_point`（PostMessage 到 `MMUIRenderSubWindow` 子窗口）方案，坐标算出来但未命中，疑似 DPI 缩放导致 UIA `rectangle()` 逻辑坐标与物理坐标不一致（`ScreenToClient` 前应先 `SetProcessDPIAware`/`SetProcessDpiAwarenessContext`，未验证）。
+- **计划**：①先修 DPI 坐标映射再重试 PostMessage 自动点击 ②在自动点击多次失败时至少要报警通知人工介入，不能静默 `sessions=0` 挂在那。
 
 ---
 
@@ -114,7 +158,7 @@ schtasks /run /tn ZJDiagUIA
 `/it`（interactive token）能在 session 1 交互桌面跑代码操作微信。`PsExec -i 1` 起不来。
 
 ### 读中文日志（避免多字节截断）
-日志是 **GBK**。`Get-Content -Tail N -Encoding Default` → 转 UTF8 字节 → `[Convert]::ToBase64String` → SSH 回传 → 本地 `base64 -d`（纯 ASCII 传输不被 codepage 损坏）。直接 `iconv -f GBK` 经 SSH 常把最新几行多字节字符截断成假象。
+⚠️0706 实测日志已是 **UTF-8**（`Get-Content -Encoding UTF8` 直接对；再用 `-Encoding Default`(GBK) 会双重乱码、grep 中文全 miss）。旧版本模块可能仍是 GBK：先 tail 几行看是否乱码再定编码。旧 GBK 读法备查：`Get-Content -Tail N -Encoding Default` → 转 UTF8 字节 → `[Convert]::ToBase64String` → SSH 回传 → 本地 `base64 -d`（纯 ASCII 传输不被 codepage 损坏）。直接 `iconv -f GBK` 经 SSH 常把最新几行多字节字符截断成假象。
 
 ### 诊断脚本写法
 scratchpad 用 `.txt` 扩展（`.py` 被 bash-guard 拦）→ base64 → 在目标机解码成 `.py` → 跑 `C:\Users\asus\anaconda3\python.exe`（含 pywinauto）。
@@ -128,6 +172,18 @@ scratchpad 用 `.txt` 扩展（`.py` 被 bash-guard 拦）→ base64 → 在目�
 ### staging 库（本机美国 Mac）
 `psql -d zenithjoy_test`，表在 **`zenithjoy` schema**（不是 public）。关键表：`wechat_cs_account_config`（接管/白名单/人设）、`service_agents`（绑定）、`license_machines`（注册）、`agents`（心跳/module_status）、`crm_customers`（identity=customer/blacklist/internal）。staging API 日志 `~/Library/Logs/zenithjoy-api.staging.{log,error.log}`，route 判定打印 `[wechat-draft] auto route=X inWhitelist=Y enabled=Z businessHoursOk=W`。
 
+### 部署 line04 新版到 staging（本机绕 GHA timeout）
+`git reset --hard origin/main` → `npm ci --workspace=apps/api --ignore-scripts` → `source deploy-lib.sh`+设 ZJ_* env → `staging_deploy_slot <sha>`。**部署后必补** `WECHAT_CS_MODEL=gpt-5.4-mini`（PlistBuddy Add 进 staging plist + kickstart，否则回落 deepseek 死渠道）。
+
+### 让 agent 连 staging（#976 后从 staging 下自动连对；手改兜底）
+`.env` 设 `ZENITHJOY_API_BASE/URL=...staging-autopilot...`+`ZENITHJOY_ENV=staging`（start.bat 行95-102 选环境）。`cs_wid=cs-<machineId前8>`。
+
+### 真送达 gate（识别真发 vs 没发）
+`reply_in_chat: ...DELIVERED`=真送达；读不到=`send_failed` 绝不假装。preflight `--verify-silent` 是打包进 agent 的运行时自检。**回复改动真机看到 DELIVERED 才算 done。**
+
+### 关更新真实状态怎么查
+搜 `%APPDATA%\Tencent\xwechat` 下 `WeixinUpdate.exe`/`.disabled`：有活的(无.disabled)或 `patch\4.1.10.31\`=**没锁死会自升**；`xwechat.bak4110`=旧4.1.10通道已断。看日志 `interpret_lock_verify` 的 `locked=`。
+
 ---
 
 ## 4. 排障起手式（怀疑顺序）
@@ -140,8 +196,21 @@ scratchpad 用 `.txt` 扩展（`.py` 被 bash-guard 拦）→ base64 → 在目�
 
 ---
 
+## 4.5 根治"来回修"的守卫架构（别再靠文档/自觉）
+病根：修好的东西记进这份台账（文档），但没做成机器强制守卫 → 下次改把它改坏没人拦（#998 就这么进来的）。三块（非 NFR）：
+1. **rog 真机 runner 当 CI 闸**：碰 `services/agent/wechat-rpa/**`/回复/状态的 PR，合并前必须在 rog 真机跑真送达自检，过了才合（dev skill `target_environment=windows_wechat` 已有概念，没建成 required gate）。
+2. **agent 运行时"状态自检+自愈"代码（一份代码两处用）**：打包进 agent 每台客户机自愈 + rog runner 发版前先跑=那道闸。
+3. **invariant 登记进 `decisions` 表（category=invariant）喂进 /dev GAN**：如"回复循环不准滚动/开群"。
+**顺序：先写 agent 自检自愈（让真机自己变干净可测）→ 再把 rog 接成闸**（否则 rog 一乱天天误挡合并）。
+
 ## 5. 相关 memory / skill
 - memory `line04_wechat_uia_tree_collapse_rootcause_0629`（树塌缩真因+E2E+复用法，最全）
 - memory `line04_wechat_cs_working_impl_0621`（跑通版 git 74654efd 完整实现，离屏修法在 §5）
 - skill `wechat-uia-silent-send`（发送机制：不抢焦点/不藏窗口/读回验证/禁止死路）
 - memory `line04_selfcheck_thrash_rootcause_0627`（多进程抢键盘自检）
+
+**今晚（0629晚~0630）新增 ——**
+- ⭐ 主文档入口 `docs/line04-master.md`（现状/目标/待办/打法/索引一处全，活文档；本 skill 是它的 §7 排障台账）
+- memory `line04_cs_realmachine_and_followups_0630`（真机跑通+4遗留修复+待办，最新最全）
+- memory `line04_agent_env_standardize_done_0629`（锁版本+清垃圾 2PR）/ `line04_reply_crm_isolate_done_0629`（做法二 3PR）
+- docs `line04-todo-checklist.md`(可勾选待办) / `handoff-line04-open-issues-0630.md`(待办总账) / `concurrency-capacity-analysis.md`(并发容量)

@@ -1,3 +1,8 @@
+## [2026-07-08] wechat-cs-troubleshooting — updated（新增 §2.J：自愈重启后欢迎回来确认屏无自动点击）
+**症状**: rog 生产实测：清理进程残留后通过正规入口重启 line04 客服，UIA 死区自愈逻辑自动触发一次微信重启，重启后卡进 `mmui::LoginWindow`（title=微信）的"欢迎回来"确认屏（账号已登录，仅需点"进入微信"，不需要密码），listener 心跳持续 `locked=True sessions=0`，生产完全收不到客户消息，直到人工点击"进入微信"才恢复。
+**根因**: `find_weixin.py` 的 `is_privacy_locked()` 只做检测，没有自愈/自动点击逻辑；该状态和真正的隐私锁密码验证共用同一窗口 class/title，代码目前无法区分也无法自动跳过。
+**修改**: §2 新增条目 J，记录现象、根因，以及三种自动点击方案失败的排除记录（`click_input()` 无效/`InvokePattern.invoke()` 报告成功但控件无视觉响应/复用 `_click_screen_point` PostMessage 方案坐标未命中疑似 DPI 缩放偏差），为下次实现自愈补上排除清单；已建 Notion issue e78d98bc（P1）跟进代码修复。
+
 ## [2026-07-08] daily-report-cs — created
 **症状**: daily-report skill 生成的是"聊天记录→日报"，报告体、全量 system prompt（~15k tokens），不适合实时客服场景（客户一句话进来要几秒内回一句话），且完整版报告类字段（两层日报/资料范围模块/变更记录）客服场景用不上。
 **根因**: 判断内核（A1-A4/四感/推进信号/询价分级/高风险识别/事实边界+资料缺失句式库）本身是通用的，缺的是"单轮、短输出、可控延迟"的裁剪版本。
