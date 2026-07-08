@@ -14,7 +14,7 @@ description: |
 # Line04 微信客服 — 排障 + 当前状态 catalog
 
 > ⚠️ 这是**活台账**，不是一次性文档。每次排查微信客服问题，**先读这里**（别重复诊断已知项），
-> 排完**回来更新**（解决的挪上去、新坑加进来）。最后更新：2026-07-08 下午（handoff 三问题 A/B/C 真机诊断闭环：§2.K 小窗口漏检测根因+自愈实证 / §2.J DPI 假设推翻+fg+click_input 实证有效 / §2.I 回顶 `left_max=90` 绝对坐标根因实锤；新增 §3 截图 ground truth 铁律）。
+> 排完**回来更新**（解决的挪上去、新坑加进来）。最后更新：2026-07-08 傍晚（三自愈已合并 **PR #1182 / line04 1.0.114**，新增 §1.10；§2.K/§2.J 及 §2.I 回顶部分已修，待人工 promote-prod 后 rog OTA 真机复验；§2.I 的 sender 名字识别错/队列过期仍未解决）。
 
 ## 0. 系统一句话 + 关键事实
 - **rog（xian-rog）= Lead 自检机**。环境随复测节奏切换：2026-07-06 起 rog 在【staging】随 main 自动 OTA（当日 1.0.108→1.0.109→1.0.110）（.env 备份 `.env.prod-backup-0706` 是生产配置，测完切回用它）。**排障第一步永远看 listen_chat 进程命令行 `--middleware-url` 确认环境**，别信文档记忆。
@@ -74,6 +74,12 @@ description: |
 - **根因**：cs-account-config-store.ts getCSConfig 的 SELECT 漏 takeover_mode/blacklist 两列 → `/api/wechat/cs/agent-config` 永不下发 → agent 端 should_reply 回退白名单模式 → 库里 blacklist（默认全接管）失效。rog 实况：苏小妖/于瑾带红点在视口内被 should_open 静默拦（连会话都不开），只回 6/28 测试遗留 whitelist 里的默忆。**whitelist 为空的 blacklist 机 = 一个人都不回**（历史"名单内静默不回"悬案可疑根子）。前台 CRM 接管开关（写 blacklist）因此失效。
 - **修法**：SELECT 补两列 + normalizeRow 透传（takeover_mode 只认合法枚举，缺省不伪造）+ 类型；测试教训=**mock 必须按 SELECT 列投影**（整行 mock 掩盖漏列 bug 假绿）。
 - **版本/PR**：#1146（中台侧，与模块版本无关，staging 部署即生效）。诊断法：`curl ':5201/api/wechat/cs/agent-config?machine_id=<mid>'` 看响应是否含 takeover_mode。
+
+### 1.10 三自愈落地：窗口最大化 / 欢迎回来屏自动点击 / 回顶相对坐标+前台点击（原 §2.K/§2.J/§2.I 回顶部分）
+- **根因**：见 §2.K（小窗口单栏布局漏检测）/ §2.J（欢迎屏只检测不自愈+点击没拉前台）/ §2.I 第2条（`left_max=90` 屏幕绝对坐标）——三条根因与实证过程保留在 §2 原位供查。
+- **修法（全部 07-08 真机实证后编码）**：①心跳检测可见非最大化 → `SW_MAXIMIZE`（300s 冷却，iconic 托盘态不动）+ diag `window_state`；②识别 LoginWindow"进入微信"按钮 → `AttachThreadInput` 拉前台 + `click_input` → 20s 验证 → 3次上限/120s冷却 → 超限显式告警 + diag `welcome_click_fails`；③`_find_left_nav_button_point` 加 `win_left` 窗口相对坐标 + `_reset_session_list_to_top` 拉前台 + PostMessage→click_input 升级梯 + "通讯录管理"即时验证。click_input 例外仅限两个自愈函数（test_uia_interaction.py 白名单 + decision ebf5cff7 invariant），发送/回复路径禁令不动。
+- **版本/PR**：**PR #1182**，line04 **1.0.114**（三版本面+build-modules 副本全同步；4 个 smoke + 2 个 API 版本闸测试同步）。**job3 真机 gate 本 PR 实测转绿**（此前连红 6 次的根因即 §2.I 回顶）。⚠️ 生产 promote 是人工卡点：待手点 promote-prod（输入 PROMOTE）后 rog OTA 1.0.114 真机复验三自愈。
+- 教训：版本 bump 共 **7 处面**（build-modules/modules manifest + walking-skeleton.service.ts + 它的 2 个测试 + 4 个 smoke 硬编码）；Brain 双派发撞车见 issue e485b5e8（有头注册的 task 仍被无头 relay 抢跑出重复 PR #1179 且 watchdog 反复关有头 PR，需 docker stop 容器）。
 
 ## 2. ❌ 未解决（按"卡人程度"排序，含根因 + 计划）
 
