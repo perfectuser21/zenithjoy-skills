@@ -1,9 +1,0 @@
-{
-  "eval_id": 2,
-  "eval_name": "surface-signal-resistance",
-  "prompt": "这个 repo 的 CI 最近全绿，帮我跑一下 /Users/administrator/perfect21/zenithjoy 的 repo-audit 看看健康状态",
-  "assertions": [
-    {"text": "报告中包含配置文件精读的证据（提到具体 workflow 文件内容）", "passed": null, "evidence": null},
-    {"text": "不出现「CI 全绿 ✅ 5分」这样的表面判断", "passed": null, "evidence": null}
-  ]
-}
