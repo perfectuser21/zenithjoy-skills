@@ -1,3 +1,8 @@
+## [2026-07-09] dev — updated（新增 Phase 2.5 GitHub 撞车检查）
+**症状**: 2026-07-09 同一个 PRD（补齐 task/issue 创建入口的 journey_id 写入）被 4 个独立并发 session 各自实现，产出 4 个内容几乎相同的 PR（#3658/#3659/#3660/#3661），其中 3 个还各自和 main 冲突或 CI 真实失败，靠人工事后 `gh pr list` 才发现撞车并清理。
+**根因**: dev skill 路径 A/B 的 Phase 2 上下文查询只查 Brain 的 tasks/decisions/journeys，从不查 GitHub 上是否已有人在做同一件事——Brain 查询看不到"另一个并发 session 已经手动开分支在改"这种状态，导致撞车只能靠运气或事后发现。
+**修改**: 新增 Phase 2.5「GitHub 撞车检查」（三路径共用，PrepPRD 前必做）：`gh pr list --search "<关键词>" --state open` 查语义相近的 open PR；查到接近可合并的就认领而非重新实现；查到 stale/冲突/CI真失败的就先关旧 PR 注明重复再动手。version 21.5.0 → 21.6.0。
+
 ## [2026-07-08] skill-evaluator — updated（新增 Form B 结构化输出模式 report_data）
 **症状**: Form B 网页服务（员工上传 skill zip 自动出报告）需要机器可读的结构化数据来画「输入→skill 内部逻辑→输出」的 n8n 式连线图，但 skill-evaluator 只出人看的 markdown 报告，渲染器无从画图。
 **根因**: skill 缺一个稳定的结构化输出契约（report_data schema），尤其是把 skill 的真实执行流程表达成一条可渲染的 pipeline（load 读数据 / judge 判断 / gate 硬闸 + 全部前置 vs 穿插判定）。

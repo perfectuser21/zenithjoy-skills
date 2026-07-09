@@ -1,10 +1,11 @@
 ---
 name: dev
-version: 21.5.0
-updated: 2026-07-07
-description: Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→比对已有Steps展示Golden Path草稿→确认前置工作全部到位→用户确认PrepPRD→路由执行
+version: 21.6.0
+updated: 2026-07-09
+description: Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→Phase2.5 GitHub撞车检查→比对已有Steps展示Golden Path草稿→确认前置工作全部到位→用户确认PrepPRD→路由执行
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
+  - 21.6.0: 新增 Phase 2.5「GitHub 撞车检查」（三路径共用，PrepPRD 前必做）— 起因 2026-07-09 同一 PRD 被 4 个并发 session 各自实现产出 4 个重复 PR；新增 gh pr list --search 查重步骤，查到接近可合并的同语义 PR 就认领而非重新实现，查到 stale/冲突/CI真失败的就先关旧 PR 再动手
   - 21.5.0: 路径A/B 终态 handoff 说明（decisions cf998025）— engine-pr-watchdog 3.2.0 起，路径 A/B merge 后自动写 handoff（SSOT: tasks.result.handoff + 镜像 docs/handoffs/），无下一步写明「完成」；engine-ship 说明同步更新；无行为变更，仅文档对齐
   - 21.4.0: 路径C点火 payload 补 orchestrator=skill-relay 硬性字段 — cecelia #3554（2026-07-05）起 Brain 硬校验 payload.orchestrator==='skill-relay'，缺失/非法直接 terminal failed（missing_orchestrator_flag），LangGraph 图不再隐式兜底
   - 21.3.0: 新增「哨兵（回归守卫）死规矩」节（谁写/啥时候/写哪/CI闸门卡 + 失控程度越高守卫越重 + 一份代码两处用）；Bug PrepPRD 加 proven-to-fire 守卫指针与验收项
@@ -75,6 +76,26 @@ curl -s -X POST "localhost:5221/api/brain/decisions/match" \
 ```
 
 > 路径 C 不查 api_registry / db_schema_registry / test_registry / issues / skills / OKR（已移到 Proposer 阶段）。
+
+---
+
+## Phase 2.5：GitHub 撞车检查（三条路径都必做，PrepPRD 前）
+
+**背景**：Brain 的 tasks/decisions 查询只能看到"这个系统知道的工作"，看不到"另一个并发 session 已经手动开了分支在改"。2026-07-09 曾出现同一个 PRD（补齐 journey_id 写入）被 4 个独立 session 各自实现一遍，产出 4 个内容几乎相同的 PR，其中 3 个还各自和 main 产生冲突——纯靠 Brain 查询查不出这种撞车，必须直接问 GitHub。
+
+**动作**（从用户描述提炼 2-3 个关键词）：
+
+```bash
+gh pr list --search "<关键词>" --state open --json number,title,url,createdAt,statusCheckRollup
+```
+
+**分支处理**：
+
+- **查到语义相近的 open PR，且它 CI 全绿或接近可合并** → 不要另起一份实现。改为"认领"这个已有 PR：切到它的分支，把它推向合并（解冲突 / 补测试 / 等 CI），完成后正常收尾。这比重新实现快，也不会再制造一份要被人工发现和清理的重复劳动。
+- **查到语义相近的 open PR，但它已经 stale（长时间没动）、和 main 冲突严重、或 CI 有真实失败（非 flaky）** → 可以重新做，但动手前先把旧 PR 关掉，评论里写清楚"与 #<即将开的新 PR> 重复"，避免两份同时挂着让下一个人再撞一次。
+- **没查到** → 正常往下走。
+
+这一步的价值在动手写代码**之前**兑现——写完才发现撞车，返工成本已经付了；写之前查一遍，几秒钟的事。
 
 ---
 
