@@ -1,3 +1,8 @@
+## [2026-07-09] dev — updated（新增 Phase 0 --task-id 立即 claim）
+**症状**: Phase 2.5 GitHub 撞车检查上线当天，同一个 task（f30dace8，session resume 孤儿 worktree 自愈那个 bug）又撞车了一次——这次是人工交互式 `/dev` 流程和 Brain 自身的 tick 自动派发同时处理了同一个 task，各自独立开出 PR #3665（人工，已合并）和 #3663（Brain 自动，事后关闭），实现方式完全不同（worktree list 校验 vs .meta 文件方案）。
+**根因**: `POST /api/brain/tasks` 建的任务默认 `status='queued'` 且 `claimed_by=NULL`；Brain tick 循环每 2 分钟扫一次这个状态的任务自动派发到容器跑 headless claude。注册后如果不立刻上锁，2 分钟内必被 tick 当"无主任务"抢走——这不是查重能防的问题（两边在各自开始时都还没有分支/PR 可查，Phase 2.5 的 `gh pr list` 检查天然查不到），唯一有效防线是注册后立刻 claim。系统本来就有现成的 `POST /api/brain/tasks/:id/claim` 端点和 `claimed_by` 乐观锁，只是没人在注册后调用它。
+**修改**: 新增 Phase 0（有头模式第一动作，早于 Phase 1/PrepPRD）：收到 `--task-id` 立即 `POST /tasks/:id/claim`；成功则继续，409（已被抢）则停下告知用户查证，避免在已经跑着的任务上再做一遍。version 21.6.0 → 21.7.0。
+
 ## [2026-07-09] dev — updated（新增 Phase 2.5 GitHub 撞车检查）
 **症状**: 2026-07-09 同一个 PRD（补齐 task/issue 创建入口的 journey_id 写入）被 4 个独立并发 session 各自实现，产出 4 个内容几乎相同的 PR（#3658/#3659/#3660/#3661），其中 3 个还各自和 main 冲突或 CI 真实失败，靠人工事后 `gh pr list` 才发现撞车并清理。
 **根因**: dev skill 路径 A/B 的 Phase 2 上下文查询只查 Brain 的 tasks/decisions/journeys，从不查 GitHub 上是否已有人在做同一件事——Brain 查询看不到"另一个并发 session 已经手动开分支在改"这种状态，导致撞车只能靠运气或事后发现。
