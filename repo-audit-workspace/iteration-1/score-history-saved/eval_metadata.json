@@ -1,8 +1,0 @@
-{
-  "eval_id": 3,
-  "eval_name": "score-history-saved",
-  "prompt": "帮我审一下 /Users/administrator/perfect21/zenithjoy 这个 repo，跑完后把分数写入历史记录",
-  "assertions": [
-    {"text": "报告末尾有分数写入确认（Brain 或本地）", "passed": null, "evidence": null}
-  ]
-}
