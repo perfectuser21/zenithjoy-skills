@@ -1,10 +1,11 @@
 ---
 name: dev
-version: 21.6.0
+version: 21.7.0
 updated: 2026-07-09
-description: Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→Phase2.5 GitHub撞车检查→比对已有Steps展示Golden Path草稿→确认前置工作全部到位→用户确认PrepPRD→路由执行
+description: Phase0 --task-id立即claim防tick抢跑→Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→Phase2.5 GitHub撞车检查→比对已有Steps展示Golden Path草稿→确认前置工作全部到位→用户确认PrepPRD→路由执行
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
+  - 21.7.0: 新增 Phase 0「--task-id 立即 claim」（有头模式第一动作，PrepPRD/Phase1 之前）— 起因 2026-07-09 同一 task（f30dace8）被人工 /dev 流程和 Brain tick 自动派发同时抢跑，各自独立产出 PR #3665/#3663；根因是注册任务默认 queued+claimed_by=NULL，tick 每 2 分钟扫一次无主任务，不 claim 必被抢；这不是查重能防的问题（两边都还没开分支/PR，互相查不到），唯一防线是注册后立刻用现成的 POST /tasks/:id/claim 上锁
   - 21.6.0: 新增 Phase 2.5「GitHub 撞车检查」（三路径共用，PrepPRD 前必做）— 起因 2026-07-09 同一 PRD 被 4 个并发 session 各自实现产出 4 个重复 PR；新增 gh pr list --search 查重步骤，查到接近可合并的同语义 PR 就认领而非重新实现，查到 stale/冲突/CI真失败的就先关旧 PR 再动手
   - 21.5.0: 路径A/B 终态 handoff 说明（decisions cf998025）— engine-pr-watchdog 3.2.0 起，路径 A/B merge 后自动写 handoff（SSOT: tasks.result.handoff + 镜像 docs/handoffs/），无下一步写明「完成」；engine-ship 说明同步更新；无行为变更，仅文档对齐
   - 21.4.0: 路径C点火 payload 补 orchestrator=skill-relay 硬性字段 — cecelia #3554（2026-07-05）起 Brain 硬校验 payload.orchestrator==='skill-relay'，缺失/非法直接 terminal failed（missing_orchestrator_flag），LangGraph 图不再隐式兜底
@@ -16,6 +17,25 @@ changelog:
 ---
 
 > **CRITICAL LANGUAGE RULE**: 所有输出简体中文。
+
+---
+
+## 第零步 Phase 0：收到 --task-id 立即 claim（防 Brain tick 抢跑）
+
+如果本次调用带 `--task-id <id>`（有头模式：人工/交互先 `POST /api/brain/tasks` 注册了 Brain task，再调用本 skill）：
+
+**这是本 skill 的第一个动作，必须在 Phase 1 之前执行，不可跳过、不可拖后到 PrepPRD 或更晚。**
+
+```bash
+curl -s -X POST "localhost:5221/api/brain/tasks/<task-id>/claim" \
+  -H "Content-Type: application/json" -d '{"claimer": "interactive-dev-skill"}'
+```
+
+- 返回 200 → claim 成功，继续往下走正常流程
+- 返回 409 → 已经被别的执行体抢先 claim（通常是 Brain tick 的自动派发）。**停下来**，把情况告诉用户：这个 task 已被 `<claimed_by>` 抢走，可能正在跑或已经产出 PR，先 `gh pr list`/查 task 状态确认，别在别人已经在跑的任务上再做一遍
+- 没有 `--task-id`（本次不是先注册 Brain task 的场景）→ 跳过本步骤，直接进 Phase 1
+
+**为什么必须做**：Brain tick 循环每 2 分钟扫一次 `status='queued' AND claimed_by IS NULL` 的任务自动派发到容器跑 headless claude。`POST /api/brain/tasks` 建出来的任务默认就是这个状态——注册后不立刻 claim，2 分钟内必然被 tick 当无主任务抢走，产出一份和你手动处理完全独立、互相不知情、大概率冲突的重复实现。2026-07-09 实测复现：task `f30dace8` 被人工 `/dev` 流程和 Brain 自动 tick 同时处理，各自独立开出 PR #3665（人工，已合并）和 #3663（Brain 自动，事后发现关闭），实现方式完全不同。这不是查重能防住的问题（两边都没查到对方，因为两边都还没来得及开分支/PR）——唯一有效的防线是注册后立刻上锁。
 
 ---
 
