@@ -1,3 +1,8 @@
+## [2026-07-10] harness-report — updated（九要素 T11：Step 8 learning 模板修真 + 接通 learnings 数据管道）
+**症状**: Step 8 用 heredoc 静态模板生成 learning.md：四类目全是「（无 / 填写…）」占位符，「下次预防清单」三条每次一模一样（硬编码文本非真实总结）；且只写 git 文件从不调 Brain API——harness 产出的结构化复盘永远进不了 learnings 表（T9/T10 修好的那条数据管道）。
+**根因**: 模板填充式生成没有强制 AI 回顾本次 sprint 真实记录，占位符照样能通过「learning.md 存在」的出口核验；DB 写入步骤从未设计过。
+**修改**: harness-report 6.4.0 → 6.5.0 — Step 8 改为 AI 回顾台账/GAN 轮次/fix 记录/CI 往返后亲自撰写；Step 8c 运行时占位符守卫（命中 → DONE_WITH_CONCERNS）；Step 8e 原子条目 POST /api/brain/learnings-received（必带 task_id 挂谱系，issues_found 故意不传防多余 fix task）；Step 8f capture_atoms 探测式 best-effort（T10 入口落地后自愈）；CI 新增 lint-learning-placeholders 闸门（fixture self-test 6/6，proven-to-fire）拦占位符原文与预防清单整段照抄。
+
 ## [2026-07-09] dev — updated（新增 Phase 0 --task-id 立即 claim）
 **症状**: Phase 2.5 GitHub 撞车检查上线当天，同一个 task（f30dace8，session resume 孤儿 worktree 自愈那个 bug）又撞车了一次——这次是人工交互式 `/dev` 流程和 Brain 自身的 tick 自动派发同时处理了同一个 task，各自独立开出 PR #3665（人工，已合并）和 #3663（Brain 自动，事后关闭），实现方式完全不同（worktree list 校验 vs .meta 文件方案）。
 **根因**: `POST /api/brain/tasks` 建的任务默认 `status='queued'` 且 `claimed_by=NULL`；Brain tick 循环每 2 分钟扫一次这个状态的任务自动派发到容器跑 headless claude。注册后如果不立刻上锁，2 分钟内必被 tick 当"无主任务"抢走——这不是查重能防的问题（两边在各自开始时都还没有分支/PR 可查，Phase 2.5 的 `gh pr list` 检查天然查不到），唯一有效防线是注册后立刻 claim。系统本来就有现成的 `POST /api/brain/tasks/:id/claim` 端点和 `claimed_by` 乐观锁，只是没人在注册后调用它。
