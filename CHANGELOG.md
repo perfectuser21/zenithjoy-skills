@@ -1,3 +1,8 @@
+## [2026-07-10] wechat-cs-troubleshooting v2.0.0 瘦身 + 新增 windows-agent-diagnostics v1.0.0（skill 分层 P0）
+- 症状：wechat-cs-troubleshooting 长到 30KB，约六成是历史台账（PR 号/实证时间线/自省记录），操作层被淹没，"活台账"模式让 skill 无限增生。
+- 根因：教训记录与操作手册混在同一层，缺少"台账进 Notion Notes、正文只读、攒批定期重写"的分层纪律（决策见 memory handoff_skill_layering_self_evolution_0710）。
+- 修改：①§1 已解决全录/§2 实证细节/§4.5 守卫架构/§5 memory 索引迁 Notion Notes（[Line04][台账] 前缀 3 条，Type=Learning，已验证 15 个关键标识可检索）；②skill 瘦身为纯操作层（关键事实+已解决速查表+未解决薄清单+诊断法+起手式），frontmatter 声明"新教训写 Notes 不写回本文件"；③跨线通用诊断通道（session0/1 边界、schtasks、日志编码、截图 ground truth 铁律）抽出为第一个全局 skill windows-agent-diagnostics。
+
 ## [2026-07-10] harness-report — updated（九要素 T11：Step 8 learning 模板修真 + 接通 learnings 数据管道）
 **症状**: Step 8 用 heredoc 静态模板生成 learning.md：四类目全是「（无 / 填写…）」占位符，「下次预防清单」三条每次一模一样（硬编码文本非真实总结）；且只写 git 文件从不调 Brain API——harness 产出的结构化复盘永远进不了 learnings 表（T9/T10 修好的那条数据管道）。
 **根因**: 模板填充式生成没有强制 AI 回顾本次 sprint 真实记录，占位符照样能通过「learning.md 存在」的出口核验；DB 写入步骤从未设计过。
