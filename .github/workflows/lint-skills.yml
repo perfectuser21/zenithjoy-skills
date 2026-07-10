@@ -40,6 +40,13 @@ jobs:
       - name: Lint 全部 skill
         run: python3 .github/workflows/scripts/lint-skills.py
 
+      # 九要素 T11：learning.md 占位符闸门（拦「（无 / 填写」与硬编码预防清单整段照抄）
+      - name: Self-test — fixture 证明 learning 占位符闸门能拦
+        run: python3 .github/workflows/scripts/test/test_lint_learning_placeholders.py
+
+      - name: Lint learning 占位符
+        run: python3 .github/workflows/scripts/lint-learning-placeholders.py
+
       # Brain 契约一致性：skill 文档描述的调用契约必须与 cecelia Brain 现行硬校验一致。
       # cecelia 侧契约变更 PR 必须同步更新 check-brain-contract.sh 的断言（见脚本头注释）。
       - name: Brain 契约一致性守卫
