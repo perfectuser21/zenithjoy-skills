@@ -119,14 +119,14 @@ curl -s -m 10 -X PATCH "$BRAIN/api/brain/orchestrator/relay-runs/${HARNESS_INITI
 
 ```bash
 # 派发前（<node> = planner|proposer|reviewer|generator|evaluator|judge|merge|report）
-EVT_ID=$(curl -s -X POST "$BRAIN/api/brain/harness/phase-event" \
+EVT_ID=$(curl -s -m 10 -X POST "$BRAIN/api/brain/harness/phase-event" \
   -H "Content-Type: application/json" \
-  -d "{\"initiative_id\":\"$HARNESS_INITIATIVE_ID\",\"node\":\"<node>\",\"status\":\"running\",\"model\":\"<模型档>\"}" | jq -r .id)
+  -d "{\"initiative_id\":\"$HARNESS_INITIATIVE_ID\",\"node\":\"<node>\",\"status\":\"running\",\"model\":\"<模型档>\"}" | jq -r .id || true)
 
-# subagent 返回后（成功 done / 失败 failed；cost_usd 可得才带）
-curl -s -X PATCH "$BRAIN/api/brain/harness/phase-event/$EVT_ID" \
+# subagent 返回后（成功 done / 失败 failed；cost_usd 可得才带）——EVT_ID 空（POST 失败）则跳过 PATCH
+[ -n "$EVT_ID" ] && curl -s -m 10 -X PATCH "$BRAIN/api/brain/harness/phase-event/$EVT_ID" \
   -H "Content-Type: application/json" \
-  -d "{\"status\":\"done\",\"ts_end\":$(date +%s)}"
+  -d "{\"status\":\"done\",\"ts_end\":$(date +%s)}" || true
 ```
 
 - `HARNESS_INITIATIVE_ID` 未注入（前台手跑）→ 整段跳过，不报错不阻塞
