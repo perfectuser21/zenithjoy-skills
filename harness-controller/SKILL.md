@@ -7,9 +7,10 @@ description: |
   移植 Superpowers 6.0 subagent-driven-development 零件：进度台账 / 文件接力 / 四态出口协议 / 单评审双裁决 / compaction 恢复。
   点火方：Brain harness dispatch（无头）或人工前台（同一份 skill 两种触发，行为一致）。
   /dev 仍是唯一需求入口：本 skill 消费 /dev 路径C 的交接契约（PrepPRD + 铁律清单 + NFR），不做需求对抗。
-version: 1.8.0
+version: 1.8.1
 created: 2026-07-04
 changelog:
+  - 1.8.1: fix——phase-event 自报两条 curl 加 -m 10 超时与 || true best-effort，PATCH 前加 EVT_ID 空值守卫（POST 失败则跳过 PATCH，防打到无 :id 的 URL），与文档既有 relay-runs best-effort curl 风格一致
   - 1.8.0: T7 phase-event复活——每阶段派 subagent 前后 POST/PATCH /api/brain/harness/phase-event 自报，让 initiative_run_events 重新有写入方（07-04 LangGraph→relay 切换后断供），同时给 cecelia 侧 zombie-reaper 心跳判活提供第二信号（防长阶段被 updated_at 单信号误杀）；HARNESS_INITIATIVE_ID 缺失（前台手跑）时整段跳过不阻塞
   - 1.7.0: Step 6 merge 后追加 staging_e2e 派生（POST /api/brain/harness/staging-e2e，best-effort 不阻塞）——覆盖本 session 自己 merge 与外部已合并两条路径，这是 staging→production 放行层当前唯一的任务产生入口（此前该层因旧 LangGraph 图（已废弃，不再被 invoke）停用而悬空 10 天，cecelia decision 76ab76ea 拍板恢复）
   - 1.6.0: 跨 repo 化刀3——①Step 5 judge 主路径切 Brain API（curl POST /api/brain/harness/judge，worktree 传宿主绝对路径 $HARNESS_WORKTREE_HOST，brain@1.242.0 spawn 注入；FIXED 由 API 归一 PASS；CLI 降为 cecelia 本机兜底不删）②CI 门禁三件套②按 base_repo 映射 smoke 约定（cecelia/zenithjoy/第三方各走各的，第三方无约定跳过）
@@ -119,14 +120,14 @@ curl -s -m 10 -X PATCH "$BRAIN/api/brain/orchestrator/relay-runs/${HARNESS_INITI
 
 ```bash
 # 派发前（<node> = planner|proposer|reviewer|generator|evaluator|judge|merge|report）
-EVT_ID=$(curl -s -X POST "$BRAIN/api/brain/harness/phase-event" \
+EVT_ID=$(curl -s -m 10 -X POST "$BRAIN/api/brain/harness/phase-event" \
   -H "Content-Type: application/json" \
-  -d "{\"initiative_id\":\"$HARNESS_INITIATIVE_ID\",\"node\":\"<node>\",\"status\":\"running\",\"model\":\"<模型档>\"}" | jq -r .id)
+  -d "{\"initiative_id\":\"$HARNESS_INITIATIVE_ID\",\"node\":\"<node>\",\"status\":\"running\",\"model\":\"<模型档>\"}" | jq -r .id || true)
 
-# subagent 返回后（成功 done / 失败 failed；cost_usd 可得才带）
-curl -s -X PATCH "$BRAIN/api/brain/harness/phase-event/$EVT_ID" \
+# subagent 返回后（成功 done / 失败 failed；cost_usd 可得才带）——EVT_ID 空（POST 失败）则跳过 PATCH
+[ -n "$EVT_ID" ] && curl -s -m 10 -X PATCH "$BRAIN/api/brain/harness/phase-event/$EVT_ID" \
   -H "Content-Type: application/json" \
-  -d "{\"status\":\"done\",\"ts_end\":$(date +%s)}"
+  -d "{\"status\":\"done\",\"ts_end\":$(date +%s)}" || true
 ```
 
 - `HARNESS_INITIATIVE_ID` 未注入（前台手跑）→ 整段跳过，不报错不阻塞
