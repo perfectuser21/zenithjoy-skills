@@ -1,0 +1,26 @@
+{
+  "skill_name": "line-strategist",
+  "evals": [
+    {
+      "id": 0,
+      "name": "idle-advance",
+      "prompt": "你是 Cecelia 系统里「智能发布」这条 line 的军师。LINE_ID=c019cdeb-d90b-4f8b-a658-ae333663ac35,TRIGGER=idle,DRY_RUN=true。现在产能有空槽,Brain 唤醒你决定这条线下一步该干什么。要求:干跑模式——只允许只读查询(GET),严禁任何 POST/PATCH/DELETE、严禁创建任务、严禁发通知;最终输出一个机器可读的决策 JSON 和决策理由。Brain API 在 localhost:5221。",
+      "expected_output": "读取 line 快照(含推进项账本),发现该 line 的 ability 3acfe778 有 todo 推进项,决策=advance(挑推进项),输出含 decision/confidence/target 的 JSON,全程无写操作。",
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "empty-ledger-restock",
+      "prompt": "你是 Cecelia 系统里「客户私域 AI 接管(Line04)」这条 line 的军师。LINE_ID=bfeed805-deed-46c3-8624-87f0028101d4,TRIGGER=manual,DRY_RUN=true。主理人让你判断这条线下一步。要求:干跑模式——只允许只读查询(GET),严禁任何 POST/PATCH/DELETE、严禁创建任务、严禁发通知;最终输出一个机器可读的决策 JSON 和决策理由。Brain API 在 localhost:5221。",
+      "expected_output": "读取快照发现该 line 推进项账本为空(todo 无货)且 open issues 均为 P2(不满足立即修条件),决策=restock(调 decomp 补货)或 noop,理由提到账本为空,全程无写操作。",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "cross-line-halt",
+      "prompt": "你是 Cecelia 系统里「智能发布」这条 line 的军师。LINE_ID=c019cdeb-d90b-4f8b-a658-ae333663ac35,TRIGGER=run_terminal,DRY_RUN=true。触发上下文:刚失败的 run 的失败原因经查是 Brain 调度器的 worktree 分配冲突——这个根因会影响所有 line 的任务派发,不只是你这条线。请决定下一步。要求:干跑模式——只允许只读查询(GET),严禁任何 POST/PATCH/DELETE、严禁创建任务、严禁发通知;最终输出一个机器可读的决策 JSON 和决策理由。Brain API 在 localhost:5221。",
+      "expected_output": "识别出根因是跨 line 的基础设施问题,超出单 line 军师职权:决策=halt(停线上报),scope 标 cross-line,不建任何任务,说明会登记浮给主理人,全程无写操作。",
+      "files": []
+    }
+  ]
+}

@@ -1,3 +1,7 @@
+## [2026-07-11] line-strategist v1.1.0 手册阅读纪律 + 首次入库（skill 分层配套）
+- 症状：line-strategist 目录一直是未跟踪状态（不在 repo 里但已被 sync-skills-snapshot.sh 当 SSOT 源），且军师没有"读哪层手册"的纪律。
+- 修改：①目录首次正式入库（SKILL.md + evals）；②frontmatter 补 version；③Step 1 末尾加「手册阅读纪律」——只读操作层（line 作战手册 + 全局操作 skill），不读台账层（Notion Notes [LineXX][台账]/learnings/历史 handoff）。
+
 ## [2026-07-10] wechat-cs-troubleshooting v2.0.0 瘦身 + 新增 windows-agent-diagnostics v1.0.0（skill 分层 P0）
 - 症状：wechat-cs-troubleshooting 长到 30KB，约六成是历史台账（PR 号/实证时间线/自省记录），操作层被淹没，"活台账"模式让 skill 无限增生。
 - 根因：教训记录与操作手册混在同一层，缺少"台账进 Notion Notes、正文只读、攒批定期重写"的分层纪律（决策见 memory handoff_skill_layering_self_evolution_0710）。
