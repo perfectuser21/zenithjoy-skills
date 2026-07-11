@@ -4,7 +4,7 @@ description: |
   全链路 Project Management 拆解引擎（秋米驱动）。将 OKR/KR/Project/Scope/Initiative/Task 层级目标拆解成可执行任务。
   当用户需要拆解目标、规划项目、把大想法变成具体 PR 列表时触发。
   触发词：/decomp、帮我拆解、拆一下、把这个拆成任务、规划 Initiative、OKR 怎么拆、项目怎么做。
-version: 2.1.0
+version: 2.3.0
 created: 2026-01-01
 updated: 2026-03-21
 changelog:
@@ -21,6 +21,7 @@ changelog:
   - 2.0.0: 新增 Scope 层级（Project→Scope→Initiative 三层结构）；引入 Shape Up 方法论 + SPIDR 拆分五刀法；Phase 3 改为 scope_plan 飞轮
   - 2.2.0: 产能模型改为动态查询 capacity-budget API；校准表 PR 数量改为动态值；删除写死的产能数字
   - 2.1.0: 新增拆解粒度校准表（Task/Initiative/Scope/Project PR数量+周期+判断标准+反例说明）；新增 Initiative 技术调研规则（第一个 Task 必须为技术调研 + WebSearch 选型）
+  - 2.3.0: 九要素T6两轴衔接——拆完KR必写 key_results.metadata.target_abilities（goals PATCH merge 路径），禁走 okr/key-results PATCH（整体覆盖吞轻边）；配套 cecelia#3757 对账端点
 ---
 
 # /decomp — 全链路 Project Management 拆解引擎
@@ -541,6 +542,26 @@ docker exec cecelia-postgres psql cecelia -c "
   RETURNING id, title;
 "
 ```
+
+**拆完 KR 必做——写两轴衔接轻边（九要素T6，2026-07-11 起死步骤）**：
+
+每个新建/更新的 KR（key_results 行）必须把它要推进的 ability id 列表写进
+`key_results.metadata.target_abilities`，否则季度末对账端点看不到这个 KR 推进了哪些能力：
+
+```bash
+# 1. ability id 从 journey_features catalog 语义匹配（禁凭空造）
+curl -s "localhost:5221/api/brain/journey_features?limit=50"
+
+# 2. 写轻边（merge 语义，不会覆盖 metadata 其他 key）
+curl -s -X PATCH "localhost:5221/api/brain/goals/<kr_id>" \
+  -H "Content-Type: application/json" \
+  -d '{"metadata":{"target_abilities":["<ability_id>","..."]}}'
+
+# 3. 对账（可选自检）：thickness + 推进项完成度视图
+curl -s "localhost:5221/api/brain/okr/kr/<kr_id>/ability-progress"
+```
+
+⚠️ 禁用 `PATCH /api/brain/okr/key-results/:id` 改 metadata——那条路是**整体覆盖**，会吞掉 target_abilities；只能走上面的 goals PATCH（COALESCE merge）。
 
 ---
 
