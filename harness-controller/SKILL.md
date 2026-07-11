@@ -7,9 +7,10 @@ description: |
   移植 Superpowers 6.0 subagent-driven-development 零件：进度台账 / 文件接力 / 四态出口协议 / 单评审双裁决 / compaction 恢复。
   点火方：Brain harness dispatch（无头）或人工前台（同一份 skill 两种触发，行为一致）。
   /dev 仍是唯一需求入口：本 skill 消费 /dev 路径C 的交接契约（PrepPRD + 铁律清单 + NFR），不做需求对抗。
-version: 2.0.0
+version: 2.1.0
 created: 2026-07-04
 changelog:
+  - 2.1.0: Step 7 收尾追加自杀式 tmux 关窗——检测 $TMUX/读会话名/后台延迟 kill-session，非 tmux 或读不到会话名降级为提示不阻塞（07-08/09 T2/T3/T4 三个有头任务收尾后 tmux 窗口不自关，空转两天没人关；cecelia #4c6c6ca5 配套）
   - 2.0.0: 重写（自我进化 P3→P5 试点）——吸收 1.0.0~1.9.0 全部踩坑修订后整体重组：横切纪律（台账/进度上报/phase-event/文件接力）归拢为独立一节不再散落各 Step；历史事故叙事压缩为短引用；操作规则、bash 块、API 契约字符串全部保留。规则零新增零删除，纯结构重组
   - 1.9.0: Step 4 新增 evaluate_verdict 上报硬性动作——evaluator 出裁决后立刻 PATCH relay-runs 带 evaluate_verdict（PASS/FAIL/FIXED 原样发，cecelia#3754 起写侧接住落 initiative_runs.evaluate_verdict；此前该列全 NULL=裁决只活在台账文本里，机器不可读）；fix loop 每轮重评后同样上报（COALESCE 覆盖语义，最后一次为准）
   - 1.8.1: fix——phase-event 自报两条 curl 加 -m 10 超时与 || true best-effort，PATCH 前加 EVT_ID 空值守卫（POST 失败则跳过 PATCH，防打到无 :id 的 URL），与文档既有 relay-runs best-effort curl 风格一致
@@ -328,7 +329,26 @@ curl -s -X PATCH "$BRAIN/api/brain/orchestrator/relay-runs/${HARNESS_INITIATIVE_
 
 **PATCH body 三个字段是硬性要求，不许只 PATCH phase**（#3540 为此加的字段，1.2.1 及以前只写 phase → dashboard verdict 全空、cost 全 0）：`verdict` = 最终裁决（PASS/FAIL）、`cost` = 全程累计成本、`pr_url` = PR 链接（从台账/`gh pr view --json url` 取）。`evaluate_verdict` 已在 Step 4 出裁决时上报过，此处不必重发（要重发也无害，COALESCE 覆盖）。
 
-台账 append `report: done`，确认 PR 状态 = MERGED（硬约束 6），输出最终摘要，session 结束。
+台账 append `report: done`，确认 PR 状态 = MERGED（硬约束 6），输出最终摘要。
+
+**收尾最后一步——自杀式 tmux 关窗**（有头前台派发的 tmux 会话跑完不会自己关窗，全靠控制会话手动 `send-keys /exit`+`kill-session`，07-08/09 T2/T3/T4 三个任务因控制会话没盯到底空转两天没人关；无头 harness dispatch 通常没有 `$TMUX`，走 else 分支直接跳过，无害）：
+
+```bash
+if [ -n "$TMUX" ]; then
+  SESSION_NAME=$(tmux display-message -p '#S' 2>/dev/null)
+  if [ -n "$SESSION_NAME" ]; then
+    (sleep 2 && tmux kill-session -t "$SESSION_NAME") >/dev/null 2>&1 &
+    disown
+    echo "✅ 已安排 2 秒后自杀 tmux 会话: $SESSION_NAME（收尾完成，自动关窗）"
+  else
+    echo "⚠️ tmux 环境检测到但无法读取会话名，跳过自动关窗（非阻塞）"
+  fi
+else
+  echo "ℹ️ 非 tmux 会话，跳过自动关窗步骤"
+fi
+```
+
+必须是本 Step 真正最后一个动作，确保上面的最终摘要已经完整输出后再执行——延迟 2 秒 + 后台 + `disown` 就是为了不截断。session 结束。
 
 ## 四态协议（所有 subagent 统一出口，处置表）
 

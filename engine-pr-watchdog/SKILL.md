@@ -1,7 +1,7 @@
 ---
 name: engine-pr-watchdog
-version: 3.2.0
-updated: 2026-07-06
+version: 3.3.0
+updated: 2026-07-11
 description: PR 合并守卫。任何 PR 开完后立刻调用，监控所有 repo 的 open PR，阻塞轮询 CI + 合并状态，CI 失败自动修复，直到全部 PR 合并才退出。不使用 ScheduleWakeup，不提前 exit。
 trigger: 任何 PR 开完之后（gh pr create 之后），立刻调用本 skill。engine-ship 完成后也调用。
 ---
@@ -224,6 +224,29 @@ EOF
 3. 写完 handoff 才算本 PR 真正收尾；多 PR 场景每个 PR 各写各的
 ```
 
+### Step 5.6: 自杀式 tmux 关窗（全部 PR 都收尾完之后，真正最后一步）
+
+> **背景**：有头派发的 tmux 会话跑完任务（handoff 写好 + Brain task status=completed）后不会自己关掉所在的 tmux 窗口，全靠控制会话手动 `send-keys /exit` + `tmux kill-session` 才能收尾。2026-07-08/09 派发的 T2/T3/T4 三个任务就因为控制会话没盯到底，空转了两天没人关。
+>
+> 只在**所有活跃 PR 都已 MERGED/CLOSED、Step 5.5 handoff 全部写完**之后执行一次，绝不能在轮询循环中途触发——杀早了会把还没收尾完的会话一起带走。
+
+```bash
+if [ -n "$TMUX" ]; then
+  SESSION_NAME=$(tmux display-message -p '#S' 2>/dev/null)
+  if [ -n "$SESSION_NAME" ]; then
+    (sleep 2 && tmux kill-session -t "$SESSION_NAME") >/dev/null 2>&1 &
+    disown
+    echo "✅ 已安排 2 秒后自杀 tmux 会话: $SESSION_NAME（收尾完成，自动关窗）"
+  else
+    echo "⚠️ tmux 环境检测到但无法读取会话名，跳过自动关窗（非阻塞）"
+  fi
+else
+  echo "ℹ️ 非 tmux 会话，跳过自动关窗步骤"
+fi
+```
+
+延迟 2 秒 + 后台 + `disown` 是为了让上面这句 echo 先正常输出完，不被 kill-session 截断；tmux 不存在或读不到会话名一律降级为提示，不阻塞本 skill 的收尾判定。
+
 ---
 
 ## 防护规则
@@ -238,4 +261,4 @@ EOF
 
 ## 完成标志
 
-所有活跃 PR 均为 MERGED 或 CLOSED，worktree 已清理，Brain 已回写，**每个 PR 的 handoff 已写（tasks.result.handoff + docs/handoffs/ 镜像）**。
+所有活跃 PR 均为 MERGED 或 CLOSED，worktree 已清理，Brain 已回写，**每个 PR 的 handoff 已写（tasks.result.handoff + docs/handoffs/ 镜像）**，且已尝试自杀 tmux 会话（Step 5.6，非 tmux 环境视为已满足）。
