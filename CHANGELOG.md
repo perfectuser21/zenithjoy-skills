@@ -1,3 +1,9 @@
+## [2026-07-11] engine-pr-watchdog v3.3.0 + harness-controller v2.1.0 — 收尾自杀式 tmux 关窗
+
+**症状**: 有头派发的 tmux 会话跑完任务（handoff 写好 + Brain task status=completed）后不会自己关掉所在的 tmux 窗口，全靠控制会话手动 `send-keys /exit` + `tmux kill-session` 才能收尾。2026-07-08/09 派发的 T2/T3/T4 三个任务就因为控制会话没盯到底，空转了两天没人关。
+**根因**: /dev 路径 A/B 终态（engine-pr-watchdog Step 5.5 写完 handoff 之后）与路径 C 终态（harness-controller Step 7 report）都只负责把工作状态收尾干净，从未处理"自己所在的 tmux 会话该由谁关掉"，这个动作此前只存在于控制会话的人工习惯里，没有机器化。
+**修改**: 两个 skill 的收尾流程真正最后一步各加一段 bash：检测 `$TMUX` 是否非空 → `tmux display-message -p '#S'` 读自己会话名 → 用 `(sleep 2 && tmux kill-session -t "$SESSION_NAME") & disown` 延迟后台自杀（避免截断尚未输出完的收尾信息）→ 读不到会话名或 tmux 不存在则降级为 echo 提示，不阻塞收尾判定；非 tmux 环境直接跳过。engine-pr-watchdog 新增 Step 5.6，harness-controller 在 Step 7 末尾原地追加。
+
 ## [2026-07-11] harness-controller v2.0.0 — 重写（自我进化 P3→P5 试点首刀）
 
 **背景**: skill 分层自我进化蓝图的 P3→P5 试点：controller 从 1.0.0 到 1.9.0 共 9 版全是踩坑打补丁式修订，正文里散落大量历史事故叙事（N4/run4/#3540 实证……），横切纪律（台账 / 进度上报 / phase-event / 文件接力）分散在四处，阅读时序与执行时序脱节。
