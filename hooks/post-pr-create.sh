@@ -26,6 +26,15 @@ if [[ -n "${HARNESS_NODE:-}" ]]; then
   exit 0
 fi
 
+# rewrite/* 重写 PR 停人工 review（decision e6c57e2f，skills#127 教训）：
+# 不启用 auto-merge、不强制 watchdog，等主理人批准。
+# gh 查询失败（HEAD_BRANCH 为空）→ 保守按普通分支处理，守卫不因查询失败静默放掉。
+HEAD_BRANCH=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json headRefName -q .headRefName 2>/dev/null)
+if [[ "$HEAD_BRANCH" == rewrite/* ]]; then
+  echo "[post-pr-create] rewrite/* 分支（${HEAD_BRANCH}）：跳过 auto-merge，重写 PR 停人工 review，等主理人批准。" >&2
+  exit 0
+fi
+
 # 立刻 enable auto-merge
 gh pr merge "$PR_NUMBER" --repo "$REPO" --auto --squash 2>/dev/null || true
 
