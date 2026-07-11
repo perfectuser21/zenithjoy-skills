@@ -1,3 +1,10 @@
+## [2026-07-11] harness-controller v2.0.0 — 重写（自我进化 P3→P5 试点首刀）
+
+**背景**: skill 分层自我进化蓝图的 P3→P5 试点：controller 从 1.0.0 到 1.9.0 共 9 版全是踩坑打补丁式修订，正文里散落大量历史事故叙事（N4/run4/#3540 实证……），横切纪律（台账 / 进度上报 / phase-event / 文件接力）分散在四处，阅读时序与执行时序脱节。
+**修改**: 整体重写重组——①新增「横切纪律」独立一节（A 台账+进度上报 / B phase-event 自报 / C 文件接力），各 Step 只引用不重复；②Step 0 拆出 0.3 前台点火防护 / 0.4 恢复规则子节；③Step 1 验收清单从"两段+四项扩展"合并为五项同权清单；④历史事故叙事压缩为短引用（事件号保留）。
+**不变量**: 操作规则零新增零删除；13 个 bash 块原样保留；全部 API 契约字符串（relay-runs / phase-event / judge / staging-e2e / skill-relay）原样保留；check-brain-contract.sh 全过。
+**流程**: 走 rewrite/* 分支（decision e6c57e2f，非 cp-* 不 auto-merge），人工 review diff 批准。
+
 ## [2026-07-11] harness-controller v1.9.0 — Step 4 补 evaluate_verdict 上报
 - 症状：initiative_runs.evaluate_verdict 全 NULL——controller 只在 Step 7 终局发 judge 的 verdict，evaluator 裁决只活在台账文本里，机器不可读，skill 自我进化没有基准线。
 - 根因：cecelia#3754 前写侧根本不接这个字段；写侧接住后 controller 没有发送动作。
