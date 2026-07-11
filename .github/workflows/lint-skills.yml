@@ -52,6 +52,9 @@ jobs:
       - name: Brain 契约一致性守卫
         run: bash .github/workflows/scripts/check-brain-contract.sh
 
+      # skills#127 回归：post-pr-create hook 对 rewrite/* 必须跳过 auto-merge（人工门）
+      - name: Regression — post-pr-create rewrite/* 豁免
+        run: bash hooks/__tests__/post-pr-create-rewrite.test.sh
   # ─── 选择性 auto-merge：cp-* 分支 PR 且 lint 闸门绿 → 自动 squash 合并 ───
   # 自指安全：auto-merge needs lint-skills，坏 gate 自己也过不了，不会乱合。
   auto-merge:
