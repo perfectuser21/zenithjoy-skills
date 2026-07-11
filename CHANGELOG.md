@@ -1,3 +1,8 @@
+## [2026-07-11] harness-controller v1.9.0 — Step 4 补 evaluate_verdict 上报
+- 症状：initiative_runs.evaluate_verdict 全 NULL——controller 只在 Step 7 终局发 judge 的 verdict，evaluator 裁决只活在台账文本里，机器不可读，skill 自我进化没有基准线。
+- 根因：cecelia#3754 前写侧根本不接这个字段；写侧接住后 controller 没有发送动作。
+- 修改：Step 4 evaluator 出裁决（含 fix loop 每轮重评）后立刻 best-effort PATCH relay-runs 带 evaluate_verdict（PASS/FAIL/FIXED 原样发，Brain 侧归一+COALESCE 覆盖）；Step 7 注明不必重发。
+
 ## [2026-07-11] line-strategist v1.1.0 手册阅读纪律 + 首次入库（skill 分层配套）
 - 症状：line-strategist 目录一直是未跟踪状态（不在 repo 里但已被 sync-skills-snapshot.sh 当 SSOT 源），且军师没有"读哪层手册"的纪律。
 - 修改：①目录首次正式入库（SKILL.md + evals）；②frontmatter 补 version；③Step 1 末尾加「手册阅读纪律」——只读操作层（line 作战手册 + 全局操作 skill），不读台账层（Notion Notes [LineXX][台账]/learnings/历史 handoff）。
