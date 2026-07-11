@@ -1,10 +1,11 @@
 ---
 name: dev
-version: 21.7.0
-updated: 2026-07-09
+version: 21.8.0
+updated: 2026-07-10
 description: Phase0 --task-id立即claim防tick抢跑→Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→Phase2.5 GitHub撞车检查→比对已有Steps展示Golden Path草稿→确认前置工作全部到位→用户确认PrepPRD→路由执行
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
+  - 21.8.0: 判定点显性化进 /dev（九要素 T5 — decisions e035dad8）— 步骤 1 综合呈现从两流改三流（新增【判定点】流：逐条登记候选/所选/依据/误判后果，误判后果严重的升拍板点主动请教用户）；大功能 PrepPRD 模板加「判定点登记表」段；用户确认后路径 A/B 立即写 decisions category=judgment（保鲜守卫「判定点活性」指标数据源），路径 C 由 harness reviewer Step 5 从合同统一写库不重复；用户纠正的判定方法按 e035dad8 第④条走 Invariant Gate 升铁律
   - 21.7.0: 新增 Phase 0「--task-id 立即 claim」（有头模式第一动作，PrepPRD/Phase1 之前）— 起因 2026-07-09 同一 task（f30dace8）被人工 /dev 流程和 Brain tick 自动派发同时抢跑，各自独立产出 PR #3665/#3663；根因是注册任务默认 queued+claimed_by=NULL，tick 每 2 分钟扫一次无主任务，不 claim 必被抢；这不是查重能防的问题（两边都还没开分支/PR，互相查不到），唯一防线是注册后立刻用现成的 POST /tasks/:id/claim 上锁
   - 21.6.0: 新增 Phase 2.5「GitHub 撞车检查」（三路径共用，PrepPRD 前必做）— 起因 2026-07-09 同一 PRD 被 4 个并发 session 各自实现产出 4 个重复 PR；新增 gh pr list --search 查重步骤，查到接近可合并的同语义 PR 就认领而非重新实现，查到 stale/冲突/CI真失败的就先关旧 PR 再动手
   - 21.5.0: 路径A/B 终态 handoff 说明（decisions cf998025）— engine-pr-watchdog 3.2.0 起，路径 A/B merge 后自动写 handoff（SSOT: tasks.result.handoff + 镜像 docs/handoffs/），无下一步写明「完成」；engine-ship 说明同步更新；无行为变更，仅文档对齐
@@ -218,8 +219,9 @@ Phase 1 收敛后，派三路 Agent 并行执行，各自输出覆盖声明：
 
 #### 综合：单次呈现给用户
 
-合并四路结果，**产出分两流（关键，别混着砸用户）**：
+合并四路结果，**产出分三流（关键，别混着砸用户）**：
 - 【要用户拍的】policy / 阈值 / FR 范围（回所有还是名单？延迟几秒？失败重试几次？）→ **用人话列给用户，等他定**
+- 【判定点】对模糊现实的判断假设（RPA 状态判定 / API 返回解读 / 真机反馈识别，decisions e035dad8）→ 逐条登记候选方法/所选/依据/误判后果；**误判后果严重的（静默丢数据/直接面客错误/不可逆动作）升为拍板点主动请教用户**——用户常有比 AI 自选更优的土办法
 - 【机器铁律】登记表里命中的（租户隔离/不回自己/泄密…）→ **自动标注，不打扰用户**，留给合同阶段 enforce
 
 **最终呈现格式**：
@@ -232,14 +234,29 @@ Phase 1 收敛后，派三路 Agent 并行执行，各自输出覆盖声明：
 需要你拍板的 N 个决策点：
   1. 回复延迟容忍：2秒还是5秒？
   2. 失败重试次数：3次还是不重试？
+  3. ⚠️ 判定点「<名>」：AI 打算用 <所选方法>（候选还有 <B/C>），误判后果 <后果>——有更好的土办法吗？
   ...
+
+判定点登记表（误判后果轻的自动登记，不打扰）：
+  | 判定点 | 候选方法 | 所选方法 | 依据 | 误判后果 |
 
 已命中的铁律（自动 enforce，无需拍板）：
   - 不回自己（decision #xxx）
   - 租户隔离（decision #xxx）
 ```
 
-**用户对补全版说"对/走/可以"后 → 步骤 2。**
+**用户对补全版说"对/走/可以"后 → 先写判定点，再进步骤 2。**
+
+**判定点写库（确认后立即执行，每行一条 — 九要素 T5，保鲜守卫「判定点活性」指标数据源）**：
+
+```bash
+# ⚠️ 原样复制，category 必须是 judgment，禁止改成 type（type 被 Brain API 忽略）
+curl -s -X POST localhost:5221/api/brain/strategic-decisions \
+  -H "Content-Type: application/json" \
+  -d "{\"topic\":\"判定点: <判定点名>\",\"decision\":\"所选方法: <所选>｜候选: <候选>\",\"reason\":\"依据: <依据>｜误判后果: <后果>｜来源: /dev PrepPRD\",\"made_by\":\"user\",\"author\":\"dev-skill\",\"category\":\"judgment\"}"
+```
+
+> 用户被 ⚠️ 判定点请教后给出了不同于 AI 所选的方法 → 写库时所选方法用用户的，reason 加 `用户纠正`；被用户明确❌过的判定方法按 e035dad8 第④条走 Invariant Gate 升铁律（另一条 category=invariant，不在此处写）。Brain API 不可用时跳过，不阻塞。**路径 C 不在此处写**（判定点会进 PrepPRD 登记表 → 合同 → reviewer Step 5 APPROVED 后统一写库，此处写会重复）；路径 A/B 没有合同阶段，是此处写库的唯一出口。
 
 > 🔁 **闭环**：生产里新发现的坑（用户吐槽 / 事故）→ 提炼成一条铁律写回登记表（`POST /decisions category=invariant`）→ 下次 Phase 1 喂料时自动覆盖。这是让系统越跑越聪明、同类坑不再踩第二次的机制。
 
@@ -360,6 +377,16 @@ Phase 1 收敛后，派三路 Agent 并行执行，各自输出覆盖声明：
 
 ## 不包含
 - [本次不做的事]
+
+## 判定点登记表（对模糊现实的判断假设 — decisions e035dad8）
+
+> 凡"系统自行推断外部真实状态"的地方（RPA 状态判定 / API 返回解读 / 真机反馈识别）逐条登记。
+> 误判后果严重（静默丢数据/直接面客错误/不可逆动作）的行在判定点名前标 ⚠️——这些已在上方对抗深挖的拍板点里让用户拍过。
+> 无接缝判定点显式写：`（本任务无接缝判定点，N/A）`
+
+| 判定点 | 候选方法 | 所选方法 | 依据 | 误判后果 |
+|--------|----------|----------|------|----------|
+| | | | | |
 
 ## 前置工作（已逐项确认，无 TBD）
 

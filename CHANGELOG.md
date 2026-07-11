@@ -2,6 +2,11 @@
 - 症状：line-strategist 目录一直是未跟踪状态（不在 repo 里但已被 sync-skills-snapshot.sh 当 SSOT 源），且军师没有"读哪层手册"的纪律。
 - 修改：①目录首次正式入库（SKILL.md + evals）；②frontmatter 补 version；③Step 1 末尾加「手册阅读纪律」——只读操作层（line 作战手册 + 全局操作 skill），不读台账层（Notion Notes [LineXX][台账]/learnings/历史 handoff）。
 
+## [2026-07-10] 九要素 T5：判定点写库通电（harness-contract-reviewer v9.4.0 / harness-contract-proposer v9.8.0 / dev v21.8.0）
+**症状**: 判定点登记表模板 07-07 已进 proposer(9.6.0)/reviewer(9.3.0) 合同层，但 `decisions category=judgment` 至今 0 条——登记表写在合同 markdown 里就死在合同里，账本保鲜守卫（T1）的「判定点活性」指标（近 30 天新增 judgment 条数，0 = 学习回路断电告警）没有任何数据源；/dev 的对抗深挖与 PrepPRD 完全没有判定点概念，e035dad8 第②条「误判后果严重的判定点升拍板点请教用户」从未落地。
+**根因**: 模板刀只落了"写进合同"，没落"写进库"——缺写入方（谁在什么时机把登记表行变成 judgment 记录）与 /dev 侧入口（拍板点升级 + PrepPRD 段）。
+**修改**: ①reviewer 9.4.0：Step 5 APPROVED 后新增逐行解析合同判定点登记表 → POST /api/brain/strategic-decisions category=judgment（跳过表头/示例/N-A，失败只 WARN）；②proposer 9.8.0：登记表加机器可解析约定（行自含语义/示例行前缀/⚠️ 严重后果标记 + judgment-pending-user notes 约定）；③dev 21.8.0：综合呈现两流改三流（判定点流，严重后果升拍板点）+ 大功能 PrepPRD 加判定点登记表段 + 确认后路径 A/B 写 judgment（路径 C 由 reviewer 统一写不重复）。E2E：真实合同样例跑 Step 5 解析脚本，判定点行真实落库 category=judgment。
+
 ## [2026-07-10] wechat-cs-troubleshooting v2.0.0 瘦身 + 新增 windows-agent-diagnostics v1.0.0（skill 分层 P0）
 - 症状：wechat-cs-troubleshooting 长到 30KB，约六成是历史台账（PR 号/实证时间线/自省记录），操作层被淹没，"活台账"模式让 skill 无限增生。
 - 根因：教训记录与操作手册混在同一层，缺少"台账进 Notion Notes、正文只读、攒批定期重写"的分层纪律（决策见 memory handoff_skill_layering_self_evolution_0710）。
