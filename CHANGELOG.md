@@ -1,3 +1,10 @@
+## [2026-07-12] golden-path-controller / golden-path-proposer / golden-path-reviewer v1.0.0 — created（GP loop T3：AI 自提 Golden Path 提案三件套）
+
+**症状**: 「AI 自提 Golden Path」模式已定稿立项（cecelia decisions cb6be3f6/b416bfb3，架构 docs/architecture/2026-07-12-golden-path-mode），但三镜头对抗流程只在朋友圈试点会话里手工编排过一次，未沉淀成 skill——`golden_path_proposal` task_type（T2 接线）派发后无 controller 可选。
+**根因**: 试点是会话内手工编排，提案/对抗/收敛/demo/回写各环节的纪律（判级规则、REFUTE 反驳权、findings_log 归档、无 MAX_ROUNDS）只存在于记忆和 scratchpad。
+**修改**: 新建三个 skill：①golden-path-controller——复制 harness-controller 2.1.0 横切纪律（append-only 台账/phase-event 自报/文件接力脚本 vendored/四态出口/Step 0 装载恢复/收尾 tmux 自杀），Step 主线替换为 探索+判级→提案→镜头分级扇出对抗（内部小改 1v1；碰真机/客户/钱三镜头）→收敛→HTML demo（docs-center 发布）→PATCH golden_paths converged+findings_log（含 REFUTED 条目及归属，只存不算分）；②golden-path-proposer——产物契约=提案文档（现状标注必须引用代码证据/Gate 前置/验收断言/判定点登记表），修订轮逐条核销或带证据 REFUTE；③golden-path-reviewer——沿用 rubric+VERDICT 结构，GP 专属 5 维（现状真实性/路径完整/断言可验证/判定点完备/风险与门），镜头参数化 LENS=tech/product/risk/solo，收敛轮兼裁 REFUTE。朋友圈试点 v2.1 提案终稿从 session scratchpad 抢救入 repo 作 golden 样例（golden-path-proposer/examples/moments-golden-path-v2.md）。无 MAX_ROUNDS 纪律保持（DoD N3）。
+**eval**: 三个 skill 触发词与 harness-* 系列有区分度（golden path 提案/GP 对抗/镜头审查 vs 合同/GAN/sprint），lint 跨 skill 相似度检测通过；主要触发方=Brain relay loadSkill 按 task_type 机械选择，非语义触发，recall 以接线测试（cecelia T2 的 F2 断言）为准。
+
 ## [2026-07-11] engine-pr-watchdog v3.3.0 + harness-controller v2.1.0 — 收尾自杀式 tmux 关窗
 
 **症状**: 有头派发的 tmux 会话跑完任务（handoff 写好 + Brain task status=completed）后不会自己关掉所在的 tmux 窗口，全靠控制会话手动 `send-keys /exit` + `tmux kill-session` 才能收尾。2026-07-08/09 派发的 T2/T3/T4 三个任务就因为控制会话没盯到底，空转了两天没人关。
