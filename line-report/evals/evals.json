@@ -1,0 +1,33 @@
+{
+  "skill_name": "line-report",
+  "evals": [
+    {
+      "id": 0,
+      "eval_name": "daily-all-lines",
+      "prompt": "给我出一份今天的 Line 经营日报：每条业务线今天完成了多少任务、做了多少决策、合并了多少 PR，跟昨天比是多了还是少了。数据在 Brain（localhost:5221）。",
+      "expected_output": "含总览表（每条活跃 Line 一行）、分 Line 明细、环比、未归属节、数据口径脚注的中文日报；数字与 Brain 实际数据一致",
+      "files": [],
+      "assertions": [
+        "report.md 存在、非空，且为简体中文",
+        "含总览表，覆盖 ≥5 条活跃 Line（至少包含 Cecelia Harness Pipeline 和 客户智能获客路径）",
+        "关键数字与取数脚本重跑结果一致（各 Line 完成任务数误差 ≤2，考虑运行间隙新完成的任务）",
+        "含与昨天的环比表述（数字对比或 ▲▼ 差值）",
+        "含'未归属'章节，未归属任务/决策没有被静默丢弃",
+        "含数据口径脚注（说明时间窗口 Asia/Shanghai 及 completed_at 缺失时的 updated_at 兜底）"
+      ]
+    },
+    {
+      "id": 1,
+      "eval_name": "weekly-named-lines",
+      "prompt": "看一下 zenithjoy Line 2 和 Line 4 这周的周报，完成任务数和决策数，和上周对比。",
+      "expected_output": "只报 Line 02（客户智能获客路径）和 Line 04（客户私域 AI 接管）两条线的周报，正确把 Line 编号翻译成 journey，含周环比",
+      "files": [],
+      "assertions": [
+        "只报两条线且 Line 编号翻译正确：Line 2→客户智能获客路径，Line 4→客户私域 AI 接管",
+        "周期为自然周（本周一起算）并含与上周的对比",
+        "完成任务数/决策数与取数脚本 --period weekly 重跑结果一致（误差 ≤2）",
+        "report.md 为简体中文，无日语/韩语"
+      ]
+    }
+  ]
+}

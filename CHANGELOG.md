@@ -1,3 +1,10 @@
+## [2026-07-12] line-report v1.0.0 — created（按 Line 维度的经营日报/周报/月报）
+
+**症状**: 系统只有垂直领域报告（daily-report=Line04 客户销售复盘、ci-patrol=CI 健康巡检），没有跨 Line 的经营视角报告——主理人无法回答"每条 Line 今天/这周/这个月完成了多少任务、做了多少决策、和上一周期比怎么样"（用户 2026-07-12 提出，/plan 判 Initiative）。
+**根因**: Brain 里数据齐全（tasks/decisions/journeys），但缺聚合层：①Line=journey 的映射只存在于 Memory；②tasks 列表 API 不带 status 过滤时缺 payload/completed_at 字段且截断在旧数据；③约 3/4 completed 任务没盖 completed_at、decisions 无硬归属字段——没有一个 skill 把这些坑封装成可复现的取数+归属纪律。
+**修改**: 新建 line-report skill：Step1 取数脚本（因 repo 政策 .py 走 /dev，脚本以 markdown 内联块存于 references/fetch-script.md，运行时落 scratchpad；带 status 过滤取全字段、updated_at 兜底盖章缺失并计数、smoke/deprecated journey 排除、Asia/Shanghai 自然日/周/月窗口+等长环比）→ Step2 语义归属补齐（硬字段优先，推断必须标注，禁止静默丢弃）→ Step3 模板输出（总览表/分线明细/未归属/数据口径四段）。附 references/line-registry.md（Line 编号↔journey 映射+归属关键词）、report-template.md、无头模式（[LINE_REPORT] 定时触发）。
+**eval**: 2 用例（今日全线日报、Line2+4 周报）× with/without 对照：with-skill 10/10 (100%)，baseline 83.3%（漏未归属节+口径未披露 completed_at 缺章导致完成数低估），with-skill 平均快 177s。
+
 ## [2026-07-12] golden-path-controller / golden-path-proposer / golden-path-reviewer v1.0.0 — created（GP loop T3：AI 自提 Golden Path 提案三件套）
 
 **症状**: 「AI 自提 Golden Path」模式已定稿立项（cecelia decisions cb6be3f6/b416bfb3，架构 docs/architecture/2026-07-12-golden-path-mode），但三镜头对抗流程只在朋友圈试点会话里手工编排过一次，未沉淀成 skill——`golden_path_proposal` task_type（T2 接线）派发后无 controller 可选。
