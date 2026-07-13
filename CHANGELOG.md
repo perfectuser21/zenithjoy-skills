@@ -1,3 +1,8 @@
+## [2026-07-14] arch-review 1.1.0 — 台账-现实一致性双探针（handoff 0714 刀4）
+**症状**: 台账漂移无人察觉——journeys Path2/Path4 updated_at 停在 05-22 与持续 merge 的 PR 脱节 46 天；golden-path-2-smoke.sh 还在测已删除的飞书流程，与 07-07 去飞书决策打架。
+**根因**: arch-review Mode 4 只巡 repo 代码结构（且有「无 packages/brain/src 则跳过」前置），Brain DB 台账与现实的一致性没有任何巡检方。
+**修改**: 4A 新增第 7/8 项：探针A【台账新鲜度】journeys.updated_at 落后该线最近 merged PR >7 天 ⚠️ / >21 天 🔴 开 followup；探针B【smoke 一致性】e2e_test_path 脚本 grep 近 60 天 decisions 废弃关键词，命中 🔴 开 Issue。前置跳过改为只跳代码类检查，探针查 Brain DB 照常执行；任一探针 🔴 → verdict 不得 HEALTHY。
+
 ## [2026-07-14] harness-report 6.7.0 — Phase B 翻牌义务（handoff 0714 刀3）
 **症状**: 台账只在点火时写、交付后不翻牌——journeys 表 Path2/Path4 updated_at 停在 2026-05-22，Path2 定义还是已废弃的飞书版（与用户 07-07「去飞书改本地」决策打架 46 天）；journey_features「视频/图文内容判定门槛」status=planned 而现实已合并 11 个 PR；「Step3 绑飞书」status=done 而方案已废。
 **根因**: harness-report Phase B 有写 journeys/journey_features 的代码路径，但「翻牌」从来不是强制步骤——报告阶段只加新记录不翻旧状态，台账漂移无人察觉。
