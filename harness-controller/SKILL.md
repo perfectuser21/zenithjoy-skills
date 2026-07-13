@@ -7,9 +7,10 @@ description: |
   移植 Superpowers 6.0 subagent-driven-development 零件：进度台账 / 文件接力 / 四态出口协议 / 单评审双裁决 / compaction 恢复。
   点火方：Brain harness dispatch（无头）或人工前台（同一份 skill 两种触发，行为一致）。
   /dev 仍是唯一需求入口：本 skill 消费 /dev 路径C 的交接契约（PrepPRD + 铁律清单 + NFR），不做需求对抗。
-version: 2.2.0
+version: 2.2.1
 created: 2026-07-04
 changelog:
+  - 2.2.1: refactor——Step 3「CI 阻塞等待」循环体改为调用共享 zenithjoy-skills/scripts/ci-poll.sh（SSOT 单一出处），行为不变；exit 11（BEHIND）降级为继续等待（harness-controller 不做 rebase 决策，由 watchdog 负责）
   - 2.2.0: 治 relay 断链头号死因「结束发言等 CI」——新增硬约束 7（等外部事件必须前台阻塞轮询，禁止"等通知"后停止输出：headless -p 模式结束输出=进程退出=session 自杀）+ Step 3 新增「CI 阻塞等待」机械段（同步 bash sleep 30 轮询循环，Bash 超时立刻重发不结束 turn，绝不 run_in_background；照抄 engine-pr-watchdog 已验证模式）。07-12 实证：31e29c09/a1bf1ba5/4bb31ef5 三条 relay 均在 generator 开出 PR 后说"等待 CI 结果通知"正常退出（45 turns/18min，离任何资源墙都远），evaluator/judge/merge/report 全链 0 执行、任务假 done；watchdog 重点火的恢复 session 又以"CI 在跑等信号"1 turn 再死。对照组 a85e0582 全程未撒手，1h47m 八节点全通——链本身是通的，死因只此一处
   - 2.1.0: Step 7 收尾追加自杀式 tmux 关窗——检测 $TMUX/读会话名/后台延迟 kill-session，非 tmux 或读不到会话名降级为提示不阻塞（07-08/09 T2/T3/T4 三个有头任务收尾后 tmux 窗口不自关，空转两天没人关；cecelia #4c6c6ca5 配套）
   - 2.0.0: 重写（自我进化 P3→P5 试点）——吸收 1.0.0~1.9.0 全部踩坑修订后整体重组：横切纪律（台账/进度上报/phase-event/文件接力）归拢为独立一节不再散落各 Step；历史事故叙事压缩为短引用；操作规则、bash 块、API 契约字符串全部保留。规则零新增零删除，纯结构重组
@@ -251,13 +252,16 @@ PR push 后 CI 要跑若干分钟。**禁止**输出"等待 CI 结果/等通知"
 
 ```bash
 # 同步执行（绝不 run_in_background），Bash timeout 设 600000（工具上限 10 分钟）
+# ci-poll.sh：zenithjoy-skills/scripts/ci-poll.sh（SSOT，watchdog 与 controller 共用）
+ZS_ROOT=$(python3 -c "import os; print(os.path.dirname(os.path.realpath(os.path.expanduser('~/.claude/skills/harness-controller'))))" 2>/dev/null)
+CI_POLL="$ZS_ROOT/scripts/ci-poll.sh"
+REPO=$(gh pr view "$PR_NUM" --json headRepository -q .headRepository.nameWithOwner 2>/dev/null || echo "")
 while true; do
-  # 退出条件 1：全绿 → break 进 Step 4
-  # 退出条件 2：有失败 → break 派 fix subagent（上面 fix loop 规则）
-  CHECKS=$(gh pr checks "$PR_NUM" 2>/dev/null)
-  echo "$CHECKS" | grep -qE "fail" && { echo "CI_FAILED"; break; }
-  PENDING=$(echo "$CHECKS" | grep -cE "pending|in_progress|queued" || echo 0)
-  [ "$PENDING" -eq 0 ] && { echo "CI_GREEN"; break; }
+  bash "$CI_POLL" "$PR_NUM" "$REPO"
+  POLL_EXIT=$?
+  [ "$POLL_EXIT" -eq 0 ] && { echo "CI_GREEN"; break; }
+  [ "$POLL_EXIT" -eq 10 ] && { echo "CI_FAILED"; break; }
+  # exit 11（BEHIND）：controller 不做 rebase 决策，继续等待
   sleep 30
 done
 ```
