@@ -1,7 +1,7 @@
 ---
 name: engine-pr-watchdog
-version: 3.3.0
-updated: 2026-07-11
+version: 3.4.0
+updated: 2026-07-13
 description: PR 合并守卫。任何 PR 开完后立刻调用，监控所有 repo 的 open PR，阻塞轮询 CI + 合并状态，CI 失败自动修复，直到全部 PR 合并才退出。不使用 ScheduleWakeup，不提前 exit。
 trigger: 任何 PR 开完之后（gh pr create 之后），立刻调用本 skill。engine-ship 完成后也调用。
 ---
@@ -78,12 +78,11 @@ while true; do
     break
   fi
 
-  # ── 检查 CI ──────────────────────────────────────
-  CHECKS=$(gh pr checks "$PR_NUMBER" --repo "$REPO" 2>/dev/null)
-  FAILED=$(echo "$CHECKS" | grep -c "fail" || echo 0)
-  PENDING=$(echo "$CHECKS" | grep -cE "pending|in_progress|queued" || echo 0)
+  # ── CI 轮询（共享脚本，sleep 30 在脚本内）───────
+  bash ~/perfect21/zenithjoy-skills/scripts/ci-poll.sh "$PR_NUMBER" "$REPO"
+  POLL_EXIT=$?
 
-  if [ "$FAILED" -gt 0 ]; then
+  if [ "$POLL_EXIT" -eq 10 ]; then
     if [ "$FIX_COUNT" -ge "$MAX_FIXES" ]; then
       echo "🚨 连续修复 $MAX_FIXES 次仍失败，需要人工介入"
       rm -f "$FIX_COUNT_FILE"
@@ -91,24 +90,21 @@ while true; do
     fi
     FIX_COUNT=$((FIX_COUNT+1))
     echo "$FIX_COUNT" > "$FIX_COUNT_FILE"
-    echo "❌ CI 有 $FAILED 个失败（第 $FIX_COUNT 次）"
+    echo "❌ CI 有失败（第 $FIX_COUNT 次）"
     exit 10
   fi
 
-  # ── 检查 BEHIND ───────────────────────────────────
-  MERGE_STATE=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json mergeStateStatus --jq '.mergeStateStatus' 2>/dev/null)
-  if [ "$MERGE_STATE" = "BEHIND" ]; then
+  if [ "$POLL_EXIT" -eq 11 ]; then
     echo "📦 分支落后 main，需要 rebase"
     exit 11
   fi
 
-  # ── 确认 auto-merge ──────────────────────────────
+  # ── CI 全绿：确认 auto-merge ─────────────────────
   AUTO_MERGE=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json autoMergeRequest --jq '.autoMergeRequest' 2>/dev/null)
   if [ "$AUTO_MERGE" = "null" ] || [ -z "$AUTO_MERGE" ]; then
     gh pr merge "$PR_NUMBER" --repo "$REPO" --auto --squash 2>/dev/null && echo "✅ auto-merge 已启用"
   fi
 
-  echo "$(TZ=Asia/Shanghai date '+%H:%M:%S') OPEN | CI: pending=$PENDING fail=$FAILED | merge=$MERGE_STATE"
   sleep 30
 done
 ```
