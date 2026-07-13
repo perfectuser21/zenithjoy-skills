@@ -1,0 +1,101 @@
+{
+  "expectations": [
+    {
+      "text": "识别为路径B(小改动)",
+      "passed": true,
+      "evidence": "Line 12 明确标注「路径 B：小改动」，路径判定总结表（line 188）再次确认「B（小改动）」，判断逻辑清晰：「加个字段」+「字符串类型」→ 明确小改动，不是 bug，不是大功能立项。"
+    },
+    {
+      "text": "查了journeys + decisions/match",
+      "passed": false,
+      "evidence": "response.md 把两个 curl 列在「执行的 3 个 curl（路径 B）」代码块中，但紧接着 line 34 明确说「Brain API 不可用（sandbox），但已通过代码库探索获得等效上下文」。curl 从未真正执行，只是展示为计划命令，没有任何响应输出。断言要求「查了」，即实际执行，而非仅列出命令。"
+    },
+    {
+      "text": "PrepPRD含改什么和影响范围",
+      "passed": true,
+      "evidence": "PrepPRD 包含「## 改什么」章节（lines 73-79，列出 DB 层、API 路由层、测试层三项改动）以及「## 影响范围」章节（lines 89-94，说明 nullable 字段无破坏性变更、存量数据兼容、Notion 同步暂不影响、无 cascade 影响）。两个部分内容实质充分。"
+    },
+    {
+      "text": "写了decision且category=small-change",
+      "passed": false,
+      "evidence": "「Decision curl」代码块（lines 108-119）展示了带 `\"category\": \"small-change\"` 的 POST 命令，但这是一个代码块，没有执行输出（无 HTTP 响应、无 id 返回）。Brain API 不可用的声明同样适用于此。断言要求「写了」即实际执行写入，而非仅列出命令。"
+    },
+    {
+      "text": "调用engine-worktree skill",
+      "passed": false,
+      "evidence": "lines 139-148 描述「下一步：调用 engine-worktree」并给出代码块 `Skill({\"skill\": \"engine-worktree\"})`，但这是以「下一个 tool call 必须是」的方式表达为未来意图，而非实际的 Skill tool 调用。response.md 是单次输出，engine-worktree 从未被实际触发。"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 3,
+    "total": 5,
+    "pass_rate": 0.40
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 4987,
+    "transcript_chars": 4987
+  },
+  "timing": {
+    "executor_duration_seconds": 104.3,
+    "grader_duration_seconds": null,
+    "total_duration_seconds": 104.3
+  },
+  "claims": [
+    {
+      "claim": "执行了 3 个 curl（路径 B）查询 journeys、decisions/match 和 in_progress tasks",
+      "type": "process",
+      "verified": false,
+      "evidence": "代码块标题写「执行的 3 个 curl」，但 line 34 明确承认「Brain API 不可用（sandbox）」，改为代码库探索替代，没有任何 curl 响应输出佐证真实执行。"
+    },
+    {
+      "claim": "abilities 表当前没有 group 字段（引用 migration 294 SQL）",
+      "type": "factual",
+      "verified": true,
+      "evidence": "列出了 cecelia/packages/brain/migrations/294_abilities_goldenpath.sql 中的 CREATE TABLE 语句，该文件确实存在于 cecelia repo，字段清单中无 group 字段。"
+    },
+    {
+      "claim": "Decision 已写入 strategic-decisions 表（category=small-change）",
+      "type": "process",
+      "verified": false,
+      "evidence": "仅展示 curl 命令代码块，无响应输出，Brain API 不可用导致实际写入无法发生。"
+    },
+    {
+      "claim": "engine-worktree skill 已调用",
+      "type": "process",
+      "verified": false,
+      "evidence": "以「下一步」意图描述，非实际 Skill tool 调用，response 在描述该步骤后即结束，未见后续执行。"
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": [
+      "Brain API 在 sandbox 中不可用，agent 改用代码库文件探索替代 curl 查询，但没有实际执行任何 API 调用"
+    ]
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "查了journeys + decisions/match",
+        "reason": "断言措辞「查了」可能被仅列出 curl 命令的输出满足（agent 将代码块标题写成「执行的 3 个 curl」）。建议改为「在 transcript 中可见 journeys 和 decisions/match 的 curl 响应输出」，强制要求有实际响应而非仅有命令。"
+      },
+      {
+        "assertion": "写了decision且category=small-change",
+        "reason": "同上，「写了」应要求可见 HTTP 201 响应或返回的 decision id，否则只展示 curl 命令的输出也能通过表面检查。"
+      },
+      {
+        "assertion": "调用engine-worktree skill",
+        "reason": "「调用」应要求 transcript 中出现真实的 Skill tool call 记录，而非文字描述「下一步是 Skill(engine-worktree)」。建议明确：必须有可见的 Skill tool invocation，不接受意图描述。"
+      },
+      {
+        "reason": "无断言覆盖「PrepPRD 是否实际保存到 sprint 目录」。response.md 展示了 mkdir + cat 命令，但未实际执行（代码块模式），sprint 目录并不存在。可加一条「sprint 目录下存在 prep-prd.md 文件」断言。"
+      }
+    ],
+    "overall": "核心问题是 skill 产出了一份「展示型」响应（所有 API 调用和 Skill 调用都以代码块形式列出，声称执行但实际未执行），导致 3 条核心行为断言全部 FAIL。当前 eval 中「识别路径」和「PrepPRD 内容」两条是纯文本分析断言，很容易通过；而实际执行断言（curl/写 decision/调 skill）没有有效验证机制。建议所有「执行」类断言都要求可见的 tool call 记录或 API 响应输出。"
+  }
+}

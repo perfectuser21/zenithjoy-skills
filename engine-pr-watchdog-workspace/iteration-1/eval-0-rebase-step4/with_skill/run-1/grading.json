@@ -1,0 +1,8 @@
+{
+  "summary": {"pass_rate": 1.0, "passed": 3, "failed": 0, "total": 3},
+  "expectations": [
+    {"text": "所有 bash 调用均不使用 run_in_background: true", "passed": true, "evidence": "文中多次提到 run_in_background，但全部是在禁止语境：同步，不使用 run_in_background。无任何实际后台化执行指令。"},
+    {"text": "输出中提到 push 必须同步执行的约束（来自 skill 指令）", "passed": true, "evidence": "明确写出：实际执行的 Bash 命令（同步，不使用 run_in_background），绝对不使用 run_in_background: true，直接体现新增约束规则。"},
+    {"text": "push 完成后明确说会立刻重入 Step 2 轮询", "passed": true, "evidence": "push 返回后，不输出任何提示文字给用户，不结束当前 turn，立刻发起下一次 Step 2 的 Bash 调用"}
+  ]
+}

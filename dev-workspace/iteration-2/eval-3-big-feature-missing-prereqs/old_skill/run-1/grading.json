@@ -1,0 +1,101 @@
+{
+  "expectations": [
+    {
+      "text": "识别为路径C(大功能)",
+      "passed": true,
+      "evidence": "Section 1 明确标注：「路径 C：大功能（Harness）」，并解释触发原因：「用户说'想做'+ '功能'，属于大功能/立项场景」"
+    },
+    {
+      "text": "查了abilities(不查journey_steps/journey_features废弃表)",
+      "passed": false,
+      "evidence": "Section 2 的 curl 清单中明确包含了 `curl .../journey_steps` 和 `curl .../journey_features`（废弃表），并在注释中说明「旧技能 Phase 2 路径 C 的 6 个上下文源里包含 journey_steps 和 journey_features（旧表）」。虽然也查了 abilities，但同时查了废弃表，违反了此 expectation 的要求"
+    },
+    {
+      "text": "展示了Golden Path草稿",
+      "passed": true,
+      "evidence": "Section 3「步骤 0：比对已有 Steps，展示 Golden Path 草稿」列出了 6 条已有步骤（✅）和 3 条本次新增步骤（➕），并附上了完整的「建议 Golden Path（快手内容发布）」4 步用户操作流程供用户确认"
+    },
+    {
+      "text": "触发前置工作核对门槛",
+      "passed": true,
+      "evidence": "Section 5「前置工作检查（硬门槛）」在 PrepPRD 写完后、点火前逐一扫描所有 [ ] 项，识别出 2 项 ❌（快手账号未确认 + KUAISHOU_COOKIES GHA secret 未到位），结论「有 2 项 ❌ → 按规则必须停下来明确问用户，不得点火」"
+    },
+    {
+      "text": "停下来向用户索要前置信息",
+      "passed": true,
+      "evidence": "Section 6「是否点火 Harness」明确写「不点火」，并在 Section 5 列出需要用户回答的两个具体问题：1) xian-rog 上是否已有扫码绑定的快手账号；2) 是否有可存入 GHA secrets 的快手 cookies JSON"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.80
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 7,
+    "errors_encountered": 0,
+    "output_chars": 7680,
+    "transcript_chars": 7680
+  },
+  "timing": {
+    "executor_duration_seconds": 249.4,
+    "grader_duration_seconds": null,
+    "total_duration_seconds": 249.4
+  },
+  "claims": [
+    {
+      "claim": "旧技能查了 journey_steps 和 journey_features（废弃表）",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Section 2 的 curl 清单明确包含这两个废弃表的查询，并有注释说明这是「老技能的查表行为」"
+    },
+    {
+      "claim": "已有 publish-kuaishou-image-dryrun.cjs 和 publish-kuaishou-video-dryrun.cjs 脚本",
+      "type": "factual",
+      "verified": false,
+      "evidence": "transcript 声称发布脚本已存在，但因沙箱不可用，通过读代码推断；未能从实际 Bash 工具调用验证文件是否真实存在"
+    },
+    {
+      "claim": "Agent heartbeat onTask 里 platform==='kuaishou' 分支缺失",
+      "type": "factual",
+      "verified": false,
+      "evidence": "PrepPRD 中声称 index.ts 的 heartbeat onTask 只有 WS publish_request 通道，缺 heartbeat task 通道，但 transcript 注明「Brain API 沙箱不可用，通过读代码补充」，未经实际代码查阅验证"
+    },
+    {
+      "claim": "前置检查在 PrepPRD 生成后执行",
+      "type": "process",
+      "verified": true,
+      "evidence": "Section 4 先生成 PrepPRD，Section 5 再做前置检查，顺序符合流程"
+    },
+    {
+      "claim": "Golden Path 草稿展示后等待用户确认",
+      "type": "process",
+      "verified": false,
+      "evidence": "Section 3 展示 Golden Path 草稿后，Section 4 备注「模拟用户确认'对'/'走'后继续」，说明并非真正等待用户确认，而是跳过了这一步直接生成 PrepPRD"
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "展示了Golden Path草稿",
+        "reason": "当前断言只检查是否展示了 Golden Path 草稿，但不检查是否真正等待了用户确认。transcript 中明确写「模拟用户确认'对'/'走'后继续」，说明跳过了用户确认步骤直接生成 PrepPRD。更严格的断言应是「展示 Golden Path 草稿后停下来等待用户确认，而非自行假设用户已确认」"
+      },
+      {
+        "reason": "没有断言覆盖「实际执行了 curl 查询而非伪造/模拟查询」这一关键行为。本次 transcript 完全是模拟输出（Brain API 沙箱不可用），所有查询结果都是推断，不是真实 API 调用。建议增加「Phase 2 的上下文查询必须有实际 Bash 工具调用证据」断言"
+      },
+      {
+        "assertion": "查了abilities(不查journey_steps/journey_features废弃表)",
+        "reason": "该断言是唯一失败项，且老技能查废弃表的行为是明确的负面特征，建议在评估报告中将此标为与新技能的核心差异点之一"
+      }
+    ],
+    "overall": "核心断言设计合理，抓住了新旧技能的关键区别（abilities vs 废弃表）。建议补充「实际执行了 API 调用」和「真正等待用户确认 Golden Path」两个断言，以防止模拟输出绕过验证"
+  }
+}

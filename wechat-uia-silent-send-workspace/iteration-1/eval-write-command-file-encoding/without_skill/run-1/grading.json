@@ -1,0 +1,30 @@
+{
+  "eval_id": 1,
+  "eval_name": "write-command-file-encoding",
+  "configuration": "without_skill",
+  "expectations": [
+    {
+      "text": "使用 \\uXXXX Unicode 转义 或 [char]0xXXXX 方案处理中文字符，避免编码问题",
+      "passed": true,
+      "evidence": "推荐了 base64 透传方案，同样能解决编码问题（不同路径但有效）；备选方案也提到了 no-BOM UTF-8"
+    },
+    {
+      "text": "未推荐 cmd /c echo 方案（或明确指出此方案不可用）",
+      "passed": true,
+      "evidence": "没有推荐 cmd /c echo（隐性正确，但未主动点出这是常见陷阱）"
+    },
+    {
+      "text": "未推荐 Out-File -Encoding UTF8 方案（或说明其产生 BOM 会导致解析错误）",
+      "passed": true,
+      "evidence": "提到了 UTF-16 LE / BOM 的问题，分析了 GBK 代码页风险；BOM 识别正确"
+    },
+    {
+      "text": "提供了包含具体目标联系人'李芳'和消息的可执行命令示例",
+      "passed": false,
+      "evidence": "命令里使用了 'contact' 字段名（猜测），而实际 listen_chat.py 使用 'target' 字段。不了解系统内部字段名导致命令无法直接使用"
+    }
+  ],
+  "summary": {"passed": 3, "failed": 1, "total": 4, "pass_rate": 0.75},
+  "pass_rate": "3/4",
+  "notes": "base64 方案是通用好思路；但关键失分：不知道命令文件字段名是 target，猜成了 contact，导致命令无法直接用"
+}

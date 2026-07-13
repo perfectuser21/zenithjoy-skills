@@ -1,0 +1,30 @@
+{
+  "eval_id": 3,
+  "eval_name": "contact-not-found-debug",
+  "configuration": "without_skill",
+  "expectations": [
+    {
+      "text": "解释了联系人 match 机制：子串匹配（target 是会话 ListItem 名字的子串）",
+      "passed": true,
+      "evidence": "正确解释了子串匹配逻辑，还补充了 ListItem.Name 可能包含时间+消息预览拼接的重要提示"
+    },
+    {
+      "text": "说明了联系人必须在当前可见的会话列表内才能被找到",
+      "passed": true,
+      "evidence": "说明了'UIA 默认只能枚举到已渲染的 ListItem'，且建议先点一下让会话在列表顶部可见"
+    },
+    {
+      "text": "提供了 dump 所有会话 ListItem 名字的代码或方法",
+      "passed": false,
+      "evidence": "提供了代码，但用了 auto.WindowControl(searchDepth=1, ClassName='WeChatMainWndForPC') 这个错误的类名（微信4.0用的是 mmui::MainWindow）；且方法一推荐'在独立脚本里运行'而非在 listen_chat 进程内，在 schtasks session 隔离下会扫出空列表，给出错误结论"
+    },
+    {
+      "text": "说明修改 listen_chat.py 后需要重启进程才生效",
+      "passed": false,
+      "evidence": "方法一描述的是修改主动发送循环里的代码，但没有明确说'改完必须重启进程'。用户可能以为改了文件立即生效"
+    }
+  ],
+  "summary": {"passed": 2, "failed": 2, "total": 4, "pass_rate": 0.5},
+  "pass_rate": "2/4",
+  "notes": "关键失分：1) 推荐独立脚本 dump（忽略 schtasks session 隔离，会失败）；2) 用了错误的 WeChatMainWndForPC 类名；3) 未提示需要重启进程。这正是 skill 的核心价值所在"
+}

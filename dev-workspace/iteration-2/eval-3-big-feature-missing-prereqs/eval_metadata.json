@@ -1,0 +1,12 @@
+{
+  "eval_id": 3,
+  "eval_name": "big-feature-with-missing-prerequisites",
+  "prompt": "我想做快手内容发布功能，现在只有抖音这边有，快手完全没有，需要能发图文和视频",
+  "assertions": [
+    {"name": "识别为路径C(大功能)", "description": "输出中明确标注走路径C或大功能/Harness路径"},
+    {"name": "查了abilities(不查journey_steps/journey_features废弃表)", "description": "执行了 /api/brain/abilities 查询，且没有查询 journey_steps 或 journey_features"},
+    {"name": "展示了Golden Path草稿", "description": "展示了包含已有和本次新增的 Golden Path 草稿让用户确认"},
+    {"name": "触发前置工作核对门槛", "description": "在写PrepPRD之前，执行了前置工作核对步骤，识别出快手账号/Cookie/API等前置工作缺失"},
+    {"name": "停下来向用户索要前置信息", "description": "因前置工作未到位，明确列出需要用户提供的内容，没有点火Harness"}
+  ]
+}

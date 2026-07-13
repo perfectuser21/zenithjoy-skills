@@ -1,0 +1,58 @@
+{
+  "line_id": "c019cdeb-d90b-4f8b-a658-ae333663ac35",
+  "line_name": "智能发布",
+  "trigger": "run_terminal",
+  "dry_run": true,
+  "decision": "halt_and_escalate",
+  "decision_summary": "失败根因是 Brain 调度器 worktree 分配冲突，属于全局基础设施故障，不是本 line 的业务缺陷。本 line 不重试、不派新 run，升级为跨 line 的基础设施 P1 修复，修复合并部署后再恢复派发。",
+  "root_cause": {
+    "scope": "global_infrastructure",
+    "component": "Brain scheduler / worktree allocation",
+    "affects_all_lines": true,
+    "line_local_fault": false
+  },
+  "actions": [
+    {
+      "order": 1,
+      "action": "do_not_retry_run",
+      "reason": "根因在调度器层，重试必然复现同一冲突，只会浪费额度并污染 line 成功率统计。",
+      "executed": false,
+      "blocked_by": "dry_run（本身也无需写操作）"
+    },
+    {
+      "order": 2,
+      "action": "dedup_check_existing_issues",
+      "result": "已发现两个 In progress 的 P1 worktree 相关 issue：ec5ceda5-1cad-4c12-99e7-3d79a5d5d2cb（worktree/node_modules 被环境清理器反复破坏）、dfc5c882-e3f2-488e-9b96-05f6cb5c06bb（codex relay 容器毒化宿主 worktree 创建）。本次失败很可能与其同源，应先归并而非新建重复 issue。",
+      "executed": true,
+      "read_only": true
+    },
+    {
+      "order": 3,
+      "action": "escalate_to_brain_owner",
+      "proposal": "若确认与已有两个 P1 issue 不同源，则新建 Issue（sub-area=brain, priority=P1，标题：Brain 调度器 worktree 分配冲突导致 run 失败——影响所有 line 派发）并创建关联 fix Task 走 /dev + systematic-debugging（先写复现 failing test）。",
+      "executed": false,
+      "blocked_by": "dry_run 禁止 POST"
+    },
+    {
+      "order": 4,
+      "action": "hold_line_dispatch",
+      "proposal": "在调度器修复合并并部署（brain-deploy 重建镜像）前，暂停本 line 及其他 line 的新 harness run 派发，避免批量失败。",
+      "executed": false,
+      "blocked_by": "dry_run 禁止 PATCH"
+    },
+    {
+      "order": 5,
+      "action": "resume_after_fix_verified",
+      "proposal": "修复部署后，用一个最小 run（如 relay-demo 级别）验证 worktree 分配正常，再恢复智能发布 line 的正常派发。",
+      "executed": false,
+      "blocked_by": "依赖 action 3/4 完成"
+    }
+  ],
+  "line_status_snapshot": {
+    "journey_status": "active",
+    "maturity": "skeleton",
+    "active_line_tasks_found": 0
+  },
+  "notifications_sent": false,
+  "writes_performed": false
+}

@@ -1,0 +1,11 @@
+{
+  "eval_id": 2,
+  "eval_name": "small-change-abilities-group-field",
+  "prompt": "给 abilities 表加个 group 字段，字符串类型，用来做 Ability Group 聚合，比如抖音发布这个 group 下面有长视频/短视频/图文三个 Ability",
+  "assertions": [
+    {"name": "Brain DB 有新 decision 且 category=small-change", "description": "GET /api/brain/strategic-decisions 能查到新写入的记录，category 字段为 small-change"},
+    {"name": "PrepPRD 文件已写入磁盘", "description": "sprints/ 目录下有新建的目录，内含 prep-prd.md 且文件非空"},
+    {"name": "PrepPRD 含改什么/影响范围", "description": "prep-prd.md 内容包含改什么和影响范围"},
+    {"name": "正确路由路径B", "description": "输出明确标注走路径B(小改动)，不走A/C"}
+  ]
+}

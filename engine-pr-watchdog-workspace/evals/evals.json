@@ -1,0 +1,57 @@
+{
+  "skill_name": "engine-pr-watchdog",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "分支落后了，需要处理 Step 4（rebase）。假设：PR #45，repo perfectuser21/cecelia，worktree /tmp/test-worktree，branch cp-test。请使用 engine-pr-watchdog skill，执行 Step 4 的 rebase 流程，展示你实际会怎么运行 bash 命令（包括 git fetch、rebase、push 的参数设置），然后说明接下来会做什么。",
+      "expected_output": "所有 bash 命令同步执行（无 run_in_background），push 完成后立刻重入 Step 2 轮询，不输出文字给用户",
+      "files": [],
+      "assertions": [
+        {
+          "id": "no-run-in-background",
+          "description": "不将 run_in_background: true 作为实际执行参数（在禁止语境中提及是允许的）",
+          "type": "text_not_contains",
+          "value": "run_in_background: true"
+        },
+        {
+          "id": "mentions-sync-push",
+          "description": "skill 指令中明确提到 push 必须同步执行的约束",
+          "type": "text_contains_any",
+          "value": ["同步", "不得 run_in_background", "绝对禁止"]
+        },
+        {
+          "id": "reenter-step2",
+          "description": "rebase + push 后说明会立刻重新进入 Step 2 轮询",
+          "type": "text_contains_any",
+          "value": ["Step 2", "重新进入", "继续轮询", "立刻"]
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "刚创建了 PR #100 在 perfectuser21/zenithjoy-skills 上，branch 是 feat/skill-test。请调用 engine-pr-watchdog 进入监控循环。假设第一次检查 gh pr view 返回 state=OPEN，CI pending=2 fail=0，mergeStateStatus=BEHIND。展示你接下来的完整决策和 bash 命令序列。",
+      "expected_output": "检测到 BEHIND 后执行 Step 4，所有命令同步，push 后立刻重入循环，整个过程不结束 turn",
+      "files": [],
+      "assertions": [
+        {
+          "id": "detects-behind",
+          "description": "正确检测到 BEHIND 状态并路由到 Step 4",
+          "type": "text_contains_any",
+          "value": ["BEHIND", "Step 4", "rebase"]
+        },
+        {
+          "id": "no-background-push",
+          "description": "git push 不使用后台模式",
+          "type": "text_not_contains",
+          "value": "run_in_background: true"
+        },
+        {
+          "id": "loop-continues",
+          "description": "push 完成后明确说明继续轮询，不结束 turn",
+          "type": "text_contains_any",
+          "value": ["继续", "重新进入", "不结束", "立刻", "下一次"]
+        }
+      ]
+    }
+  ]
+}

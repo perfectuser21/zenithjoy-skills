@@ -1,0 +1,27 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-usm-to-xian",
+  "prompt": "我有一个 2GB 的模型文件在 us-mac，要传到 xian-m4，怎么传最快？",
+  "assertions": [
+    {
+      "id": "b1",
+      "text": "推荐 COS 中转路径（而不是 SCP 直连或 rsync hk-vps 中转）",
+      "method": "llm"
+    },
+    {
+      "id": "b2",
+      "text": "给出 coscmd upload 命令",
+      "method": "grep"
+    },
+    {
+      "id": "b3",
+      "text": "给出 curl 从 COS 下载命令",
+      "method": "grep"
+    },
+    {
+      "id": "b4",
+      "text": "提到西安机器下载前需要关 exit node（否则 COS 变 27KB/s）",
+      "method": "grep"
+    }
+  ]
+}

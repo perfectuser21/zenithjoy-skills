@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "识别为路径A(Bug) — 输出中明确标注走路径A或Bug路径，不走路径B/C",
+      "passed": true,
+      "evidence": "Line 9 明确标注：关键词报错/之前是好的 → 路径A：Bug，全文没有出现路径B/C字样。"
+    },
+    {
+      "text": "查了3个curl：journeys + issues + decisions/match — 执行了对3个端点的查询",
+      "passed": true,
+      "evidence": "Phase 2 节依次列出三个 curl：/api/brain/journeys、/api/brain/issues?limit=20、POST /api/brain/decisions/match，全部命中。"
+    },
+    {
+      "text": "PrepPRD含症状/根因假设/修法/Regression Test — PrepPRD包含四个部分",
+      "passed": true,
+      "evidence": "PrepPRD 节包含症状、根因假设、修法、Regression Test 计划四部分，均有实质内容，不是占位符。"
+    },
+    {
+      "text": "写了decision且category=bug-fix — 执行了 POST /api/brain/strategic-decisions 且 category 字段为 bug-fix",
+      "passed": true,
+      "evidence": "输出展示了 curl -s -X POST localhost:5221/api/brain/strategic-decisions 的完整 JSON body，其中 category: bug-fix 明确出现。"
+    },
+    {
+      "text": "调用systematic-debugging skill — 最后一步调用了 superpowers:systematic-debugging",
+      "passed": true,
+      "evidence": "末尾写出 Skill({\"skill\":\"superpowers:systematic-debugging\"}) 并说明接力链：systematic-debugging → engine-worktree → ..."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "executor_duration_seconds": 263.5,
+    "total_duration_seconds": 263.5,
+    "total_tokens": 73203
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "断言检查的是文本出现（代码块）而非真实 tool call 执行。建议补充对 API 实际返回值或文件产物的验证。"
+      }
+    ],
+    "overall": "5/5通过，但多条断言为规划文本验证而非执行验证。"
+  }
+}

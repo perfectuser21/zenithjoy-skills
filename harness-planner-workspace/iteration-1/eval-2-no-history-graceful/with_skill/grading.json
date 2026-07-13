@@ -1,0 +1,21 @@
+{
+  "expectations": [
+    {
+      "text": "产出sprint-prd.md",
+      "passed": true,
+      "evidence": "2613 chars"
+    },
+    {
+      "text": "两段存在且非空段",
+      "passed": true,
+      "evidence": "两段均在+占位"
+    },
+    {
+      "text": "PRD正文正常",
+      "passed": true,
+      "evidence": "主题+常规段齐全"
+    }
+  ],
+  "pass_count": 3,
+  "total": 3
+}

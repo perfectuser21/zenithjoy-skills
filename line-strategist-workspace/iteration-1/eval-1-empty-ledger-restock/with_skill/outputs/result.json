@@ -1,0 +1,15 @@
+{
+  "line_id": "bfeed805-deed-46c3-8624-87f0028101d4",
+  "trigger": "manual",
+  "decision": "fix_bug",
+  "target": "4ed0b9dd-78d3-4441-a794-f1ddfcdc2758",
+  "created_task_id": null,
+  "confidence": 0.72,
+  "decision_note_id": null,
+  "dry_run": true,
+  "decision_note_draft": {
+    "title": "军师决策[客户私域 AI 接管]: 修 P0 bug——agent 2.0.28 找不到微信(4ed0b9dd)，路径A",
+    "type": "Decision",
+    "content": "## 触发\nTRIGGER=manual（主理人手动唤醒，DRY_RUN=true，无 TRIGGER_CONTEXT）\n\n## 快照事实\n1. 防抖：queued 中无本 line 的 strategist_decision 任务（count=0），无重复决策。\n2. line 基本面：Line04「客户私域 AI 接管」status=active，maturity=not_started。\n3. 推进项账本为空：/warroom/line/{id}/advancements 返回 items=[]，todo/doing 均为 0——账本尚未铺开。\n4. 近期 run：最近两个失败 sprint 根因不同（07-03 桌面租约仲裁层 8594ef9a 死于 ARTIFACT 门 `python3: command not found`（门禁环境缺 python3，基础设施性）；06-26 CRM Glide 8cc738e2 死在 generator）；但 07-07 有两个任务 done（客服回复判断内核接入 e74341f4、CRM客户状态历史追踪 5d090237），失败链已被成功打断，不构成『连续 ≥2 run 同根因失败』的停线条件。\n5. 本 line open P0/P1 issues（按标题/sub_area 归属 Line04）：P0×3——4ed0b9dd（agent 2.0.28 连上中台但找不到微信，line04 模块无输出，产品核心功能不可用）、c1432195（dashboard 客服白名单保存整页白屏，配置做不了）、bbd27b4d（2.0.25 exe 起不来，疑似已被 2.0.28 版本取代但未关闭）；P1×若干（无单实例锁 5109ba34、权限划分 96db53be、汇总页缺失 ecf13d74、人设串台 defe1a42 等）。\n6. 修复占用检查：in_progress 任务为 0 条；queued 仅 5 条 content-pipeline 任务，均与 Line04 无关——所有 P0/P1 均无进行中的修复任务。\n7. ability/feature 台账：29 条，其中 building×4（桌面租约仲裁层、Agent形态收口、客服每日工作报告、客服工作汇总统计页）、planned×多、done×6——存在补货对象，但按阶梯排在 bug 之后。\n\n## 决策\n阶梯逐级判断：\n① 停线——不命中（最近两次失败根因不同，且 07-07 已有两个任务成功落地，失败未连续；8594ef9a 的 python3 缺失属门禁环境问题，已有 harness 侧 issue track，未构成本 line 持续烧产能）。\n② P0/P1 bug 且无进行中修复——**命中**。选最高优先级且最阻断核心价值的 P0 4ed0b9dd：客户装最新 agent 2.0.28 能连中台却找不到微信窗口，等于『AI 接管个微』这条 line 的核心 workflow 在客户机上完全不可用，属产品级瘫痪。c1432195（白名单白屏）影响面次之；bbd27b4d 针对旧版 2.0.25、疑似已被 2.0.28 取代，建议排查 4ed0b9dd 时顺带确认其是否可关闭。\n③④⑤ 不再评估（第一个命中即停）。\n附注（不作为本次决策）：账本 items=[] 是真实缺口，P0 修完后下一次唤醒大概率走『补货』（候选 ability：building 状态且推进项耗尽的 8358dd63 桌面租约仲裁层等）；本次不并行派活，遵守一次只建 1 个任务。\n若非 DRY_RUN，将建任务：title='fix: agent 2.0.28 line04 模块找不到微信窗口(UIA 找不到/日志无输出)'，task_type=dev，priority=P0，payload={journey_id: bfeed805-…, issue_id: 4ed0b9dd-…, harness_mode:false, dispatched_by:'line-strategist'}。\n\n## 自审\n依据：(a) 三个 open P0 全属本 line，issues API 直接证据；(b) in_progress=0、queued 无 line04 任务，无重复修复风险；(c) 阶梯规定 bug 先于补货，账本为空不改变优先序；(d) 4ed0b9dd 是最新版本上的核心功能瘫痪，比配置页白屏更阻断客户价值。\nconfidence: 0.72\n质量预期：修复后客户机 agent 2.0.28 可发现微信窗口、line04 模块激活，恢复『AI 接管个微』端到端可用性，也为后续推进项（桌面租约等）提供可运行的真机环境。\n风险：若 4ed0b9dd 实为环境个案（如该客户机微信版本被版本闸拦截，关联 P2 222cb545）而非代码 bug，则一个 P0 修复任务的产能被低效使用；最坏损失约一个 dev 任务的排查时间，且 c1432195 的修复被推后一个决策周期。\n\n## 产出\nDRY_RUN=true：未建任务、未写 note、未发通知。本草稿即应留痕全文。\n\n## scope\nline 内（4ed0b9dd/c1432195 标 sub_area=agent/dashboard 但内容均属 Line04 客服系统，不涉他线）。另登记观察：8594ef9a 失败的 ARTIFACT 门 python3 缺失与 harness 门禁环境有关（cross-line 基础设施，已有 harness issue 7c2d19fe 等在 track），建议随晨报提示主理人关注 harness 门禁环境，本军师不越权建任务。"
+  }
+}

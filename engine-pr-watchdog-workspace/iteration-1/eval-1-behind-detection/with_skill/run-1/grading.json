@@ -1,0 +1,8 @@
+{
+  "summary": {"pass_rate": 1.0, "passed": 3, "failed": 0, "total": 3},
+  "expectations": [
+    {"text": "正确识别 BEHIND 状态并路由到 Step 4", "passed": true, "evidence": "MERGE_STATE=BEHIND → exit 11，触发 Step 4（BEHIND 处理），决策树清晰标出 exit 11 路由。"},
+    {"text": "git push 命令不使用后台模式", "passed": true, "evidence": "全部命令同步执行（不使用 run_in_background），Step 4 代码块无 run_in_background 参数。"},
+    {"text": "rebase+push 后明确说明继续轮询、不结束 turn", "passed": true, "evidence": "push 返回后，不输出任何文字，立刻发起第二次 Step 2 的 Bash 调用，并附完整命令序列 3 步图示。"}
+  ]
+}

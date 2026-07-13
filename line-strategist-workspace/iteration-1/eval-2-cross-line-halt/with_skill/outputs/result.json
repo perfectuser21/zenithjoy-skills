@@ -1,0 +1,16 @@
+{
+  "line_id": "c019cdeb-d90b-4f8b-a658-ae333663ac35",
+  "trigger": "run_terminal",
+  "decision": "halt",
+  "target": null,
+  "created_task_id": null,
+  "confidence": 0.85,
+  "decision_note_id": null,
+  "dry_run": true,
+  "scope": "cross-line",
+  "decision_note_draft": {
+    "title": "军师决策[智能发布]: 停线上报——失败根因为 Brain 调度器 worktree 分配冲突（基础设施级、跨 line），登记不执行，浮晨报待主理人拍板",
+    "type": "Decision",
+    "content": "## 触发\nTRIGGER=run_terminal。本 line 刚失败的 run 经查根因为 Brain 调度器的 worktree 分配冲突——该根因位于任务派发基础设施层，会影响所有 line 的任务派发，不只本 line。\n\n## 快照事实\n1. 防抖自检：queued 队列中本 line 的 strategist_decision 任务数=0，无重复决策在跑（GET /api/brain/tasks?status=queued）。\n2. line 基本面：智能发布（ZenithJoy），status=active，maturity=skeleton；warroom 快照中 steps/tasks 均为空（GET /api/brain/warroom/line/{id}）。\n3. 推进项账本：4 项，全部挂在 ability「微信公众号文章发布」——done×2（官方API图文上传打通 P0 / 草稿箱发布成功 P1）、doing×1（定时发布 P1）、todo×1（多图文素材库 P2）。doing 项「定时发布」疑似即为刚失败 run 对应的推进项，账面仍为 doing 未回落（GET /api/brain/warroom/line/{id}/advancements）。\n4. open issues 共 41 条，无一条 P0/P1 归属本 line（line01/智能发布）；调度器 worktree 分配冲突这一根因目前未见对应的 open issue 登记（GET /api/brain/issues?status=open&limit=50）。\n5. 最近 30 条 failed 任务中未见 payload.journey_id 等于本 line 的记录；另见 relay-demo 线（journey bb8cc561）07-07 一天内连续 6 个 harness run 失败——与'调度器层面存在系统性故障'的触发上下文相互印证（GET /api/brain/tasks?status=failed&limit=30）。\n6. GET /api/brain/harness/initiative-runs 返回非 JSON（404/空），无法进一步核实 run 明细——快照存在观测盲区，作为不确定性计入 confidence。\n\n## 决策\n命中优先级阶梯第 1 条（停线条件）：触发任务的失败原因指向基础设施（Brain 调度器 worktree 分配冲突）→ 决策=停线上报。跳过后续阶梯（无本 line P0/P1 issue 可修；todo 仅剩 P2 一项但在基础设施故障未除时续派=烧产能；doing 修账也暂缓——run 终局归因是调度器而非任务本身，贸然改账会掩盖现场）。\n根因属 Brain 调度器 = 跨 line 范畴，按跨界规则「登记不执行」：不建任何任务（包括不建 fix 任务——那是跨 line 的基础设施修复，须主理人拍板归属），scope 标 cross-line 浮晨报。\n建议（供主理人）：① 在 issues 登记 P0/P1「Brain 调度器 worktree 分配冲突」（sub_area=brain），走 /dev 路径A 修复，修复须附可复现的 failing test；② 修复合并部署前，暂停各 line 的 harness 派发以免失败传染；③ 修复后把本 line doing 项「定时发布」(693c079f) 重新入队验证。\n\n## 自审\n依据：(a) 触发上下文明确归因基础设施（调度器 worktree 冲突）——直接命中阶梯第 1 条停线条件；(b) 该根因作用面=所有 line 的任务派发——命中跨 line 边界规则，登记不执行；(c) 快照旁证：relay-demo 线短期 6 连败、41 条 open issue 无本 line P0/P1、本 line 无排队任务，停线不会闲置本可推进的高优工作（仅剩 P2 todo）。\nconfidence: 0.85（扣分项：initiative-runs 端点不可读+failed 列表未直接看到本 line 终局任务，run 明细未能独立复核，归因主要依赖触发上下文）。\n质量预期：把一个会传染全部 line 的基础设施故障第一时间浮给主理人，止住产能空烧；本 line 仅推迟 1 个 P2 推进项，机会成本最小。\n风险：若归因有误（其实是本 line 个别任务问题），最坏损失=本 line 空转一个决策周期（下个终局/主理人晨报即可纠偏）；反向风险（不停线继续派）=所有 line 持续撞 worktree 冲突批量失败，远大于停线成本。\n\n## 产出\nDRY_RUN=true：未建任务、未发 Bark/飞书、未写 notes。本留痕以 decision_note_draft 形式随决策 JSON 输出。\n\n## scope\ncross-line（根因=Brain 调度器，影响所有 line 的任务派发）"
+  }
+}

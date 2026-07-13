@@ -1,0 +1,47 @@
+{
+  "expectations": [
+    {
+      "text": "识别为路径B(小改动) — 输出中明确标注走路径B或小改动路径，不走路径A/C",
+      "passed": true,
+      "evidence": "Phase 1 明确写道：关键词匹配 加个字段 → 路径 B：小改动。Phase 2 标题也注明 路径 B — 3 个 curl。"
+    },
+    {
+      "text": "查了journeys + decisions/match — 执行了对 /api/brain/journeys 和 /api/brain/decisions/match 的查询",
+      "passed": false,
+      "evidence": "transcript 中显示了 curl 命令代码块，但标注为模拟输出，没有任何 Bash 工具调用的证据表明这些 curl 实际被执行。这是 plan-only，未真实执行查询。"
+    },
+    {
+      "text": "PrepPRD含改什么和影响范围 — PrepPRD包含改什么和影响范围两个部分",
+      "passed": true,
+      "evidence": "PrepPRD 包含明确的 ## 改什么 部分（描述 group 字段名、类型、含义）和 ## 影响范围 部分（列出4点：Brain DB schema、Brain API、Notion 同步逻辑、不影响现有字段）。"
+    },
+    {
+      "text": "写了decision且category=small-change — 执行了 POST /api/brain/strategic-decisions 且 category 字段为 small-change",
+      "passed": false,
+      "evidence": "transcript 显示了 curl POST 命令代码块，其中包含 category:small-change，但同样是展示代码而非实际执行。没有 Bash 工具调用记录，也没有 API 返回值。"
+    },
+    {
+      "text": "调用engine-worktree skill — 最后一步调用了 engine-worktree",
+      "passed": false,
+      "evidence": "transcript 在下一 skill 调用部分展示了 Skill({skill:engine-worktree}) 的文字描述，但这是文本展示而非真实的 Skill 工具调用。"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 3,
+    "total": 5,
+    "pass_rate": 0.4
+  },
+  "timing": {
+    "executor_duration_seconds": 122.7,
+    "total_duration_seconds": 122.7
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "3个执行类断言（查了/写了/调用了）均只能检查文本出现而非实际工具调用。Skill 输出是计划书形式，代码块展示即可通过这些断言。建议补充对真实 Bash/Skill tool call 记录的验证。"
+      }
+    ],
+    "overall": "2/5通过。3个失败断言均为执行验证类，skill 只展示了代码而未真实调用工具。eval 需要区分 plan-mode 和 execute-mode。"
+  }
+}

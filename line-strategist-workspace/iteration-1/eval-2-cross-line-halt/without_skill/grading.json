@@ -1,0 +1,24 @@
+{
+  "expectations": [
+    {
+      "text": "识别跨line基础设施根因",
+      "passed": true,
+      "evidence": "root_cause.scope=global_infrastructure,affects_all_lines=true"
+    },
+    {
+      "text": "决策=halt且不建任务",
+      "passed": true,
+      "evidence": "halt_and_escalate,全部写动作标executed:false"
+    },
+    {
+      "text": "scope标注cross-line登记浮晨报",
+      "passed": true,
+      "evidence": "升级建议+查重命中2个既有worktree issue避免重复登记"
+    },
+    {
+      "text": "零写操作",
+      "passed": true,
+      "evidence": "8条curl全GET"
+    }
+  ]
+}

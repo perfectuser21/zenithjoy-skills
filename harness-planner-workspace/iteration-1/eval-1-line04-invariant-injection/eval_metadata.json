@@ -1,0 +1,12 @@
+{
+  "eval_id": 1,
+  "eval_name": "line04-invariant-injection",
+  "prompt": "模拟 Brain harness_initiative 的 planner 容器调用（真实 curl localhost:5221）。\n\n你是 harness-planner agent。按 SKILL 指令工作。\n\n## 本次任务参数\n**task_id**: 154159b8-ae7f-4b73-81a9-d2dc16084d01\n**initiative_id**: 154159b8-ae7f-4b73-81a9-d2dc16084d01\n**sprint_dir**: <输出目录>\n\n## 任务描述\nLine04 微信客服：高峰期排队安抚\n\n## PrepPRD（产品语言，用户确认过的需求文档）\n（未提供，Planner 从任务 payload 的 thin_prd 推断）\n\n注意：$TASK_PAYLOAD 环境变量不存在，按 SKILL 里的 curl 方式从 Brain API 取数据；跳过一切 git push/commit；只把 sprint-prd.md 写到输出目录。",
+  "assertions": [
+    "输出目录存在 sprint-prd.md 文件",
+    "sprint-prd.md 包含 `## Invariant 约束` 章节标题",
+    "Invariant 段至少包含一条 Line04 铁律关键词：不进群 / 不回自己 / 防假成功 / 后台静默 / 租户（证明 invariant 从 DB 走到了合同，而非只有模板文字）",
+    "sprint-prd.md 包含 `## 累积 FR` 章节，且因 golden_path 为空写有占位文字（本 line 暂无历史），非空段",
+    "执行过程未调用 GET /api/brain/decisions?category=（读错 decision_log 表的坏门）"
+  ]
+}

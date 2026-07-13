@@ -1,0 +1,29 @@
+{
+  "eval_name": "eval-plugin-dist",
+  "config": "with_skill",
+  "expectations": [
+    {
+      "text": "识别为插件/工具分发类，推荐 COS（而非只推 SCP 直传）",
+      "passed": true,
+      "evidence": "明确识别为 B 类（插件/工具分发），推荐 COS，并说明了为什么不用 SCP（便于多设备复用）"
+    },
+    {
+      "text": "给出 coscmd upload 上传命令",
+      "passed": true,
+      "evidence": "完整给出 coscmd config + coscmd upload $PLUGIN /plugins/$(basename $PLUGIN)"
+    },
+    {
+      "text": "给出 curl 从 COS 下载命令（在 xian-pc 上执行）",
+      "passed": true,
+      "evidence": "给出了 Windows PowerShell 和 CMD 两种 curl 下载命令，含完整 COS URL"
+    },
+    {
+      "text": "提到上传前需关 exit node（否则 COS 变 27KB/s）",
+      "passed": true,
+      "evidence": "明确第一步就是 sudo tailscale set --exit-node=，并在常见坑表格里再次强调"
+    }
+  ],
+  "pass_count": 4,
+  "total_count": 4,
+  "pass_rate": 1.0
+}

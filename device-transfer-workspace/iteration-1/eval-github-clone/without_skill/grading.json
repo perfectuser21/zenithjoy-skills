@@ -1,0 +1,29 @@
+{
+  "eval_name": "eval-github-clone",
+  "config": "without_skill",
+  "expectations": [
+    {
+      "text": "给出了 tailscale exit node 方案（包含 tailscale set --exit-node= 命令）",
+      "passed": false,
+      "evidence": "完全不知道 Tailscale exit node，推荐的是 Clash/Surge 本地代理软件"
+    },
+    {
+      "text": "给出了 git proxy/SOCKS5 方案（git config http.proxy 或 socks5h://）",
+      "passed": false,
+      "evidence": "有 git config http.proxy 但指向本地 127.0.0.1:7890，不是 us-mac 的 SOCKS5 方案"
+    },
+    {
+      "text": "提到了拉完要关 exit node，或说明了两种方案的适用场景区别",
+      "passed": false,
+      "evidence": "不知道 exit node 概念，没有提到 COS 和 exit node 的冲突"
+    },
+    {
+      "text": "没有只给模糊建议（如'用 VPN'），而是给出具体可执行命令",
+      "passed": true,
+      "evidence": "给出了具体命令，但都是通用方案（Clash 端口、hk-vps 中转），不是我们基础设施的命令"
+    }
+  ],
+  "pass_count": 1,
+  "total_count": 4,
+  "pass_rate": 0.25
+}

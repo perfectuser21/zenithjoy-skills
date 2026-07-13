@@ -1,0 +1,11 @@
+{
+  "eval_id": 4,
+  "eval_name": "big-feature-thin-skeleton-explicit",
+  "prompt": "帮我给 Line 07 AI 爆款视频翻拍做 thin 骨架就行，先跑起来能看到 9 节点画布，不用真的能处理视频",
+  "assertions": [
+    {"name": "识别thin骨架例外场景", "description": "识别出用户明确说只需要thin骨架，触发例外条款"},
+    {"name": "PrepPRD验收标准不含ffprobe等真实验证", "description": "PrepPRD的验收标准里没有出现 ffprobe / 真实视频输出 / 真实API调用等无法达到的条件"},
+    {"name": "PrepPRD验收标准含thin级别检查", "description": "验收标准包含 API 服务能启动、路由响应、节点画布可见等可达到的检查"},
+    {"name": "进入了点火流程(不被卡住)", "description": "流程进入了写decision和点火curl阶段，没有因前置工作未就绪而被无限阻塞"}
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "meta": {
+    "role": "line-strategist",
+    "line_id": "c019cdeb-d90b-4f8b-a658-ae333663ac35",
+    "line_name": "智能发布",
+    "trigger": "idle",
+    "dry_run": true,
+    "generated_at": "2026-07-08T09:55:00+08:00",
+    "writes_performed": false
+  },
+  "line_state_snapshot": {
+    "maturity": "skeleton",
+    "journey_type": "autonomous",
+    "abilities_total": 21,
+    "features_total": 4,
+    "status_breakdown": {
+      "working": 16,
+      "broken": 3,
+      "planned": 6
+    },
+    "broken_abilities": ["小红书视频发布", "小红书图文发布", "小红书长文发布"],
+    "planned_abilities": ["头条视频发布", "头条图文发布", "头条文章发布", "头条微头条发布", "视频号视频发布", "视频号图文发布"],
+    "related_open_issues": [
+      {
+        "id": "4e399691-f3bc-46f3-89cf-4458e75808be",
+        "title": "[CI红灯] zenithjoy-workspace｜小红书 Session — 每日 E2E 验证 连续3次失败",
+        "priority": "P1",
+        "status": "In progress"
+      },
+      {
+        "id": "8bc1290e-8fe0-450e-9848-9a2a14be60e2",
+        "title": "[CI红灯] zenithjoy-workspace｜小红书 Session 绑定 — 扫码 + 存 Secret 连续3次失败",
+        "priority": "P1",
+        "status": "In progress"
+      },
+      {
+        "id": "a301e36e-b627-44d4-9f56-0c0d331aa839",
+        "title": "发布系统没有 integrity test",
+        "priority": "P2",
+        "status": "In progress"
+      }
+    ],
+    "in_flight_tasks_for_line": 0,
+    "recent_publisher_prs_in_last_100_dev_records": 0,
+    "advancement_items": {
+      "total": 4,
+      "note": "全部挂在「微信公众号文章发布」名下（2 done / 1 doing:定时发布 / 1 todo），其余 20 个 ability 零推进项账本"
+    },
+    "golden_paths": 0
+  },
+  "decision": {
+    "verdict": "ADVANCE",
+    "chosen_action": {
+      "type": "propose_task",
+      "would_execute_if_not_dry_run": "POST /api/brain/tasks",
+      "task_proposal": {
+        "title": "[Line01 智能发布] 修复小红书发布链路：session 失效根因诊断 + 三条 broken ability（图文/视频/长文）恢复 working",
+        "task_type": "dev",
+        "priority": "P1",
+        "journey_id": "c019cdeb-d90b-4f8b-a658-ae333663ac35",
+        "ability_ids": [
+          "116a9fc6-0e93-423e-8a2c-b0e7664c6f12",
+          "01c89148-a084-4de1-8582-b474a38a726a",
+          "fdb7c6e3-47da-4903-b990-75090c4a7153"
+        ],
+        "related_issue_ids": [
+          "4e399691-f3bc-46f3-89cf-4458e75808be",
+          "8bc1290e-8fe0-450e-9848-9a2a14be60e2"
+        ],
+        "scope": [
+          "1. 诊断小红书每日 E2E 与 session 绑定两条 CI 红灯的共同根因（大概率 session/cookie 失效或绑定流程坏）",
+          "2. 若根因是代码/流程层：走 /dev 修复，dryrun E2E 转绿",
+          "3. 若根因是 session 过期必须人扫码：自动化能做的全部做完（存 Secret 链路、失效检测、告警），然后 sendBark() 通知主理人扫码（Bark 不走飞书，符合紧急告警规则），不算任务失败",
+          "4. 三条小红书 ability status broken→working，附 CI 绿灯证据",
+          "5. 为本次修复补 advancement_items 账本记录"
+        ],
+        "acceptance": "publisher-smoke / 小红书每日 E2E workflow 连续 1 次全绿；journey_features 三条小红书 ability 状态可更新为 working；两个 P1 CI 红灯 issue 可关闭"
+      }
+    },
+    "alternatives_considered": [
+      {
+        "option": "铺开头条 4 条 planned ability（现成 toutiao-publisher skill 标注生产就绪）",
+        "rank": 2,
+        "why_not_now": "先修后建：3 条 broken + 2 个 P1 CI 红灯代表已交付能力在退化，价值回收快于新增能力；且头条 skill 声称生产就绪，abilities 表可能只是状态漂移，应在修复任务后顺带核对"
+      },
+      {
+        "option": "铺开视频号 2 条 planned ability",
+        "rank": 3,
+        "why_not_now": "视频号无现成生产就绪发布器，成本最高，不适合 idle 空槽的单 PR 推进"
+      },
+      {
+        "option": "补发布系统 integrity test（issue a301e36e）",
+        "rank": 4,
+        "why_not_now": "P2 且 issue 已 In progress，避免重复劳动"
+      },
+      {
+        "option": "什么都不做（HOLD）",
+        "rank": 5,
+        "why_not_now": "该线 0 个在飞任务、最近 100 条 dev-records 无发布相关 PR，线处于停滞；有明确 P1 断点，不应空转"
+      }
+    ],
+    "risks": [
+      "小红书 session 绑定可能最终卡在人工扫码这个物理交互点，任务需按 scope 第 3 条把边界内工作做完并 Bark 升级，避免无限重试烧产能",
+      "abilities 表状态与真实 CI 状态可能漂移（头条标 planned 但 skill 称生产就绪），修复任务中应顺带核对并回写"
+    ],
+    "confidence": 0.85
+  }
+}

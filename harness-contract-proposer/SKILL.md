@@ -4,11 +4,12 @@ description: |
   Harness Contract Proposer — Harness v5 GAN Layer 2a：
   读 PRD，GAN 对抗写 Golden Path 合同（每步含真实验证命令）；
   Reviewer APPROVED 后倒推拆 task-plan.json。
-version: 9.10.0
+version: 9.11.0
 created: 2026-04-08
 updated: 2026-07-14
 changelog:
   - 9.10.0: 真实链路四硬规则（handoff 0714 刀2 — #1267/#1269/#1271/#1256 实证根因）— 规则A【真实调用方 shape】合同必含 ## 真实调用方请求 shape 段，DoD 认证方式/关键字段与生产调用方逐字段一致（禁 body 传 tenant_id 而生产走 x-agent-id header 的双路径分叉）；规则B【第三方真调一次】涉第三方 API 的 DoD 至少一条真 key 真请求真响应校验，禁全 force_*/mock；规则C【mock 豁免显式登记】DoD 含 force_*/stub/假数据 → 合同必附 ## 未覆盖真实链路清单 段，controller 呈现进 PR 描述不许静默；规则D【target_environment 强制路由】微信 UI/RPA 必 windows_wechat，Android 通道未落地前真机段必入未覆盖清单；自查 checklist 新增第 8 条
+  - 9.11.0: EVA v2 审计四刀（d063b3e5/a85e0582/a638f840 实证脱模板合同骗过自查）— (1) Step 2b-check 三处补丁：[BEHAVIOR] 计数锚定行首 checkbox 格式（标题式不计入）+ 第 5 项 E2E 段 bash 块 ≥1 + 第 6 项提取 E2E 块过 bash -n 与全角标点扫描；(2) E2E 多代码块拼接语义显式化（evaluator 1.22.0 全部 bash 块按序拼接，推荐单块，多块禁重复 shebang/set）；(3) 禁文本自证型 BEHAVIOR（grep 文件含字符串归 [ARTIFACT]，真执行断言 ≥2 条且占比 ≥50%）+ 自查第 7 项启发式分类计数；(4) 新增 Step 1.3 历史约束三源加载（铁律逐条映射 INV-N 条目或显式 N/A + context-manifest 累积 FR + 回归测试）
   - 9.9.0: 领域验证规则新增「RPA 快验通道 dev-verify」小节——windows_wechat 等真机 RPA 类合同至少一条 [BEHAVIOR] 必须写成快验通道回执断言(exit_code=0+stdout 领域内容,可机检可复跑),给"真机真收真回"一个统一可执行 oracle
   - 9.8.0: 判定点登记表机器可解析约定（九要素 T5 — decisions e035dad8）— 登记表即数据：合同 APPROVED 后 reviewer Step 5 逐行解析写入 decisions category=judgment（账本保鲜「判定点活性」指标数据源）；每行自含语义（判定点列禁写「同上/...」）；示例行保留「（示例：」前缀供解析跳过；误判后果严重（静默丢数据/直接面客错误）的行在判定点名前标 ⚠️——⚠️ 行属「升拍板点主动请教用户」级别（e035dad8 第②条），PrepPRD/对齐会未拍过的 ⚠️ 判定点要在合同 notes 里标注待确认
   - 9.7.0: 跨 repo 化刀3 — (a) Contract Gate 速查表补第三方 repo 显式跳过规则：packages/brain/src/lib/contract-gate.js 不存在（第三方 repo / 非 cecelia worktree）→ 跳过代码层 Contract Gate，仅执行 skill 内置规则审查，并在合同 notes 记一行 contract-gate: skipped (file not found, third-party repo)，cecelia 场景原逻辑不动；(b) Step 1 DB 连接串参数化 ${DB_URL:-postgresql://localhost/cecelia}，第三方 repo 必须显式传 $DB_URL，不得假设 cecelia 库存在
@@ -314,6 +315,24 @@ curl -sf "localhost:5221/api/brain/registry?type=test&limit=30" > /tmp/test_regi
 
 ---
 
+### Step 1.3: 历史约束三源加载（EVA v2 — 固定动作，模板必填段）
+
+历史约束共三个来源，逐源加载（a85e0582 已自发写出铁律映射格式，本节把它固化为模板必填段）：
+
+1. **铁律清单 → DoD Invariant 覆盖条目**：controller 注入的铁律清单必须逐条映射进 contract-dod.md——每条铁律一行：
+   ```
+   - [ ] [BEHAVIOR] INV-N {断言该铁律在本 sprint 交付物上未被破坏的可执行验证}
+   ```
+   或显式写 `N/A：<理由>`（如"本 sprint 不触及该铁律覆盖的模块"）。禁止整份铁律清单无声消失——每条铁律要么有 INV 条目，要么有 N/A 行。
+2. **累积 FR 摘要（T3 端点）**：
+   ```bash
+   curl -s "$BRAIN/api/brain/line/<journey_id>/context-manifest"
+   ```
+   取回的累积 FR 摘要作为「已知约束」输入，写进 contract-draft.md 的 `## 已知约束` 章节（与 Step 1.2 回归测试约束同章节，标注来源 `[累积FR]`）。端点不可达时记一行 `context-manifest: unavailable`，不得静默跳过。
+3. **回归测试约束**：见 Step 1.2（已有流程，不重复）。
+
+---
+
 ### Step 1.5: 精简纪律（B50 — 防膨胀，修订轮必做）
 
 **核心：合同收敛目标是"覆盖完 PRD"，不是"无限加严谨度"。处理 Reviewer 反馈时先减后加，净变化趋近 0。**
@@ -452,6 +471,7 @@ psql $DB -c "SELECT count(*) FROM brain_alerts WHERE task_id='$TASK_ID' AND crea
 
 > **选模板规则**：看 PRD 末尾的 `target_environment` 字段，不是 `journey_type`。evaluator 模式B 按 `target_environment` SSH 派发到正确机器，合同 E2E 脚本必须与目标机器匹配。
 > `windows_wechat` 与 `windows_cloud` 的区别：前者走 xian-rog self-hosted runner（含真实微信 4.1.8），后者走 GHA windows-latest（无微信，适合 Agent 安装包/Publisher 测试）。
+> **多代码块拼接语义（EVA v2 显式化）**：evaluator 1.22.0 起提取 `## E2E 验收` 段内**全部** bash 块按顺序拼接执行——推荐统一写单块；如写多块，仅第一块可含 shebang/`set -euo pipefail`，后续块必须是纯命令续体（禁止重复 shebang/set），且不得依赖块间的独立进程假设。
 
 ---
 
@@ -1183,6 +1203,7 @@ DODEOF
 - PRD 每个 response 字段 → 至少 1 条 [BEHAVIOR] 验
 - PRD 每个 query parameter → 至少 1 条 [BEHAVIOR] 验（用错 query 名 endpoint 应 404 也是验证）
 - error path → 至少 1 条 [BEHAVIOR] 验
+- **禁文本自证型 BEHAVIOR（EVA v2）**：`grep <脚本/源码文件> 含某字符串` 型断言是文本自证——验证的是文件包含字符串而非行为发生，此类断言归 [ARTIFACT]；[BEHAVIOR] 中「真执行断言」（curl/psql/真跑脚本收 exit code/ffprobe）必须 ≥2 条且占比 ≥50%（a85e0582 实证 9 条里 6 条是文本自证）。占比由 Step 2b-check 第 7 项启发式计数把关
 
 ---
 
@@ -1196,9 +1217,9 @@ DODEOF
 # ===== 合同格式确定性自查（任一 FAIL → 合同作废，按 Step 2 / Step 2b 模板重写后重跑本脚本）=====
 SELF_CHECK_FAIL=0
 
-# 1. [BEHAVIOR] 条目数 ≥ 4（Step 2b 硬阈值）
-BC=$(grep -c '\[BEHAVIOR\]' "${SPRINT_DIR}/contract-dod.md")
-[ "$BC" -ge 4 ] || { echo "SELF-CHECK FAIL: [BEHAVIOR] 只有 ${BC} 条（需 ≥4）"; SELF_CHECK_FAIL=1; }
+# 1. [BEHAVIOR] 条目数 ≥ 4（Step 2b 硬阈值；EVA v2：锚定行首 checkbox 格式——d063b3e5 实证「## [BEHAVIOR]」标题式脱模板合同被裸 grep 计入骗过自查）
+BC=$(grep -c '^- \[ \] \[BEHAVIOR\]' "${SPRINT_DIR}/contract-dod.md")
+[ "$BC" -ge 4 ] || { echo "SELF-CHECK FAIL: 行首 '- [ ] [BEHAVIOR]' 格式条目只有 ${BC} 条（需 ≥4；标题式/非 checkbox 格式不计入）"; SELF_CHECK_FAIL=1; }
 
 # 2. contract-draft.md 必须存在 ## E2E 验收 段（final-e2e 脚本载体，缺了 evaluator 模式B 无从跑）
 grep -q '^## E2E 验收' "${SPRINT_DIR}/contract-draft.md" || { echo "SELF-CHECK FAIL: contract-draft.md 缺 '## E2E 验收' 段"; SELF_CHECK_FAIL=1; }
@@ -1211,6 +1232,23 @@ fi
 # 4. 每条 [BEHAVIOR] 必须带内嵌可执行命令（Test: manual:）
 MC=$(grep -c 'Test: manual:' "${SPRINT_DIR}/contract-dod.md")
 [ "$MC" -ge "$BC" ] || { echo "SELF-CHECK FAIL: [BEHAVIOR] ${BC} 条但 'Test: manual:' 只有 ${MC} 条（每条 BEHAVIOR 必须内嵌 manual: 命令）"; SELF_CHECK_FAIL=1; }
+
+# 5. ## E2E 验收 段内 bash 代码块 ≥1（EVA v2 — d063b3e5 实证 E2E 段 0 个 bash 块，evaluator 提取必得空脚本）
+E2E_BLOCKS=$(awk '/^## E2E 验收/{found=1; next} found && /^## /{exit} found && /^```bash/{n++} END{print n+0}' "${SPRINT_DIR}/contract-draft.md")
+[ "$E2E_BLOCKS" -ge 1 ] || { echo "SELF-CHECK FAIL: E2E 验收段无 bash 代码块（evaluator 提取必得空脚本）"; SELF_CHECK_FAIL=1; }
+
+# 6. 提取 E2E 块过 bash -n + 全角字符扫描（EVA v2 — d063b3e5 实证固化脚本带全角字符 bash bug）
+awk '/^## E2E 验收/{found=1; next} found && /^## /{exit} found && /^```bash/{b=1; next} b && /^```/{b=0; next} b{print}' "${SPRINT_DIR}/contract-draft.md" > /tmp/e2e-selfcheck.sh
+bash -n /tmp/e2e-selfcheck.sh || { echo "SELF-CHECK FAIL: E2E 脚本 bash 语法错误"; SELF_CHECK_FAIL=1; }
+if grep -nE '[（）：，“”]\$' /tmp/e2e-selfcheck.sh; then  # 用 -E 不用 -P：macOS BSD grep 无 -P，-P 在 Mac 上直接报错致本项静默失效
+  echo "SELF-CHECK FAIL: 全角标点紧贴 \$VAR（bash 3.2 下 unbound variable 崩溃，issue a638f840 实证）"; SELF_CHECK_FAIL=1
+fi
+
+# 7. BEHAVIOR 真执行断言分类计数（EVA v2 — a85e0582 实证 9 条里 6 条是文本自证；**启发式**：按 manual: 命令主体首个可执行词粗分，非精确解析，边界情况以语义自查为准）
+REAL_EXEC=$(grep 'Test: manual:' "${SPRINT_DIR}/contract-dod.md" | grep -cE "manual:(bash -c ')?[[:space:]]*(curl|psql|bash|ffprobe|node)")
+GREP_ONLY=$(grep 'Test: manual:' "${SPRINT_DIR}/contract-dod.md" | grep -cE "manual:(bash -c ')?[[:space:]]*grep")
+[ "$REAL_EXEC" -ge 2 ] || { echo "SELF-CHECK FAIL: 真执行断言（curl/psql/bash/ffprobe/node 开头）仅 ${REAL_EXEC} 条（需 ≥2，启发式计数）"; SELF_CHECK_FAIL=1; }
+[ "$REAL_EXEC" -ge "$GREP_ONLY" ] || { echo "SELF-CHECK FAIL: grep 开头文本自证条数（${GREP_ONLY}）超过真执行条数（${REAL_EXEC}）——真执行占比 <50%（启发式计数）"; SELF_CHECK_FAIL=1; }
 
 [ "$SELF_CHECK_FAIL" -eq 0 ] && echo "✅ 合同格式自查通过" || { echo "❌ 合同脱模板，禁止交付——重写后重跑本脚本"; exit 1; }
 ```

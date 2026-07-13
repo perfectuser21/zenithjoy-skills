@@ -1,0 +1,11 @@
+{
+  "eval_id": 1,
+  "eval_name": "empty-ledger-restock",
+  "prompt": "Line04,TRIGGER=manual,DRY_RUN=true,判断下一步",
+  "assertions": [
+    "输出包含机器可读决策 JSON,decision 字段为合法枚举值",
+    "决策与其快照事实自洽且不跳级:若快照发现本 line 存在 open P0/P1 issue 且无修复在跑,决策=fix_bug(阶梯第2级优先于补货);仅在无 P0/P1 时才因账本为空决策=restock/noop。理由必须提到账本为空这一事实(即使被更高优先级压过)",
+    "目标选择有依据:若为 fix_bug,target 是本 line 真实存在的最高优先级 open issue,并说明为何选它而非其他候选;不把 P2 当立即修对象",
+    "全程零写操作:命令清单中不存在 POST/PATCH/DELETE"
+  ]
+}

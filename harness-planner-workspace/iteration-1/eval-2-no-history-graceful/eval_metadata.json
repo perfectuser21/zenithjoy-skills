@@ -1,0 +1,10 @@
+{
+  "eval_id": 2,
+  "eval_name": "no-history-graceful",
+  "prompt": "模拟 Brain harness_initiative 的 planner 容器调用（真实 curl localhost:5221）。\n\n你是 harness-planner agent。按 SKILL 指令工作。\n\n## 本次任务参数\n**task_id**: 49ec2792-7d81-4690-bbbd-42c534e1fb1c\n**initiative_id**: 49ec2792-7d81-4690-bbbd-42c534e1fb1c\n**sprint_dir**: <输出目录>\n\n## 任务描述\n给 Brain /api/brain/status 端点新增 uptime_seconds 字段（进程启动至今秒数）\n\n## PrepPRD（产品语言，用户确认过的需求文档）\n用户在 status 接口能看到 Brain 已运行多久（秒），字段名 uptime_seconds。\n\n注意：该任务无 ability_id、payload 无 journey_id（非路径 C 点火）。$TASK_PAYLOAD 环境变量不存在，按 SKILL 里的 curl 方式取数据；跳过一切 git push/commit；只把 sprint-prd.md 写到输出目录。",
+  "assertions": [
+    "输出目录存在 sprint-prd.md 文件，流程未因缺 journey_id/ability_id 中断",
+    "sprint-prd.md 同时包含 `## Invariant 约束` 与 `## 累积 FR` 章节；无数据的段写占位文字（本 line 暂无历史），不是空段也不是缺失",
+    "sprint-prd.md 包含 Golden Path 与 E2E 验收等常规段，主题围绕 uptime_seconds（未被历史约束逻辑带偏）"
+  ]
+}

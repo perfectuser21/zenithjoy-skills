@@ -1,0 +1,30 @@
+{
+  "eval_id": 3,
+  "eval_name": "contact-not-found-debug",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "解释了联系人 match 机制：子串匹配（target 是会话 ListItem 名字的子串）",
+      "passed": true,
+      "evidence": "明确说明'_tgt in name（子串包含）'，还解释了 element_info.name split('\\n')[0] 的首行匹配逻辑"
+    },
+    {
+      "text": "说明了联系人必须在当前可见的会话列表内才能被找到",
+      "passed": true,
+      "evidence": "明确说'会话列表只显示最近 N 条对话，不在列表内的联系人无法 match'，并建议先手动顶到列表"
+    },
+    {
+      "text": "提供了 dump 所有会话 ListItem 名字的代码或方法",
+      "passed": true,
+      "evidence": "提供了 mw.descendants(control_type='ListItem') 的精确 dump 代码，与 listen_chat.py 实际使用的 API 一致"
+    },
+    {
+      "text": "说明修改 listen_chat.py 后需要重启进程才生效",
+      "passed": true,
+      "evidence": "步骤2明确'改完代码必须重启进程才生效（listen_chat.py 是常驻轮询循环，热改文件不会重新加载）'"
+    }
+  ],
+  "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0},
+  "pass_rate": "4/4",
+  "notes": "skill 提供了精确的 mw.descendants API + session 隔离警告（schtasks session 0 vs 微信 session 1）。关键加分项：without_skill 不知道 session 隔离问题，用了错误的独立脚本方法"
+}

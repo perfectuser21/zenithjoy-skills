@@ -1,0 +1,27 @@
+{
+  "eval_id": 3,
+  "eval_name": "contact-not-found-debug",
+  "prompt": "我用命令文件给'糊糊大老婆'发了条消息，listen_chat.py 把文件消费掉了，但日志里说'[主动发送] 找不到 糊糊大老婆'，消息没发出去。微信里我叫她糊糊大老婆，但 WeChat 里的备注名我不确定。怎么查清楚她在微信会话列表里的真实名字？",
+  "assertions": [
+    {
+      "id": "C1",
+      "text": "解释了联系人 match 机制：子串匹配（target 是会话 ListItem 名字的子串）",
+      "rationale": "用户需要理解为什么'糊糊大老婆'没 match，即使微信备注里可能有这些字"
+    },
+    {
+      "id": "C2",
+      "text": "说明了联系人必须在当前可见的会话列表内才能被找到",
+      "rationale": "UIA 只能访问渲染出来的控件，不在列表里的联系人无法直接匹配"
+    },
+    {
+      "id": "C3",
+      "text": "提供了 dump 所有会话 ListItem 名字的代码或方法",
+      "rationale": "这是唯一可靠的调试手段，不依赖猜测"
+    },
+    {
+      "id": "C4",
+      "text": "说明修改 listen_chat.py 后需要重启进程才生效",
+      "rationale": "Python 运行时不会热加载文件修改，不提示这点用户会以为改了就能用"
+    }
+  ]
+}

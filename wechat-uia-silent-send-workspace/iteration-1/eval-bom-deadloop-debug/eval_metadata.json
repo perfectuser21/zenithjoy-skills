@@ -1,0 +1,27 @@
+{
+  "eval_id": 2,
+  "eval_name": "bom-deadloop-debug",
+  "prompt": "xian-rog 上的 listen_chat 日志里一直循环报错：[主动发送] 指令处理异常: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)，每 3 秒一条，文件 C:\\Users\\Public\\zj-proactive-send.json 也一直存在没被删掉。怎么回事？怎么修？",
+  "assertions": [
+    {
+      "id": "B1",
+      "text": "解释了 BOM 来源：PowerShell 默认写 UTF-8 with BOM，Python json.load(encoding='utf-8') 不接受",
+      "rationale": "这是根本原因，skill 需要让用户理解为什么同样的代码在这里失败"
+    },
+    {
+      "id": "B2",
+      "text": "解释了文件不删的原因：json.load 抛异常时 os.remove 还没执行，导致文件残留死循环",
+      "rationale": "用户看到'文件一直存在'现象，需要理解是代码逻辑问题而非权限问题"
+    },
+    {
+      "id": "B3",
+      "text": "提供将 encoding 改为 utf-8-sig 的修法（或等效的 BOM 兼容方案）",
+      "rationale": "utf-8-sig 是 Python 内置 BOM 兼容编解码，是最简单的单行修复"
+    },
+    {
+      "id": "B4",
+      "text": "提供将 os.remove 移到 json 解析之前（读完即删）的修法",
+      "rationale": "这样即使 parse 失败，文件也会被清理，彻底防止死循环"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "expectations": [
+    {
+      "text": "产出sprint-prd.md",
+      "passed": true,
+      "evidence": "3920 chars"
+    },
+    {
+      "text": "Invariant段存在",
+      "passed": true,
+      "evidence": "章节标题"
+    },
+    {
+      "text": "Line04铁律真实注入",
+      "passed": true,
+      "evidence": "命中: 不进群,不回自己,防假成功,后台静默,租户"
+    },
+    {
+      "text": "累积FR段占位",
+      "passed": true,
+      "evidence": "占位文字存在"
+    },
+    {
+      "text": "未用坏端点",
+      "passed": true,
+      "evidence": "execution-log 无坏端点调用（golden-path-decisions 是好端点，此前误匹配）"
+    }
+  ],
+  "pass_count": 5,
+  "total": 5
+}

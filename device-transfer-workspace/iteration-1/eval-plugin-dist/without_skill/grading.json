@@ -1,0 +1,29 @@
+{
+  "eval_name": "eval-plugin-dist",
+  "config": "without_skill",
+  "expectations": [
+    {
+      "text": "识别为插件/工具分发类，推荐 COS（而非只推 SCP 直传）",
+      "passed": false,
+      "evidence": "直接推荐 SCP 直传，不知道 COS 分发体系"
+    },
+    {
+      "text": "给出 coscmd upload 上传命令",
+      "passed": false,
+      "evidence": "没有任何 COS 相关内容"
+    },
+    {
+      "text": "给出 curl 从 COS 下载命令（在 xian-pc 上执行）",
+      "passed": false,
+      "evidence": "没有 COS 下载，只给了 SCP/rsync/Python HTTP 服务器"
+    },
+    {
+      "text": "提到上传前需关 exit node（否则 COS 变 27KB/s）",
+      "passed": false,
+      "evidence": "不知道 exit node 概念"
+    }
+  ],
+  "pass_count": 0,
+  "total_count": 4,
+  "pass_rate": 0.0
+}

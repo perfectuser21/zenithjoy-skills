@@ -1,0 +1,30 @@
+{
+  "eval_id": 1,
+  "eval_name": "write-command-file-encoding",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "使用 \\uXXXX Unicode 转义 或 [char]0xXXXX 方案处理中文字符，避免编码问题",
+      "passed": true,
+      "evidence": "提供了完整的 \\u674e\\u82b3（李芳）+ \\uXXXX 转义命令，并解释了 pure ASCII JSON 原理"
+    },
+    {
+      "text": "未推荐 cmd /c echo 方案（或明确指出此方案不可用）",
+      "passed": true,
+      "evidence": "明确在'错误写法'表格里列出 cmd /c echo 遇到中文/引号直接乱码或失败"
+    },
+    {
+      "text": "未推荐 Out-File -Encoding UTF8 方案（或说明其产生 BOM 会导致解析错误）",
+      "passed": true,
+      "evidence": "明确警告 Out-File -Encoding UTF8 写 UTF-8 带 BOM，Python json.load 会报 Unexpected UTF-8 BOM 并死循环"
+    },
+    {
+      "text": "提供了包含具体目标联系人'李芳'和消息的可执行命令示例",
+      "passed": true,
+      "evidence": "给出了完整 SSH 命令，Unicode 转义包含李芳（\\u674e\\u82b3）和完整消息内容"
+    }
+  ],
+  "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0},
+  "pass_rate": "4/4",
+  "notes": "skill 加持下回答非常准确，给出了精确的 \\uXXXX 命令，且主动添加了'找不到联系人'的后续调试指引，超出问题范围地提供了完整上下文"
+}
