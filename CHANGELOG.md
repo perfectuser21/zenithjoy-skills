@@ -1,3 +1,8 @@
+## [2026-07-14] harness-report 6.7.0 — Phase B 翻牌义务（handoff 0714 刀3）
+**症状**: 台账只在点火时写、交付后不翻牌——journeys 表 Path2/Path4 updated_at 停在 2026-05-22，Path2 定义还是已废弃的飞书版（与用户 07-07「去飞书改本地」决策打架 46 天）；journey_features「视频/图文内容判定门槛」status=planned 而现实已合并 11 个 PR；「Step3 绑飞书」status=done 而方案已废。
+**根因**: harness-report Phase B 有写 journeys/journey_features 的代码路径，但「翻牌」从来不是强制步骤——报告阶段只加新记录不翻旧状态，台账漂移无人察觉。
+**修改**: Phase B 新增「翻牌义务」强制清单（关键步）：①Feature status 按 evaluator verdict 翻牌（禁止交付后仍 planned）；②journey step 回写 + journeys.updated_at 必刷；description 与 decisions 冲突 → 标待人工确认 + 开 issue；③smoke 一致性核对（e2e_test_path 脚本测已废弃方案 → 开 issue）。完成标志追加「翻牌清单」输出，空清单无原因 = 关键步失败。
+
 ## [2026-07-14] harness-contract-proposer 9.10.0 + harness-contract-reviewer 9.5.0 + harness-controller 2.5.0 — 真实链路四硬规则（handoff 0714 刀2）
 **症状**: Contract 断言 ≠ 生产现实——07120952-line02-content-judgment-gate 合同 8 条 BEHAVIOR 里 5 处外部调用全用 force_result/force_timeout/假图顶替，没有一条真调 Gemini → 模型下线(#1269)/API 格式错(#1271)全漏过；DoD 用 body 传 tenant_id，真实 Android agent 发 x-agent-id header，测的永远绿、真的从没人碰(#1267)；windows_wechat 通道存在但 #1256 的 sprint 没路由过去，合并后真机爆 5 个致命 bug。
 **根因**: 合同阶段对"真实调用方 shape / 第三方真调 / mock 豁免透明化 / 环境路由"四件事零强制，pipeline 的"完成"定义到 evaluator PASS 为止照不到生产现实。
