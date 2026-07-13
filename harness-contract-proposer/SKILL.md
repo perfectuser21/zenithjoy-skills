@@ -4,10 +4,11 @@ description: |
   Harness Contract Proposer — Harness v5 GAN Layer 2a：
   读 PRD，GAN 对抗写 Golden Path 合同（每步含真实验证命令）；
   Reviewer APPROVED 后倒推拆 task-plan.json。
-version: 9.9.0
+version: 9.10.0
 created: 2026-04-08
-updated: 2026-07-10
+updated: 2026-07-14
 changelog:
+  - 9.10.0: 真实链路四硬规则（handoff 0714 刀2 — #1267/#1269/#1271/#1256 实证根因）— 规则A【真实调用方 shape】合同必含 ## 真实调用方请求 shape 段，DoD 认证方式/关键字段与生产调用方逐字段一致（禁 body 传 tenant_id 而生产走 x-agent-id header 的双路径分叉）；规则B【第三方真调一次】涉第三方 API 的 DoD 至少一条真 key 真请求真响应校验，禁全 force_*/mock；规则C【mock 豁免显式登记】DoD 含 force_*/stub/假数据 → 合同必附 ## 未覆盖真实链路清单 段，controller 呈现进 PR 描述不许静默；规则D【target_environment 强制路由】微信 UI/RPA 必 windows_wechat，Android 通道未落地前真机段必入未覆盖清单；自查 checklist 新增第 8 条
   - 9.9.0: 领域验证规则新增「RPA 快验通道 dev-verify」小节——windows_wechat 等真机 RPA 类合同至少一条 [BEHAVIOR] 必须写成快验通道回执断言(exit_code=0+stdout 领域内容,可机检可复跑),给"真机真收真回"一个统一可执行 oracle
   - 9.8.0: 判定点登记表机器可解析约定（九要素 T5 — decisions e035dad8）— 登记表即数据：合同 APPROVED 后 reviewer Step 5 逐行解析写入 decisions category=judgment（账本保鲜「判定点活性」指标数据源）；每行自含语义（判定点列禁写「同上/...」）；示例行保留「（示例：」前缀供解析跳过；误判后果严重（静默丢数据/直接面客错误）的行在判定点名前标 ⚠️——⚠️ 行属「升拍板点主动请教用户」级别（e035dad8 第②条），PrepPRD/对齐会未拍过的 ⚠️ 判定点要在合同 notes 里标注待确认
   - 9.7.0: 跨 repo 化刀3 — (a) Contract Gate 速查表补第三方 repo 显式跳过规则：packages/brain/src/lib/contract-gate.js 不存在（第三方 repo / 非 cecelia worktree）→ 跳过代码层 Contract Gate，仅执行 skill 内置规则审查，并在合同 notes 记一行 contract-gate: skipped (file not found, third-party repo)，cecelia 场景原逻辑不动；(b) Step 1 DB 连接串参数化 ${DB_URL:-postgresql://localhost/cecelia}，第三方 repo 必须显式传 $DB_URL，不得假设 cecelia 库存在
@@ -159,6 +160,31 @@ echo "$RESP" | grep -q '"ok":true' && echo "$RESP" | grep -q '"exit_code":0' || 
 **写断言前必答**：「这功能在哪几个点碰真实世界？」→ 那几点全部进接缝清单。
 
 **禁止写死环境假设值**（违反 → Reviewer 打回）：屏幕外坐标（如 `-2600`）、UIA 气泡阈值、假设调用方传 `X`、假设 `.env` 有 `Y` 等——要么**从环境推导**，要么**真机校准**；这类值本质是接缝，**必真验**，不许直接写死兜过。
+
+---
+
+## ⚡ 真实链路四硬规则（v9.10 — #1267/#1269/#1271/#1256 实证根因）
+
+**根因实证（07120952-line02-content-judgment-gate 复盘）**：合同 8 条 BEHAVIOR 里 5 处外部调用全用 `force_result`/`force_timeout`/假图 `data_b64:"dGVzdA=="` 顶替，没有一条真调第三方 → 模型下线（#1269）、API 格式错（#1271）全部漏过；DoD 用 body 传 `tenant_id`，真实 Android agent 发 `x-agent-id` header——两条代码路径，测的永远绿、真的从没人碰（#1267）。以下四条硬规则写进每份合同，Reviewer 逐条核对，违反 = 打回：
+
+### 规则 A【真实调用方 shape】
+
+凡 Golden Path 含「设备/agent 调服务端」（Android agent、Windows agent、外部 webhook 等真实调用方），合同 contract-draft.md 必须内嵌 `## 真实调用方请求 shape` 段：从**生产调用方**（agent 源码 / 抓包 / 现网日志）摘录真实请求的认证方式与关键字段——认证走 header 还是 body、字段名逐字。DoD 的 [BEHAVIOR] 断言构造的请求必须与该 shape **逐字段一致**（认证 header 名 / payload 字段名 / Content-Type）。写不出 shape = 合同前提不成立，先去查生产调用方代码再起草。禁止"DoD 用 body 传字段、生产调用方走 header"这类双路径分叉。
+
+### 规则 B【第三方真调一次】
+
+凡 ability 依赖第三方 API（LLM / 支付 / 短信 / 平台 API 等），DoD 至少一条 [BEHAVIOR] **真实调用**该外部依赖：真 key、真请求、真响应业务字段校验（jq -e 断言响应内容，不是只看 HTTP 200）。其余断言允许 force_*/mock 控制成本，但"全 mock 零真调" = 合同不合格。真 key 从 `~/.credentials/` 或 CI secret 注入；凭据不可得 → 走规则 C 显式登记，不许静默假绿。
+
+### 规则 C【mock 豁免显式登记】
+
+DoD/测试出现 `force_*`、stub、假数据（如 `data_b64:"dGVzdA=="`）时，合同必须附 `## 未覆盖真实链路清单` 段：逐条列「哪个真实链路点被 mock 顶替｜为什么｜真验证补位计划（谁/何时/什么环境）」。harness-controller 会把该清单原样呈现进 PR 描述与最终报告，**不许静默**。无任何 mock 时显式写 `（本合同无 mock 豁免，N/A）`。
+
+### 规则 D【target_environment 强制路由】
+
+target_environment 必须与 ability 的**真实运行环境**匹配——堵"有枪没上膛"（#1256 实证：windows_wechat 通道存在但 sprint 没路由过去，5 个致命 bug 全漏到真机）：
+- Line04 微信 UI/RPA ability → 必须 `windows_wechat`（xian-rog 真机，e2e-wechat-rpa.yml）
+- Android agent ability → Android 真机 TARGET_ENV 通道落地前，必须在合同里显式登记「真机段未覆盖」（走规则 C 清单），不得假装 windows_cloud/local_api 能覆盖真机段
+- 环境选错/漏选 = Reviewer 打回（第 7 维 0 分）
 
 ---
 
@@ -999,6 +1025,7 @@ PRD `## Response Schema` 段定义的字段名（key 字面值）是**不可改�
 5. **断言（v7.6 新加 — Bug 9）**：`grep -c '^- \[ \] \[BEHAVIOR\]' contract-dod.md` ≥ 4。少于 4 → contract 作废，按 Step 2b 模板补齐到 ≥ 4 条不同场景（schema 字段 + keys 完整性 + 禁用字段反向 + error path 至少各 1）
 6. **假绿自查（v7.12 新加 — Bug 10）**：对每条 `[BEHAVIOR]` 命令，心想"如果对应代码**一行都没写**，这条命令会 FAIL 吗？"。答案是 YES → 真红，合格；答案是 NO（mkdir/touch/health check/404-acceptable 都能通过）→ **假绿，必须改写**
 7. **Golden Path 溯源（v9.0 新加）**：对每条 `[BEHAVIOR]`，回答「这是 Golden Path 哪一步的用户可观察输出？」——答不出来 → 删掉该条目或补对应 Golden Path 步骤；命令里含 `MOCK_*` 环境变量或 mock 对象 → 不合格；Golden Path 含微信操作但 `target_environment` 写 `windows_cloud` → 路由错误，必须改 `windows_wechat`
+8. **真实链路四硬规则自查（v9.10 新加）**：①涉及设备/agent 调服务端 → contract-draft.md 有 `## 真实调用方请求 shape` 段，且 DoD 请求的认证方式/字段名与之逐字段一致；②涉及第三方 API → 至少一条 [BEHAVIOR] 真 key 真请求真响应校验；③DoD 含 `force_*`/stub/假数据 → 有 `## 未覆盖真实链路清单` 段（无 mock 则显式 N/A）；④target_environment 与 ability 真实运行环境匹配（微信 RPA = windows_wechat；Android 真机段未覆盖必须入清单）
 
 任一断言 fail → contract 草案作废，**用 PRD 字面字段名 + ≥ 4 条 [BEHAVIOR] 重写**。
 

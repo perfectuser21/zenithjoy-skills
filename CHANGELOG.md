@@ -1,3 +1,8 @@
+## [2026-07-14] harness-contract-proposer 9.10.0 + harness-contract-reviewer 9.5.0 + harness-controller 2.5.0 — 真实链路四硬规则（handoff 0714 刀2）
+**症状**: Contract 断言 ≠ 生产现实——07120952-line02-content-judgment-gate 合同 8 条 BEHAVIOR 里 5 处外部调用全用 force_result/force_timeout/假图顶替，没有一条真调 Gemini → 模型下线(#1269)/API 格式错(#1271)全漏过；DoD 用 body 传 tenant_id，真实 Android agent 发 x-agent-id header，测的永远绿、真的从没人碰(#1267)；windows_wechat 通道存在但 #1256 的 sprint 没路由过去，合并后真机爆 5 个致命 bug。
+**根因**: 合同阶段对"真实调用方 shape / 第三方真调 / mock 豁免透明化 / 环境路由"四件事零强制，pipeline 的"完成"定义到 evaluator PASS 为止照不到生产现实。
+**修改**: ①proposer 新增「真实链路四硬规则」节+自查 checklist 第 8 条：规则A 真实调用方请求 shape 段（DoD 认证字段与生产调用方逐字段一致）/ 规则B 第三方至少真调一次（真 key 真请求真响应校验）/ 规则C mock 豁免显式登记（## 未覆盖真实链路清单）/ 规则D target_environment 强制路由（微信 RPA 必 windows_wechat，Android 通道未落地前真机段必入清单）；②reviewer Golden Path 覆盖审查新增第 14-17 条逐规则打回判据 + 第 6 维领域清单补两行；③controller Step 3/Step 7 把未覆盖清单原样转呈 PR 描述与最终报告，禁止静默。
+
 ## [2026-07-13] harness-generator 7.8.0 + harness-contract-proposer 9.9.0 — updated
 **症状**: Generator 开发 RPA 代码时盲写——容器内 vitest 绿≠真机能跑,微信 UIA/几何类改动反复真机炸、来回修二十几轮;合同层"真机真收真回"断言没有统一可执行 oracle,evaluator 无法机检。
 **根因**: RPA 快验通道(cecelia #3839/#3843 + zenithjoy-workspace #1270/#1272,已上生产并真机验收)修好了路,但 proposer/generator skill 一个字没提——通道存在与否 Generator 不知情,"不盲写"靠人记得而非系统保证。
