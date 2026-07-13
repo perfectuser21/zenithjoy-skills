@@ -35,10 +35,10 @@ console.log('✅ Notion 凭据已同步');
 
 | 变量 | 用途 | DB ID |
 |------|------|-------|
-| `NOTION_JOURNEY_DB` | AI Journey — Walking Skeleton 路径 | `358c40c2-ba63-8148-bde7-e313d789931a` |
-| `NOTION_STEPS_DB` | AI Steps — Walking Skeleton 步骤 | `369c40c2-ba63-812c-9f35-e7e43db25014` |
-| `NOTION_JOURNEY_STEP_DB` | Journey-Step 顺序连接表 | `369c40c2-ba63-81e2-b95a-e5e3d0592676` |
-| `NOTION_FEATURE_DB` | AI Feature — Skeleton 上的肌肉 | `358c40c2-ba63-81e3-96c5-d762b3d34dff` |
+| `NOTION_JOURNEY_DB` | AI Journey — 能力轴 L1 领域（Journey） | `358c40c2-ba63-8148-bde7-e313d789931a` |
+| `NOTION_STEPS_DB` | AI Steps — 历史遗留 Step 库（journey_steps，已废弃只读；新 L4 step 落 golden_path 表） | `369c40c2-ba63-812c-9f35-e7e43db25014` |
+| `NOTION_JOURNEY_STEP_DB` | Journey-Step 顺序连接表（遗留） | `369c40c2-ba63-81e2-b95a-e5e3d0592676` |
+| `NOTION_FEATURE_DB` | AI Feature — journey_features 载体：kind=ability 即 L3 Golden Path/Ability，kind=feature 即 L5 使能件 | `358c40c2-ba63-81e3-96c5-d762b3d34dff` |
 | `NOTION_SKILL_REGISTRY_DB` | Skill Registry | `353c40c2-ba63-81bf-ae3e-f0e6fa3753d7` |
 | `NOTION_API_REGISTRY_DB` | Sprint State — API Registry | `365c40c2-ba63-81a3-9060-fcef565e5291` |
 | `NOTION_DB_SCHEMA_REGISTRY_DB` | Sprint State — DB Schema Registry | `365c40c2-ba63-8181-9a57-ed760fd68ba3` |

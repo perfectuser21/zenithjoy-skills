@@ -633,19 +633,20 @@ Brain tick 自动 pick up 后 spawn 单 session skill-relay（harness-controller
 
 ## Walking Skeleton 概念（路径 C 参考）
 
-### 层级结构
+### 层级结构（能力轴 5 层，decision 13013a49）
 
 ```
-Journey — 端到端价值闭环
-  └── Phase — 阶段（发布/生成/剪辑），客户视角的流程分组
-        └── Ability — 客户价值 workflow（journey_features 表 kind=ability）
-              · Feature — 使能件（登录/下载/cookie/保活，journey_features 表 kind=feature）
-Golden Path — 横切：Ability+Feature 的有序组合（golden_path 表，按 scope 筛 + 按 order 排）
+L1 领域 Journey — 端到端价值闭环（journeys 表）
+  └── L2 子领域 Ability Group — 客户视角的流程分组（journey_features.group 字段）
+        └── L3 Golden Path = Ability = function — 客户价值 workflow（journey_features 表 kind=ability）
+              └── L4 step — 这条 Golden Path 的有序 step（golden_path 表 303，owner_task_id/order_no/feature_id）
+                    · L5 Feature — 使能件（登录/下载/cookie/保活，journey_features 表 kind=feature，经 step 挂 L4）
 ```
 
-- **Ability** = 客户为之而来的价值 workflow（发抖音视频）；判据：会不会写进客户交付清单
-- **Feature** = 使能件，客户不为它来（登录/下载/cookie/保活）
-- **Golden Path** = 客户真实流程 = Ability+Feature 有序组合
+- **Golden Path = Ability = function** = 客户为之而来的价值 workflow（发抖音视频、被动回复）；判据：独立触发 + 独立交付一个客户可见结果 + 独立可验收，三问全 yes。它就是 L3，不是"Ability+Feature 的横切组合"。
+- **step** = 这条 Golden Path 内部的有序阶段（L4，golden_path 表 303）；每个 step 指向一个/多个 Feature。
+- **Feature** = 使能件，客户不为它来（登录/下载/cookie/保活），经 step 挂到 L4。
+- **thickness / maturity** = 深度轴（thin→mature），与 step 清单（广度轴）分开记。
 
 Ability 判断：能对客户说"我们现在支持 [Ability名] 了"吗？
 - "我们支持抖音发布了" ✅ → Ability

@@ -54,9 +54,10 @@ Notion（展示层，只读）
 
 ---
 
-### 2. journey_steps（Golden Path 步骤）
+### 2. journey_steps（历史遗留 Step 表，已废弃只读）
 
-> ⚠️ 已废弃（2026-06-09）：不再写入。历史数据只读，新数据统一写 `journey_features`（kind 字段区分 ability/feature）。
+> ⚠️ 已废弃（2026-06-09）：不再写入，历史数据只读。
+> ⚠️ 命名澄清（能力轴新定义，decision 13013a49）：这张表旧称"Golden Path 步骤"与新五层定义撞车，勿再沿用该叫法。新定义里 L4「step」的载体是 `golden_path`(303) 表（见下文），不是这张遗留表；本表的历史 step 数据仅供只读回溯。
 
 **API**：`POST /api/brain/journey_steps`
 **Notion**：AI Steps DB
@@ -103,9 +104,10 @@ Name 自动生成格式：`{JourneyCode}-S{step_order}`（如 `L01-S4`、`ZjOps-
 
 ### 4. journey_features（Ability/Feature 唯一存储）
 
-**2026-06-09 决策：abilities 表已删，journey_features 是 Ability/Feature 的唯一 SSOT。**
-- **Ability**（kind=ability）= 客户为之而来的价值 workflow（发抖音视频）
-- **Feature**（kind=feature）= 使能件（登录/下载/cookie/保活）
+**journey_features 是当前实际在用的 Ability/Feature 载体。**（能力轴新定义，decision 13013a49）
+- **Ability**（kind=ability）= 客户为之而来的价值 workflow（发抖音视频）= 新定义 L3「Golden Path = Ability = function」
+- **Feature**（kind=feature）= 使能件（登录/下载/cookie/保活）= 新定义 L5，经 step 挂到 L4
+- ⚠️ `abilities`(migration 294) 是**遗留死表**：从未 DROP、仍在库里，但已不写入，待归并/DROP。别再说它"已删"（那是假话），也别往它写。当前 Ability/Feature 一律写 journey_features。
 
 **API**：`POST /api/brain/journey_features`
 **Notion**：AI Feature DB
@@ -132,23 +134,24 @@ Name 自动生成格式：`{JourneyCode}-S{step_order}`（如 `L01-S4`、`ZjOps-
 
 ---
 
-### golden_path（客户流程，scope 筛 + order 排）
+### golden_path（Step 表 — 一条 Golden Path 的有序 step，migration 303）
 
-客户真实流程 = Ability+Feature 的有序组合。按 scope 筛选、按 order 排列。
+**这是能力轴新定义里的 L4「step」表**（decision 13013a49），不是"FR 台账"、也不是"Ability+Feature 有序组合"那种第三义描述——那些旧叫法已废止。一条 **Golden Path = 一个 Ability = 一个 function**（L3，落 journey_features kind=ability）；这张 `golden_path`(303) 表存的是**这条 Golden Path 的有序 step**，每行一个 step，按 `owner_task_id` 归属到所属 ability、按 `order_no` 排序。每个 step 可经 `feature_id` 指向 L5 使能件。
 
 **API**：`POST /api/brain/golden_path`
 
 ```json
 {
-  "scope_type": "journey",
-  "scope_id": "uuid",
+  "owner_task_id": "uuid",
   "order_no": 1,
-  "ability_id": "uuid",
-  "note": "扫码绑定主号"
+  "feature_id": "uuid",
+  "note": "接收并理解客户消息"
 }
 ```
 
-字段：`scope_type` | `scope_id` | `order_no` | `ability_id` | `note`
+字段：`owner_task_id`（step 所属 ability 的执行 task）| `order_no`（step 顺序）| `feature_id`（该 step 指向的 L5 使能件）| `note`（step 说明）
+
+> step 上的 **NFR 决策**挂在 `decisions`（`category='nfr'`, `level='step'`, `target_type='golden_path'`, `target_id=<step id>`），不新建表。
 
 ---
 
