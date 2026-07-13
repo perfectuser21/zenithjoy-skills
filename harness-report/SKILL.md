@@ -6,10 +6,11 @@ description: |
   → 更新Notion Feature Registry → 飞书通知 → 写本地harness-report.md备份。
   Phase B（Sprint状态同步）：写本地Brain DB → 通过 db-update skill 触发 notion-push-sync.js 的 8 个 push 函数（journeys/journey_features/issues/skill_registry/journey_steps/journey_step_links/decisions/initiative_contracts）→ git commit。
   由 harness-evaluator PASS 后 Brain reportNode 自动 spawn；relay 模式由 harness-controller 调 Skill 触发（变量走「Relay 入口段」自取）；也可手动触发补同步。
-version: 6.6.0
+version: 6.7.0
 created: 2026-04-08
-updated: 2026-07-10
+updated: 2026-07-14
 changelog:
+  - 6.7.0: 翻牌义务（handoff 0714 刀3 — 台账只点火时写、交付后不翻牌根治）— Phase B 新增三件强制动作：(1) Feature 翻牌：本 sprint 推进的 journey_features 按 evaluator verdict 翻 status（PASS+merged→done / 真机段未验→working+logic-done-pending 备注 / 部分交付→working），禁止交付后仍留 planned；(2) Journey 回写：journey step 状态回写 + journeys.updated_at 刷新；description 与最新 decisions 冲突 → 标待人工确认并开 issue，不静默改写不静默跳过；(3) smoke 一致性核对：journey.e2e_test_path 指向的脚本是否还测现行方案（对照 decisions 近期废弃决策），测已废弃方案 → 开 issue。完成标志追加「翻牌清单」输出。实证：Path2/Path4 journeys.updated_at 停在 05-22、飞书版定义与 07-07 决策打架 46 天、「内容判定门槛」planned 而现实已合并 11 个 PR
   - 6.6.0: a638f840 两修——(a) TOTAL_COST fallback 端点修正为 /api/brain/orchestrator/relay-runs?task_id=（旧 URL 缺 orchestrator 前缀 Cannot GET，fallback 链空环；brain 1.259.0 起支持 task_id 过滤）；(b) Step 1 回写加降级链：status+result 被拒（老 brain 的 completed 409 / task 卡异常态）→ 纯 result 补写（brain 1.259.0 起合法）→ 仍失败才落 .report-concerns，pr_url/cost 不再静默丢失
   - 6.5.0: 九要素 T11 learning 模板修真 — (a) Step 8 废除 heredoc 静态占位符模板，改为 AI 回顾台账/GAN 轮次/fix 记录/CI 往返后亲自撰写真实复盘，类目无内容写「无（本次未遇到）」，预防清单必须从本次真实问题提炼；(b) Step 8c 占位符守卫：命中「（无 / 填写」或硬编码预防清单三条整段照抄 → CONCERN（关键步），配套 zenithjoy-skills CI 闸门 lint-learning-placeholders 双保险；(c) Step 8e 接通 learnings 数据管道：原子条目提炼进 learning-atoms.json 后 POST /api/brain/learnings-received（必带 task_id，谱系经 task 挂 journey/ability；issues_found 故意不传防多余 fix task）；(d) Step 8f capture_atoms 探测式 best-effort 写入（非关键步，T10 入口落地后自愈）；(e) 运行指标追加 TOTAL_COST，token/耗时留 TODO 挂 T7 phase-event
   - 6.4.0: 跨 repo 化刀3 — Step 3 截图上传宿主与 Step 9 访问地址参数化：新增 REPORT_HOST_SSH（默认 us-vps）/ REPORT_HOST_URL（默认 http://38.23.47.81:9998），正文引用变量，默认值保持现值（cecelia 本机场景零变化），第三方 repo 用 env 覆盖即可换报告宿主；Brain API（localhost:5221）调用不动（主理人拍板：Brain 是唯一中枢）
@@ -742,3 +743,15 @@ echo "[harness-report Phase A] 交付完成，verdict=$VERDICT${CONCERNS:+，con
 4. 更新 Journey Maturity
 
 **`db-update` 是数据写入的唯一门控**，所有表的 Output Template 和禁止规则都在该 skill 里定义。不允许绕过它直接写 Brain DB 或 Notion。
+
+### 翻牌义务（v6.7 强制清单 — 「台账只点火时写、交付后不翻牌」根治）
+
+> 实证（handoff 0714）：journeys 表 Path2/Path4 的 updated_at 停在 2026-05-22（Path2 定义还是已废弃的飞书版，与用户 07-07「去飞书改本地」决策打架 46 天）；journey_features「视频/图文内容判定门槛」status=planned 而现实已合并 11 个 PR；「Step3 绑飞书」status=done 而方案已废。报告阶段不翻牌 = 台账永久漂移、arch-review 巡检失去数据源。
+
+Phase B 调用 db-update 时，以下三件事是**强制动作**（属关键步：做不到 → DONE_WITH_CONCERNS 并写明原因，禁止静默跳过）：
+
+1. **Feature 翻牌**：本 sprint 推进的 journey_features 条目，status 按 evaluator verdict 翻——PASS 且 PR 已 merge → `done`（若合同「未覆盖真实链路清单」显示真机段未验 → `working` + 备注 `logic-done-pending`）；部分交付 → `working`。**禁止交付后仍留 `planned`**。找不到对应 feature 条目 → 按 db-update 模板补建后再翻。
+2. **Journey 回写**：对应 journey step 状态回写 + `journeys.updated_at` 刷新（哪怕本次只推进一小步也要刷，给「台账新鲜度」探针真实信号）。若 journey description 与 decisions 表最新决策冲突（如描述还是已废弃方案）→ **不要静默改写也不要静默跳过**：在报告里标注「待人工确认」并开 issue（走 db-update issues 模板，注明冲突的 decision id）。
+3. **smoke 一致性核对**：读该 journey 的 `e2e_test_path` 指向的 smoke 脚本内容，核对它测的还是不是现行方案（对照 decisions 表近 60 天「废弃 / 去X / 改Y」决策关键词）；测已废弃方案 → 开 issue，写明脚本路径 + 冲突 decision id。
+
+**完成标志追加**：Phase B 结束输出「翻牌清单」——本次翻了哪些 feature（`<id>: planned→done`）、刷新了哪个 journey、smoke 核对结论（一致 / 已开 issue #N）。三项都无内容时显式写「本 sprint 无关联 feature/journey（原因：…）」，空清单无原因 = 关键步失败。
