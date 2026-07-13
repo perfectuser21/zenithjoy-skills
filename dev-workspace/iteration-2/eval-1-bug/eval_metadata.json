@@ -1,0 +1,12 @@
+{
+  "eval_id": 1,
+  "eval_name": "bug-path-cookie-error",
+  "prompt": "抖音文章发布一直报错 TypeError: Cannot read properties of undefined (reading 'cookie')，从昨天开始就这样了，之前是好的",
+  "assertions": [
+    {"name": "识别为路径A(Bug)", "description": "输出中明确标注走路径A或Bug路径，不走路径B/C"},
+    {"name": "查了3个curl：journeys + issues + decisions/match", "description": "执行了对 /api/brain/journeys、/api/brain/issues、/api/brain/decisions/match 的查询"},
+    {"name": "PrepPRD含症状/根因假设/修法/Regression Test", "description": "PrepPRD包含症状、根因假设、修法、Regression Test计划四个部分"},
+    {"name": "写了decision且category=bug-fix", "description": "执行了 POST /api/brain/strategic-decisions 且 category 字段为 bug-fix"},
+    {"name": "调用systematic-debugging skill", "description": "最后一步调用了 superpowers:systematic-debugging"}
+  ]
+}

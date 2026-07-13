@@ -1,0 +1,24 @@
+{
+  "expectations": [
+    {
+      "text": "决策JSON含合法枚举decision",
+      "passed": true,
+      "evidence": "decision=fix_bug,标准schema"
+    },
+    {
+      "text": "自洽不跳级且提到账本为空",
+      "passed": true,
+      "evidence": "3个open P0压过补货;快照事实#3明确记录账本items=[],并预告修完后走补货+候选ability"
+    },
+    {
+      "text": "目标选择有依据",
+      "passed": true,
+      "evidence": "P0 4ed0b9dd(找不到微信=核心瘫痪)对比c1432195/bbd27b4d给出取舍理由"
+    },
+    {
+      "text": "零写操作",
+      "passed": true,
+      "evidence": "12条curl全GET"
+    }
+  ]
+}

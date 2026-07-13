@@ -1,0 +1,24 @@
+{
+  "expectations": [
+    {
+      "text": "决策JSON含合法枚举decision",
+      "passed": true,
+      "evidence": "decision=restock_queue,等价语义可读"
+    },
+    {
+      "text": "自洽不跳级且提到账本为空",
+      "passed": false,
+      "evidence": "未查issues表(本line实有3个open P0),决策=restock并一次提案3个任务;P0仅作为提案之一而非阶梯优先命中"
+    },
+    {
+      "text": "目标选择有依据",
+      "passed": true,
+      "evidence": "3个提案各有理由且优先级排序合理(P0 revert列首位)"
+    },
+    {
+      "text": "零写操作",
+      "passed": true,
+      "evidence": "17条curl全GET"
+    }
+  ]
+}

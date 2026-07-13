@@ -1,0 +1,31 @@
+{
+  "line_id": "c019cdeb-d90b-4f8b-a658-ae333663ac35",
+  "trigger": "idle",
+  "decision": "fix_bug",
+  "target": "db8630b7-fa89-4fa6-8f96-033dd9d5f570",
+  "created_task_id": null,
+  "confidence": 0.72,
+  "decision_note_id": null,
+  "dry_run": true,
+  "planned_action": {
+    "path": "A",
+    "task_draft": {
+      "title": "fix: e2e-verify.ps1 Phase 2 在 Windows GHA runner 崩溃（ffmpeg 不在 PATH + host.docker.internal 无法解析）",
+      "task_type": "dev",
+      "priority": "P0",
+      "payload": {
+        "journey_id": "c019cdeb-d90b-4f8b-a658-ae333663ac35",
+        "issue_id": "db8630b7-fa89-4fa6-8f96-033dd9d5f570",
+        "harness_mode": false,
+        "dispatched_by": "line-strategist",
+        "strategist_decision_id": "<留痕 note id，DRY_RUN 未创建>"
+      }
+    }
+  },
+  "ledger_repair_needed": {
+    "reason": "推进项「定时发布」(693c079f-6396-435b-af76-8ef6f902c603) status=doing 但全系统无关联任务/run，属挂账；非 DRY_RUN 时应先 PATCH 回 todo 再决策",
+    "item_id": "693c079f-6396-435b-af76-8ef6f902c603",
+    "suggested_patch": "status: doing -> todo"
+  },
+  "decision_note_draft": "军师决策[智能发布]: 优先修 P0 CI 验证链崩溃（e2e-verify.ps1 Phase 2），推进项暂缓\n\n## 触发\nTRIGGER=idle（产能空闲唤醒），TRIGGER_CONTEXT 空，DRY_RUN=true，BRAIN_TASK_ID 无。\n\n## 快照事实\n1. line 基本面：智能发布（ZenithJoy），status=active，maturity=skeleton；章程明确「8 平台 × 3 类内容 dryrun+真发全链路 + GHA windows-latest CI 自动验证」（GET /warroom/line/<id>）。\n2. 能力面：25 个 journey_features——16 ability working（全部 thin）、3 个小红书 ability broken、6 个头条/视频号 ability planned（GET /abilities?journey_id=<id>）。\n3. 推进项账本仅 1 个 ability（微信公众号文章发布）有 4 项：2 done、1 doing（定时发布 693c079f）、1 todo（多图文素材库 00d57f14, P2）（GET /warroom/line/<id>/advancements）。\n4. doing 项「定时发布」查无关联任务：in_progress=0，queued 5 条全是 content-pipeline，completed/failed 最近各 100 条中 journey_id==本 line 为 0 → 挂账（账本 2026-07-08 05:05 刚播种，done 项 pr_url 指向落账本本身的 cecelia PR #3635）。\n5. open issues 41 条，其中 P0 db8630b7「e2e-verify.ps1 Phase 2 在 Windows GHA runner 崩溃：ffmpeg 不在 PATH + host.docker.internal 无法解析」（2026-06-10 起 open）——e2e-verify 正是本 line 章程里的 GHA windows-latest 自动验证脚本，Phase 2 崩溃 = 发布验证链断裂；无任何进行中/排队的修复任务。\n6. 无本 line 历史 run 失败记录 → 不满足停线条件。\n\n## 决策\n阶梯逐级：①停线不命中（无连续失败，doing 挂账可解释为账本播种残留，非无法解释矛盾）→ ②P0/P1 bug 命中：db8630b7 为 P0 且无修复在途 → 决策=修 bug（路径A），建 dev 任务挂 journey+issue。跳过 ③（idle 触发无终局 run）④续推进（todo 多图文素材库 P2 让位于 P0 bug；doing 挂账记入修账清单，非 DRY_RUN 时先 PATCH 回 todo）⑤补货（todo 未耗尽，且 3 个 broken 小红书 ability 也应先于 planned 新平台考虑，留给下轮）⑥noop。\n\n## 自审\n依据：a) 章程原文含「GHA windows-latest CI 自动验证」，issue 正中该验证脚本；b) P0 已 open 近一个月且无修复任务在途；c) 阶梯规则 P0/P1 bug 优先于 P2 推进项。\nconfidence: 0.72（扣分点：该 issue journey_id/sub_area 均为 null，归属本 line 是语义推断而非硬关联；若主理人判定归属其他 line，则本决策降级为 advance→多图文素材库）。\n质量预期：修通 Phase 2 后本 line 的 CI 自动验证恢复，后续所有发布 ability 的推进项都有可信验收闸，也为修 3 个 broken 小红书 ability 提供验证基础。\n风险：若 issue 实际归属其他 line，浪费一次决策周期（但 fix 本身对发布验证链仍有价值，损失有限）；doing 挂账若不修，账本完成度统计持续失真。\n\n## 产出\nDRY_RUN=true：未建任务、未 PATCH、未发通知。拟建任务草案见 result.json planned_action。\n\n## scope\nline 内（附注：issue db8630b7 的归属标注缺失是系统级元数据卫生问题，建议 issues 表补 journey_id 回填，浮晨报）。"
+}

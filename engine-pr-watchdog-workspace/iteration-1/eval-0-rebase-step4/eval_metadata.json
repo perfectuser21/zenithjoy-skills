@@ -1,0 +1,25 @@
+{
+  "eval_id": 0,
+  "eval_name": "rebase-step4",
+  "prompt": "分支落后了，需要处理 Step 4（rebase）。假设：PR #45，repo perfectuser21/cecelia，worktree /tmp/test-worktree，branch cp-test。请使用 engine-pr-watchdog skill，执行 Step 4 的 rebase 流程，展示你实际会怎么运行 bash 命令（包括 git fetch、rebase、push 的参数设置），然后说明接下来会做什么。",
+  "assertions": [
+    {
+      "id": "no-run-in-background",
+      "text": "所有 bash 调用均不使用 run_in_background: true",
+      "type": "text_not_contains",
+      "value": "run_in_background"
+    },
+    {
+      "id": "mentions-sync-constraint",
+      "text": "输出中提到 push 必须同步执行的约束（来自 skill 指令）",
+      "type": "text_contains_any",
+      "value": ["同步", "不得 run_in_background", "绝对禁止", "run_in_background 禁止"]
+    },
+    {
+      "id": "reenter-step2-after-push",
+      "text": "push 完成后明确说会立刻重入 Step 2 轮询",
+      "type": "text_contains_any",
+      "value": ["Step 2", "重新进入", "继续轮询", "立刻重新", "回到轮询"]
+    }
+  ]
+}

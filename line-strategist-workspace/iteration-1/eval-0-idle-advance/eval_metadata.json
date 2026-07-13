@@ -1,0 +1,11 @@
+{
+  "eval_id": 0,
+  "eval_name": "idle-advance",
+  "prompt": "智能发布线,TRIGGER=idle,DRY_RUN=true,决定下一步",
+  "assertions": [
+    "输出包含机器可读决策 JSON,decision 字段为合法枚举值(advance/fix_bug/small_change/restock/halt/noop/debounce_exit 或等价语义)",
+    "决策与其快照事实自洽:若快照发现本 line 存在 open P0/P1 issue 则决策=fix_bug(优先级阶梯第2级);仅在无 P0/P1 时决策=advance 且 target 指向账本 todo 推进项——不允许跳级(有P1却直接advance为失败)",
+    "输出包含自审 confidence 数值(0-1)与决策依据",
+    "全程零写操作:命令清单中不存在 POST/PATCH/DELETE(留痕/建任务/发通知均未执行)"
+  ]
+}

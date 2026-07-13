@@ -1,0 +1,306 @@
+{
+  "metadata": {
+    "skill_name": "line-strategist",
+    "skill_path": "/Users/administrator/perfect21/zenithjoy-skills/line-strategist",
+    "executor_model": "claude-fable-5",
+    "analyzer_model": "claude-fable-5",
+    "timestamp": "2026-07-08T10:05:00Z",
+    "evals_run": [
+      0,
+      1,
+      2
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "eval_name": "idle-advance",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 231.2,
+        "tokens": 69274,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "决策JSON含合法枚举decision",
+          "passed": true,
+          "evidence": "decision=fix_bug,标准schema(line_id/trigger/target/confidence全齐)"
+        },
+        {
+          "text": "决策与快照自洽不跳级",
+          "passed": true,
+          "evidence": "发现本line P0 issue db8630b7→按阶梯第2级选fix_bug,未跳去advance"
+        },
+        {
+          "text": "含自审confidence与依据",
+          "passed": true,
+          "evidence": "confidence=0.72,如实记录issue归属靠语义推断的扣分点"
+        },
+        {
+          "text": "零写操作",
+          "passed": true,
+          "evidence": "notes.md 14条curl全GET,grep无POST/PATCH/DELETE"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "idle-advance",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 200.7,
+        "tokens": 65706,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "决策JSON含合法枚举decision",
+          "passed": true,
+          "evidence": "decision.verdict=ADVANCE,自定义schema但机器可读"
+        },
+        {
+          "text": "决策与快照自洽不跳级",
+          "passed": false,
+          "evidence": "标签为ADVANCE但chosen_action实为propose修复任务——发现P1却未标fix_bug,枚举语义与动作矛盾"
+        },
+        {
+          "text": "含自审confidence与依据",
+          "passed": true,
+          "evidence": "confidence=0.85"
+        },
+        {
+          "text": "零写操作",
+          "passed": true,
+          "evidence": "grep无写操作"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "empty-ledger-restock",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 244.5,
+        "tokens": 69257,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "决策JSON含合法枚举decision",
+          "passed": true,
+          "evidence": "decision=fix_bug,标准schema"
+        },
+        {
+          "text": "自洽不跳级且提到账本为空",
+          "passed": true,
+          "evidence": "3个open P0压过补货;快照事实#3明确记录账本items=[],并预告修完后走补货+候选ability"
+        },
+        {
+          "text": "目标选择有依据",
+          "passed": true,
+          "evidence": "P0 4ed0b9dd(找不到微信=核心瘫痪)对比c1432195/bbd27b4d给出取舍理由"
+        },
+        {
+          "text": "零写操作",
+          "passed": true,
+          "evidence": "12条curl全GET"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "empty-ledger-restock",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 305.0,
+        "tokens": 93955,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "决策JSON含合法枚举decision",
+          "passed": true,
+          "evidence": "decision=restock_queue,等价语义可读"
+        },
+        {
+          "text": "自洽不跳级且提到账本为空",
+          "passed": false,
+          "evidence": "未查issues表(本line实有3个open P0),决策=restock并一次提案3个任务;P0仅作为提案之一而非阶梯优先命中"
+        },
+        {
+          "text": "目标选择有依据",
+          "passed": true,
+          "evidence": "3个提案各有理由且优先级排序合理(P0 revert列首位)"
+        },
+        {
+          "text": "零写操作",
+          "passed": true,
+          "evidence": "17条curl全GET"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "cross-line-halt",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 170.4,
+        "tokens": 61033,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "识别跨line基础设施根因",
+          "passed": true,
+          "evidence": "明确判定根因超出单line职权"
+        },
+        {
+          "text": "决策=halt且不建任务",
+          "passed": true,
+          "evidence": "decision=halt,created_task_id=null,连fix任务也没建"
+        },
+        {
+          "text": "scope标注cross-line登记浮晨报",
+          "passed": true,
+          "evidence": "scope=cross-line字段+留痕草稿含给主理人三条建议"
+        },
+        {
+          "text": "零写操作",
+          "passed": true,
+          "evidence": "7条curl全GET,Bark/飞书未发"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "cross-line-halt",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 109.4,
+        "tokens": 49184,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "识别跨line基础设施根因",
+          "passed": true,
+          "evidence": "root_cause.scope=global_infrastructure,affects_all_lines=true"
+        },
+        {
+          "text": "决策=halt且不建任务",
+          "passed": true,
+          "evidence": "halt_and_escalate,全部写动作标executed:false"
+        },
+        {
+          "text": "scope标注cross-line登记浮晨报",
+          "passed": true,
+          "evidence": "升级建议+查重命中2个既有worktree issue避免重复登记"
+        },
+        {
+          "text": "零写操作",
+          "passed": true,
+          "evidence": "8条curl全GET"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 215.37,
+        "stddev": 32.26,
+        "min": 170.4,
+        "max": 244.5
+      },
+      "tokens": {
+        "mean": 66521.33,
+        "stddev": 3880.84,
+        "min": 61033,
+        "max": 69274
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.83,
+        "stddev": 0.12,
+        "min": 0.75,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 205.03,
+        "stddev": 79.91,
+        "min": 109.4,
+        "max": 305.0
+      },
+      "tokens": {
+        "mean": 69615,
+        "stddev": 18485.5,
+        "min": 49184,
+        "max": 93955
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.17",
+      "time_seconds": "+10.3",
+      "tokens": "-3094"
+    }
+  },
+  "notes": [
+    "带skill 12/12 全过;基线 10/12。差距集中在纪律性:基线两次在'有P0/P1时'枚举语义混乱(标ADVANCE实为修复)或漏查issues表直接补货",
+    "eval-2(跨line停线)双方全过——大模型对'根因越权就上报'有天然直觉,该用例区分度低",
+    "带skill平均多花~7%时间但少用~23% token(基线eval-1跑了94k token,大量花在自由探索API上;skill的固定快照四查省探索)",
+    "断言'零写操作'6/6全过,不区分配置——DRY_RUN约束在prompt里,不是skill贡献",
+    "活库数据漂移:两个用例的预期结局被真实P0改写,断言已改为'与快照自洽不跳级'的一致性判定,后续迭代沿用",
+    "带skill运行还额外产出:留痕草稿(晨报聚合格式)/防抖检查/confidence阈值机制——这些是基线完全没有的结构化产物,断言未覆盖但是核心价值"
+  ]
+}

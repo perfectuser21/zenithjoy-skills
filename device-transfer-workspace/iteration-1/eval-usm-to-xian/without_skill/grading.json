@@ -1,0 +1,29 @@
+{
+  "eval_name": "eval-usm-to-xian",
+  "config": "without_skill",
+  "expectations": [
+    {
+      "text": "推荐 COS 中转路径（而不是 SCP 直连或 rsync hk-vps 中转）",
+      "passed": false,
+      "evidence": "推荐了 rsync hk-vps 中转，实际上 hk-vps→西安入境只有 0.27 MB/s，比 COS 慢得多"
+    },
+    {
+      "text": "给出 coscmd upload 命令",
+      "passed": false,
+      "evidence": "完全不知道 COS，给的是 rsync 命令"
+    },
+    {
+      "text": "给出 curl 从 COS 下载命令",
+      "passed": false,
+      "evidence": "没有 COS 相关内容"
+    },
+    {
+      "text": "提到西安机器下载前需要关 exit node（否则 COS 变 27KB/s）",
+      "passed": false,
+      "evidence": "不知道 exit node 和 COS 的关系"
+    }
+  ],
+  "pass_count": 0,
+  "total_count": 4,
+  "pass_rate": 0.0
+}

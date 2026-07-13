@@ -12,6 +12,10 @@
 **症状**: Contract 断言 ≠ 生产现实——07120952-line02-content-judgment-gate 合同 8 条 BEHAVIOR 里 5 处外部调用全用 force_result/force_timeout/假图顶替，没有一条真调 Gemini → 模型下线(#1269)/API 格式错(#1271)全漏过；DoD 用 body 传 tenant_id，真实 Android agent 发 x-agent-id header，测的永远绿、真的从没人碰(#1267)；windows_wechat 通道存在但 #1256 的 sprint 没路由过去，合并后真机爆 5 个致命 bug。
 **根因**: 合同阶段对"真实调用方 shape / 第三方真调 / mock 豁免透明化 / 环境路由"四件事零强制，pipeline 的"完成"定义到 evaluator PASS 为止照不到生产现实。
 **修改**: ①proposer 新增「真实链路四硬规则」节+自查 checklist 第 8 条：规则A 真实调用方请求 shape 段（DoD 认证字段与生产调用方逐字段一致）/ 规则B 第三方至少真调一次（真 key 真请求真响应校验）/ 规则C mock 豁免显式登记（## 未覆盖真实链路清单）/ 规则D target_environment 强制路由（微信 RPA 必 windows_wechat，Android 通道未落地前真机段必入清单）；②reviewer Golden Path 覆盖审查新增第 14-17 条逐规则打回判据 + 第 6 维领域清单补两行；③controller Step 3/Step 7 把未覆盖清单原样转呈 PR 描述与最终报告，禁止静默。
+## [2026-07-14] harness 七棒 EVA v2 批量修复 — updated
+**症状**: EVA v2 重打分（均分 55.4→67.0，RUBRIC/BASELINE 首次入库 docs/eval/）暴露 30 余处缺口：planner 枚举 2/3 跑非法+恢复路径 299 行穿透+未定义变量 bug；generator Red 阶段与 relay 现实脱节+TDD 可事后补标；controller cost 条文空转+judge_verdict 仅 2/30 落库；proposer 自查可被标题式格式骗过（d063b3e5 实证）；reviewer 判定点 3 行登记全静默漏写+放行全角 bug 脚本；evaluator verdict 无真跑证据；report 被 mjs 降级脚本架空+英文 Placeholder 逃逸守卫。
+**根因**: 自查普遍是"自觉 checklist"无机械闸；跨棒协议留真空（多代码块拼接/PR 带 task id/rubric 7 维）；回写动作缺对称条文（judge_verdict）或缺数据源（cost）。
+**修改**: 七棒同批落地——planner 8.15.0（发货前机械闸+四态出口+FR 语义反例+bug 修）/ generator 7.9.0（Red 双分支+防补标+Step 6.7 门禁自查+update-branch+FAILED 接线）/ controller 2.6.0（cost 诚实化+judge_verdict 上报+pr_opened 留痕+PR 带 task id 验收+gan 7 维质量门+report 行明细）/ proposer 9.11.0（自查三补丁+拼接语义+禁文本自证+三源加载）/ reviewer 9.6.0（判定点回读自证+RESULT_FILE 参数化+bash -n 审查+第 6 维收紧+中文强制）/ evaluator 1.23.0（verdict 带 exit_code+log_tail+detached HEAD 固化分支+awk 正则放宽+变量表补行）/ report 6.8.0（placeholder 英文指纹+RESULT_FILE 参数化+learnings 计数核验+Phase B 核验+mjs 共存声明）。系统级 5 项移交 cecelia 侧（见 docs/eval/BASELINE-2026-07-14.md）。
 
 ## [2026-07-13] harness-generator 7.8.0 + harness-contract-proposer 9.9.0 — updated
 **症状**: Generator 开发 RPA 代码时盲写——容器内 vitest 绿≠真机能跑,微信 UIA/几何类改动反复真机炸、来回修二十几轮;合同层"真机真收真回"断言没有统一可执行 oracle,evaluator 无法机检。

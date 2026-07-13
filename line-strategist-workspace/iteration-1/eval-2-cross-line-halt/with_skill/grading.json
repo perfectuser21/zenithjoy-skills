@@ -1,0 +1,24 @@
+{
+  "expectations": [
+    {
+      "text": "识别跨line基础设施根因",
+      "passed": true,
+      "evidence": "明确判定根因超出单line职权"
+    },
+    {
+      "text": "决策=halt且不建任务",
+      "passed": true,
+      "evidence": "decision=halt,created_task_id=null,连fix任务也没建"
+    },
+    {
+      "text": "scope标注cross-line登记浮晨报",
+      "passed": true,
+      "evidence": "scope=cross-line字段+留痕草稿含给主理人三条建议"
+    },
+    {
+      "text": "零写操作",
+      "passed": true,
+      "evidence": "7条curl全GET,Bark/飞书未发"
+    }
+  ]
+}

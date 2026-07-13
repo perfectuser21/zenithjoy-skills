@@ -1,0 +1,117 @@
+{
+  "skill_name": "dev",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "bug-path-cookie-error",
+      "prompt": "抖音文章发布一直报错 TypeError: Cannot read properties of undefined (reading 'cookie')，从昨天开始就这样了，之前是好的",
+      "expected_output": "走路径A：查3个curl → 写Bug PrepPRD含症状/根因假设/修法/Regression Test计划/验收标准 → 写decision(category=bug-fix) → 调 systematic-debugging skill",
+      "assertions": [
+        {
+          "name": "识别为路径A(Bug)",
+          "description": "输出中明确标注走路径A或Bug路径，不走路径B/C"
+        },
+        {
+          "name": "查了3个curl：journeys + issues + decisions/match",
+          "description": "执行了对 /api/brain/journeys、/api/brain/issues、/api/brain/decisions/match 的查询"
+        },
+        {
+          "name": "PrepPRD含症状/根因假设/修法/Regression Test",
+          "description": "PrepPRD包含症状、根因假设、修法、Regression Test计划四个部分"
+        },
+        {
+          "name": "写了decision且category=bug-fix",
+          "description": "执行了 POST /api/brain/strategic-decisions 且 category 字段为 bug-fix"
+        },
+        {
+          "name": "调用systematic-debugging skill",
+          "description": "最后一步调用了 superpowers:systematic-debugging"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "eval_name": "small-change-add-field",
+      "prompt": "给 abilities 表加个 group 字段，字符串类型，用来做 Ability Group 聚合，比如抖音发布这个 group 下面有长视频/短视频/图文三个 Ability",
+      "expected_output": "走路径B：查3个curl → 写小改动PrepPRD含改什么/为什么/影响范围/验收标准 → 写decision(category=small-change) → 调 engine-worktree",
+      "assertions": [
+        {
+          "name": "识别为路径B(小改动)",
+          "description": "输出中明确标注走路径B或小改动路径，不走路径A/C"
+        },
+        {
+          "name": "查了journeys + decisions/match",
+          "description": "执行了对 /api/brain/journeys 和 /api/brain/decisions/match 的查询"
+        },
+        {
+          "name": "PrepPRD含改什么和影响范围",
+          "description": "PrepPRD包含改什么和影响范围两个部分"
+        },
+        {
+          "name": "写了decision且category=small-change",
+          "description": "执行了 POST /api/brain/strategic-decisions 且 category 字段为 small-change"
+        },
+        {
+          "name": "调用engine-worktree skill",
+          "description": "最后一步调用了 engine-worktree"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "eval_name": "big-feature-with-missing-prerequisites",
+      "prompt": "我想做快手内容发布功能，现在只有抖音这边有，快手完全没有，需要能发图文和视频",
+      "expected_output": "走路径C：查5个curl → 展示已有Abilities和Golden Path草稿 → 用户确认后执行步骤1前置工作核对 → 发现快手API凭据/测试账号/快手Cookie等前置工作缺失 → 停下来列出需要用户提供的清单，不写PrepPRD也不点火",
+      "assertions": [
+        {
+          "name": "识别为路径C(大功能)",
+          "description": "输出中明确标注走路径C或大功能/Harness路径"
+        },
+        {
+          "name": "查了abilities(不查journey_steps/journey_features废弃表)",
+          "description": "执行了 /api/brain/abilities 查询，且没有查询 journey_steps 或 journey_features"
+        },
+        {
+          "name": "展示了Golden Path草稿",
+          "description": "展示了包含已有和本次新增的 Golden Path 草稿让用户确认"
+        },
+        {
+          "name": "触发前置工作核对门槛",
+          "description": "在写PrepPRD之前，执行了前置工作核对步骤，识别出快手账号/Cookie/API等前置工作缺失"
+        },
+        {
+          "name": "停下来向用户索要前置信息",
+          "description": "因前置工作未到位，明确列出需要用户提供的内容，没有点火Harness"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "eval_name": "big-feature-thin-skeleton-explicit",
+      "prompt": "帮我给 Line 07 AI 爆款视频翻拍做 thin 骨架就行，先跑起来能看到 9 节点画布，不用真的能处理视频",
+      "expected_output": "走路径C：因用户明确说thin骨架不验真实行为，可以跳过真实前置工作检查 → PrepPRD验收标准里只写API schema/服务启动/路由响应，不写ffprobe/真实输出 → 点火Harness",
+      "assertions": [
+        {
+          "name": "识别thin骨架例外场景",
+          "description": "识别出用户明确说只需要thin骨架，触发例外条款"
+        },
+        {
+          "name": "PrepPRD验收标准不含ffprobe等真实验证",
+          "description": "PrepPRD的验收标准里没有出现 ffprobe / 真实视频输出 / 真实API调用等无法达到的条件"
+        },
+        {
+          "name": "PrepPRD验收标准含thin级别检查",
+          "description": "验收标准包含 API 服务能启动、路由响应、节点画布可见等可达到的检查"
+        },
+        {
+          "name": "进入了点火流程(不被卡住)",
+          "description": "流程进入了写decision和点火curl阶段，没有因前置工作未就绪而被无限阻塞"
+        }
+      ],
+      "files": []
+    }
+  ]
+}

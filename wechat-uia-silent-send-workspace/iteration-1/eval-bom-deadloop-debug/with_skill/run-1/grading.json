@@ -1,0 +1,30 @@
+{
+  "eval_id": 2,
+  "eval_name": "bom-deadloop-debug",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "解释了 BOM 来源：PowerShell 默认写 UTF-8 with BOM，Python json.load(encoding='utf-8') 不接受",
+      "passed": true,
+      "evidence": "明确说明 Out-File -Encoding UTF8 产生 BOM，Python json.load 报 Unexpected UTF-8 BOM"
+    },
+    {
+      "text": "解释了文件不删的原因：json.load 抛异常时 os.remove 还没执行，导致文件残留死循环",
+      "passed": true,
+      "evidence": "清楚说明 os.remove 在 json.loads 之后，parse 异常时根本走不到删除那行"
+    },
+    {
+      "text": "提供将 encoding 改为 utf-8-sig 的修法（或等效的 BOM 兼容方案）",
+      "passed": true,
+      "evidence": "代码示例里明确用 encoding='utf-8-sig'，注释说明兼容带 BOM 的 UTF-8"
+    },
+    {
+      "text": "提供将 os.remove 移到 json 解析之前（读完即删）的修法",
+      "passed": true,
+      "evidence": "代码注释'读完立即删，parse 异常也不会死循环（关键）'，并给出完整修复代码"
+    }
+  ],
+  "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0},
+  "pass_rate": "4/4",
+  "notes": "完美对齐。额外亮点：提供了3步修法（止血→根治读取端→根治写入端），并给出回归验证步骤"
+}

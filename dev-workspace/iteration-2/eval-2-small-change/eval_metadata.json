@@ -1,0 +1,12 @@
+{
+  "eval_id": 2,
+  "eval_name": "small-change-add-field",
+  "prompt": "给 abilities 表加个 group 字段，字符串类型，用来做 Ability Group 聚合，比如抖音发布这个 group 下面有长视频/短视频/图文三个 Ability",
+  "assertions": [
+    {"name": "识别为路径B(小改动)", "description": "输出中明确标注走路径B或小改动路径，不走路径A/C"},
+    {"name": "查了journeys + decisions/match", "description": "执行了对 /api/brain/journeys 和 /api/brain/decisions/match 的查询"},
+    {"name": "PrepPRD含改什么和影响范围", "description": "PrepPRD包含改什么和影响范围两个部分"},
+    {"name": "写了decision且category=small-change", "description": "执行了 POST /api/brain/strategic-decisions 且 category 字段为 small-change"},
+    {"name": "调用engine-worktree skill", "description": "最后一步调用了 engine-worktree"}
+  ]
+}

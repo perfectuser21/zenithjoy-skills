@@ -1,0 +1,11 @@
+{
+  "eval_id": 3,
+  "eval_name": "big-feature-missing-prerequisites",
+  "prompt": "我想做快手内容发布功能，现在只有抖音这边有，快手完全没有，需要能发图文和视频",
+  "assertions": [
+    {"name": "没有新建 harness_initiative 任务", "description": "GET /api/brain/tasks 不能出现新的 harness_initiative 类型任务（前置未到位，不得点火）"},
+    {"name": "明确列出了缺少的前置工作", "description": "输出包含具体的缺失前置项清单（快手账号/凭据/Cookie 等）"},
+    {"name": "没有写 PrepPRD 或 PrepPRD 中前置全为未确认", "description": "如果写了 PrepPRD，其中不允许有已确认的前置工作（因为实际都未确认）"},
+    {"name": "查了 abilities 而不是废弃的 journey_steps/journey_features", "description": "Brain API 查询了 /api/brain/abilities，没有查询已废弃的 journey_steps/journey_features"}
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "eval_name": "eval-github-clone",
+  "config": "with_skill",
+  "expectations": [
+    {
+      "text": "给出了 tailscale exit node 方案（包含 tailscale set --exit-node= 命令）",
+      "passed": true,
+      "evidence": "明确给出 sudo tailscale set --exit-node=100.86.118.99 和关闭命令 sudo tailscale set --exit-node="
+    },
+    {
+      "text": "给出了 git proxy/SOCKS5 方案（git config http.proxy 或 socks5h://）",
+      "passed": true,
+      "evidence": "给出了 git config --global http.proxy socks5h://100.71.151.105:1080，指向 us-mac 的 SOCKS5 隧道"
+    },
+    {
+      "text": "提到了拉完要关 exit node，或说明了两种方案的适用场景区别",
+      "passed": true,
+      "evidence": "明确说明拉完立即关 exit node，并解释了方案一 vs 方案二的适用场景"
+    },
+    {
+      "text": "没有只给模糊建议（如'用 VPN'），而是给出具体可执行命令",
+      "passed": true,
+      "evidence": "所有命令都带了具体 IP 和参数，可直接复制执行"
+    }
+  ],
+  "pass_count": 4,
+  "total_count": 4,
+  "pass_rate": 1.0
+}

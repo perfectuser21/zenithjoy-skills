@@ -1,0 +1,66 @@
+{
+  "line_id": "bfeed805-deed-46c3-8624-87f0028101d4",
+  "line_name": "客户私域 AI 接管 (Line04)",
+  "trigger": "manual",
+  "dry_run": true,
+  "generated_at": "2026-07-08",
+  "diagnosis": {
+    "ledger_state": "empty_execution_queue",
+    "evidence": [
+      "全系统 queued 任务仅 5 个且全部为 content-pipeline，无一属于 Line04；in_progress = 0",
+      "Line04 最近两个任务（1.0.107 七修、wechat-rpa 三修）均已 completed_no_pr，执行队列已放空",
+      "journey_features 台账共 29 项：15 planned / 5 building / 2 working / 6 done / 1 ability planned，能力账本不空但无任务在推进",
+      "PR #1182（三自愈，line04 1.0.114）已合并，卡在人工 promote-prod 卡点，生产尚未 OTA 复验",
+      "排障活台账仍列 🔴🔴 #998 scan_unread 滚动回归为最紧急未解决项：rog 仅热修，repo/生产仍是坏的滚动版，AST 守卫被放松"
+    ]
+  },
+  "decision": {
+    "action": "restock_queue",
+    "summary": "Line04 执行队列已空但线未完工，判定为『补货』：先放行人工卡点（promote-prod 1.0.114 + rog 真机复验），再按优先级向队列补入 3 个开发任务。DRY_RUN=true，本次不创建任何任务、不发任何通知，仅输出提案。",
+    "human_gate": {
+      "required": true,
+      "what": "手动触发 promote-prod（输入 PROMOTE）放行 line04 1.0.114 到生产，随后 rog OTA 真机复验三自愈（窗口最大化 / 欢迎回来屏自动点击 / 回顶相对坐标）",
+      "why_not_a_task": "这是人工放行动作而非开发任务，且干跑模式禁止代为执行"
+    },
+    "proposed_tasks": [
+      {
+        "rank": 1,
+        "title": "[Line04] revert #998 scan_unread 滚动回归 + 恢复 test_reply_loop_purity AST 守卫",
+        "priority": "P0",
+        "journey_id": "bfeed805-deed-46c3-8624-87f0028101d4",
+        "related_feature_id": "1e4ee48d-365d-4373-a4bc-86a20a917289",
+        "rationale": "排障台账标注 🔴🔴 最紧急、影响所有客户机：#998(1.0.83) 把『回复循环不准滚动』的守卫放松并把滚动+开群塞回主循环，rog 仅 scp 热修，repo 与生产安装包仍是坏版本，任何 OTA/重装都会打回原形",
+        "acceptance_hint": "revert 后 AST 守卫恢复锁死回复循环无滚动；rog 真机连续 DELIVERED 才算过"
+      },
+      {
+        "rank": 2,
+        "title": "[Line04] §2.I 剩余两根因：待发回复队列过期/上限 + sender 名字识别校验（苏小x/于瑾死循环案）",
+        "priority": "P1",
+        "journey_id": "bfeed805-deed-46c3-8624-87f0028101d4",
+        "related_feature_id": "1e4ee48d-365d-4373-a4bc-86a20a917289",
+        "rationale": "1.0.114 只修了回顶坐标一条根因；失败待发回复无过期无上限会 4+ 小时死循环重试，名字误读导致目标会话不存在时永远秒失败，这是同事收不到回复的直接原因",
+        "acceptance_hint": "失败回复带 TTL+重试上限；目标名与会话列表做存在性校验，不存在走降级而非死循环"
+      },
+      {
+        "rank": 3,
+        "title": "[Line04] 客服回复判断内核接入 wechat-cs-reply（decision 2026-07-07 已拍板）",
+        "priority": "P1",
+        "journey_id": "bfeed805-deed-46c3-8624-87f0028101d4",
+        "related_feature_id": "5778a80a-3c71-4df1-afce-72c10551efe5",
+        "rationale": "07-07 决策已定：生产微信客服从自由发挥改为规则化判断内核，一次调用产出回复+stage/signal/risk/escalate，stage 自动回写 crm_customers.status；feature 已建账(planned)但无任务承接，是台账与队列之间的断线",
+        "acceptance_hint": "wechat-draft.ts 接入内核；escalate 复用 cs-outbound 队列；crm_customers 状态历史新增 changed_by 区分 ai_inferred/manual"
+      }
+    ],
+    "explicitly_deferred": [
+      {
+        "item": "§2.B/C 新装 agent 不杀旧 listen_chat 孤儿进程（假『未安装』）",
+        "reason": "P2：卡装机体验但不卡当前回复主链路，待前三项消化后补入"
+      },
+      {
+        "item": "§2.E 生产 LLM deepseek-v3.2 死渠道",
+        "reason": "需要动生产 env（用户点头的人工确认项），随 promote-prod 卡点一并向主理人确认"
+      }
+    ]
+  },
+  "writes_performed": "none (DRY_RUN=true，全程仅 GET/只读)"
+}

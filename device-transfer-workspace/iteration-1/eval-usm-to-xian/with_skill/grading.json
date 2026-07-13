@@ -1,0 +1,29 @@
+{
+  "eval_name": "eval-usm-to-xian",
+  "config": "with_skill",
+  "expectations": [
+    {
+      "text": "推荐 COS 中转路径（而不是 SCP 直连或 rsync hk-vps 中转）",
+      "passed": true,
+      "evidence": "明确推荐 COS 中转，并对比直连 0.5 MB/s vs COS 2~33 MB/s，说明 hk-vps 方向不对"
+    },
+    {
+      "text": "给出 coscmd upload 命令",
+      "passed": true,
+      "evidence": "完整给出 coscmd config + coscmd upload /path/to/model.bin /temp/model.bin"
+    },
+    {
+      "text": "给出 curl 从 COS 下载命令",
+      "passed": true,
+      "evidence": "给出了 curl -L https://zenithjoy-static-1333590468.cos.ap-guangzhou.myqcloud.com/temp/model.bin"
+    },
+    {
+      "text": "提到西安机器下载前需要关 exit node（否则 COS 变 27KB/s）",
+      "passed": true,
+      "evidence": "明确说 sudo tailscale set --exit-node= 并解释不关会跌到 27 KB/s"
+    }
+  ],
+  "pass_count": 4,
+  "total_count": 4,
+  "pass_rate": 1.0
+}

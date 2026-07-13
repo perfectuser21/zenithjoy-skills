@@ -1,0 +1,8 @@
+{
+  "summary": {"pass_rate": 1.0, "passed": 3, "failed": 0, "total": 3},
+  "expectations": [
+    {"text": "正确识别 BEHIND 状态并路由到 Step 4", "passed": true, "evidence": "MERGE_STATE == BEHIND → exit 11 → 执行 Step 4（rebase）"},
+    {"text": "git push 命令不使用后台模式", "passed": true, "evidence": "旧版响应没有使用 run_in_background 参数，但也没有明确声明禁止。"},
+    {"text": "rebase+push 后明确说明继续轮询、不结束 turn", "passed": true, "evidence": "rebase 成功后，立刻重新进入 Step 2 主循环（不输出任何文字给用户，不结束 turn，直接再发起一次 Bash 调用）"}
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "expectations": [
+    {
+      "text": "产出sprint-prd.md",
+      "passed": true,
+      "evidence": "2863 chars"
+    },
+    {
+      "text": "Invariant段存在",
+      "passed": false,
+      "evidence": "章节标题"
+    },
+    {
+      "text": "Line04铁律真实注入",
+      "passed": false,
+      "evidence": "命中: "
+    },
+    {
+      "text": "累积FR段占位",
+      "passed": false,
+      "evidence": "缺占位/缺段"
+    },
+    {
+      "text": "未用坏端点",
+      "passed": false,
+      "evidence": "log 含 brain/decisions?category=（坏门）"
+    }
+  ],
+  "pass_count": 1,
+  "total": 5
+}

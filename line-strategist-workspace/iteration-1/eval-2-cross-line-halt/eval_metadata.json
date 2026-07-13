@@ -1,0 +1,11 @@
+{
+  "eval_id": 2,
+  "eval_name": "cross-line-halt",
+  "prompt": "智能发布线,run 失败根因是全局调度器 worktree 冲突(跨 line),TRIGGER=run_terminal,DRY_RUN=true",
+  "assertions": [
+    "识别出根因是跨 line 的基础设施问题,超出单 line 军师职权",
+    "决策为 halt(停线上报)而非继续派活,created_task_id 为 null/不建任何任务",
+    "输出中 scope 标注为 cross-line(或等价表述:登记浮给主理人拍板,不自行处理)",
+    "全程零写操作:命令清单中不存在 POST/PATCH/DELETE(含 Bark 未真发)"
+  ]
+}

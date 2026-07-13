@@ -1,0 +1,168 @@
+{
+  "metadata": {
+    "skill_name": "device-transfer",
+    "skill_path": "/Users/administrator/perfect21/zenithjoy-skills/device-transfer",
+    "executor_model": "claude-sonnet-4-6",
+    "analyzer_model": "claude-sonnet-4-6",
+    "timestamp": "2026-06-08T15:48:00Z",
+    "evals_run": ["eval-github-clone", "eval-usm-to-xian", "eval-plugin-dist"],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "eval-github-clone",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 29.9,
+        "tokens": 19866,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "给出了 tailscale exit node 方案（包含 tailscale set --exit-node= 命令）", "passed": true, "evidence": "明确给出 sudo tailscale set --exit-node=100.86.118.99 和关闭命令"},
+        {"text": "给出了 git proxy/SOCKS5 方案（git config http.proxy 或 socks5h://）", "passed": true, "evidence": "给出了 git config --global http.proxy socks5h://100.71.151.105:1080"},
+        {"text": "提到了拉完要关 exit node，或说明了两种方案的适用场景区别", "passed": true, "evidence": "明确说明拉完立即关，并解释了方案一 vs 方案二的适用场景"},
+        {"text": "没有只给模糊建议（如'用 VPN'），而是给出具体可执行命令", "passed": true, "evidence": "所有命令都带了具体 IP 和参数，可直接复制执行"}
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "eval-github-clone",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.25,
+        "passed": 1,
+        "failed": 3,
+        "total": 4,
+        "time_seconds": 35.4,
+        "tokens": 14561,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "给出了 tailscale exit node 方案（包含 tailscale set --exit-node= 命令）", "passed": false, "evidence": "完全不知道 Tailscale exit node，推荐的是 Clash/Surge 本地代理软件"},
+        {"text": "给出了 git proxy/SOCKS5 方案（git config http.proxy 或 socks5h://）", "passed": false, "evidence": "有 git config 但指向本地 127.0.0.1:7890，不是 us-mac 的 SOCKS5 方案"},
+        {"text": "提到了拉完要关 exit node，或说明了两种方案的适用场景区别", "passed": false, "evidence": "不知道 exit node 概念，没有提到 COS 和 exit node 的冲突"},
+        {"text": "没有只给模糊建议（如'用 VPN'），而是给出具体可执行命令", "passed": true, "evidence": "给出了具体命令，但都是通用方案，不是我们基础设施的命令"}
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "eval-usm-to-xian",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 35.2,
+        "tokens": 20606,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "推荐 COS 中转路径（而不是 SCP 直连或 rsync hk-vps 中转）", "passed": true, "evidence": "明确推荐 COS 中转，对比直连 0.5 MB/s vs COS 2~33 MB/s"},
+        {"text": "给出 coscmd upload 命令", "passed": true, "evidence": "完整给出 coscmd config + coscmd upload /path/to/model.bin /temp/model.bin"},
+        {"text": "给出 curl 从 COS 下载命令", "passed": true, "evidence": "给出了 curl -L https://zenithjoy-static-1333590468.cos.ap-guangzhou.myqcloud.com/..."},
+        {"text": "提到西安机器下载前需要关 exit node（否则 COS 变 27KB/s）", "passed": true, "evidence": "明确说 sudo tailscale set --exit-node= 并解释不关会跌到 27 KB/s"}
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "eval-usm-to-xian",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "time_seconds": 32.8,
+        "tokens": 14630,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "推荐 COS 中转路径（而不是 SCP 直连或 rsync hk-vps 中转）", "passed": false, "evidence": "推荐了 rsync hk-vps 中转，实际上 hk-vps→西安入境只有 0.27 MB/s"},
+        {"text": "给出 coscmd upload 命令", "passed": false, "evidence": "完全不知道 COS，给的是 rsync 命令"},
+        {"text": "给出 curl 从 COS 下载命令", "passed": false, "evidence": "没有 COS 相关内容"},
+        {"text": "提到西安机器下载前需要关 exit node（否则 COS 变 27KB/s）", "passed": false, "evidence": "不知道 exit node 和 COS 的关系"}
+      ],
+      "notes": ["推荐的 hk-vps rsync 方案实际是错误的——hk-vps→西安入境限速 0.27 MB/s，比 COS 慢得多"]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "eval-plugin-dist",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 39.3,
+        "tokens": 20442,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "识别为插件/工具分发类，推荐 COS（而非只推 SCP 直传）", "passed": true, "evidence": "明确识别为 B 类（插件/工具分发），推荐 COS，并说明了为什么不用 SCP"},
+        {"text": "给出 coscmd upload 上传命令", "passed": true, "evidence": "完整给出 coscmd config + coscmd upload $PLUGIN /plugins/$(basename $PLUGIN)"},
+        {"text": "给出 curl 从 COS 下载命令（在 xian-pc 上执行）", "passed": true, "evidence": "给出了 Windows PowerShell 和 CMD 两种 curl 下载命令，含完整 COS URL"},
+        {"text": "提到上传前需关 exit node（否则 COS 变 27KB/s）", "passed": true, "evidence": "第一步就是 sudo tailscale set --exit-node=，常见坑表格里再次强调"}
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "eval-plugin-dist",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "time_seconds": 22.0,
+        "tokens": 13897,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "识别为插件/工具分发类，推荐 COS（而非只推 SCP 直传）", "passed": false, "evidence": "直接推荐 SCP 直传，不知道 COS 分发体系"},
+        {"text": "给出 coscmd upload 上传命令", "passed": false, "evidence": "没有任何 COS 相关内容"},
+        {"text": "给出 curl 从 COS 下载命令（在 xian-pc 上执行）", "passed": false, "evidence": "没有 COS 下载，只给了 SCP/rsync/Python HTTP 服务器"},
+        {"text": "提到上传前需关 exit node（否则 COS 变 27KB/s）", "passed": false, "evidence": "不知道 exit node 概念"}
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0},
+      "time_seconds": {"mean": 34.8, "stddev": 4.7, "min": 29.9, "max": 39.3},
+      "tokens": {"mean": 20305, "stddev": 384, "min": 19866, "max": 20606}
+    },
+    "without_skill": {
+      "pass_rate": {"mean": 0.083, "stddev": 0.144, "min": 0.0, "max": 0.25},
+      "time_seconds": {"mean": 30.1, "stddev": 7.0, "min": 22.0, "max": 35.4},
+      "tokens": {"mean": 14363, "stddev": 375, "min": 13897, "max": 14630}
+    },
+    "delta": {
+      "pass_rate": "+0.92",
+      "time_seconds": "+4.7",
+      "tokens": "+5942"
+    }
+  },
+  "notes": [
+    "with_skill 三个 eval 全部 4/4 满分（100%），baseline 整体只有 1/12（8.3%）",
+    "Eval 2（us-mac→西安）baseline 推荐的 hk-vps rsync 方案实际是错的（入境 0.27 MB/s），skill 正确给出了 COS",
+    "Baseline 对 Tailscale/COS/exit node 整个基础设施完全不知情，无法给出正确答案",
+    "skill 使用 token 略多（+5942），因为回答包含了具体 IP、bucket 名称和凭据处理步骤"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "eval_id": 4,
+  "eval_name": "thin-skeleton-no-real-processing",
+  "prompt": "帮我给 Line 07 AI 爆款视频翻拍做 thin 骨架就行，先跑起来能看到 9 节点画布，不用真的能处理视频",
+  "assertions": [
+    {"name": "PrepPRD 文件已写入磁盘且不含 ffprobe", "description": "prep-prd.md 存在，用 grep 验证文件内容不含 ffprobe 字符串"},
+    {"name": "PrepPRD 验收标准只含 thin 级别检查", "description": "验收标准包含 API 路由、服务启动、画布渲染等可达到的检查"},
+    {"name": "进入了点火流程（decision 写入 DB）", "description": "GET /api/brain/strategic-decisions 能查到 category=feature 的新记录"},
+    {"name": "正确识别 thin 骨架例外", "description": "输出明确说明因用户声明只需 thin 骨架而跳过真实前置工作检查"}
+  ]
+}

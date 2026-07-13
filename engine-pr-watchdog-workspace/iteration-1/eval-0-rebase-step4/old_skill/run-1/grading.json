@@ -1,0 +1,8 @@
+{
+  "summary": {"pass_rate": 0.667, "passed": 2, "failed": 1, "total": 3},
+  "expectations": [
+    {"text": "所有 bash 调用均不使用 run_in_background: true", "passed": true, "evidence": "旧版响应完全没有提到 run_in_background，命令列表也没有后台化执行。"},
+    {"text": "输出中提到 push 必须同步执行的约束（来自 skill 指令）", "passed": false, "evidence": "旧版 skill 没有该约束，响应中也没有提到同步、禁止 run_in_background 等字样。这正是新版修复的关键点。"},
+    {"text": "push 完成后明确说会立刻重入 Step 2 轮询", "passed": true, "evidence": "立刻重新进入 Step 2 主循环（不退出，不输出等待提示），继续轮询"}
+  ]
+}

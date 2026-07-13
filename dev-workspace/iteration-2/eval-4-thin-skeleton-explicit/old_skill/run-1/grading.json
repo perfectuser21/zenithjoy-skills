@@ -1,0 +1,92 @@
+{
+  "expectations": [
+    {
+      "text": "识别thin骨架例外场景 — 识别出用户明确说只需要thin骨架，触发例外条款",
+      "passed": true,
+      "evidence": "response.md 第76行明确写道：'用户指示「不用真的能处理视频」→ 验收标准只写画布渲染 + 路由响应，不写 ffprobe / 真实视频流验证（参见路径 C 点火前置检查唯一例外条款）'。第82行再次确认：'用户明确说「thin 骨架，先跑起来能看到 9 节点画布，不用真的能处理视频」，因此触发路径 C 点火前置检查的唯一例外'。第226-228行详细引用了例外条款的具体内容。识别是真实的，不是表面合规。"
+    },
+    {
+      "text": "PrepPRD验收标准不含ffprobe等真实验证 — PrepPRD的验收标准里没有出现 ffprobe / 真实视频输出 / 真实API调用等无法达到的条件",
+      "passed": true,
+      "evidence": "PrepPRD 第154-161行的验收标准列表完全不含 ffprobe 或真实视频处理条件：只有服务启动日志、画布渲染、侧面板弹出、路由返回200、节点变绿、health检查。'不包含'章节（第133-136行）明确列出'任何真实视频处理（ffmpeg、scene-detect）'和'任何 AI API 调用'不在范围内。第238-242行还对比了旧草稿错误写了 ffprobe 条件、本次没写——进一步证明是有意识的正确处理。"
+    },
+    {
+      "text": "PrepPRD验收标准含thin级别检查 — 验收标准包含 API 服务能启动、路由响应、节点画布可见等可达到的检查",
+      "passed": true,
+      "evidence": "PrepPRD 验收标准（第154-161行）包含：(1) 'python server.py 启动无报错，日志显示 Uvicorn running on http://0.0.0.0:8899'，(2) '浏览器打开 localhost:8899 能看到 9 节点画布（React Flow 渲染）'，(3) '点任意节点弹出侧面板（不空白）'，(4) '依次点击 01→09 全部节点执行，每个节点调对应 /api/nodes/XX/run 返回 200'，(5) '9 个节点走完后全部显示绿色'，(6) 'curl localhost:8899/api/health 返回 200 + {\"status\":\"ok\"}'，(7) 'CI 全绿（smoke 验证 API 能启动 + 9 个基础路由响应 200）'。均是 thin 级别可达到的检查。"
+    },
+    {
+      "text": "进入了点火流程(不被卡住) — 流程进入了写decision和点火curl阶段，没有因前置工作未就绪而被无限阻塞",
+      "passed": true,
+      "evidence": "response.md 第183-188行包含完整的 decision curl 命令（POST localhost:5221/api/brain/strategic-decisions），第193-213行包含完整的 harness 点火 curl 命令（POST localhost:5221/api/brain/tasks，task_type: harness_initiative）。流程未被前置工作阻塞——第145-152行前置工作中标注了部分待安装项（[])但没有因此停止，而是继续走到了点火阶段。"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 8023,
+    "transcript_chars": 8023
+  },
+  "timing": {
+    "executor_duration_seconds": 120.5,
+    "grader_duration_seconds": null,
+    "total_duration_seconds": 120.5,
+    "total_tokens": 40398,
+    "duration_ms": 120515
+  },
+  "claims": [
+    {
+      "claim": "仓库里已有的草稿 sprints/06090814-video-remake/prep-prd.md 的验收标准第3条写了 ffprobe 验证",
+      "type": "factual",
+      "verified": false,
+      "evidence": "transcript 中提到此对比，但未能在本次 grading 中直接验证该文件内容。该声明用于对比说明本次正确做法，其真实性无法从 outputs 文件中核实，属于未验证的引用声明。"
+    },
+    {
+      "claim": "Line 07 Journey 在 Brain DB 中不存在，需要新建",
+      "type": "factual",
+      "verified": false,
+      "evidence": "transcript 说'journeys 结果中 Line 07 不存在'，但 curl 命令只是展示（未实际执行），无法从 outputs 文件验证该 API 返回值。"
+    },
+    {
+      "claim": "Golden Path 共 6 步（用户视角），内部节点9个",
+      "type": "factual",
+      "verified": true,
+      "evidence": "PrepPRD 第99-116行列出了11个 Golden Path 步骤（首次使用），内部节点图（第57-65行）列出9个节点，前后一致。"
+    },
+    {
+      "claim": "thin 模式不需要任何 API Key",
+      "type": "quality",
+      "verified": true,
+      "evidence": "PrepPRD 前置工作第144-145行：'API 凭据 - [x] 无需任何 API Key（thin 全 mock）'，与整体设计一致。"
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [
+      "journey_id 和 feature_id 在点火 curl 中为空字符串，transcript 说'Line 07 是新建 Journey，点火前需先调 add-feature.js 在 Notion 注册'但实际没有执行这一步，属于已知未完成项"
+    ],
+    "workarounds": [
+      "base_repo 填了占位 GitHub URL（perfectuser21/zenithjoy-workspace.git），实际仓库名可能不正确"
+    ]
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "进入了点火流程(不被卡住)",
+        "reason": "当前断言只检查'是否出现了点火 curl'，但 transcript 中 journey_id/feature_id 为空、base_repo 是占位值，点火 curl 若真正执行大概率失败。更强的断言应为'点火 curl 中 base_repo 是有效 GitHub URL 且 journey_id 非空'，或'已说明如何获取 journey_id 并实际执行了注册步骤'。当前断言在实质性缺陷面前仍判 PASS，给出假信心。"
+      },
+      {
+        "reason": "没有断言检查 PrepPRD 是否被实际写入文件系统。transcript 只展示了'实际执行会运行'的 bash 命令（伪代码风格），并没有真正创建 sprint 目录或写文件。如果 eval 目的是验证 /dev 技能的完整输出，应有'sprint 目录下 prep-prd.md 文件存在且内容非空'的断言。"
+      }
+    ],
+    "overall": "4个断言均通过，覆盖核心场景（thin例外识别、验收标准质量、不阻塞点火）。主要弱点：点火流程断言未检查点火参数的有效性（journey_id空/base_repo占位），且无断言覆盖文件是否真正落地。"
+  }
+}

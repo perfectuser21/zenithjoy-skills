@@ -1,0 +1,27 @@
+{
+  "eval_id": 1,
+  "eval_name": "write-command-file-encoding",
+  "prompt": "我想从 Mac 上通过 SSH 远程触发 xian-rog 上的 listen_chat.py，让它主动给微信联系人'李芳'发一条消息'你好，有时间聊聊吗？'。应该怎么写这个命令文件？给我可以直接复制执行的 SSH 命令。",
+  "assertions": [
+    {
+      "id": "A1",
+      "text": "使用 \\uXXXX Unicode 转义 或 [char]0xXXXX 方案处理中文字符，避免编码问题",
+      "rationale": "中文字符直接写进 SSH 命令会乱码；ASCII-safe 方案是唯一可靠路径"
+    },
+    {
+      "id": "A2",
+      "text": "未推荐 cmd /c echo 方案（或明确指出此方案不可用）",
+      "rationale": "cmd /c echo 遇到引号/中文会失败，是已知死路"
+    },
+    {
+      "id": "A3",
+      "text": "未推荐 Out-File -Encoding UTF8 方案（或说明其产生 BOM 会导致解析错误）",
+      "rationale": "PowerShell Out-File -Encoding UTF8 写的是 UTF-8 with BOM，Python json.load 会报错"
+    },
+    {
+      "id": "A4",
+      "text": "提供了包含具体目标联系人'李芳'和消息的可执行命令示例",
+      "rationale": "用户要求直接可复制执行的命令，不是抽象说明"
+    }
+  ]
+}

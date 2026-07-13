@@ -1,0 +1,30 @@
+{
+  "eval_id": 2,
+  "eval_name": "bom-deadloop-debug",
+  "configuration": "without_skill",
+  "expectations": [
+    {
+      "text": "解释了 BOM 来源：PowerShell 默认写 UTF-8 with BOM，Python json.load(encoding='utf-8') 不接受",
+      "passed": true,
+      "evidence": "正确识别了 PowerShell 5.x Out-File/>/Set-Content 默认带 BOM；分析准确"
+    },
+    {
+      "text": "解释了文件不删的原因：json.load 抛异常时 os.remove 还没执行，导致文件残留死循环",
+      "passed": true,
+      "evidence": "代码里明确注释'这里抛异常 → 永远执行不到'，根因分析到位"
+    },
+    {
+      "text": "提供将 encoding 改为 utf-8-sig 的修法（或等效的 BOM 兼容方案）",
+      "passed": true,
+      "evidence": "用了 utf-8-sig + finally 删除的完整修法，方案比 skill 里的还更健壮（finally 保证必删）"
+    },
+    {
+      "text": "提供将 os.remove 移到 json 解析之前（读完即删）的修法",
+      "passed": true,
+      "evidence": "用 finally 块保证删除，比 skill 建议的'先读后删'更健壮。概念等价，实现更优"
+    }
+  ],
+  "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0},
+  "pass_rate": "4/4",
+  "notes": "这是 eval 2 的特殊情况：BOM + os.remove 时序问题是通用 Python 知识，不需要 skill 加持也能答对。without_skill 回答甚至提出了更优的 finally 模式。skill 在这题差异化价值低"
+}

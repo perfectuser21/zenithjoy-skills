@@ -1,0 +1,12 @@
+{
+  "eval_id": 1,
+  "eval_name": "bug-path-cookie-error",
+  "prompt": "抖音文章发布一直报错 TypeError: Cannot read properties of undefined (reading 'cookie')，从昨天开始就这样了，之前是好的",
+  "assertions": [
+    {"name": "Brain DB 有新 decision 且 category=bug-fix", "description": "GET /api/brain/strategic-decisions 能查到新写入的记录，category 字段为 bug-fix"},
+    {"name": "PrepPRD 文件已写入磁盘", "description": "sprints/ 目录下有新建的目录，内含 prep-prd.md 且文件非空"},
+    {"name": "PrepPRD 含症状/根因假设/修法/Regression Test 四节", "description": "prep-prd.md 内容包含这四个章节"},
+    {"name": "正确路由路径A", "description": "输出明确标注走路径A(Bug)，不走B/C"},
+    {"name": "Brain DB 查询了 journeys+issues+decisions/match", "description": "实际执行了三个 curl 并得到 API 返回数据"}
+  ]
+}
