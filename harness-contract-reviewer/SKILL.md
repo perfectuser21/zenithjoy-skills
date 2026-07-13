@@ -6,10 +6,11 @@ description: |
   而非"防作弊测试框架"。
   核心职责：(1) spec 对齐用户真需求 (2) criteria 可量化无歧义 (3) happy + error + 边界场景全覆盖
   GAN 对抗**多轮**直到双方达成共识。无硬轮数上限，但 Reviewer 真找不出实质 spec/产品漏洞时必须 APPROVED。
-version: 9.4.0
+version: 9.5.0
 created: 2026-04-08
-updated: 2026-07-10
+updated: 2026-07-14
 changelog:
+  - 9.5.0: 真实链路四硬规则审查（handoff 0714 刀2 — #1267/#1269/#1271/#1256 实证，与 proposer 9.10.0 对齐）— Golden Path 覆盖审查新增第 14/15/16/17 条：(14) 设备/agent 调服务端缺「真实调用方请求 shape」段或 DoD 认证字段与生产调用方不逐字段一致 → 打回（规则A）；(15) 第三方 API 全 mock 零真调 → 打回（规则B）；(16) DoD 含 force_*/stub/假数据但无「未覆盖真实链路清单」段 → 打回（规则C）；(17) target_environment 与 ability 真实运行环境不匹配 → 第 7 维 0 分打回（规则D：微信 UI/RPA 必 windows_wechat；Android 通道未落地前真机段必登记未覆盖）；第 6 维领域验证核对清单同步补「真实调用方 shape」「第三方真调」两行
   - 9.4.0: 判定点写库通电（九要素 T5 — decisions e035dad8）— Step 5 APPROVED 后新增第 2 件事：逐行解析合同「判定点登记表」写入 decisions category=judgment（账本保鲜守卫「判定点活性」指标唯一数据源）；解析跳过表头/分隔线/示例行/N-A；失败只 WARN 不阻塞结果文件
   - 9.3.0: 八要素 checklist 审查 + 判定点登记表打回规则（decisions 27b57469/e035dad8）— Golden Path 覆盖审查新增第 11/12/13 条：(11) 合同 ## 八要素需求规范 段缺失 → 第 1 维扣分（proposer 9.6.0 起必含此段）；(12) 涉及真机/RPA/外部状态推断任务缺判定点登记表 → 打回；(13) 失败语义和效果确认要素留空/N/A 而任务明显有对外动作 → 第 5/6 维扣分；输入对抗面：对外暴露 agent 任务缺此项 → 打回
   - 9.2.0: 补「接缝断言」打回信号（修真环境逐个炸根因）— Golden Path 覆盖审查段新增两条强制打回信号：(9)「接缝只用 mock 断言 → 打回」：涉及真机 UIA/生产 env/真实调用方的 [BEHAVIOR]，若 DoD 只用 mock/CI 断言、无真目标验证项 → 第 1 维/第 6 维扣分/打回，要求补接缝断言或显式标 logic-done-pending；(10)「写死环境假设值无真验 → 打回」：引入屏幕坐标/UIA 阈值/假设调用方传值/假设 env 有值等环境假设且无真机校准/真验证项 → 打回，要求从环境推导或真机校准。第 6 维 verification_oracle_completeness 领域验证核对清单同步新增「真机 RPA/生产 env 集成」一行。**未改任何维度名**——7 个维度名（dod_machineability/scope_match_prd/test_is_red/internal_consistency/risk_registered/verification_oracle_completeness/ci_workflow_alignment）是与 Brain ReviewerOutputSchema 的接口约定，一个都没动，只在维度描述/审查项里加内容
@@ -87,6 +88,10 @@ Proposer 产出的 `contract-draft.md` 格式是 **Golden Path Steps**：每步 
 11. **合同缺 ## 八要素需求规范 段 → 第 1 维扣分**（v9.3 强制 — decisions 27b57469）：proposer 9.6.0 起必须在 contract-draft.md 内嵌八要素 checklist 段；该段缺失或任一要素既无答案又无显式 N/A → 视为合同不完整，第 1 维 dod_machineability 扣分。轻微漏填（如 NFR 空白但任务明显无 NFR 要求）仅提醒，不强制打回。
 12. **涉及真机/RPA/外部状态推断任务缺判定点登记表 → 打回**（v9.3 强制 — decisions e035dad8）：凡 Golden Path 含「系统推断外部真实状态」（微信群是否发送 / RPA 当前状态 / API 返回解读 / 真机反馈识别），若合同 ## 八要素需求规范 → 判定点登记表 留空或写 N/A → 直接 REVISION，要求 proposer 逐条登记候选方法/所选/依据/误判后果。无接缝判定点的任务显式写「N/A」才算合规。
 13. **对外暴露 agent 缺输入对抗面 → 打回**（v9.3 强制 — decisions 27b57469 第9要素）：Golden Path 涉及「外部用户可写入 / 客服 agent 接收外部输入 / 爬虫内容入 pipeline」，若输入对抗面表留空（无信任等级/无 prompt injection 防护/无越权拒绝策略）→ REVISION；纯内部任务显式填 N/A 则放行。
+14. **设备/agent 调服务端缺「真实调用方请求 shape」或 DoD 与之不一致 → 打回**（v9.5 强制 — 规则A，#1267 实证：DoD 用 body 传 tenant_id，生产 Android agent 发 x-agent-id header，两条代码路径，测的永远绿、真的从没人碰）：凡 Golden Path 含真实调用方（Android/Windows agent、外部 webhook），合同必须内嵌 `## 真实调用方请求 shape` 段（来源：agent 源码/抓包/现网日志），且 DoD 断言构造请求的认证方式与关键字段（header/body、字段名）与该 shape 逐字段一致。段缺失 → 向 Proposer 索要真实调用方请求 shape 作为合同前提，REVISION；有段但 DoD 不一致 → 第 1 维/第 6 维低分打回。
+15. **第三方 API 全 mock 零真调 → 打回**（v9.5 强制 — 规则B，#1269/#1271 实证：5 处 judge-video 调用全 force_result/force_timeout/假图 data_b64，模型下线与 API 格式错全部漏过）：凡 ability 依赖第三方 API（LLM/支付/短信/平台），DoD 至少一条 [BEHAVIOR] 真 key 真请求真响应业务字段校验。`grep -nE 'force_|stub|data_b64' contract-dod.md` 命中且逐条核对后找不到任何一条真调断言 → 第 6 维低分 REVISION。
+16. **有 mock 豁免但无「未覆盖真实链路清单」→ 打回**（v9.5 强制 — 规则C）：DoD 出现 force_*/stub/假数据时，合同必须附 `## 未覆盖真实链路清单` 段（逐条：被顶替的真实链路点｜原因｜真验证补位计划）；缺段、或清单避重就轻漏列明显被 mock 的链路点 → REVISION。无 mock 时显式写 N/A 才合规。
+17. **target_environment 与 ability 真实运行环境不匹配 → 打回**（v9.5 强制 — 规则D，#1256 实证：windows_wechat 通道存在但 sprint 没路由过去，合并后真机爆 5 个致命 bug——"有枪没上膛"）：Reviewer 必须核对 PRD/合同的 target_environment 与 ability 真实运行环境：Line04 微信 UI/RPA ability → 必须 windows_wechat（xian-rog 真机 e2e-wechat-rpa.yml）；Android agent ability → Android 真机通道落地前必须在「未覆盖真实链路清单」显式登记「真机段未覆盖」；环境选错/漏选 → 第 7 维 0 分 REVISION。
 
 少一项 → 第 2 维 scope_match_prd 或第 4 维 internal_consistency 扣分。Golden Path 断链 → 直接 REVISION 不打分。
 
@@ -142,6 +147,8 @@ Proposer 产出的 `contract-draft.md` 格式是 **Golden Path Steps**：每步 
 - ❌ **DB 写入**类合同 `SELECT count(*)` 无 `created_at > NOW() - interval` 时间窗（历史数据冒充）
 - ❌ **UI 交互**类合同无 `toBeVisible` / `toHaveText` / 截图比对可见状态断言
 - ❌ **真机 RPA / 生产 env 集成**类（微信/抖音真机操控、依赖生产中台 env）合同的接缝点只用 mock/CI 断言、无真目标验证项（真机微信真收真回 / 生产 env 真出结果），且未标 `logic-done-pending` → 第 1 维 / 第 6 维低分（详见上方 Golden Path 覆盖审查第 9、10 条）
+- ❌ **设备/agent 调服务端**类合同缺 `## 真实调用方请求 shape` 段，或 DoD 断言的认证方式/字段名与生产调用方不逐字段一致（规则A — 详见 Golden Path 覆盖审查第 14 条）
+- ❌ **第三方 API**（LLM/支付/短信/平台）类合同 DoD 全部 force_*/stub/假数据，无一条真 key 真请求真响应校验断言（规则B — 详见 Golden Path 覆盖审查第 15 条）
 
 **[BEHAVIOR] ≥ 4 数量检查（归属第 6 维，v9.1 明确）**：`grep -c '^- \[ \] \[BEHAVIOR\]' contract-dod.md` < 4（至少覆盖 schema 字段 / keys 完整性 / 禁用字段反向 / error path 四类各一条）→ 第 6 维低分 REVISION。**此数量检查由第 6 维负责，不归第 7 维 ci_workflow_alignment**（第 7 维只审 CI Workflow 内容对齐）。
 
