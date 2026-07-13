@@ -1,3 +1,8 @@
+## [2026-07-13] harness-generator 7.8.0 + harness-contract-proposer 9.9.0 — updated
+**症状**: Generator 开发 RPA 代码时盲写——容器内 vitest 绿≠真机能跑,微信 UIA/几何类改动反复真机炸、来回修二十几轮;合同层"真机真收真回"断言没有统一可执行 oracle,evaluator 无法机检。
+**根因**: RPA 快验通道(cecelia #3839/#3843 + zenithjoy-workspace #1270/#1272,已上生产并真机验收)修好了路,但 proposer/generator skill 一个字没提——通道存在与否 Generator 不知情,"不盲写"靠人记得而非系统保证。
+**修改**: ①proposer 领域验证规则新增「RPA 快验通道 dev-verify」小节:windows_wechat 等真机 RPA 类合同至少一条 [BEHAVIOR] 必须写成快验通道回执断言(exit_code=0+stdout 领域内容,含防作弊注记);②generator 新增 Step 5.5:碰 RPA 执行路径的 sprint 在 push 前必须经 POST /api/brain/rpa/dev-verify 真机自验(RPA 快验通道纪律),回执贴进 Test Evidence。
+
 ## [2026-07-12] line-report v1.0.0 — created（按 Line 维度的经营日报/周报/月报）
 
 **症状**: 系统只有垂直领域报告（daily-report=Line04 客户销售复盘、ci-patrol=CI 健康巡检），没有跨 Line 的经营视角报告——主理人无法回答"每条 Line 今天/这周/这个月完成了多少任务、做了多少决策、和上一周期比怎么样"（用户 2026-07-12 提出，/plan 判 Initiative）。
