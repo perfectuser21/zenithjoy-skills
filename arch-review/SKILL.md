@@ -1,9 +1,10 @@
 ---
 name: arch-review
-version: 1.0.0
+version: 1.1.0
 created: 2026-03-10
-updated: 2026-03-10
+updated: 2026-07-14
 changelog:
+  - 1.1.0: 台账-现实一致性双探针（handoff 0714 刀4 — 台账漂移无人察觉根治）— 4A 新增第 7/8 项：探针A【台账新鲜度】active journey 的 journeys.updated_at 落后该线最近 merged PR >7 天 ⚠️ / >21 天 🔴 开 followup；探针B【smoke 一致性】journey.e2e_test_path 脚本 grep 近 60 天 decisions「废弃/去X」关键词，命中 🔴 开 Issue。两探针查 Brain DB 不依赖 repo 代码，「无 packages/brain/src 则跳过」前置改为只跳 4A 1-6 与 4B，探针照常执行；输出表同步加两行
   - 1.0.0: 初始版本 - 从 /architect Mode 3 迁移 + 新增 Mode 4 架构巡检
 description: |
   架构审查官。负责验证、巡检、发现偏离与结构退化，不承担新架构设计职责（那是 /architect 的事）。
@@ -123,10 +124,11 @@ curl -s -X PATCH http://localhost:5221/api/brain/projects/$INITIATIVE_ID \
 
 ### 前置检查
 
-若 `packages/brain/src/` 不存在，跳过架构巡检并返回 HEALTHY（该仓库无 Cecelia Brain 模块）。
+若 `packages/brain/src/` 不存在，跳过**代码类检查（4A 第 1-6 项 + 4B）**（该仓库无 Cecelia Brain 模块）。**但 4A 第 7/8 项台账探针查的是 Brain DB（localhost:5221 / psql cecelia），不依赖 repo 代码，必须照常执行**——不允许因此前置返回 HEALTHY 直接退出。
 
 ```bash
-[ ! -d "packages/brain/src" ] && echo '{"verdict":"HEALTHY","summary":"无 Cecelia Brain 模块，跳过巡检"}' && exit 0
+SKIP_CODE_REVIEW=0
+[ ! -d "packages/brain/src" ] && SKIP_CODE_REVIEW=1 && echo "无 Cecelia Brain 模块：跳过 4A 1-6 与 4B，仅跑 4A 7/8 台账探针"
 ```
 
 ### 执行节奏
@@ -144,7 +146,7 @@ curl -s -X PATCH http://localhost:5221/api/brain/projects/$INITIATIVE_ID \
 
 检查实现是否偏离 `architecture.md` / ADR / SYSTEM_MAP。
 
-**每日 6 项检查**：
+**每日 8 项检查**（第 7/8 项为台账探针，查 Brain DB，不受「无 packages/brain/src」前置影响）：
 
 **1. Boundary Drift**
 L0/L1/L2/Planner/Skill 职责边界是否被侵蚀，有无跨层直接调用。
@@ -173,6 +175,39 @@ grep -rn "TODO\|FIXME\|HACK\|temp\|temporary" packages/brain/src/ --include="*.j
   grep -v node_modules | grep -v ".test."
 ```
 超过 7 天的 TODO 标记为结构债。
+
+**7. 台账新鲜度探针（v1.1 — 探针A）**
+
+> 实证（handoff 0714）：journeys 表 Path2/Path4 updated_at 停在 2026-05-22，与该线持续 merge 的 PR 脱节 46+ 天无人察觉。harness-report 6.7.0 的翻牌义务是写入侧，本探针是巡检侧第二道闸。
+
+对每条 active journey（排除名称含 smoke/test 的污染条目），比较 `journeys.updated_at` 与该线最近 merged PR 时间：
+
+```bash
+psql -h localhost -p 5432 -U postgres -d cecelia -tc \
+  "SELECT id, name, updated_at FROM journeys WHERE status='active' AND name !~* 'smoke|test';"
+# 该线最近 merged PR 时间：按 journey 名/line 关键词匹配 PR 标题
+# gh pr list --repo <base_repo> --state merged --search "<line关键词>" --limit 1 --json mergedAt,title
+# 匹配不到 PR 时，以 tasks 表该 journey_id 最近 completed 任务的 updated_at 兜底
+```
+
+判据：`journeys.updated_at` 落后该线最近 merged PR 时间 **> 7 天 → ⚠️**；**> 21 天 → 🔴 开 `arch_review_followup` task**（写明 journey id、落后天数、最近 PR）。
+
+**8. smoke 一致性探针（v1.1 — 探针B）**
+
+> 实证：golden-path-2-smoke.sh 停在 05-26 还在测已删除的飞书流程，与用户 07-07「去飞书改本地」决策（431acd2c）打架 46 天。
+
+对每条 active journey 的 `e2e_test_path` 指向的 smoke 脚本，grep 已废弃方案关键词。关键词来源：decisions 表近 60 天「废弃/去X/弃用/改用」类决策：
+
+```bash
+psql -h localhost -p 5432 -U postgres -d cecelia -tc \
+  "SELECT id, topic, decision FROM decisions WHERE created_at > NOW() - interval '60 days' AND (topic || ' ' || decision) ~ '废弃|弃用|去飞书|不再用|改用|替换为';"
+# 从命中决策提取被废弃的方案关键词（如：飞书 / Bitable / LangGraph），逐个 grep smoke 脚本：
+grep -nE '<废弃关键词>' <repo>/<e2e_test_path> && echo "🔴 该 smoke 在测已废弃方案"
+```
+
+命中 → **🔴 开 Issue**（POST /api/brain/issues，body 写明脚本路径、命中行、冲突 decision id）。脚本文件不存在 → ⚠️（journey 声明了 e2e_test_path 但脚本缺失，同样是台账-现实断裂）。
+
+**探针裁决联动**：第 7/8 项任一 🔴 → 本次巡检 verdict 不得为 HEALTHY（至少 NEEDS_ATTENTION）。
 
 ---
 
@@ -224,6 +259,8 @@ git log --since="30 days ago" --name-only --pretty=format:"" | \
 | Core Module Complexity | ✅/⚠️/🔴 | ... |
 | Concurrency Safety | ✅/⚠️/🔴 | ... |
 | Temp Patch Accumulation | ✅/⚠️/🔴 | ... |
+| Ledger Freshness (探针A) | ✅/⚠️/🔴 | ... |
+| Smoke Consistency (探针B) | ✅/⚠️/🔴 | ... |
 
 ### 4B Structural Health Findings
 [轻量/完整] — 孤岛、God Module、结构债信号
