@@ -7,9 +7,10 @@ description: |
   移植 Superpowers 6.0 subagent-driven-development 零件：进度台账 / 文件接力 / 四态出口协议 / 单评审双裁决 / compaction 恢复。
   点火方：Brain harness dispatch（无头）或人工前台（同一份 skill 两种触发，行为一致）。
   /dev 仍是唯一需求入口：本 skill 消费 /dev 路径C 的交接契约（PrepPRD + 铁律清单 + NFR），不做需求对抗。
-version: 2.6.0
+version: 2.7.0
 created: 2026-07-04
 changelog:
+  - 2.7.0: Step 6 新增「毕业（测试入册）」机械步（刀1b relay 路径，配套 cecelia test-pyramid-guard 孤儿棘轮锁 0）——judge PASS 后、SHA 锚定与 merge 前，仓库存在 scripts/graduate-sprint-tests.mjs 时必须跑毕业脚本把 sprints/ 下 tests/ 与 e2e-verify.sh 搬进永久池（tests/regression/<slug>/ + scripts/smoke/e2e/<slug>.sh），commit+push 等 CI 绿再锚定；无脚本的 repo（如 zenithjoy-workspace）跳过。SHA 锚定条款新增与 update-branch 对称的毕业 commit 豁免（git diff --stat HEAD~1 证明纯 rename 零内容变更 → re-anchor 不触发 Step 4 全量重评）。插点依据：evaluator B-1 已把 e2e-verify.sh 固化完毕、merge 后无人再接手，且 guard 棘轮 orphans=0 会把没毕业的 PR 拦红
   - 2.5.0: 规则C配套（handoff 0714 刀2，proposer 9.10.0/reviewer 9.5.0）——Step 3 generator 验收新增「未覆盖真实链路清单转呈」：合同含 ## 未覆盖真实链路清单 段（非 N/A）必须原样进 PR 描述（缺则让 generator gh pr edit 补上）；Step 7 report 同步把该清单转呈最终报告/通知正文。mock 豁免必须呈现给用户，禁止静默
   - 2.6.0: EVA v2 审计六处修法——①Step 7 cost 条文诚实化（controller 拿不到 subagent 真实成本，30 条实证 29 条恒 0：有真实数据才填，否则填 0 并台账注明 cost=unsettled，Brain 侧 session 用量结算是正解已立案）②Step 5 judge VERDICT 对称上报 relay-runs judge_verdict（DB 30 条仅 2 非空的病根）③Step 3 PR 开出即台账 append 中间态 generator: pr_opened 行（31e29c09 实证死亡窗口台账止步 gan）④Step 3 controller 验收扩为四件：PR body/title 必须 grep 到 task id（Step 0.4 外部真相重建依赖此约定）⑤横切纪律 A 加 gan 附件质量门（rubric 必须标准 7 维，d063b3e5 实证自创 5 维）+ gan done 行登记 judgments_written=N ⑥report 台账行带明细 verdict/learnings_inserted/concerns（a85e0582 实证裸行无从审计）
   - 2.4.0: 治断点恢复失忆（issue 45dd6925）——Step 0.4 新增「台账缺失 ≠ 新 sprint」外部真相重建：.harness/progress.md 是 gitignore 本地文件，worktree 收割/重建后必然蒸发（07-13 d063b3e5 实证重派=全新 clone，恢复 session 重跑 planner+GAN 白烧 $7+）；台账不存在时先查 gh pr list（open→重建台账续跑 / merged→直跳 merge 后半程）+ relay-runs phase 佐证，全无外部真相才许当新 sprint
@@ -364,13 +365,29 @@ curl -s -m 10 -X PATCH "$BRAIN/api/brain/orchestrator/relay-runs/${HARNESS_INITI
 
 - merge 动作前后按「横切纪律 B」自报 node=merge。
 - review_required → 起预览环境 + Bark 通知主理人（附 approve 命令），阻塞等 task_events 批准事件
+- **毕业（测试入册）——judge PASS 后、SHA 锚定与 merge 前的机械步（v2.7）**。为什么插在这里：evaluator B-1 已把 e2e-verify.sh 固化进 sprint 目录（这是该脚本内容定稿的唯一时点），merge 之后没有任何阶段再碰这条 PR——所以「e2e-verify.sh 之后、merge 之前」是毕业的唯一时点；且 cecelia 已上线 test-pyramid-guard 孤儿棘轮锁 0，sprints/ 下留测试的 PR 会被 CI 直接拦红，不毕业就合不进去：
+
+```bash
+# 条件：仓库存在毕业脚本才执行（无则跳过——该 repo 未启用金字塔守卫，如 zenithjoy-workspace）
+if [ -f scripts/graduate-sprint-tests.mjs ]; then
+  # 搬运 sprints/<sprint>/tests/ → tests/regression/<slug>/、e2e-verify.sh → scripts/smoke/e2e/<slug>.sh（纯 rename）
+  # --update-refs：同步重写根 DoD.md 里的旧路径引用，防毕业 commit 被 dod-behavior-dynamic 拦死（#3870 实证，cecelia #3874 起支持）
+  node scripts/graduate-sprint-tests.mjs --sprint "$SPRINT_DIR" --update-refs
+  git add -A && git commit -m "chore(quality): 毕业 sprint 测试入册永久池（纯 rename）"
+  git push
+  # 毕业 commit 会重触 CI——照 Step 3「CI 阻塞等待」同款 ci-poll 循环等到全绿，再继续下面的 SHA 锚定/merge
+else
+  echo "[毕业] 本 repo 无 scripts/graduate-sprint-tests.mjs，跳过（未启用金字塔守卫）"
+fi
+```
+
 - **merge 前 SHA 锚定硬检查（确定性 bash，c66bbedc 实证：锚定后又进代码 commit、未重评直接 merge）**——"新 commit 旧 verdict 作废"不只写在 Step 4，merge 这里必须机械复核：
 
 ```bash
 [ "$(gh pr view <pr> --json headRefOid -q .headRefOid)" = "$ANCHORED_SHA" ] || 回 Step 4 重评
 ```
 
-  不相等 → **禁止 merge**，回 Step 4 以当前 head 重评（evaluator + judge 都要），台账 append 重评行后才可回到本步
+  不相等 → **禁止 merge**，回 Step 4 以当前 head 重评（evaluator + judge 都要），台账 append 重评行后才可回到本步。**豁免（v2.7，与下面 update-branch 豁免对称）：head 变化仅由本步「毕业 commit」造成时**——用 `git diff --stat HEAD~1` 证明该 commit 是纯 rename 零内容变更（全部行形如 `old => new`，insertions/deletions 均为 0）——允许以毕业后的 head 直接 re-anchor，不触发 Step 4 全量重评，台账记 re-anchor 行（注明 graduation）
 - merge（唯一权威路径）：evaluator PASS + judge PASS（+ 人工批准如需）→ `gh pr merge --squash --delete-branch`
   - BEHIND → `gh pr update-branch` ≤3 次；**update 改变 head sha → evaluator/judge verdict 以新 sha 重锚**（轻量 rebase 不重评，台账记 re-anchor 行）
   - CONFLICTING → 终局 FAIL 上报
