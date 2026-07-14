@@ -1,3 +1,13 @@
+## [2026-07-14] harness-contract-proposer 9.12.0 + harness-generator 7.10.0 + harness-evaluator 1.24.0 — 禁 mock 被改的边三棒接力（刀2）
+**症状**: 接缝层 bug 全 mock 单测结构性抓不到——#3830 recovery 钩子被剪断、#3848 sprint_dir 跨节点传递丢失、#3808 completed↔queued 状态振荡、#3840 PR 池不幂等，四起事故全长在模块↔模块/代码↔DB 的接缝，测试全绿真机全炸。
+**根因**: 合同层对"被改的那条边能不能 mock"零约束——mock 出来的邻居永远配合，真邻居才翻脸；下游 generator/evaluator 也没有对应的执行/执法条款。
+**修改**: ①proposer 9.12.0 新增硬规则「禁 mock 被改的边」：本单涉及调度/状态机/跨模块数据传递/生命周期钩子/DB写路径之一 → 合同 failing test 必须不 mock 被改的边（真 Postgres/真相邻模块，只许 mock 更外层无关依赖），合同必含 `## 禁 mock 边清单` 段逐条列禁 mock 的边（空清单须写理由，仅纯UI/纯文档类允许），自查 checklist 第 9 条；②generator 7.10.0 TDD 纪律加执行规则：清单内的边 vi.mock/stub 命中即违约（CONTRACT IS LAW），需真 PG 的测试按合同放 integration 命名/位置，CI 由 brain-integration job 起真 Postgres 跑；③evaluator 1.24.0 新增 Step B-1.8b 机械核查：读清单 → grep 测试文件 vi.mock/jest.mock/stub 目标 → 命中 = CONTRACT-IS-LAW FAIL（含证据文件+行号），清单缺失但涉接缝改动 = contract_invalid 归责 GAN。
+
+## [2026-07-14] harness-controller 2.7.0 + engine-ship 16.4.0 — 毕业步（sprint 测试入册永久池，刀1b）
+**症状**: cecelia 主仓上线 test-pyramid-guard 后孤儿棘轮锁 0——sprints/ 下留测试的 PR 会被 CI 拦红，但 relay 与有头两条路径都没有"毕业"动作，PR 到 merge 前测试仍留在 sprints/ 下必然撞闸。
+**根因**: 主仓 scripts/graduate-sprint-tests.mjs（tests→tests/regression/<slug>/、e2e-verify.sh→scripts/smoke/e2e/<slug>.sh）已就位，但两条交付路径的 skill 都没接线这个机械步。
+**修改**: ①controller 2.7.0 Step 6 在 judge PASS 后、SHA 锚定与 merge 前插入毕业机械步（仓库存在 graduate 脚本才执行，无则跳过如 zenithjoy-workspace；跑脚本→commit"chore(quality): 毕业 sprint 测试入册永久池（纯 rename）"→push→ci-poll 等绿再锚定），并给 SHA 锚定条款加与 update-branch 对称的毕业 commit 豁免（git diff --stat HEAD~1 证明纯 rename 零内容变更 → re-anchor 不触发 Step 4 全量重评）；插点依据=evaluator B-1 固化 e2e-verify.sh 之后、merge 之前是唯一时点。②engine-ship 16.4.0 新增 §1.5 毕业步（有头路径）：harness_mode=true 跳过（relay 由 controller 负责）；本分支 sprints/*/tests/ 或 sprints/*/e2e-verify.sh 有新增文件且 repo 有 graduate 脚本 → 逐 sprint 跑毕业 → commit+push（此时 PR 已开、watchdog 未接手，追加 commit 重触 CI 属正常）。
+
 ## [2026-07-14] arch-review 1.1.0 — 台账-现实一致性双探针（handoff 0714 刀4）
 **症状**: 台账漂移无人察觉——journeys Path2/Path4 updated_at 停在 05-22 与持续 merge 的 PR 脱节 46 天；golden-path-2-smoke.sh 还在测已删除的飞书流程，与 07-07 去飞书决策打架。
 **根因**: arch-review Mode 4 只巡 repo 代码结构（且有「无 packages/brain/src 则跳过」前置），Brain DB 台账与现实的一致性没有任何巡检方。
