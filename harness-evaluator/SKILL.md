@@ -6,10 +6,11 @@ description: |
   evaluator 在 CI 绿之后、PR merge 之前真启服务 + 跑 contract 的 manual:bash 命令验真行为。
   PASS → 允许 merge；FAIL → 不 merge，带反馈打回 Generator 在 PR 分支 fix loop（main 不变动）。
   单模式（harness v2 始终 IS_FINAL_E2E=true）：读 contract-draft.md 的 ## E2E 验收 脚本，按 target_environment 派发跑 Golden Path 端到端真实行为。
-version: 1.23.0
+version: 1.24.0
 created: 2026-05-06
 updated: 2026-07-14
 changelog:
+  - 1.24.0: 新增 Step B-1.8b 禁 mock 边机械核查（刀2，配套 proposer 9.12.0/generator 7.10.0）——读合同 ## 禁 mock 边清单 → grep 本单测试文件的 vi.mock/jest.mock/stub 目标 → 命中清单内的边 → CONTRACT-IS-LAW FAIL（feedback 含证据文件+行号）；清单缺失但本单涉及调度/状态机/跨模块传递/生命周期钩子/DB写路径 → FAIL 归责 GAN；#3830/#3848/#3808/#3840 实证接缝层 bug 全 mock 单测结构性抓不到
   - 1.23.0: EVA v2 审计四修——(E1) verdict 必带真跑证据：behavior_tests 每条必须是对象 {command, exit_code, log_tail}（log_tail=命令输出末 5 行），缺任一 = 该条视为未跑禁 PASS（a85e0582 实证 verdict 只列命令原文无法区分真跑/声称跑过）；(E4) Step B-1 固化段加分支判断：detached HEAD（post-merge 补验模式）跳过 commit/push 并在 verdict notes 说明，普通路径 push 失败输出 WARN 记入 notes（删静默吞掉）；(E5) 三处 awk 标题正则放宽为 /^##+[[:space:]]*E2E[[:space:]]*验收/（### 或带空格变体不再整段漏空）；(E7) 注入变量表补 PR_BRANCH 行
   - 1.22.0: a638f840 三修——(a) Step 0a 支持"PR 已 merge/分支已删"场景：checkout 失败时查 gh pr state，MERGED 则在 merge commit/origin/main 上补验（post-merge 模式），仅 PR 非 MERGED 时才 FATAL；(b) Step B-1 三处 awk 改为提取 E2E 段内全部代码块（拼接至下一个 ## 标题，旧版只取第一块，多块合同 Step 2-9 被静默丢弃）；(c) bash 固化前加 bash -n 语法门，语法坏脚本在 setup 就 FAIL 不入库
   - 1.21.0: 跨 repo 化刀3——①变量表 DB 行改为优先 $DB_URL（payload/env 注入），postgresql://localhost/cecelia 仅作 cecelia 本机 fallback；②url_validation gate 按 repo 注入：cecelia 默认仍 grep localhost:5221|psql cecelia，第三方 repo 以 $EXPECTED_API_HOST/$DB_URL 为准，两者都未提供时对第三方 repo 降级 WARN 而非 FAIL（避免假 FAIL）；③windows 分支与 Step B-2.6 的 REPO 不再写死默认仓库：fallback 顺序 $GITHUB_REPO → payload.base_repo URL 解析 owner/repo → 两者都缺才回退旧默认并打 WARN
@@ -481,6 +482,33 @@ cat > "$WORKSPACE/.brain-result.json" << BREOF
 BREOF
 exit 0
 ```
+
+#### Step B-1.8b: 禁 mock 边机械核查（v1.24 — CONTRACT-IS-LAW 执法步）
+
+**读合同 `## 禁 mock 边清单`，机械 grep 本单测试文件的 mock 目标，命中清单内的边 → CONTRACT-IS-LAW FAIL（含证据行号）。** 背景：#3830/#3848/#3808/#3840 实证接缝层 bug（调度/状态机/跨模块传递/生命周期钩子/DB写路径）全 mock 单测结构性抓不到，proposer 9.12.0 起合同必含该清单。
+
+执行步骤：
+
+1. 读 `${SPRINT_DIR}/contract-draft.md` 的 `## 禁 mock 边清单` 段，提取每条边涉及的模块/表名关键词（如 `模块B`、`DB 表 X` → 关键词 `moduleB`、`pg`/`db`/表名）。
+2. 机械扫描本单测试文件的 mock 目标：
+
+```bash
+# 扫描 PR 内全部测试文件的 mock/stub 目标（带文件+行号作证据）
+grep -rnE "vi\.mock|jest\.mock|\bstub|createMock|mockImplementation" \
+  $(git diff --name-only "$(git merge-base origin/main HEAD)"..HEAD | grep -E '\.(test|spec)\.(ts|js|mjs|cjs)$') 2>/dev/null
+```
+
+3. 逐行对照：mock 目标命中清单内任一条边（被 mock 的模块路径/DB 客户端/表名属于清单所列的边）→ 违约：
+
+```bash
+cat > "$WORKSPACE/.brain-result.json" << BREOF
+{"verdict":"FAIL","task_id":"$TASK_ID","failed_step":"contract_is_law_mock_edge","log_excerpt":"合同禁 mock 边清单第 N 条「<边描述>」被 mock 顶替：<测试文件>:<行号> vi.mock('<目标>')。该边是本单被改的接缝，必须真调（真 Postgres/真相邻模块），只允许 mock 更外层无关依赖。"}
+BREOF
+exit 0
+```
+
+4. 清单为空且带合法理由（纯UI/纯文档类）→ 本步跳过记 notes；**清单段缺失**但本单改动明显涉及调度/状态机/跨模块数据传递/生命周期钩子/DB写路径 → FAIL（failed_step=contract_invalid，责任在 GAN 合同层，不进 generator fix loop）。
+5. 命中零条 → 本步 PASS，verdict notes 记 `mock_edge_check: clean（清单 N 条，扫描 M 个测试文件）`。
 
 #### 领域验证死规则（evaluator 侧卡点 — 执行前扫描，缺对应 oracle 直接 FAIL）
 
