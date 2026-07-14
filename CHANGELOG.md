@@ -1,3 +1,8 @@
+## [2026-07-14] arch-review 1.2.0 — 部署配置漂移探针（decision be038f9e 铁律配套）
+**症状**: 「验证过了、汇报完成了、隔天又崩」复发 5+ 次——每轮完成只验证运行时当下状态（容器 env 对、进程连对库），下次正常部署/重启把状态冲掉。eval 首跑即抓到活漏洞：com.zenithjoy.api plist DATABASE_NAME=cecelia 与运行时 zenithjoy 漂移（issue b2cce1ac）。
+**根因**: 持久化配置（.env.docker 双仓、deploy 脚本默认值、LaunchDaemon plist、GitHub 仓库变量）与运行时状态之间没有任何巡检方核对一致性，验收标准只看「现在跑得对」。
+**修改**: 4A 新增第 9 项探针C【部署配置漂移】：docker inspect / launchctl print 取运行时 env，对比持久化源推导值；关键变量运行时≠持久化 🔴 开 Issue，持久化源互相矛盾 ⚠️。eval 实跑修正 5 处：.env.docker 主仓+部署根两份都比且互 diff、launchd 扫全量 plist 不按 manifest（会漏 zenithjoy 系）、sed 取整段代替 grep -A20 截断、gh variable 验 exit code、不存在的部署脚本跳过不卡住。探针C 与 A/B 同为非代码类，「无 packages/brain/src」时照常执行。
+
 ## [2026-07-14] harness-contract-proposer 9.12.0 + harness-generator 7.10.0 + harness-evaluator 1.24.0 — 禁 mock 被改的边三棒接力（刀2）
 **症状**: 接缝层 bug 全 mock 单测结构性抓不到——#3830 recovery 钩子被剪断、#3848 sprint_dir 跨节点传递丢失、#3808 completed↔queued 状态振荡、#3840 PR 池不幂等，四起事故全长在模块↔模块/代码↔DB 的接缝，测试全绿真机全炸。
 **根因**: 合同层对"被改的那条边能不能 mock"零约束——mock 出来的邻居永远配合，真邻居才翻脸；下游 generator/evaluator 也没有对应的执行/执法条款。

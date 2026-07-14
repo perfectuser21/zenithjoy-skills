@@ -1,9 +1,10 @@
 ---
 name: arch-review
-version: 1.1.0
+version: 1.2.0
 created: 2026-03-10
 updated: 2026-07-14
 changelog:
+  - 1.2.0: 部署配置漂移探针（decision be038f9e 铁律配套 — 「运行时对但持久化没改，下次部署冲掉」已复发5+次根治）— 4A 新增第 9 项探针C：对生产运行时（docker 容器 / LaunchDaemon）取实际 env，对比持久化源（repo .env.docker/compose、deploy-lib.sh 默认值、GitHub 仓库变量），关键变量运行时≠持久化推导值 🔴 开 Issue；持久化源互相矛盾 ⚠️。探针C 与 A/B 同为非代码类检查，「无 packages/brain/src」时照常执行；输出表加一行
   - 1.1.0: 台账-现实一致性双探针（handoff 0714 刀4 — 台账漂移无人察觉根治）— 4A 新增第 7/8 项：探针A【台账新鲜度】active journey 的 journeys.updated_at 落后该线最近 merged PR >7 天 ⚠️ / >21 天 🔴 开 followup；探针B【smoke 一致性】journey.e2e_test_path 脚本 grep 近 60 天 decisions「废弃/去X」关键词，命中 🔴 开 Issue。两探针查 Brain DB 不依赖 repo 代码，「无 packages/brain/src 则跳过」前置改为只跳 4A 1-6 与 4B，探针照常执行；输出表同步加两行
   - 1.0.0: 初始版本 - 从 /architect Mode 3 迁移 + 新增 Mode 4 架构巡检
 description: |
@@ -124,11 +125,11 @@ curl -s -X PATCH http://localhost:5221/api/brain/projects/$INITIATIVE_ID \
 
 ### 前置检查
 
-若 `packages/brain/src/` 不存在，跳过**代码类检查（4A 第 1-6 项 + 4B）**（该仓库无 Cecelia Brain 模块）。**但 4A 第 7/8 项台账探针查的是 Brain DB（localhost:5221 / psql cecelia），不依赖 repo 代码，必须照常执行**——不允许因此前置返回 HEALTHY 直接退出。
+若 `packages/brain/src/` 不存在，跳过**代码类检查（4A 第 1-6 项 + 4B）**（该仓库无 Cecelia Brain 模块）。**但 4A 第 7/8/9 项探针查的是 Brain DB 与生产运行时（localhost:5221 / psql cecelia / docker / launchctl），不依赖 repo 代码，必须照常执行**——不允许因此前置返回 HEALTHY 直接退出。
 
 ```bash
 SKIP_CODE_REVIEW=0
-[ ! -d "packages/brain/src" ] && SKIP_CODE_REVIEW=1 && echo "无 Cecelia Brain 模块：跳过 4A 1-6 与 4B，仅跑 4A 7/8 台账探针"
+[ ! -d "packages/brain/src" ] && SKIP_CODE_REVIEW=1 && echo "无 Cecelia Brain 模块：跳过 4A 1-6 与 4B，仅跑 4A 7/8/9 探针"
 ```
 
 ### 执行节奏
@@ -146,7 +147,7 @@ SKIP_CODE_REVIEW=0
 
 检查实现是否偏离 `architecture.md` / ADR / SYSTEM_MAP。
 
-**每日 8 项检查**（第 7/8 项为台账探针，查 Brain DB，不受「无 packages/brain/src」前置影响）：
+**每日 9 项检查**（第 7/8/9 项为探针，查 Brain DB 与生产运行时，不受「无 packages/brain/src」前置影响）：
 
 **1. Boundary Drift**
 L0/L1/L2/Planner/Skill 职责边界是否被侵蚀，有无跨层直接调用。
@@ -207,7 +208,44 @@ grep -nE '<废弃关键词>' <repo>/<e2e_test_path> && echo "🔴 该 smoke 在�
 
 命中 → **🔴 开 Issue**（POST /api/brain/issues，body 写明脚本路径、命中行、冲突 decision id）。脚本文件不存在 → ⚠️（journey 声明了 e2e_test_path 但脚本缺失，同样是台账-现实断裂）。
 
-**探针裁决联动**：第 7/8 项任一 🔴 → 本次巡检 verdict 不得为 HEALTHY（至少 NEEDS_ATTENTION）。
+**9. 部署配置漂移探针（v1.2 — 探针C）**
+
+> 实证（decision be038f9e，2026-07-14 Alex 拍板铁律的巡检侧配套）：同一漏洞复发 5+ 次——每轮"完成"只验证运行时当下状态（容器 env 对、进程连对库），没人验证下次正常部署/重启会不会把状态冲掉。持久化配置（.env.docker、deploy-lib.sh 默认值、GitHub 仓库变量）与运行时状态之间的缝每次都从这里漏。本探针的问题只有一个：**"如果现在重新部署/重启，这个服务还会得到和当前一样的配置吗？"**
+
+对每个生产运行时，取**实际运行时 env**，对比**持久化源推导出的期望值**：
+
+```bash
+# ① Docker 容器（cecelia prod/staging）：运行时实际 env
+docker inspect cecelia-node-brain --format '{{json .Config.Env}}' | jq -r '.[]' | sort
+# 持久化源有两份 .env.docker，必须两份都比、且两份互 diff（实证坑：容器实际由
+# CD 专用仓 ~/perfect21/cecelia-deploy-main/.env.docker 启动，主仓那份被 gitignore
+# 且可能领先/落后——只比其中一份会产生假🔴或漏真🔴）：
+diff ~/perfect21/cecelia/.env.docker ~/perfect21/cecelia-deploy-main/.env.docker
+# 再加 docker-compose.yml / docker-compose.staging.yml 的 environment 段默认值。
+# 部署脚本默认值：看实际存在的 scripts/deploy-local.sh、scripts/brain-deploy.sh 等；
+# 引用了不存在的脚本名时跳过并在报告注明，不要卡住。
+
+# ② launchd 服务：扫 /Library/LaunchDaemons/*.plist 全量（排除 *.bak*），
+# 不要只按 launchd-patrol manifest 清单——manifest 只含 cecelia 系 label，
+# 会漏掉 zenithjoy 系（实证：首跑抓到的🔴恰在 com.zenithjoy.api）：
+for p in /Library/LaunchDaemons/com.*.plist; do
+  label=$(basename "$p" .plist)
+  launchctl print "system/$label" 2>/dev/null | sed -n '/environment = {/,/}/p'   # 运行时（勿用 grep -A20，50+ 变量会截断）
+  /usr/libexec/PlistBuddy -c "Print :EnvironmentVariables" "$p" 2>/dev/null        # 持久化
+done
+
+# ③ GitHub 仓库变量（CI/CD 部署时注入的）——空列表和权限失败长得一样，必须验证 exit code：
+gh variable list --repo perfectuser21/cecelia; echo "exit=$?"
+```
+
+比对方法：只比**关键变量**（DB 连接、端口、API base、feature flag、部署目标），不逐字节比对全量 env。对每个关键变量回答：持久化源推导值 == 运行时实际值？
+
+判据：
+- 关键变量**运行时值 ≠ 持久化推导值** → **🔴 开 Issue**（POST /api/brain/issues，写明服务名、变量名、运行时值 vs 持久化值、哪个持久化文件要改）——这正是"下次部署会冲掉"的活漏洞
+- **持久化源之间互相矛盾**（.env.docker 说 A、deploy-lib.sh 默认值说 B、GitHub 变量说 C）→ **⚠️**（当前可能碰巧对，但取值优先级一变就漂移）
+- 容器/服务不在跑导致取不到运行时 env → ⚠️ 记录（那是 launchd-patrol 的辖区，但要写进报告）
+
+**探针裁决联动**：第 7/8/9 项任一 🔴 → 本次巡检 verdict 不得为 HEALTHY（至少 NEEDS_ATTENTION）。
 
 ---
 
@@ -261,6 +299,7 @@ git log --since="30 days ago" --name-only --pretty=format:"" | \
 | Temp Patch Accumulation | ✅/⚠️/🔴 | ... |
 | Ledger Freshness (探针A) | ✅/⚠️/🔴 | ... |
 | Smoke Consistency (探针B) | ✅/⚠️/🔴 | ... |
+| Deploy Config Drift (探针C) | ✅/⚠️/🔴 | ... |
 
 ### 4B Structural Health Findings
 [轻量/完整] — 孤岛、God Module、结构债信号
