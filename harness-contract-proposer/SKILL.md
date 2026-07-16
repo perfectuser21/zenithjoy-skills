@@ -4,10 +4,11 @@ description: |
   Harness Contract Proposer — Harness v5 GAN Layer 2a：
   读 PRD，GAN 对抗写 Golden Path 合同（每步含真实验证命令）；
   Reviewer APPROVED 后倒推拆 task-plan.json。
-version: 9.13.0
+version: 9.14.0
 created: 2026-04-08
 updated: 2026-07-16
 changelog:
+  - 9.14.0: 三段式 [BEHAVIOR] 剧本格式升级——每条 BEHAVIOR 须含三段：①「动作」（操作步骤）②「预期观察」（用户/系统可见状态变化）③「验证命令」（可执行断言）；新增 until-loop 等待预算范式（within 预算轮询，如 within 60s 收到消息确认）；legacy 兼容标记（存量纯命令写法保留但标为 legacy，不强制迁移）；样例剧本：点设置 → within 60s 收到消息
   - 9.13.0: [BEHAVIOR] 格式加验证等级标记+锚定父路声明（决策145014a4 W3）——[BEHAVIOR] 条目格式新增 [L1|L2|L3] 标记（与 judge #4004 解析约定一致：behavior_tests[i].verification_level 字段，L1=替身/L2=服务端真验/L3=真机真验）；新增「锚定父路声明」硬规则：sprint GP 段首行必须写「覆盖父路 <golden_path名或id> 第 N-M 步」或「独立小路（无父路）」，禁留空
   - 9.12.0: 新增硬规则「禁 mock 被改的边」（刀2 — #3830 recovery钩子剪断/#3848 sprint_dir跨节点丢/#3808 状态振荡/#3840 PR池不幂等实证：接缝层 bug 全 mock 单测结构性抓不到）——本单改动涉及调度/状态机/跨模块数据传递/生命周期钩子/DB写路径之一时，合同 failing test 必须不 mock 被改的那条边（真 Postgres、真相邻模块，只许 mock 更外层无关依赖）；合同必须输出「## 禁 mock 边清单」小节逐条列禁 mock 的边，空清单须写明理由（仅纯UI/纯文档类允许）；自查 checklist 新增第 9 条
   - 9.10.0: 真实链路四硬规则（handoff 0714 刀2 — #1267/#1269/#1271/#1256 实证根因）— 规则A【真实调用方 shape】合同必含 ## 真实调用方请求 shape 段，DoD 认证方式/关键字段与生产调用方逐字段一致（禁 body 传 tenant_id 而生产走 x-agent-id header 的双路径分叉）；规则B【第三方真调一次】涉第三方 API 的 DoD 至少一条真 key 真请求真响应校验，禁全 force_*/mock；规则C【mock 豁免显式登记】DoD 含 force_*/stub/假数据 → 合同必附 ## 未覆盖真实链路清单 段，controller 呈现进 PR 描述不许静默；规则D【target_environment 强制路由】微信 UI/RPA 必 windows_wechat，Android 通道未落地前真机段必入未覆盖清单；自查 checklist 新增第 8 条
@@ -272,6 +273,57 @@ vitest 测试文件还要写（generator TDD red-green 用），但**不再被 e
 示例：`- [ ] [BEHAVIOR] [L2] 任务完成后 DB 状态应更新 Test: manual:bash psql ... | grep completed`
 
 **每条 [BEHAVIOR] 必须标注等级，格式为 `[BEHAVIOR] [L1|L2|L3] <描述>`。**
+
+---
+
+## ⚡ 三段式 [BEHAVIOR] 剧本格式（v9.14 新增）
+
+**每条 [BEHAVIOR] 须按三段式剧本组织，缺任一段 Reviewer 打回：**
+
+| 段 | 说明 | 示例 |
+|---|---|---|
+| ①「动作」 | 用户/系统执行的操作步骤（点击/发送/调用等） | 用户点击「设置」按钮 |
+| ②「预期观察」 | 用户或系统可见的状态变化（界面变化/消息出现/DB 写入等） | within 60s 收到消息确认通知 |
+| ③「验证命令」 | 可执行的断言命令（manual:bash 形式，机器可跑） | `curl ... \| jq -e '.status=="ok"'` |
+
+### until-loop 等待预算范式
+
+涉及异步操作（消息发送、任务调度、文件生成等）时，「预期观察」段必须写明等待预算，并在「验证命令」段用 until-loop 实现轮询：
+
+```bash
+# within 60s 等待范式（标准写法）
+DEADLINE=$((SECONDS + 60))
+until curl -sf localhost:5221/api/brain/tasks/$TASK_ID | jq -e '.status=="completed"' >/dev/null 2>&1; do
+  [ $SECONDS -lt $DEADLINE ] || { echo "FAIL: timeout after 60s"; exit 1; }
+  sleep 2
+done
+echo "OK: within 60s 任务完成"
+```
+
+关键词约定：`within <N>s`（等待预算上限）/ `until`（轮询循环关键词）/ `60s`（样例预算值）。
+
+### 样例剧本（点设置 → within 60s 收到消息）
+
+```
+[BEHAVIOR] [L2] 用户点设置触发消息推送，within 60s 收到确认消息
+  动作: 调用 POST /api/settings/save 保存配置
+  预期观察: within 60s 消息队列出现新条目，用户侧收到推送确认
+  验证命令: Test: manual:bash
+    DEADLINE=$((SECONDS + 60))
+    until psql $DB_URL -c "SELECT 1 FROM messages WHERE type='settings_notify' AND created_at > NOW()-INTERVAL '5m'" | grep -q '1 row'; do
+      [ $SECONDS -lt $DEADLINE ] || { echo "FAIL: within 60s 未收到消息"; exit 1; }
+      sleep 2
+    done
+    echo "OK: within 60s 收到消息确认"
+```
+
+### legacy 兼容标记
+
+存量纯命令写法（未含三段式格式）保留有效，但标为 `[legacy]`，不强制迁移——新写条目必须三段式：
+
+```
+- [ ] [BEHAVIOR] [L2] [legacy] 检查接口响应 Test: manual:bash curl -sf localhost:5221/api/ping | jq -e '.ok==true'
+```
 
 ---
 

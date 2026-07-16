@@ -6,10 +6,11 @@ description: |
   evaluator 在 CI 绿之后、PR merge 之前真启服务 + 跑 contract 的 manual:bash 命令验真行为。
   PASS → 允许 merge；FAIL → 不 merge，带反馈打回 Generator 在 PR 分支 fix loop（main 不变动）。
   单模式（harness v2 始终 IS_FINAL_E2E=true）：读 contract-draft.md 的 ## E2E 验收 脚本，按 target_environment 派发跑 Golden Path 端到端真实行为。
-version: 1.25.0
+version: 1.26.0
 created: 2026-05-06
 updated: 2026-07-16
 changelog:
+  - 1.26.0: 配套三段式剧本格式——evaluator 按剧本逐步执行：先执行「动作」，再 within 预算轮询「预期观察」，最后跑「验证命令」；behavior_tests 条目支持 action/expected 新字段（与 command/exit_code/log_tail 共存）
   - 1.25.0: verdict 输出带 verification_level 字段（决策145014a4 W3）——.brain-result.json 顶层新增 verification_level 字段（缺省 L2），behavior_tests 条目新增 verification_level 字段；与 W2 judge #4004 解析约定对齐（behavior_tests[i].verification_level = 'L1'|'L2'|'L3'，brainResult.verification_level = 'L1'|'L2'|'L3'）
   - 1.24.0: 新增 Step B-1.8b 禁 mock 边机械核查（刀2，配套 proposer 9.12.0/generator 7.10.0）——读合同 ## 禁 mock 边清单 → grep 本单测试文件的 vi.mock/jest.mock/stub 目标 → 命中清单内的边 → CONTRACT-IS-LAW FAIL（feedback 含证据文件+行号）；清单缺失但本单涉及调度/状态机/跨模块传递/生命周期钩子/DB写路径 → FAIL 归责 GAN；#3830/#3848/#3808/#3840 实证接缝层 bug 全 mock 单测结构性抓不到
   - 1.23.0: EVA v2 审计四修——(E1) verdict 必带真跑证据：behavior_tests 每条必须是对象 {command, exit_code, log_tail}（log_tail=命令输出末 5 行），缺任一 = 该条视为未跑禁 PASS（a85e0582 实证 verdict 只列命令原文无法区分真跑/声称跑过）；(E4) Step B-1 固化段加分支判断：detached HEAD（post-merge 补验模式）跳过 commit/push 并在 verdict notes 说明，普通路径 push 失败输出 WARN 记入 notes（删静默吞掉）；(E5) 三处 awk 标题正则放宽为 /^##+[[:space:]]*E2E[[:space:]]*验收/（### 或带空格变体不再整段漏空）；(E7) 注入变量表补 PR_BRANCH 行
@@ -859,6 +860,31 @@ BREOF
 **输出协议（v1.5.0+ — 文件协议）**：最终结果写入 `"$WORKSPACE/.brain-result.json"`（Docker 默认 `/workspace/.brain-result.json`，mac_web host 执行时为 `$WORKSPACE_PATH/.brain-result.json`，relay 宿主执行且两者皆无时 fallback `$PWD/.brain-result.json`，见 Step 0），Brain 读文件不读 stdout。
 
 **behavior_tests 真跑证据（EVA v2 E1 硬要求）**：verdict JSON 必须带 `behavior_tests` 数组，**每条必须是对象 `{command, exit_code, log_tail}`**——`log_tail` = 该命令输出末 5 行（如 `tail -5 /tmp/e2e-result.log`）。缺 `exit_code` 或 `log_tail` 任一 = 该条视为未跑，**禁 PASS**。a85e0582 实证：verdict 只列命令原文时，"真跑"与"声称跑过"从 verdict 本身无法区分——退出码和真实输出尾巴是唯一能自证真跑的东西。
+
+**behavior_tests 三段式剧本字段（v1.26 新增，与 proposer 9.14 配套）**：合同条目含三段式格式（action/expected/验证命令）时，behavior_tests 条目新增 `action` 和 `expected` 字段，与 `command`/`exit_code`/`log_tail` 共存：
+
+- `action`：对应剧本「动作」段，记录 evaluator 实际执行的操作步骤（字符串）
+- `expected`：对应剧本「预期观察」段，记录期望状态描述（含 `within Ns` 等待预算声明）
+- `command`/`exit_code`/`log_tail`：对应剧本「验证命令」段，执行语义不变
+
+**evaluator 按剧本逐步执行流程（三段式合同）**：
+1. 先执行「动作」（action 字段命令）
+2. 再按「预期观察」中的 `within Ns` 预算 until-loop 轮询状态
+3. 最后跑「验证命令」（command 字段）并记录 exit_code + log_tail
+
+三段式示例条目：
+```json
+{
+  "command": "until psql $DB_URL -c \"SELECT 1 FROM messages WHERE type='settings_notify'\" | grep -q '1 row'; do sleep 2; done",
+  "exit_code": 0,
+  "log_tail": "1 row\nOK: within 60s 收到消息确认",
+  "verification_level": "L2",
+  "action": "POST /api/settings/save",
+  "expected": "within 60s 消息队列出现新条目"
+}
+```
+
+非三段式（legacy 格式）条目只需 `command`/`exit_code`/`log_tail`，`action`/`expected` 可省略。
 
 ```json
 {"verdict":"PASS","verification_level":"L2","behavior_tests":[{"command":"curl -sf localhost:5221/api/brain/ping | jq -e '.ok==true'","exit_code":0,"log_tail":"{\"ok\":true}","verification_level":"L2"}], ...}
