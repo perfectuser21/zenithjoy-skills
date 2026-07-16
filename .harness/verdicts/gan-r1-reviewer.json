@@ -1,0 +1,18 @@
+{
+  "verdict": "REVISION",
+  "round": 1,
+  "rubric_scores": {
+    "fr_coverage": 9,
+    "invariant_coverage": 5,
+    "test_quality": 8,
+    "e2e_completeness": 9,
+    "contract_gate_compliance": 9,
+    "response_schema": 10,
+    "anti_regression": 8
+  },
+  "judgments_written": 9,
+  "critical_issues": [
+    "PRD 声明的 6 条 Invariant 中有 4 条在 contract-dod.md 中无任何处理（既无 BEHAVIOR 断言也无 N/A 说明）：[proposer 核查派发历史]、[单 slot 串行]、[真环境验证才算 done]、[凭据安全]"
+  ],
+  "notes": "合同整体质量较高，FR 覆盖完整，E2E 脚本规范可执行，BEHAVIOR 条目格式合规（9 条，均含 manual:bash + 期望:OK）。唯一缺陷是铁律覆盖段遗漏了 PRD 4 条铁律的 N/A 说明，属于格式合规问题，修复成本低（补 4 行 N/A 说明即可），不涉及逻辑重构。"
+}

@@ -1,0 +1,25 @@
+{
+  "initiative_id": "38c0c94e-c7db-4252-97cb-f6e066cc2fc8",
+  "journey_type": "autonomous",
+  "journey_type_reason": "修改 harness skill 文本文件（工具链变更），无前端 UI/Windows App/微信 RPA",
+  "tasks": [
+    {
+      "task_id": "ws1",
+      "title": "升级 harness-contract-proposer/SKILL.md 和 harness-evaluator/SKILL.md 三段式剧本格式",
+      "scope": "在 proposer SKILL.md 新增三段式 [BEHAVIOR] 模板（动作/预期观察/验证命令）+ until-loop 等待预算范式 + legacy 兼容标记 + 样例剧本；在 evaluator SKILL.md 新增按剧本逐步执行流程 + behavior_tests action/expected 字段说明；两个文件各自 version bump + changelog 条目",
+      "dod": [
+        "[BEHAVIOR] proposer SKILL.md 包含三段式关键词（动作/预期观察/验证命令）+ until-loop + legacy 标记 + 等待预算（within/60s）",
+        "[BEHAVIOR] evaluator SKILL.md 包含 action/expected 字段，且 command/exit_code/log_tail 存量字段保留",
+        "[BEHAVIOR] proposer version >= 9.14.x，evaluator version >= 1.26.x",
+        "[ARTIFACT] 两个 SKILL.md 文件存在且内容完整"
+      ],
+      "files": [
+        "harness-contract-proposer/SKILL.md",
+        "harness-evaluator/SKILL.md"
+      ],
+      "depends_on": [],
+      "complexity": "S",
+      "estimated_minutes": 45
+    }
+  ]
+}
