@@ -6,10 +6,11 @@ description: |
   evaluator 在 CI 绿之后、PR merge 之前真启服务 + 跑 contract 的 manual:bash 命令验真行为。
   PASS → 允许 merge；FAIL → 不 merge，带反馈打回 Generator 在 PR 分支 fix loop（main 不变动）。
   单模式（harness v2 始终 IS_FINAL_E2E=true）：读 contract-draft.md 的 ## E2E 验收 脚本，按 target_environment 派发跑 Golden Path 端到端真实行为。
-version: 1.24.0
+version: 1.25.0
 created: 2026-05-06
-updated: 2026-07-14
+updated: 2026-07-16
 changelog:
+  - 1.25.0: verdict 输出带 verification_level 字段（决策145014a4 W3）——.brain-result.json 顶层新增 verification_level 字段（缺省 L2），behavior_tests 条目新增 verification_level 字段；与 W2 judge #4004 解析约定对齐（behavior_tests[i].verification_level = 'L1'|'L2'|'L3'，brainResult.verification_level = 'L1'|'L2'|'L3'）
   - 1.24.0: 新增 Step B-1.8b 禁 mock 边机械核查（刀2，配套 proposer 9.12.0/generator 7.10.0）——读合同 ## 禁 mock 边清单 → grep 本单测试文件的 vi.mock/jest.mock/stub 目标 → 命中清单内的边 → CONTRACT-IS-LAW FAIL（feedback 含证据文件+行号）；清单缺失但本单涉及调度/状态机/跨模块传递/生命周期钩子/DB写路径 → FAIL 归责 GAN；#3830/#3848/#3808/#3840 实证接缝层 bug 全 mock 单测结构性抓不到
   - 1.23.0: EVA v2 审计四修——(E1) verdict 必带真跑证据：behavior_tests 每条必须是对象 {command, exit_code, log_tail}（log_tail=命令输出末 5 行），缺任一 = 该条视为未跑禁 PASS（a85e0582 实证 verdict 只列命令原文无法区分真跑/声称跑过）；(E4) Step B-1 固化段加分支判断：detached HEAD（post-merge 补验模式）跳过 commit/push 并在 verdict notes 说明，普通路径 push 失败输出 WARN 记入 notes（删静默吞掉）；(E5) 三处 awk 标题正则放宽为 /^##+[[:space:]]*E2E[[:space:]]*验收/（### 或带空格变体不再整段漏空）；(E7) 注入变量表补 PR_BRANCH 行
   - 1.22.0: a638f840 三修——(a) Step 0a 支持"PR 已 merge/分支已删"场景：checkout 失败时查 gh pr state，MERGED 则在 merge commit/origin/main 上补验（post-merge 模式），仅 PR 非 MERGED 时才 FATAL；(b) Step B-1 三处 awk 改为提取 E2E 段内全部代码块（拼接至下一个 ## 标题，旧版只取第一块，多块合同 Step 2-9 被静默丢弃）；(c) bash 固化前加 bash -n 语法门，语法坏脚本在 setup 就 FAIL 不入库
@@ -860,8 +861,14 @@ BREOF
 **behavior_tests 真跑证据（EVA v2 E1 硬要求）**：verdict JSON 必须带 `behavior_tests` 数组，**每条必须是对象 `{command, exit_code, log_tail}`**——`log_tail` = 该命令输出末 5 行（如 `tail -5 /tmp/e2e-result.log`）。缺 `exit_code` 或 `log_tail` 任一 = 该条视为未跑，**禁 PASS**。a85e0582 实证：verdict 只列命令原文时，"真跑"与"声称跑过"从 verdict 本身无法区分——退出码和真实输出尾巴是唯一能自证真跑的东西。
 
 ```json
-{"verdict":"PASS","behavior_tests":[{"command":"curl -sf localhost:5221/api/brain/ping | jq -e '.ok==true'","exit_code":0,"log_tail":"{\"ok\":true}"}], ...}
+{"verdict":"PASS","verification_level":"L2","behavior_tests":[{"command":"curl -sf localhost:5221/api/brain/ping | jq -e '.ok==true'","exit_code":0,"log_tail":"{\"ok\":true}","verification_level":"L2"}], ...}
 ```
+
+**verification_level 字段（W3 新增，与 judge #4004 对齐）**：
+- 顶层 `verification_level`：本次验收整体达到的等级，缺省 `"L2"`
+- 条目级 `behavior_tests[i].verification_level`：每条 behavior_test 的等级，条目级优先于顶层
+- 取值：`"L1"`（替身）/ `"L2"`（服务端真验）/ `"L3"`（真机真验）
+- judge 读此字段执法：L3 要求 log_tail 含真机指纹关键词（adb shell/UiSelector 等）
 
 示例（PASS）：
 

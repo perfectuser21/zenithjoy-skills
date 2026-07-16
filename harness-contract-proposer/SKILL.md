@@ -4,10 +4,11 @@ description: |
   Harness Contract Proposer — Harness v5 GAN Layer 2a：
   读 PRD，GAN 对抗写 Golden Path 合同（每步含真实验证命令）；
   Reviewer APPROVED 后倒推拆 task-plan.json。
-version: 9.12.0
+version: 9.13.0
 created: 2026-04-08
-updated: 2026-07-14
+updated: 2026-07-16
 changelog:
+  - 9.13.0: [BEHAVIOR] 格式加验证等级标记+锚定父路声明（决策145014a4 W3）——[BEHAVIOR] 条目格式新增 [L1|L2|L3] 标记（与 judge #4004 解析约定一致：behavior_tests[i].verification_level 字段，L1=替身/L2=服务端真验/L3=真机真验）；新增「锚定父路声明」硬规则：sprint GP 段首行必须写「覆盖父路 <golden_path名或id> 第 N-M 步」或「独立小路（无父路）」，禁留空
   - 9.12.0: 新增硬规则「禁 mock 被改的边」（刀2 — #3830 recovery钩子剪断/#3848 sprint_dir跨节点丢/#3808 状态振荡/#3840 PR池不幂等实证：接缝层 bug 全 mock 单测结构性抓不到）——本单改动涉及调度/状态机/跨模块数据传递/生命周期钩子/DB写路径之一时，合同 failing test 必须不 mock 被改的那条边（真 Postgres、真相邻模块，只许 mock 更外层无关依赖）；合同必须输出「## 禁 mock 边清单」小节逐条列禁 mock 的边，空清单须写明理由（仅纯UI/纯文档类允许）；自查 checklist 新增第 9 条
   - 9.10.0: 真实链路四硬规则（handoff 0714 刀2 — #1267/#1269/#1271/#1256 实证根因）— 规则A【真实调用方 shape】合同必含 ## 真实调用方请求 shape 段，DoD 认证方式/关键字段与生产调用方逐字段一致（禁 body 传 tenant_id 而生产走 x-agent-id header 的双路径分叉）；规则B【第三方真调一次】涉第三方 API 的 DoD 至少一条真 key 真请求真响应校验，禁全 force_*/mock；规则C【mock 豁免显式登记】DoD 含 force_*/stub/假数据 → 合同必附 ## 未覆盖真实链路清单 段，controller 呈现进 PR 描述不许静默；规则D【target_environment 强制路由】微信 UI/RPA 必 windows_wechat，Android 通道未落地前真机段必入未覆盖清单；自查 checklist 新增第 8 条
   - 9.11.0: EVA v2 审计四刀（d063b3e5/a85e0582/a638f840 实证脱模板合同骗过自查）— (1) Step 2b-check 三处补丁：[BEHAVIOR] 计数锚定行首 checkbox 格式（标题式不计入）+ 第 5 项 E2E 段 bash 块 ≥1 + 第 6 项提取 E2E 块过 bash -n 与全角标点扫描；(2) E2E 多代码块拼接语义显式化（evaluator 1.22.0 全部 bash 块按序拼接，推荐单块，多块禁重复 shebang/set）；(3) 禁文本自证型 BEHAVIOR（grep 文件含字符串归 [ARTIFACT]，真执行断言 ≥2 条且占比 ≥50%）+ 自查第 7 项启发式分类计数；(4) 新增 Step 1.3 历史约束三源加载（铁律逐条映射 INV-N 条目或显式 N/A + context-manifest 累积 FR + 回归测试）
@@ -258,6 +259,31 @@ Generator 写代码 + vitest 单元测试
 v7.3 错误把 BEHAVIOR 单独拆到 vitest 测试文件，但 evaluator v1.1 反作弊红线第 3 条要求"DoD 文件含 [BEHAVIOR] 标签 + manual: 命令"（不是 vitest 索引）。两个 skill 协议矛盾，W22 实证 4 次 sub-evaluator FAIL "缺 [BEHAVIOR]"。本版本统一：DoD 文件内嵌 [BEHAVIOR] 标签 + Test: manual:bash 命令，evaluator 直接执行。
 
 vitest 测试文件还要写（generator TDD red-green 用），但**不再被 evaluator 当 verdict 来源**。
+
+---
+
+## ⚡ [BEHAVIOR] 验证等级标记（v9.13 — [L1|L2|L3]，与 judge #4004 对齐）
+
+**验证等级标记（[L1|L2|L3]，必须在 [BEHAVIOR] 关键词后标注）**：
+- `[L1]`：替身验证（mock/stub，不碰真实系统）
+- `[L2]`：服务端真验（真实 DB / API，非替身，非真机）
+- `[L3]`：真机真验（UIA/adb 真机操控、生产 env 真实调用）
+与 judge #4004 解析约定一致：behavior_tests[i].verification_level = 'L1'|'L2'|'L3'
+示例：`- [ ] [BEHAVIOR] [L2] 任务完成后 DB 状态应更新 Test: manual:bash psql ... | grep completed`
+
+**每条 [BEHAVIOR] 必须标注等级，格式为 `[BEHAVIOR] [L1|L2|L3] <描述>`。**
+
+---
+
+## ⚡ 锚定父路声明（硬规则 — v9.13 新增）
+
+### 锚定父路声明（硬规则）
+
+sprint GP 段首行必须写：
+- `覆盖父路 <golden_path名或id> 第 N-M 步` — 本 sprint 覆盖某条已有 Golden Path 的部分步骤
+- `独立小路（无父路）` — 本 sprint 是独立路径，无父路依赖
+
+禁留空。缺失 → reviewer 打回 proposer。
 
 ---
 
