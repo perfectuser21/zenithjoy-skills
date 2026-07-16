@@ -142,19 +142,15 @@ N/A — 本任务为纯文本 grep/ls 验证，无代码执行路径，无外部
 
 ## 判定点登记表
 
-| 判定点 | 类型 | 命令 | 接缝级别 |
-|--------|------|------|---------|
-| HARNESS_GEAR 变量行存在 | grep 文本断言 | `grep -q "HARNESS_GEAR" harness-controller/SKILL.md` | L1 |
-| payload.gear 来源声明存在 | grep 文本断言 | `grep -q "payload.gear" harness-controller/SKILL.md` | L1 |
-| gear=hotfix 短流程段存在 | grep 文本断言 | `grep -q "gear=hotfix" harness-controller/SKILL.md` | L1 |
-| skip GAN 日志关键词存在 | grep 文本断言 | `grep -q "skip proposer/reviewer GAN" harness-controller/SKILL.md` | L1 |
-| 安全阀 FATAL 关键词存在 | grep 文本断言 | `grep -q "FATAL" harness-controller/SKILL.md` | L1 |
-| 缺锚定声明拒绝逻辑存在 | grep 文本断言 | `grep -q "缺锚定声明" harness-controller/SKILL.md` | L1 |
-| 版本 2.8.0 存在 | grep 文本断言 | `grep -q "2.8.0" harness-controller/SKILL.md` | L1 |
-| 示例文件 contract-draft.md 存在 | ls 断言 | `ls harness-controller/examples/hotfix-shortflow/contract-draft.md` | L1 |
-| 示例文件 contract-dod.md 含 ≥4 [BEHAVIOR] | grep 计数断言 | `grep -c '[BEHAVIOR]' examples/hotfix-shortflow/contract-dod.md` ≥4 | L1 |
+（本任务无接缝判定点，N/A）
 
-无接缝判定点（L3 真机/生产环境）：本任务全部为文本编辑，不触碰真机/生产 env/第三方服务，故无接缝判定点。显式标注 N/A。
+---
+
+## 风险登记
+
+| # | 风险 | Mitigation |
+|---|------|-----------|
+| R1 | 零回归——默认全流程分支（proposer/GAN）被误删 | B6 断言同时验证 HARNESS_GEAR 识别段与 proposer/GAN 关键词存在，两者缺一即 FAIL |
 
 ---
 
