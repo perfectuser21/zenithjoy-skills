@@ -7,9 +7,10 @@ description: |
   移植 Superpowers 6.0 subagent-driven-development 零件：进度台账 / 文件接力 / 四态出口协议 / 单评审双裁决 / compaction 恢复。
   点火方：Brain harness dispatch（无头）或人工前台（同一份 skill 两种触发，行为一致）。
   /dev 仍是唯一需求入口：本 skill 消费 /dev 路径C 的交接契约（PrepPRD + 铁律清单 + NFR），不做需求对抗。
-version: 2.7.0
+version: 2.8.0
 created: 2026-07-04
 changelog:
+  - 2.8.0: gear=hotfix 短流程支路（handoff 0716 刀C，fcb459b5-c510-4f45-b41f-e71b100d94f1）——Step 0 新增 HARNESS_GEAR 变量（来源 payload.gear）；当 HARNESS_GEAR=hotfix 时跳过 GAN（proposer/reviewer）直接由 controller 从 thin_prd 锚定断言组装 contract-draft.md/contract-dod.md（输出 [gear=hotfix] skip proposer/reviewer GAN）；两条安全阀铁律：①generator 发现需改 Golden Path 断言 → FATAL 报错升档，禁止顺手改；②thin_prd 缺锚定声明 → 拒绝 hotfix，回退全流程（走完整 GAN 路径）；新增 examples/hotfix-shortflow/ 示例文件；全流程默认档（无 gear 字段）路径零回归
   - 2.7.0: Step 6 新增「毕业（测试入册）」机械步（刀1b relay 路径，配套 cecelia test-pyramid-guard 孤儿棘轮锁 0）——judge PASS 后、SHA 锚定与 merge 前，仓库存在 scripts/graduate-sprint-tests.mjs 时必须跑毕业脚本把 sprints/ 下 tests/ 与 e2e-verify.sh 搬进永久池（tests/regression/<slug>/ + scripts/smoke/e2e/<slug>.sh），commit+push 等 CI 绿再锚定；无脚本的 repo（如 zenithjoy-workspace）跳过。SHA 锚定条款新增与 update-branch 对称的毕业 commit 豁免（git diff --stat HEAD~1 证明纯 rename 零内容变更 → re-anchor 不触发 Step 4 全量重评）。插点依据：evaluator B-1 已把 e2e-verify.sh 固化完毕、merge 后无人再接手，且 guard 棘轮 orphans=0 会把没毕业的 PR 拦红
   - 2.5.0: 规则C配套（handoff 0714 刀2，proposer 9.10.0/reviewer 9.5.0）——Step 3 generator 验收新增「未覆盖真实链路清单转呈」：合同含 ## 未覆盖真实链路清单 段（非 N/A）必须原样进 PR 描述（缺则让 generator gh pr edit 补上）；Step 7 report 同步把该清单转呈最终报告/通知正文。mock 豁免必须呈现给用户，禁止静默
   - 2.6.0: EVA v2 审计六处修法——①Step 7 cost 条文诚实化（controller 拿不到 subagent 真实成本，30 条实证 29 条恒 0：有真实数据才填，否则填 0 并台账注明 cost=unsettled，Brain 侧 session 用量结算是正解已立案）②Step 5 judge VERDICT 对称上报 relay-runs judge_verdict（DB 30 条仅 2 非空的病根）③Step 3 PR 开出即台账 append 中间态 generator: pr_opened 行（31e29c09 实证死亡窗口台账止步 gan）④Step 3 controller 验收扩为四件：PR body/title 必须 grep 到 task id（Step 0.4 外部真相重建依赖此约定）⑤横切纪律 A 加 gan 附件质量门（rubric 必须标准 7 维，d063b3e5 实证自创 5 维）+ gan done 行登记 judgments_written=N ⑥report 台账行带明细 verdict/learnings_inserted/concerns（a85e0582 实证裸行无从审计）
@@ -135,7 +136,8 @@ bash <skill目录>/scripts/task-brief <PLAN文件> <N>      # → .harness/task-
 : "${HARNESS_TASK_ID:?}" "${SPRINT_DIR:?}"
 BRAIN=${BRAIN_URL:-http://localhost:5221}
 TASK=$(curl -s "$BRAIN/api/brain/tasks/$HARNESS_TASK_ID")
-# payload 里应有：prep_prd_body（/dev 交接）、journey_id、review_required、target_environment、base_repo
+# payload 里应有：prep_prd_body（/dev 交接）、journey_id、review_required、target_environment、base_repo、gear（可选，hotfix=短流程）
+HARNESS_GEAR=${GEAR:-$(echo "$TASK" | jq -r '.payload.gear // empty')}
 
 # 0.2 台账（compaction/崩溃恢复的锚，SDD 6.0 模式）
 LEDGER=".harness/progress.md"
@@ -203,6 +205,35 @@ git log --grep='(Red)' --oneline <PR分支>
 ```
 
 查不到 (Red) commit → **不默认通过**，派 fix 轮要求 generator 补 TDD 纪律说明（说明 Red 基线在哪个 commit / 为何缺失 + 补跑合同测试证明先红后绿），核对通过后才继续接手。
+
+## gear=hotfix 短流程（Step 0 尾部路由，在 Step 1 之前执行）
+
+当 `HARNESS_GEAR=hotfix` 时，**跳过 GAN（proposer/reviewer）**，由 controller 直接从 thin_prd 锚定断言组装合同产物。
+
+```bash
+if [ "$HARNESS_GEAR" = "hotfix" ]; then
+  echo "[gear=hotfix] skip proposer/reviewer GAN — controller 直接组装合同"
+  # 从 sprint-prd.md 的「## 锚定声明」段提取断言，生成 contract-draft.md / contract-dod.md
+  # 完成后跳到 Step 3 generator（TDD），不走 Step 2 GAN 循环
+fi
+```
+
+### 安全阀铁律（gear=hotfix 专属，凌驾于短流程逻辑）
+
+**安全阀①（generator 层）**：generator 在实现过程中发现需要修改 Golden Path 断言时，**必须立即 FATAL 报错升档**，禁止顺手改——hotfix 档的锚定断言是只读输入，任何对合同基线的改动都必须升档为全流程任务（走 GAN 重新对抗）。
+
+```
+[FATAL] gear=hotfix 禁止顺手改 Golden Path 断言 — 请升档为全流程 sprint 重新对抗合同
+```
+
+**安全阀②（controller 层）**：controller 在装载 thin_prd 时，若发现 sprint-prd.md **缺锚定声明**（无 `## 锚定声明` 段或该段内容为空），**拒绝 hotfix**，立即回退全流程——将 HARNESS_GEAR 置空，回到 Step 2 GAN 正常路径。
+
+```bash
+if ! grep -q "## 锚定声明" "$SPRINT_DIR/sprint-prd.md" 2>/dev/null; then
+  echo "[gear=hotfix] thin_prd 缺锚定声明 — 拒绝 hotfix，回退全流程（GAN 路径）"
+  HARNESS_GEAR=""  # 清空 gear，下方流程走标准 GAN
+fi
+```
 
 ## Step 1: Planner（写 PRD）
 
