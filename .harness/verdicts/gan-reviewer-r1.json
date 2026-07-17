@@ -1,0 +1,15 @@
+{
+  "verdict": "APPROVED",
+  "rubric_scores": {
+    "completeness": 5,
+    "correctness": 5,
+    "testability": 5,
+    "invariant_coverage": 5,
+    "scope_discipline": 5,
+    "e2e_quality": 5,
+    "risk_coverage": 4
+  },
+  "judgments_written": 5,
+  "feedback": "",
+  "summary": "合同完整覆盖 PRD 全部 FR 和三个 Invariant，5 个 [BEHAVIOR] 条目均可机器验证，E2E 验收命令路径清晰、断言具体，风险轻微欠缺（PENDING>0 中间态及 macOS bash 3.x 兼容性未覆盖），不影响核心验收。"
+}

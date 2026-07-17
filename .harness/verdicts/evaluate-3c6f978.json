@@ -1,0 +1,23 @@
+{
+  "verdict": "PASS",
+  "sha": "3c6f978",
+  "evaluate_at": "2026-07-17T12:53:00Z",
+  "artifact_gate": {
+    "result": "PASS",
+    "tests_run": 4,
+    "tests_passed": 4,
+    "command": "bash sprints/07162130-cipoll-ssot-fix/tests/ci-poll-grep-fix.sh"
+  },
+  "contract_gate": {
+    "result": "PASS",
+    "cheating_detected": false,
+    "notes": "测试使用 labeled mock（非真实 gh CLI），B1 直接测旧版比较逻辑报错，无 exit-0 兜底绕过"
+  },
+  "unverifiable": [
+    "B5: diff 6 行 > DoD 约束 ≤4 行（FAILED/PENDING 各增 1 行防御性赋值）—— 功能正确，冗余而非错误，已合并"
+  ],
+  "concerns": [
+    "B5 约束轻微违反：ci-poll.sh diff 6 行（DoD 约束 ≤4），多出 2 行 FAILED/PENDING 默认值赋值（冗余但无害）"
+  ],
+  "double_gate": "PASS"
+}
