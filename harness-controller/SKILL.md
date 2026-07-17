@@ -7,9 +7,10 @@ description: |
   移植 Superpowers 6.0 subagent-driven-development 零件：进度台账 / 文件接力 / 四态出口协议 / 单评审双裁决 / compaction 恢复。
   点火方：Brain harness dispatch（无头）或人工前台（同一份 skill 两种触发，行为一致）。
   /dev 仍是唯一需求入口：本 skill 消费 /dev 路径C 的交接契约（PrepPRD + 铁律清单 + NFR），不做需求对抗。
-version: 2.8.0
+version: 2.9.0
 created: 2026-07-04
 changelog:
+  - 2.9.0: gear 档位：新增 gear=segmented 分叉（骨架棋盘 + 分段串行点绿，移植自 cecelia #4027 harness-gear 一体化 60a80ddc 决策2）——HARNESS_GEAR=segmented 时 Step 1 planner 照跑、Step 2 GAN 透传该档位给 proposer 输出多段 task-plan.json、GAN 后先派骨架 generator 落全红棋盘、再按 task-plan.json 串行段循环 generator(WORKSTREAM_INDEX)+evaluator(SEGMENT_EVAL)，同段 2 次仍败转 escalate，全段绿后走现行全量总验；复用既有 Step 0.1 HARNESS_GEAR 解析与 gear=hotfix 同款 default 不生效声明，不与 2.8.0 hotfix 支路冲突；HARNESS_GEAR 缺失/=default/=hotfix 时本节整节不生效
   - 2.8.0: gear=hotfix 短流程支路（handoff 0716 刀C，fcb459b5-c510-4f45-b41f-e71b100d94f1）——Step 0 新增 HARNESS_GEAR 变量（来源 payload.gear）；当 HARNESS_GEAR=hotfix 时跳过 GAN（proposer/reviewer）直接由 controller 从 thin_prd 锚定断言组装 contract-draft.md/contract-dod.md（输出 [gear=hotfix] skip proposer/reviewer GAN）；两条安全阀铁律：①generator 发现需改 Golden Path 断言 → FATAL 报错升档，禁止顺手改；②thin_prd 缺锚定声明 → 拒绝 hotfix，回退全流程（走完整 GAN 路径）；新增 examples/hotfix-shortflow/ 示例文件；全流程默认档（无 gear 字段）路径零回归
   - 2.7.0: Step 6 新增「毕业（测试入册）」机械步（刀1b relay 路径，配套 cecelia test-pyramid-guard 孤儿棘轮锁 0）——judge PASS 后、SHA 锚定与 merge 前，仓库存在 scripts/graduate-sprint-tests.mjs 时必须跑毕业脚本把 sprints/ 下 tests/ 与 e2e-verify.sh 搬进永久池（tests/regression/<slug>/ + scripts/smoke/e2e/<slug>.sh），commit+push 等 CI 绿再锚定；无脚本的 repo（如 zenithjoy-workspace）跳过。SHA 锚定条款新增与 update-branch 对称的毕业 commit 豁免（git diff --stat HEAD~1 证明纯 rename 零内容变更 → re-anchor 不触发 Step 4 全量重评）。插点依据：evaluator B-1 已把 e2e-verify.sh 固化完毕、merge 后无人再接手，且 guard 棘轮 orphans=0 会把没毕业的 PR 拦红
   - 2.5.0: 规则C配套（handoff 0714 刀2，proposer 9.10.0/reviewer 9.5.0）——Step 3 generator 验收新增「未覆盖真实链路清单转呈」：合同含 ## 未覆盖真实链路清单 段（非 N/A）必须原样进 PR 描述（缺则让 generator gh pr edit 补上）；Step 7 report 同步把该清单转呈最终报告/通知正文。mock 豁免必须呈现给用户，禁止静默
@@ -234,6 +235,78 @@ if ! grep -q "## 锚定声明" "$SPRINT_DIR/sprint-prd.md" 2>/dev/null; then
   HARNESS_GEAR=""  # 清空 gear，下方流程走标准 GAN
 fi
 ```
+
+## gear=segmented 分叉（骨架棋盘 + 分段串行点绿，Step 0 尾部路由，在 Step 1 之前执行）
+
+当 `HARNESS_GEAR=segmented` 时（Step 0.1 已从 `payload.gear` 解出该变量，判定方式与上面 gear=hotfix 一致），走本节接管的改写版 Step 1/2/3/4，完成后回到 Step 5 继续现行主线；其余取值（缺失/default/hotfix）本节整节不生效，不受任何段落影响。
+
+适用场景：RPA/真机等无法一次成型的大颗粒任务，需要拆多段（task-plan.json 的 `tasks` 数组）串行落地，每段独立点绿再进下一段。
+
+### 步骤
+
+1. **Step 1 planner 照跑**（现行不改）：派 harness-planner，产出 sprint-prd.md，验收清单五项不变。
+
+2. **Step 2 GAN 照跑，但派 proposer 的 prompt 里透传一行 `HARNESS_GEAR=segmented`**（proposer skill 据此输出多段 task-plan.json，非 segmented 时仍输出单段 ws1，proposer 侧逻辑不属本节改动范围）：
+
+```
+prompt: 调用 Skill(harness-contract-proposer)。上下文追加一行：
+  HARNESS_GEAR=segmented
+  （其余输入同现行：sprint-prd.md 路径 + 上轮 reviewer feedback 路径）
+```
+
+   GAN 循环、铁律覆盖硬检查、合同格式硬检查三项与现行 Step 2 完全一致；额外核对一项：`${SPRINT_DIR}/task-plan.json` 存在且 `tasks[]` 非空，每个 task 有 `task_id`（形如 ws1..N）、`depends_on`（ws1 唯一允许 `[]`，ws2+ 必须声明前置）——不过 → 打回 proposer 重出。
+
+3. **GAN 通过后先派骨架 generator**（落全红棋盘）：
+
+```
+prompt: 调用 Skill(harness-generator)。CONTRACT_BRANCH=<branch> SPRINT_DIR=<dir>。
+  payload.is_skeleton=true。
+  本轮只落整条 golden path 的全红测试棋盘（覆盖 task-plan.json 里全部 ws1..N 的验收测试），
+  commit 到 CONTRACT_BRANCH，不实现任何功能代码。
+  报告：四态 + 棋盘 commit SHA + 覆盖的 ws 列表
+```
+
+   验收：commit 存在、测试棋盘跑起来全红（非报错崩溃，是断言失败）、覆盖 task-plan.json 全部段。台账 append `skeleton: done (棋盘@<sha7>, ws=N段)`。
+
+4. **按 task-plan.json 的 tasks 数组串行循环**（ws1 → ws2 → … → wsN，按 `depends_on` 链式推进，不并发）：
+
+   对每个 ws_i：
+
+   a. 派 **generator**，prompt 头带 `WORKSTREAM_INDEX=<task_id>`：
+
+```
+prompt: 调用 Skill(harness-generator)。CONTRACT_BRANCH=<branch> SPRINT_DIR=<dir>。
+  WORKSTREAM_INDEX=<task_id>
+  只实现本段 scope（task-plan.json 该 ws 条目的 scope/files），禁碰他段实现文件；
+  只点绿本段对应的棋盘测试，TDD 纪律（commit 顺序/测试不可改）与现行一致。
+  报告：四态 + commit SHA + 本段点绿的测试清单
+```
+
+   b. 段验：派 **evaluator**，prompt 头带 `SEGMENT_EVAL=<task_id>`：
+
+```
+prompt: 调用 Skill(harness-evaluator)。SEGMENT_EVAL=<task_id>
+  跳 final-E2E，只跑本段 [BEHAVIOR]/tests 断言 + 复跑此前已绿段的测试
+  （回归棘轮：已绿段测试变红 = 本段判 FAIL，失败摘要注明回归项）。
+  报告：verdict(PASS/FAIL) + 明细
+```
+
+   c. 处置：
+      - PASS → 台账 append `segment: done (ws=<task_id>, verdict=PASS)`，进入下一个 ws；全部 ws 跑完进入第 5 步
+      - FAIL → 重派该段 generator，prompt 附上失败摘要（同段第 2 次派发）；同一段**累计 2 次仍败** → 终局按现行「四态协议」BLOCKED/escalate 路径上报，绝不无变化第 3 次重试
+
+   骨架棒与每段 generator/evaluator 派发同样适用横切纪律 A（台账）/B（phase-event，node=generator/evaluator，可附加 task_id 便于追踪）/C（文件接力，段间只传 task-N-brief.md 路径，不粘贴大产物）。
+
+5. **全段绿后派现行全量 evaluator 总验**（不带 `SEGMENT_EVAL`，走完整 final-E2E，与现行 Step 4 一字不改）；总验 PASS → 台账 append `evaluator: done (总验, verdict=PASS)` → 进入现行 Step 5 judge。
+
+6. Step 5 judge → Step 6 merge（含 staging_e2e 派生）→ Step 7 report，与现行完全一致，不再有任何 segmented 专属分叉。
+
+### 与现行的差异边界
+
+- Step 1 不变；Step 2 追加一行透传 + task-plan.json 多段格式核对
+- 新增骨架棒（一次）+ 段循环（N 次 generator+evaluator 配对），全部在 controller 本 session 内用 Task tool 派发，不产生额外 Brain 任务，dispatcher 并发模型不受影响
+- **骨架棒与全部段棒的实现 commit 都落在同一条 PR 分支**（沿用现行 harness-generator Step 2 的 PR 分支约定 `cp-$(date +%m%d%H%M)-${TASK_ID前8位}`——骨架棒首次调用建出该分支，后续每个 ws_i 的 generator 派发都在这条分支上续 commit，不为分段另开新分支）
+- 总验后 Step 5-7 与现行零差异
 
 ## Step 1: Planner（写 PRD）
 
