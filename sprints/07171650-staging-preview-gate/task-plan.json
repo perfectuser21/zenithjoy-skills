@@ -1,0 +1,37 @@
+{
+  "sprint_id": "07171650-staging-preview-gate",
+  "task_id": "8589b916-9b71-4dd8-a986-76670229b06d",
+  "journey_type": "autonomous",
+  "target_environment": "local_api",
+  "gear": "default",
+  "tasks": [
+    {
+      "id": "ws1",
+      "name": "修改两个 SKILL.md 文件并验收",
+      "depends_on": [],
+      "estimated_minutes": 20,
+      "steps": [
+        {
+          "step": 1,
+          "action": "修改 harness-contract-proposer/SKILL.md",
+          "detail": "version bump 9.15.0→9.16.0，changelog 新增条目，新增「staging 预览闸」硬规则段（步骤A/B/C + 通知式/阻塞式 + autonomous 豁免）"
+        },
+        {
+          "step": 2,
+          "action": "修改 harness-report/SKILL.md",
+          "detail": "version bump 6.8.0→6.9.0，changelog 新增条目，Step 5 后新增 Step 5.5（仅 user_facing + Bark + Brain PATCH + 非阻断）"
+        },
+        {
+          "step": 3,
+          "action": "运行验收脚本",
+          "detail": "bash sprints/07171650-staging-preview-gate/tests/verify-skill-changes.sh，所有断言 PASS"
+        },
+        {
+          "step": 4,
+          "action": "运行 E2E 验收",
+          "detail": "执行 contract-draft.md ## E2E 验收 段中的 bash 脚本，所有 AC PASS"
+        }
+      ]
+    }
+  ]
+}
