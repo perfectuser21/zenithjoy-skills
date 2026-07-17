@@ -15,8 +15,10 @@ REPO="${2:?需要 repo（格式：owner/repo）}"
 
 while true; do
   CHECKS=$(gh pr checks "$PR_NUMBER" --repo "$REPO" 2>/dev/null || true)
-  FAILED=$(echo "$CHECKS" | grep -c "fail" 2>/dev/null || echo 0)
-  PENDING=$(echo "$CHECKS" | grep -cE "pending|in_progress|queued" 2>/dev/null || echo 0)
+  FAILED=$(echo "$CHECKS" | { grep -c "fail" 2>/dev/null || true; } | head -1)
+  FAILED="${FAILED:-0}"
+  PENDING=$(echo "$CHECKS" | { grep -cE "pending|in_progress|queued" 2>/dev/null || true; } | head -1)
+  PENDING="${PENDING:-0}"
   MERGE_STATE=$(gh pr view "$PR_NUMBER" --repo "$REPO" \
     --json mergeStateStatus --jq '.mergeStateStatus' 2>/dev/null || true)
 
