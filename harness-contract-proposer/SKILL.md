@@ -4,10 +4,11 @@ description: |
   Harness Contract Proposer — Harness v5 GAN Layer 2a：
   读 PRD，GAN 对抗写 Golden Path 合同（每步含真实验证命令）；
   Reviewer APPROVED 后倒推拆 task-plan.json。
-version: 9.15.0
+version: 9.16.0
 created: 2026-04-08
 updated: 2026-07-17
 changelog:
+  - 9.16.0: user_facing 预览闸硬规则：journey_type=user_facing 的 Golden Path 合同末尾必须含 ## staging 预览闸 段（步骤A落staging环境/步骤B Final-E2E在staging跑截图/步骤C Bark推主理人预览链接）；按 BASE_REPO 定模式：cecelia仓=通知式（Bark注明「24h无异议自动放行」，Brain PATCH promote_after时间戳）/zenithjoy仓=阻塞式（Bark注明需主理人放行，prod promote前核查decisions/approval字段，未放行禁promote）；其余journey_type（含autonomous/dev_pipeline/agent_remote）不受约束（零回归保护）
   - 9.15.0: gear 档位：新增 Step 3.1 HARNESS_GEAR=segmented 档位分支（移植自 cecelia #4027 harness-gear 一体化 60a80ddc 决策6），恢复 v7 前多 workstream task-plan.json schema（tasks[]/depends_on 线性链/estimated_minutes 20-60），段划分依据=Golden Path"后段依赖前段真机产物"接缝；default（缺省或非 segmented）保持单 ws1 现行为不变
   - 9.14.0: 三段式 [BEHAVIOR] 剧本格式升级——每条 BEHAVIOR 须含三段：①「动作」（操作步骤）②「预期观察」（用户/系统可见状态变化）③「验证命令」（可执行断言）；新增 until-loop 等待预算范式（within 预算轮询，如 within 60s 收到消息确认）；legacy 兼容标记（存量纯命令写法保留但标为 legacy，不强制迁移）；样例剧本：点设置 → within 60s 收到消息
   - 9.13.0: [BEHAVIOR] 格式加验证等级标记+锚定父路声明（决策145014a4 W3）——[BEHAVIOR] 条目格式新增 [L1|L2|L3] 标记（与 judge #4004 解析约定一致：behavior_tests[i].verification_level 字段，L1=替身/L2=服务端真验/L3=真机真验）；新增「锚定父路声明」硬规则：sprint GP 段首行必须写「覆盖父路 <golden_path名或id> 第 N-M 步」或「独立小路（无父路）」，禁留空
@@ -148,6 +149,42 @@ echo "$RESP" | grep -q '"ok":true' && echo "$RESP" | grep -q '"exit_code":0' || 
 - 白名单（两端已对齐，Agent 侧是执行权威闸）：`health_check` / `wechat_private_chat_send` / `wechat_moments_send` / `wechat_qr_bind`；合同里写白名单外动作 = 断言必挂，先去走动作注册
 - 防作弊：断言必须查 `exit_code:0` **且** stdout 领域内容,只查 HTTP 200 或 `ok` 字段不够（rejected 路径也返回 JSON）；`not_dev_machine`/`agent_unreachable` 属通道故障，不许当 PASS 兜过
 - 该通道只覆盖"动作在真机能跑通"这一层;合同若还要求业务侧效果（如对方真收到消息），仍按上表补平台侧/DB 侧 oracle,两层不互替
+
+---
+
+## ⚡ staging 预览闸（user_facing 专属）
+
+**条件**：`journey_type=user_facing` 时强制执行；`autonomous`/`dev_pipeline`/`agent_remote` 类合同不受约束（autonomous 流程零回归保护，无预览闸要求）。
+
+合同末尾必须含 `## staging 预览闸` 段，包含以下三步：
+
+### 步骤 A：落 staging
+
+- **Cecelia 仓**：`localhost:5212`（cecelia staging 环境，只引用现有脚本，不重造逻辑）
+- **ZenithJoy 仓**：ZJ staging 环境（只引用现有脚本，不重造逻辑）
+- 禁止在合同里重造 staging 部署脚本；只写引用方式与环境地址
+
+### 步骤 B：Final E2E 在 staging 跑 + 截图
+
+- Final E2E 必须在 staging 环境上执行（非本地 dev 环境）
+- 截图存至 `${SPRINT_DIR}/screenshots/staging-<step>.png`
+
+### 步骤 C：Bark 推主理人预览链接
+
+调用 `$BARK_URL` 通知主理人，附 staging 预览链接 + 截图 URL。
+
+按 `BASE_REPO` 判模式：
+
+- **cecelia 仓** → **通知式**：Bark 注明「24h 无异议自动放行」；Brain PATCH 写 `promote_after`（UTC+24h 时间戳）
+  ```bash
+  PATCH localhost:5221/api/brain/tasks/$TASK_ID metadata: {staging_deployed:true, promote_after:"<UTC+24h>", staging_url:"..."}
+  ```
+- **zenithjoy 仓** → **阻塞式**：Bark 注明需主理人放行；Brain PATCH 写 `approval_required:true`；prod promote 前核查 decisions/approval 字段，未放行禁 promote
+  ```bash
+  PATCH localhost:5221/api/brain/tasks/$TASK_ID metadata: {staging_deployed:true, approval_required:true, staging_url:"..."}
+  ```
+
+**豁免说明**：`journey_type=autonomous`、`dev_pipeline`、`agent_remote` 的合同不受约束，无需含预览闸段。autonomous 流程享有零回归保护，不纳入预览闸范围。
 
 ---
 
