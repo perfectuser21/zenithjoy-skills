@@ -1,3 +1,8 @@
+## [2026-07-17] janitor 2.1.0 — daily 清单加第10项 docker 容器/镜像清理
+**症状**: us-mac 磁盘可用一度掉到 19-22Gi/228Gi，第2次因磁盘紧张被动处理（第1次是07-15的23G preview泄漏）。排查发现 OrbStack 虚拟磁盘占 59G，容器 rw layer snapshot 损坏一度导致 docker 清理命令卡死；复核时该损坏已自愈，但更根本的问题是 janitor.sh daily 清单 9 项完全没有 docker 容器/镜像清理，Exited 容器和旧版镜像 tag 会无限堆积不会自动回收。
+**根因**: janitor 的清扫清单是历史沿革的 9 项（日志/npm/brew/tmp/git分支/worktree），从未覆盖 docker 层——这是结构性缺口，不是一次性事件，只要有容器化部署（cecelia-brain 蓝绿部署每次 bump 版本都留一个旧 tag）就会持续复发。
+**修改**: daily 模式新增第 10 步：`docker container prune -f` 清理 Exited 容器 + 删除未被任何容器（running/stopped 均算）引用的旧版 `cecelia-brain` 镜像 tag，显式排除 `latest`/`blue-fallback`（部署回滚用）；docker 不可用时优雅跳过不中断其余 9 项。修复过程中用 `bash -c` 实测发现并修掉一个真 bug：`$var` 紧跟全角标点（无 ASCII 分隔）在 macOS 自带 bash 3.2 下会把变量值渲染成乱码字节（proven-to-fire 抓到，与变量取值无关，纯粹是 3-byte UTF-8 全角逗号与变量替换相邻触发的解析问题），改为 `${var} |` 分隔后验证正常。同步补 4 条测试断言（TOTAL_STEPS=10/prune命令存在/tag保护逻辑/降级跳过逻辑），并顺手修了 `__tests__/janitor_orphan.test.sh` 里一条断言旧版本迁移前遗留的过期断言（软链接目标校验字符串从 `cecelia` 改成 `zenithjoy-skills`，反映脚本仓库已迁移的现状）。
+
 ## [2026-07-17] golden-path-mapper 1.1.0 — 归位模式 Mode2 + 承诺地图体系 doctrine 补丁
 **症状**: mapper 只覆盖「切一个新领域」（Mode 1），主理人日常更高频的问题是「这个新东西该归到哪条已有路的哪一步」——没有对应流程，只能凭经验口头判断，容易把一次性事件塞进高频路骨干、或把共享前置复制进每条路造成分叉。
 **根因**: 昨天首版（#151）只定型了切分侧（三问法+挂片三规则+归位四步+动骨干豁免），归位侧的判定链（频率对齐/场景覆盖/共享前置裁决/动作类型分类）从未系统化，散落在口头约定里，AI 判断时经常漏判。

@@ -30,7 +30,7 @@ done
 
 CECELIA_REPO="/Users/administrator/perfect21/cecelia"
 BRAIN_API="http://localhost:5221"
-TOTAL_STEPS=9
+TOTAL_STEPS=10
 
 # ─────────────────────────────────────────────
 # frequent 模式：清理孤儿/僵尸进程 + 资源压力响应
@@ -463,6 +463,35 @@ if [ -d "$CECELIA_REPO/.claude/worktrees" ]; then
   done
 fi
 log "  ✓ 清理 $wt_cleaned 个残留 worktree"
+
+# 10. Docker 容器/镜像清理（Exited 容器 + 未引用旧版 cecelia-brain 镜像）
+log "[10/$TOTAL_STEPS] Docker 容器/镜像清理..."
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+  prune_out=$(docker container prune -f 2>/dev/null || true)
+  reclaimed=$(echo "$prune_out" | grep "Total reclaimed space" | awk -F': ' '{print $2}')
+  [ -z "$reclaimed" ] && reclaimed="0B"
+
+  # 当前所有容器（含 exited 之外仍保留的）引用的镜像 ID（短 12 位），这些镜像不动
+  in_use_ids=$(docker ps -aq 2>/dev/null | xargs -I{} docker inspect --format '{{.Image}}' {} 2>/dev/null | sed 's/sha256://' | cut -c1-12 | sort -u)
+
+  img_deleted=0
+  for tag in $(docker images --format '{{.Repository}}:{{.Tag}}' 2>/dev/null | grep '^cecelia-brain:'); do
+    case "$tag" in
+      cecelia-brain:latest|cecelia-brain:blue-fallback) continue ;;
+    esac
+    img_id=$(docker images --format '{{.Repository}}:{{.Tag}} {{.ID}}' 2>/dev/null | awk -v t="$tag" '$1==t{print $2}')
+    [ -z "$img_id" ] && continue
+    if echo "$in_use_ids" | grep -q "^${img_id}$"; then
+      continue
+    fi
+    if docker rmi "$tag" >/dev/null 2>&1; then
+      img_deleted=$((img_deleted + 1))
+    fi
+  done
+  log "  ✓ container prune 回收 ${reclaimed} | 删除 $img_deleted 个未引用旧版 cecelia-brain 镜像"
+else
+  log "  ✗ 跳过（docker 不可用）"
+fi
 
 # ── 结果 ──
 AFTER=$(df / | tail -1 | awk '{print $3}')

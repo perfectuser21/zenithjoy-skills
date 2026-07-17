@@ -1,14 +1,15 @@
 ---
 name: janitor
-version: 2.0.0
+version: 2.1.0
 description: |
   小扫（Janitor）- 系统清扫员（Mac mini 版）。
   两种模式：daily（磁盘清理，每天 4am）+ frequent（僵尸进程清理，每 30 分钟）。
   纯 bash 脚本，无需 LLM，cron 自动运行。
   磁盘超 70% 时自动告警到 Cecelia Brain。
 created: 2026-02-24
-updated: 2026-03-08
+updated: 2026-07-17
 changelog:
+  - 2.1.0: daily 清单加第 10 项 docker 容器/镜像清理（结构性缺口修复，见 2026-07-17 OrbStack 磁盘事故）
   - 2.0.0: 从 VPS 版重写为 Mac mini v2.0（9 项清扫 + frequent 模式）
   - 1.0.0: 初始版本（VPS Docker/PM2 清理）
 ---
@@ -44,7 +45,7 @@ changelog:
 | 自动调度 | cron（见下方配置） |
 | 查看日志 | `cat /tmp/janitor-$(date +%Y%m%d).log` |
 
-## Daily 清扫清单（9 项）
+## Daily 清扫清单（10 项）
 
 | # | 清扫目标 | 条件 | 预估大小 |
 |---|---------|------|---------|
@@ -57,6 +58,7 @@ changelog:
 | 7 | .prd/.dod/.dev-mode 残留文件 | >3 天删除 | 少量 |
 | 8 | Git 孤儿分支（cp-*/worktree-*） | 调用 branch-gc.sh | N/A（分支清理） |
 | 9 | 残留 worktree | >24h 且无 open PR | N/A（目录清理） |
+| 10 | Docker 容器/镜像清理 | Exited 容器 + 未被引用的旧版 cecelia-brain 镜像（排除 running/latest/blue-fallback）| 数 GB~数十 GB |
 
 ## Frequent 清理内容
 
