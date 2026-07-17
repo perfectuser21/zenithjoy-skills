@@ -1,130 +1,171 @@
-# Contract DoD — 07171650-staging-preview-gate
+# Contract DoD — staging 预览闸进合同法律
 
-> **Sprint**: user_facing 交付 staging 预览闸进合同法律
-> **Task ID**: 8589b916-9b71-4dd8-a986-76670229b06d
-> **journey_type**: autonomous
-> **版本目标**: proposer v9.16.0 + report v6.9.0
-
----
-
-## [ARTIFACT] 产出物清单
-
-- [ ] [ARTIFACT] `harness-contract-proposer/SKILL.md` 版本更新为 `9.16.0`，changelog 含 9.16.0 条目
-- [ ] [ARTIFACT] `harness-contract-proposer/SKILL.md` 含完整「staging 预览闸」硬规则段（步骤A/B/C + Cecelia通知式 + ZJ阻塞式 + autonomous豁免）
-- [ ] [ARTIFACT] `harness-report/SKILL.md` 版本更新为 `6.9.0`，changelog 含 6.9.0 条目
-- [ ] [ARTIFACT] `harness-report/SKILL.md` Phase A Step 5 之后含 Step 5.5 段（仅 user_facing 执行 + Bark推送 + Brain PATCH + 非阻断声明）
+> **Sprint**: 07171650-staging-preview-gate
+> **Task ID**: 8589b916-9b71-4dd8-a986-76660229b06d
+> **journey_type**: dev_pipeline
+> **目标**: harness-contract-proposer v9.16.0 + harness-report v6.9.0
 
 ---
 
-## [BEHAVIOR] 行为验证清单
+## [BEHAVIOR] 条目
 
-- [ ] [BEHAVIOR] [L2] proposer SKILL.md 版本号已 bump 至 9.16.0
-  动作: 检查 `harness-contract-proposer/SKILL.md` frontmatter version 字段
-  预期观察: 文件首行 version 字段为 `9.16.0`
-  Test: manual:bash
-  ```bash
-  grep -qE "^version: 9\.16\.0" harness-contract-proposer/SKILL.md \
-    || { echo "FAIL: proposer 版本未 bump 到 9.16.0"; exit 1; }
-  echo "OK: proposer version=9.16.0"
-  ```
+- [ ] [BEHAVIOR] B-1 [L1]: harness-contract-proposer SKILL.md 版本 bump 至 9.16.0
+  - 动作：generator 在 harness-contract-proposer/SKILL.md 的 YAML header 将 `version: 9.15.0` 改为 `version: 9.16.0`，同时在 changelog 顶部插入 9.16.0 条目
+  - 预期观察：文件头部 `version:` 字段值变为 `9.16.0`，changelog 第一条为 9.16.0 相关描述
+  - 验证命令：`grep -qE "^version: 9\.16\.0" harness-contract-proposer/SKILL.md && echo "PASS" || echo "FAIL"`
+  - Test: manual:bash
 
-- [ ] [BEHAVIOR] [L2] proposer SKILL.md 含 staging 预览闸关键词三元组（通知式/阻塞式/promote_after）
-  动作: grep 检查 `harness-contract-proposer/SKILL.md` 关键内容
-  预期观察: 文件中同时存在「staging 预览闸」「通知式」「阻塞式」「promote_after」四个关键词
-  Test: manual:bash
-  ```bash
-  grep -q "staging 预览闸" harness-contract-proposer/SKILL.md \
-    || { echo "FAIL: 无 staging 预览闸段"; exit 1; }
-  grep -q "通知式" harness-contract-proposer/SKILL.md \
-    || { echo "FAIL: 无通知式条款"; exit 1; }
-  grep -q "阻塞式" harness-contract-proposer/SKILL.md \
-    || { echo "FAIL: 无阻塞式条款"; exit 1; }
-  grep -q "promote_after" harness-contract-proposer/SKILL.md \
-    || { echo "FAIL: 无 promote_after 字段"; exit 1; }
-  echo "OK: staging 预览闸关键词三元组验证通过"
-  ```
+- [ ] [BEHAVIOR] B-2 [L1]: proposer SKILL.md 含 staging 预览闸段及三步逻辑
+  - 动作：generator 在 harness-contract-proposer/SKILL.md 规则正文中插入「## staging 预览闸」段，包含步骤 A（落 staging）、步骤 B（Final E2E 在 staging 跑）、步骤 C（Bark 推主理人预览链接）
+  - 预期观察：文件中可 grep 到「staging 预览闸」「通知式」「阻塞式」「promote_after」「BARK_URL」字样
+  - 验证命令：
+    ```bash
+    grep -q "staging 预览闸" harness-contract-proposer/SKILL.md || { echo "FAIL: 无闸段"; exit 1; }
+    grep -q "通知式" harness-contract-proposer/SKILL.md || { echo "FAIL: 无通知式"; exit 1; }
+    grep -q "阻塞式" harness-contract-proposer/SKILL.md || { echo "FAIL: 无阻塞式"; exit 1; }
+    grep -q "promote_after" harness-contract-proposer/SKILL.md || { echo "FAIL: 无 promote_after"; exit 1; }
+    grep -q "BARK_URL" harness-contract-proposer/SKILL.md || { echo "FAIL: 无 BARK_URL"; exit 1; }
+    echo "PASS"
+    ```
+  - Test: manual:bash
 
-- [ ] [BEHAVIOR] [L2] proposer SKILL.md autonomous 豁免声明存在且 autonomous 不被错误纳入
-  动作: grep 检查 autonomous 相关内容正反两侧
-  预期观察: 有豁免声明（autonomous 不受约束/零回归/不强制），且不存在「autonomous 必须 staging」类语句
-  Test: manual:bash
-  ```bash
-  grep -qE "autonomous.*不受本规则|autonomous.*零回归|autonomous.*不强制|autonomous.*不受约束" harness-contract-proposer/SKILL.md \
-    || { echo "FAIL: 无 autonomous 豁免声明"; exit 1; }
-  if grep -qE "autonomous.*必须.*staging|autonomous.*强制.*staging|autonomous.*要求.*staging" harness-contract-proposer/SKILL.md; then
-    echo "FAIL: autonomous 被错误纳入 staging 强制流程（INV-1 违反）"
-    exit 1
-  fi
-  echo "OK: autonomous 豁免声明正确，零回归通过"
-  ```
+- [ ] [BEHAVIOR] B-3 [L1]: proposer SKILL.md 明确 autonomous/dev_pipeline 豁免，不被错误纳入
+  - 动作：generator 在「staging 预览闸」段中写明豁免条款，注明 `journey_type=autonomous/dev_pipeline/agent_remote` 不受本规则约束
+  - 预期观察：文件中存在 autonomous 豁免相关语句；负向检查 — 文件中不存在「autonomous 必须执行 staging」类强制语句
+  - 验证命令：
+    ```bash
+    # 正向：autonomous 豁免声明存在
+    grep -qE "autonomous.*不受本规则|autonomous.*零回归|autonomous.*不强制|autonomous.*不受约束|dev_pipeline.*不受|不受.*autonomous" harness-contract-proposer/SKILL.md \
+      || { echo "FAIL: 无 autonomous 豁免声明"; exit 1; }
+    # 负向：autonomous 未被错误纳入
+    if grep -qE "autonomous.*必须.*staging|autonomous.*强制.*staging" harness-contract-proposer/SKILL.md; then
+      echo "FAIL: autonomous 被错误纳入 staging 强制"; exit 1
+    fi
+    echo "PASS"
+    ```
+  - Test: manual:bash
 
-- [ ] [BEHAVIOR] [L2] harness-report SKILL.md 版本号已 bump 至 6.9.0，且含 Step 5.5 段
-  动作: 检查 `harness-report/SKILL.md` 版本字段和 Step 5.5 内容
-  预期观察: version=6.9.0，文件中存在 Step 5.5（含 promote_after 和 approval_required）
-  Test: manual:bash
-  ```bash
-  grep -qE "^version: 6\.9\.0" harness-report/SKILL.md \
-    || { echo "FAIL: report 版本未 bump 到 6.9.0"; exit 1; }
-  grep -q "5\.5" harness-report/SKILL.md \
-    || { echo "FAIL: harness-report 无 Step 5.5"; exit 1; }
-  grep -q "promote_after" harness-report/SKILL.md \
-    || { echo "FAIL: report Step 5.5 无 promote_after"; exit 1; }
-  grep -q "approval_required" harness-report/SKILL.md \
-    || { echo "FAIL: report Step 5.5 无 approval_required"; exit 1; }
-  echo "OK: harness-report version=6.9.0 且 Step 5.5 内容完整"
-  ```
+- [ ] [BEHAVIOR] B-4 [L1]: harness-report SKILL.md 版本 bump 至 6.9.0 且新增 Step 5.5
+  - 动作：generator 在 harness-report/SKILL.md 的 YAML header 将 `version: 6.8.0` 改为 `version: 6.9.0`，在 changelog 顶部插入 6.9.0 条目，并在 Phase A Step 5（飞书通知）之后插入 Step 5.5 块
+  - 预期观察：文件头 version 为 6.9.0；正文出现「5.5」字样；含 `promote_after`、`approval_required`、`user_facing` 限定；含 BARK_URL 引用；Step 5.5 失败属 CONCERN 非阻断说明
+  - 验证命令：
+    ```bash
+    grep -qE "^version: 6\.9\.0" harness-report/SKILL.md || { echo "FAIL: report 版本未 bump"; exit 1; }
+    grep -q "5\.5" harness-report/SKILL.md || { echo "FAIL: 无 Step 5.5"; exit 1; }
+    grep -q "promote_after" harness-report/SKILL.md || { echo "FAIL: 无 promote_after"; exit 1; }
+    grep -q "approval_required" harness-report/SKILL.md || { echo "FAIL: 无 approval_required"; exit 1; }
+    grep -q "BARK_URL" harness-report/SKILL.md || { echo "FAIL: 无 BARK_URL"; exit 1; }
+    echo "PASS"
+    ```
+  - Test: manual:bash
 
-- [ ] [BEHAVIOR] [L2] harness-report Phase B db-update 调用保持不变（INV-4）
-  动作: 检查 `harness-report/SKILL.md` 中 db-update 引用仍存在
-  预期观察: Phase B 部分仍含「db-update」字样，调用链未被打断
-  Test: manual:bash
-  ```bash
-  grep -q "db-update" harness-report/SKILL.md \
-    || { echo "FAIL: harness-report Phase B db-update 调用丢失（INV-4 违反）"; exit 1; }
-  echo "OK: Phase B db-update 不变量通过"
-  ```
-
-- [ ] [BEHAVIOR] [L2] Step 5.5 明确限定仅 user_facing 执行
-  动作: 检查 Step 5.5 段落是否含 user_facing 限定语
-  预期观察: Step 5.5 段落内含「user_facing」限定，不对 autonomous 产生约束
-  Test: manual:bash
-  ```bash
-  # 获取 Step 5.5 附近内容，检查 user_facing 限定词
-  grep -A 5 "5\.5" harness-report/SKILL.md | grep -q "user_facing" \
-    || grep -B 2 "5\.5" harness-report/SKILL.md | grep -q "user_facing" \
-    || { echo "FAIL: Step 5.5 附近未发现 user_facing 限定词"; exit 1; }
-  echo "OK: Step 5.5 user_facing 限定存在"
-  ```
+- [ ] [BEHAVIOR] B-5 [L1]: harness-report Phase B db-update 调用不变（INV-4 回归）
+  - 动作：generator 修改 harness-report/SKILL.md 时，Phase B 的 db-update 调用段保持不变
+  - 预期观察：文件中仍存在 `db-update` 字样，未被删改
+  - 验证命令：`grep -q "db-update" harness-report/SKILL.md && echo "PASS" || echo "FAIL: Phase B db-update 丢失"`
+  - Test: manual:bash
 
 ---
 
-## [BEHAVIOR] INV 铁律覆盖
+## [ARTIFACT] 产物清单
 
-- [ ] [BEHAVIOR] [L2] INV-1: autonomous 流程零回归验证
-  Test: manual:bash
-  ```bash
-  grep -qE "autonomous.*必须.*staging|autonomous.*强制.*staging" harness-contract-proposer/SKILL.md \
-    && { echo "FAIL: INV-1 违反：autonomous 被错误纳入"; exit 1; } || true
-  echo "OK: INV-1 autonomous 零回归"
-  ```
+- [ ] `harness-contract-proposer/SKILL.md` — version 改为 9.16.0，changelog 新增 9.16.0 条目，新增「staging 预览闸」规则段
+- [ ] `harness-report/SKILL.md` — version 改为 6.9.0，changelog 新增 6.9.0 条目，Phase A Step 5 之后新增 Step 5.5 块
 
-- [ ] [BEHAVIOR] [L2] INV-2: 两个 SKILL.md 版本均单调递增验证
-  Test: manual:bash
-  ```bash
-  grep -qE "^version: 9\.16\.0" harness-contract-proposer/SKILL.md \
-    || { echo "FAIL: INV-2 proposer 版本未递增到 9.16.0"; exit 1; }
-  grep -qE "^version: 6\.9\.0" harness-report/SKILL.md \
-    || { echo "FAIL: INV-2 report 版本未递增到 6.9.0"; exit 1; }
-  echo "OK: INV-2 版本单调递增通过"
-  ```
+---
 
-- [ ] [ARTIFACT] INV-3: 本 sprint 不实现 staging 脚本，SKILL 文本只写规则引用
-  （验收方式：代码审查确认 SKILL.md 只有规则描述，无具体 staging 脚本实现）
+## 合同格式自查（proposer 交付前必跑）
 
-- [ ] [BEHAVIOR] [L2] INV-4: harness-report Phase B db-update 调用不变
-  Test: manual:bash
-  ```bash
-  grep -q "db-update" harness-report/SKILL.md \
-    || { echo "FAIL: INV-4 违反：Phase B db-update 调用丢失"; exit 1; }
-  echo "OK: INV-4 Phase B 不变"
-  ```
+```bash
+#!/bin/bash
+set -euo pipefail
+SPRINT_DIR="sprints/07171650-staging-preview-gate"
+
+echo "=== 合同格式自查 ==="
+
+# 1. contract-draft.md 存在
+test -f "${SPRINT_DIR}/contract-draft.md" || { echo "FAIL: contract-draft.md 缺失"; exit 1; }
+
+# 2. contract-dod.md 存在
+test -f "${SPRINT_DIR}/contract-dod.md" || { echo "FAIL: contract-dod.md 缺失"; exit 1; }
+
+# 3. [BEHAVIOR] 条目 ≥ 4 条（行首 checkbox 格式）
+BEHAVIOR_COUNT=$(grep -cE "^\- \[ \] \*\*\[BEHAVIOR\]" "${SPRINT_DIR}/contract-dod.md" || true)
+[ "$BEHAVIOR_COUNT" -ge 4 ] || { echo "FAIL: [BEHAVIOR] 条目不足 4 条（当前: $BEHAVIOR_COUNT）"; exit 1; }
+echo "OK: [BEHAVIOR] 条目数 = $BEHAVIOR_COUNT"
+
+# 4. contract-draft.md 含 ## E2E 验收 段
+grep -q "## E2E 验收" "${SPRINT_DIR}/contract-draft.md" || { echo "FAIL: contract-draft.md 无 ## E2E 验收 段"; exit 1; }
+
+# 5. contract-dod.md 无预勾 [x]
+if grep -qE "^\- \[x\]" "${SPRINT_DIR}/contract-dod.md"; then
+  echo "FAIL: contract-dod.md 存在预勾 [x]，禁止提前勾选"
+  exit 1
+fi
+
+# 6. [BEHAVIOR] 条目含 Test: manual:bash
+BEHAVIOR_WITH_TEST=$(grep -cE "Test: manual:bash" "${SPRINT_DIR}/contract-dod.md" || true)
+[ "$BEHAVIOR_WITH_TEST" -ge 4 ] || { echo "FAIL: [BEHAVIOR] 条目 Test: manual:bash 不足 4 条（当前: $BEHAVIOR_WITH_TEST）"; exit 1; }
+
+# 7. 测试文件存在
+test -f "${SPRINT_DIR}/tests/skill-changes.test.ts" || { echo "FAIL: tests/skill-changes.test.ts 缺失"; exit 1; }
+
+echo "=== 合同格式自查 PASS ==="
+```
+
+---
+
+## E2E 验收命令（evaluator 执行）
+
+```bash
+#!/bin/bash
+set -euo pipefail
+# 执行位置：zenithjoy-skills repo 根目录 /workspace
+
+echo "=== Final E2E 验收：staging 预览闸 ==="
+
+# AC-1: proposer SKILL.md 版本 + 关键词
+grep -qE "^version: 9\.16\.0" harness-contract-proposer/SKILL.md \
+  || { echo "FAIL AC-1a: proposer 版本未 bump"; exit 1; }
+grep -q "staging 预览闸" harness-contract-proposer/SKILL.md \
+  || { echo "FAIL AC-1b: 无 staging 预览闸段"; exit 1; }
+grep -q "通知式" harness-contract-proposer/SKILL.md \
+  || { echo "FAIL AC-1c: 无通知式"; exit 1; }
+grep -q "阻塞式" harness-contract-proposer/SKILL.md \
+  || { echo "FAIL AC-1d: 无阻塞式"; exit 1; }
+grep -q "promote_after" harness-contract-proposer/SKILL.md \
+  || { echo "FAIL AC-1e: 无 promote_after"; exit 1; }
+grep -qE "autonomous.*不受本规则|autonomous.*零回归|autonomous.*不强制|autonomous.*不受约束|dev_pipeline.*不受|不受.*autonomous" harness-contract-proposer/SKILL.md \
+  || { echo "FAIL AC-1f: 无 autonomous 豁免声明"; exit 1; }
+grep -q "BARK_URL" harness-contract-proposer/SKILL.md \
+  || { echo "FAIL AC-1g: 无 BARK_URL 引用"; exit 1; }
+echo "PASS AC-1"
+
+# AC-2: report SKILL.md 版本 + Step 5.5
+grep -qE "^version: 6\.9\.0" harness-report/SKILL.md \
+  || { echo "FAIL AC-2a: report 版本未 bump"; exit 1; }
+grep -q "5\.5" harness-report/SKILL.md \
+  || { echo "FAIL AC-2b: 无 Step 5.5"; exit 1; }
+grep -q "promote_after" harness-report/SKILL.md \
+  || { echo "FAIL AC-2c: report 无 promote_after"; exit 1; }
+grep -q "approval_required" harness-report/SKILL.md \
+  || { echo "FAIL AC-2d: report 无 approval_required"; exit 1; }
+grep -q "BARK_URL" harness-report/SKILL.md \
+  || { echo "FAIL AC-2e: report 无 BARK_URL"; exit 1; }
+echo "PASS AC-2"
+
+# AC-3: autonomous 零回归（负向）
+if grep -qE "autonomous.*必须.*staging|autonomous.*强制.*staging" harness-contract-proposer/SKILL.md; then
+  echo "FAIL AC-3: autonomous 被错误纳入 staging"
+  exit 1
+fi
+echo "PASS AC-3"
+
+# AC-4: Phase B 不变量
+grep -q "db-update" harness-report/SKILL.md \
+  || { echo "FAIL AC-4: Phase B db-update 丢失"; exit 1; }
+echo "PASS AC-4"
+
+echo ""
+echo "=== ALL E2E AC PASS ==="
+```
