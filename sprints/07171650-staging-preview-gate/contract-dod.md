@@ -1,8 +1,8 @@
 # Contract DoD — staging 预览闸进合同法律
 
 > **Sprint**: 07171650-staging-preview-gate
-> **Task ID**: 8589b916-9b71-4dd8-a986-76660229b06d
-> **journey_type**: dev_pipeline
+> **Task ID**: 8589b916-9b71-4dd8-a986-76670229b06d
+> **journey_type**: autonomous
 > **目标**: harness-contract-proposer v9.16.0 + harness-report v6.9.0
 
 ---
@@ -65,6 +65,18 @@
   - 验证命令：`grep -q "db-update" harness-report/SKILL.md && echo "PASS" || echo "FAIL: Phase B db-update 丢失"`
   - Test: manual:bash
 
+- [ ] **[BEHAVIOR] B-6 [L1]: proposer/report SKILL.md 中 staging 步骤为引用占位，不含真实 shell 执行命令（INV-3）**
+  - 动作：generator 写入的 staging 步骤内容为说明性文字（引用方式、占位说明），不包含真实脚本路径的 bash/sh 执行命令
+  - 预期观察：SKILL.md 中 staging 相关段落不含直接 bash 脚本执行语句
+  - 验证命令：
+    ```bash
+    if grep -A 20 "staging 预览闸" harness-contract-proposer/SKILL.md | grep -qE "bash .*/.*\.sh|sh .*/.*\.sh|exec .*staging"; then
+      echo "FAIL B-6: proposer SKILL.md staging 段含真实 bash 脚本执行，只允许引用占位"; exit 1
+    fi
+    echo "PASS B-6"
+    ```
+  - Test: manual:bash
+
 ---
 
 ## [ARTIFACT] 产物清单
@@ -108,7 +120,7 @@ BEHAVIOR_WITH_TEST=$(grep -cE "Test: manual:bash" "${SPRINT_DIR}/contract-dod.md
 [ "$BEHAVIOR_WITH_TEST" -ge 4 ] || { echo "FAIL: [BEHAVIOR] 条目 Test: manual:bash 不足 4 条（当前: $BEHAVIOR_WITH_TEST）"; exit 1; }
 
 # 7. 测试文件存在
-test -f "${SPRINT_DIR}/tests/skill-changes.test.ts" || { echo "FAIL: tests/skill-changes.test.ts 缺失"; exit 1; }
+test -f "${SPRINT_DIR}/tests/verify-skill-changes.sh" || { echo "FAIL: tests/verify-skill-changes.sh 缺失"; exit 1; }
 
 echo "=== 合同格式自查 PASS ==="
 ```

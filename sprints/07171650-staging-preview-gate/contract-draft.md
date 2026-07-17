@@ -2,7 +2,7 @@
 
 > **Sprint**: 07171650-staging-preview-gate
 > **Task ID**: 8589b916-9b71-4dd8-a986-76670229b06d
-> **journey_type**: dev_pipeline（纯 SKILL 文档改动，bash grep 验收）
+> **journey_type**: autonomous（纯 SKILL 文档改动，bash grep 验收）
 > **target_environment**: local_api
 > **版本目标**: harness-contract-proposer v9.16.0 + harness-report v6.9.0
 
@@ -155,7 +155,7 @@ echo "OK: autonomous 零回归 + Phase B 不变量验证通过"
 
 ## E2E 验收
 
-**journey_type**: dev_pipeline
+**journey_type**: autonomous
 **target_environment**: local_api（纯文档改动，bash grep 断言，本地执行）
 
 ```bash
@@ -182,6 +182,8 @@ grep -q "promote_after" harness-contract-proposer/SKILL.md \
   || { echo "FAIL AC-1e: 无 promote_after"; exit 1; }
 grep -qE "autonomous.*不受本规则|autonomous.*零回归|autonomous.*不强制|autonomous.*不受约束" harness-contract-proposer/SKILL.md \
   || { echo "FAIL AC-1f: 无 autonomous 豁免声明"; exit 1; }
+grep -q "BARK_URL" harness-contract-proposer/SKILL.md \
+  || { echo "FAIL AC-1g: 无 BARK_URL 引用"; exit 1; }
 echo "OK: AC-1 proposer SKILL.md 通过"
 
 # AC-2: harness-report SKILL.md 关键词验收
