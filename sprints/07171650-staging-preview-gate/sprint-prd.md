@@ -1,87 +1,84 @@
-# Sprint PRD — staging 预览闸补丁（harness-contract-proposer + harness-report）
+# user_facing 交付 staging 预览闸进合同法律：Cecelia=24h通知式/ZJ=阻塞式点头
 
-## OKR 对齐
+> **决策来源**: 34a7ad72（2026-07-16，cecelia，level=ability，category=process，status=active）
+> **任务 ID**: 8589b916-9b71-4dd8-a986-76670229b06d
+> **Sprint 目录**: sprints/07171650-staging-preview-gate
+> **版本目标**: harness-contract-proposer v9.16.0 + harness-report v6.9.0
 
-- **对应 KR**：harness 质量门完整性（user_facing 禁直上 prod）
-- **当前进度**：N/A（skill 元改动）
-- **本次推进预期**：user_facing 合同强制含 staging 预览步，report 收尾登记放行状态
+## 背景与动机
 
-## 背景
+历史教训：指挥舱空白（Cecelia）和 16步画像卡（ZJ）均为 user_facing 功能直上 prod，主理人首踩雷。根因：合同未强制 user_facing 类交付在 merge 后先落 staging 再由主理人确认。
 
-决策34a7ad72：user_facing 禁直上 prod。案例：指挥舱空白(Cecelia)/16步画像卡(ZJ)均主理人 prod 首踩雷。改 zenithjoy-skills：①harness-contract-proposer 合同加 staging 预览步规则；②harness-report 收尾加 Bark 通知+放行状态登记。既有 staging_e2e 派生（harness-controller Step 6，`POST /api/brain/harness/staging-e2e`）只引用不重造。autonomous 类流程零回归。
+## 本次变更范围
 
-## Golden Path（核心场景）
+### 改动 ①：harness-contract-proposer/SKILL.md（v9.15.0 → v9.16.0）
 
-用户/系统从 [proposer 识别 journey_type=user_facing] → 经过 [合同加 staging 预览步 → merge → Final E2E in staging → Bark 通知 → 放行判定] → 到达 [prod promote 获主理人授权]
+凡 `journey_type=user_facing` 的合同，必须在末尾含 `## staging 预览闸` 段，包含三步：
 
-具体：
-1. proposer 读 sprint-prd.md，journey_type=user_facing 时，contract-draft.md 末尾写入 `## staging 预览闸` 段（三步：A落staging / B Final-E2E在staging跑截图 / C Bark推主理人预览链接，复用 BARK_URL）
-2. 按 BASE_REPO 判定模式：cecelia 仓=通知式（Bark 注明「24h 无异议自动放行」），ZJ 仓=阻塞式（主理人须写入 approval 字段，未放行禁 promote）
-3. evaluator PASS 后 harness-report Phase A 新增 Step 5.5（user_facing 专属）：Bark 推主理人 + Brain PATCH 写 promote_after 时间戳（cecelia）或 approval_required 标记（ZJ）
+**步骤 A — 落 staging**：merge 后先部署到对应 staging 实例（Cecelia=localhost:5212，ZJ=ZJ staging），复用现有 staging 脚本，只引用不重造。
 
-## 边界情况
+**步骤 B — Final E2E 在 staging 跑**：E2E 目标地址改为 staging 地址，截图存 `${SPRINT_DIR}/screenshots/staging-<step>.png`。
 
-- autonomous/dev_pipeline/agent_remote：不加 staging 预览步（零回归）
-- Bark/Brain PATCH 失败：CONCERN 记录，不阻断 report（best-effort）
-- BASE_REPO 未知：默认 ZJ 阻塞式（更保守）
+**步骤 C — Bark 推主理人预览链接**（复用 `$BARK_URL`），按 `$BASE_REPO` 判模式：
+- `cecelia` 仓 → **通知式**：Bark 注明「24h 无异议自动放行」，Brain PATCH task metadata 写 `promote_after` 时间戳
+- `zenithjoy` 仓 → **阻塞式**：Bark 注明「需主理人放行」，prod promote 前必须核查 `decisions` 表或 task `approval` 字段，未放行禁 promote
 
-## 范围限定
+`journey_type=autonomous` 流程零回归：本规则仅限 user_facing，autonomous 合同不受约束。
 
-**在范围内**：harness-contract-proposer/SKILL.md 文本修改（版本 9.15.0→9.16.0）；harness-report/SKILL.md 文本修改（版本 6.8.0→6.9.0）
-**不在范围内**：cecelia auto-staging-deploy 脚本实现；harness-controller Step 6 staging_e2e 派生逻辑；autonomous 类合同任何现有规则
+### 改动 ②：harness-report/SKILL.md（v6.8.0 → v6.9.0）
 
-## 假设
+Phase A Step 5（飞书通知）之后，新增 **Step 5.5**（仅 journey_type=user_facing 时执行）：
+1. Bark 推送 staging 预览链接 + 截图 URL
+2. Brain PATCH：Cecelia 仓写 `promote_after`（UTC+24h）；ZJ 仓写 `approval_required: true`
+3. 失败属非关键步（CONCERN，不阻断）
 
-- [ASSUMPTION: BARK_URL 已作为环境变量在 harness-report 执行上下文可用]
-- [ASSUMPTION: staging_e2e 派生由 harness-controller 负责，本 sprint 只在 report 层引用结果]
-- [ASSUMPTION: promote_after 时间戳写入 task custom_props 字段（Brain PATCH tasks/:id）]
+## Invariant 约束
 
-## 预期受影响文件
+- INV-1：autonomous 流程零回归，journey_type=autonomous 的合同不得含 staging 预览步强制要求
+- INV-2：版本号必须单调递增（proposer 9.15.0→9.16.0，report 6.8.0→6.9.0）
+- INV-3：staging 部署/promote 逻辑本 sprint 不实现，只写引用方式进 SKILL 文本
+- INV-4：不改 harness-report Phase B 逻辑（db-update 调用不变）
 
-- `harness-contract-proposer/SKILL.md`：新增 user_facing staging 预览步硬规则 + 版本 bump + changelog
-- `harness-report/SKILL.md`：新增 Phase A Step 5.5（Bark 推送 + Brain PATCH）+ 版本 bump + changelog
+## 累积 FR
 
-## E2E 验收
+context-manifest 端点不可达，累积 FR 加载：N/A（/api/brain/line/context-manifest 返回 Cannot GET）
+
+## NFR
+
+- 无性能要求（纯 SKILL 文本改动）
+- 版本 bump 必须准确写入 changelog
+- Bark/Brain PATCH 失败为 CONCERN 非阻断
+
+## 验收标准（含可执行 bash 断言）
 
 ```bash
-# proposer GAN 阶段补全完整脚本；以下为验收点框定：
-# 1. harness-contract-proposer/SKILL.md grep 到「staging 预览闸」与 user_facing 联动规则
-grep -q "staging 预览闸" /workspace/harness-contract-proposer/SKILL.md || { echo "FAIL: proposer 缺 staging 预览闸"; exit 1; }
-grep -qE "autonomous.*零回归|autonomous.*不受本规则|journey_type=user_facing.*staging|staging.*user_facing" /workspace/harness-contract-proposer/SKILL.md || { echo "FAIL: 缺 user_facing/autonomous 分支规则"; exit 1; }
-# 2. harness-report/SKILL.md grep 到 promote_after 与 Bark 条款
-grep -q "promote_after" /workspace/harness-report/SKILL.md || { echo "FAIL: report 缺 promote_after 登记"; exit 1; }
-grep -qE "BARK_URL|Bark.*user_facing|user_facing.*Bark" /workspace/harness-report/SKILL.md || { echo "FAIL: report 缺 Bark 通知"; exit 1; }
-# 3. 版本号 bump
-grep -q "version: 9.16.0" /workspace/harness-contract-proposer/SKILL.md || { echo "FAIL: proposer 版本未 bump"; exit 1; }
-grep -q "version: 6.9.0" /workspace/harness-report/SKILL.md || { echo "FAIL: report 版本未 bump"; exit 1; }
-# 4. autonomous 零回归负向验证
-grep -qE "autonomous.*必须.*staging|autonomous.*强制.*staging" /workspace/harness-contract-proposer/SKILL.md && { echo "FAIL: autonomous 被错误纳入 staging 规则"; exit 1; } || true
+# AC-1: proposer SKILL 含关键词
+grep -q "staging 预览闸" harness-contract-proposer/SKILL.md || { echo "FAIL: 无 staging 预览闸"; exit 1; }
+grep -q "通知式" harness-contract-proposer/SKILL.md || { echo "FAIL: 无通知式条款"; exit 1; }
+grep -q "阻塞式" harness-contract-proposer/SKILL.md || { echo "FAIL: 无阻塞式条款"; exit 1; }
+grep -q "promote_after" harness-contract-proposer/SKILL.md || { echo "FAIL: 无 promote_after"; exit 1; }
+grep -qE "autonomous.*不受本规则|autonomous.*零回归|autonomous.*不强制" harness-contract-proposer/SKILL.md || { echo "FAIL: 无 autonomous 豁免"; exit 1; }
+# AC-2: report SKILL 含 Step 5.5
+grep -q "5\.5" harness-report/SKILL.md || { echo "FAIL: harness-report 无 Step 5.5"; exit 1; }
+grep -q "promote_after" harness-report/SKILL.md || { echo "FAIL: 无 promote_after"; exit 1; }
+# AC-3: 版本 bump
+grep -qE "^version: 9\.16\.0" harness-contract-proposer/SKILL.md || { echo "FAIL: proposer 版本未 bump"; exit 1; }
+grep -qE "^version: 6\.9\.0" harness-report/SKILL.md || { echo "FAIL: report 版本未 bump"; exit 1; }
+# AC-4: autonomous 零回归
+grep -qE "autonomous.*必须.*staging|autonomous.*强制.*staging" harness-contract-proposer/SKILL.md && { echo "FAIL: autonomous 被错误纳入"; exit 1; } || true
 echo "ALL AC PASS"
 ```
 
-## NFR 约束
+## 禁 mock 边清单
 
-<!-- 来源: decisions 表 category=nfr，PrepPRD 显式值优先 -->
-- 超时/延迟: Bark/Brain PATCH best-effort，失败不阻塞
-- 频控: 每次 user_facing 合同一条 Bark 推送
-- 版本要求: proposer 9.16.0（单调递增）；report 6.9.0（单调递增）
-- 可观测: Step 5.5 失败必须写 `.report-concerns`
+N/A（纯文档/SKILL 改动，无代码接缝边）
 
-## Invariant 约束（铁律，proposer/evaluator 不得违反）
+## 未覆盖真实链路清单
 
-<!-- 来源: decisions category=invariant，step + journey_feature + area 三源合并去重 -->
-- [零回归] autonomous/dev_pipeline/agent_remote 类合同禁止加 staging 预览步（来源: thin_prd 决策34a7ad72）
-- [await] 测试文件读源码必须包装 async function，不能直接 readFileSync（来源: area）
-- [Red-commit] git add 精确路径，禁止 git add .（来源: area）
-- [generator-no-merge] generator 禁自行 merge PR，merge 权归 controller（来源: area）
+- cecelia auto-staging-deploy / ZJ staging-promote 脚本真实路径：proposer 写合同时须 `find` 定位后引用，本 sprint SKILL 只写规则引用占位
 
-## 累积 FR（本 line 已验收行为，本 sprint 不得回退/重复）
+## journey_type: autonomous
 
-（本 line 暂无历史——journey_id=null，无可查 journey golden-paths）
+> 本 sprint 是修改 SKILL 文档（规则文本），无前端 UI，属 autonomous 类。
 
-## journey_type: dev_pipeline
-## journey_type_reason: 改的是 skill 元文件（harness 工具链规则文本），属 packages/engine 类 dev_pipeline，无 Dashboard UI/agent 协议/Brain API 行为变更
 ## target_environment: local_api
-## target_environment_reason: 验收为 SKILL.md 文本 grep 断言，本机 local_api 执行即可
-## journey_id: none
-## step_id: none（PrepPRD 未锚定）
