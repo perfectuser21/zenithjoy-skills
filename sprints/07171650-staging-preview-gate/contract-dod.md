@@ -38,7 +38,7 @@
     grep -qE "autonomous.*不受本规则|autonomous.*零回归|autonomous.*不强制|autonomous.*不受约束|dev_pipeline.*不受|不受.*autonomous" harness-contract-proposer/SKILL.md \
       || { echo "FAIL: 无 autonomous 豁免声明"; exit 1; }
     # 负向：autonomous 未被错误纳入
-    if grep -qE "autonomous.*必须.*staging|autonomous.*强制.*staging" harness-contract-proposer/SKILL.md; then
+    if grep -qE "autonomous.*(必须|强制|要求|亦需).*staging|staging.*(必须|强制|要求).*autonomous" harness-contract-proposer/SKILL.md; then
       echo "FAIL: autonomous 被错误纳入 staging 强制"; exit 1
     fi
     echo "PASS"
@@ -55,6 +55,8 @@
     grep -q "promote_after" harness-report/SKILL.md || { echo "FAIL: 无 promote_after"; exit 1; }
     grep -q "approval_required" harness-report/SKILL.md || { echo "FAIL: 无 approval_required"; exit 1; }
     grep -q "BARK_URL" harness-report/SKILL.md || { echo "FAIL: 无 BARK_URL"; exit 1; }
+    grep -q "user_facing" harness-report/SKILL.md || { echo "FAIL: 无 user_facing 限定条款"; exit 1; }
+    grep -qE "CONCERN|非阻断|best-effort" harness-report/SKILL.md || { echo "FAIL: 无 Step 5.5 非阻断说明"; exit 1; }
     echo "PASS"
     ```
   - Test: manual:bash
@@ -102,7 +104,7 @@ test -f "${SPRINT_DIR}/contract-draft.md" || { echo "FAIL: contract-draft.md 缺
 test -f "${SPRINT_DIR}/contract-dod.md" || { echo "FAIL: contract-dod.md 缺失"; exit 1; }
 
 # 3. [BEHAVIOR] 条目 ≥ 4 条（行首 checkbox 格式）
-BEHAVIOR_COUNT=$(grep -cE "^\- \[ \] \*\*\[BEHAVIOR\]" "${SPRINT_DIR}/contract-dod.md" || true)
+BEHAVIOR_COUNT=$(grep -cE "^\- \[ \] \[BEHAVIOR\]" "${SPRINT_DIR}/contract-dod.md" || true)
 [ "$BEHAVIOR_COUNT" -ge 4 ] || { echo "FAIL: [BEHAVIOR] 条目不足 4 条（当前: $BEHAVIOR_COUNT）"; exit 1; }
 echo "OK: [BEHAVIOR] 条目数 = $BEHAVIOR_COUNT"
 
@@ -167,7 +169,7 @@ grep -q "BARK_URL" harness-report/SKILL.md \
 echo "PASS AC-2"
 
 # AC-3: autonomous 零回归（负向）
-if grep -qE "autonomous.*必须.*staging|autonomous.*强制.*staging" harness-contract-proposer/SKILL.md; then
+if grep -qE "autonomous.*(必须|强制|要求|亦需).*staging|staging.*(必须|强制|要求).*autonomous" harness-contract-proposer/SKILL.md; then
   echo "FAIL AC-3: autonomous 被错误纳入 staging"
   exit 1
 fi

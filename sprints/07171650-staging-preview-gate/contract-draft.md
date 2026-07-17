@@ -200,7 +200,7 @@ echo "OK: AC-2 harness-report SKILL.md 通过"
 
 # AC-3: autonomous 零回归（INV-1）
 echo "[AC-3] 验证 autonomous 零回归..."
-if grep -qE "autonomous.*必须.*staging|autonomous.*强制.*staging" harness-contract-proposer/SKILL.md; then
+if grep -qE "autonomous.*(必须|强制|要求|亦需).*staging|staging.*(必须|强制|要求).*autonomous" harness-contract-proposer/SKILL.md; then
   echo "FAIL AC-3: autonomous 被错误纳入 staging 强制流程"
   exit 1
 fi
