@@ -41,7 +41,7 @@ for bin in npm brew docker; do
   fi
   found=$(env -i HOME="$HOME" PATH="/usr/bin:/bin" bash -c "$path_line; command -v ${bin}" 2>/dev/null)
   if [ -n "$found" ]; then
-    echo "  ✓ ${bin}：脚本的 PATH 导出行能让裸 cron 环境找到它（$found）"
+    echo "  ✓ ${bin}：脚本的 PATH 导出行能让裸 cron 环境找到它（${found}）"
   else
     echo "  ✗ ${bin}：即使套用脚本的 PATH 导出行，裸 cron 环境仍找不到"
     FAIL=1

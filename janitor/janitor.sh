@@ -28,9 +28,16 @@ for arg in "$@"; do
   esac
 done
 
+# cron 默认 PATH 只有 /usr/bin:/bin，找不到装在 /opt/homebrew/bin 的 npm/brew/docker，
+# 导致 cron 触发的清理长期跳过这三步（手动跑因继承交互 shell PATH 能成功，二者对比暴露此差异）。
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
 CECELIA_REPO="/Users/administrator/perfect21/cecelia"
 BRAIN_API="http://localhost:5221"
 TOTAL_STEPS=10
+# 磁盘用量必须查实际数据卷，不是 / —— APFS 下 / 是只读系统卷（firmlink），用量长期 ~30%，
+# 跟真实数据卷 /System/Volumes/Data 的用量完全对不上，曾导致 70% 告警从未触发。
+DISK_VOL="/System/Volumes/Data"
 
 # ─────────────────────────────────────────────
 # frequent 模式：清理孤儿/僵尸进程 + 资源压力响应
@@ -345,6 +352,16 @@ if [ "$MODE" = "frequent" ]; then
   if [ "$KILLED" -gt 0 ]; then
     echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] 清理完成：killed $KILLED 个孤儿进程（内存 ${MEM_PCT}%，CPU ${CPU_PCT}%）"
   fi
+
+  # 已退出的 harness relay 容器每小时新增 ~13 个（2026-07-19/20 现场验证），
+  # daily 单次清理频率追不上堆积速度，这里每 15 分钟顺手清一次。只 prune 已退出的，
+  # 不碰 running 容器（container prune 本身语义就只清 Exited/Created 状态，不会误删运行中的）。
+  if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    relay_prune_out=$(docker container prune -f 2>/dev/null || true)
+    relay_reclaimed=$(echo "$relay_prune_out" | grep "Total reclaimed space" | awk -F': ' '{print $2}')
+    [ -n "$relay_reclaimed" ] && [ "$relay_reclaimed" != "0B" ] && \
+      echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] 已退出容器 prune 回收 ${relay_reclaimed}"
+  fi
   exit 0
 fi
 
@@ -352,7 +369,7 @@ fi
 # daily 模式：Mac mini 磁盘清理（v2.0）
 # ─────────────────────────────────────────────
 LOG_FILE="/tmp/janitor-$(date +%Y%m%d).log"
-BEFORE=$(df / | tail -1 | awk '{print $3}')
+BEFORE=$(df "$DISK_VOL" | tail -1 | awk '{print $3}')
 
 log() { echo "[$(date '+%H:%M:%S')] $1" | tee -a "$LOG_FILE"; }
 
@@ -494,15 +511,15 @@ else
 fi
 
 # ── 结果 ──
-AFTER=$(df / | tail -1 | awk '{print $3}')
+AFTER=$(df "$DISK_VOL" | tail -1 | awk '{print $3}')
 FREED_MB=$(( (BEFORE - AFTER) / 1024 ))
-CURRENT=$(df -h / | tail -1 | awk '{print $3 "/" $2 " (" $5 ")"}')
+CURRENT=$(df -h "$DISK_VOL" | tail -1 | awk '{print $3 "/" $2 " (" $5 ")"}')
 log ""
 log "=== 清扫完成 ==="
 log "释放: ${FREED_MB}MB | 当前: $CURRENT"
 
 # 超70%发告警到 Cecelia Brain
-USAGE_PCT=$(df / | tail -1 | awk '{print $5}' | tr -d '%')
+USAGE_PCT=$(df "$DISK_VOL" | tail -1 | awk '{print $5}' | tr -d '%')
 if [ "$USAGE_PCT" -gt 70 ]; then
   log "⚠️  磁盘 ${USAGE_PCT}%，超警戒线！"
   curl -s -X POST http://localhost:5221/api/brain/tasks \
