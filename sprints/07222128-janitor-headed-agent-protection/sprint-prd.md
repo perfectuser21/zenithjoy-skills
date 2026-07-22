@@ -181,3 +181,28 @@ is_orphan() {
 | `janitor/janitor.sh` | 修改：`is_orphan()` 新增 TTY + tmux/ssh 祖先 + 白名单保护 |
 | `janitor/__tests__/janitor_orphan.test.sh` | 修改：新增 T-01～T-07 行为级测试 |
 | `sprints/07222128-janitor-headed-agent-protection/sprint-prd.md` | 新增：本文件 |
+
+---
+
+## Invariant 约束
+
+（本任务无 journey_id / ability_id，降级为空——无历史 invariant 需加载）
+
+---
+
+## 累積 FR
+
+（本任务无 journey_id，降级为空——无累积 FR 需加载）
+
+---
+
+## NFR
+
+- NFR-01: `is_orphan()` 修改后不得影响 daily 模式——只修改 frequent 扫描路径使用的 `is_orphan()` 判定
+- NFR-02: 修复必须对真实孤儿保持清理能力（T-05 回归覆盖 TTY=??+PPID=1 场景）
+- NFR-03: 测试不依赖真实生产进程，每个 fixture 进程在 test trap 中 kill，保证测试幂等
+
+---
+
+journey_type: autonomous
+target_environment: local_api
