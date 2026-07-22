@@ -183,28 +183,47 @@ if [ "$MODE" = "frequent" ]; then
     return 1
   }
 
-  # 判断 vitest/node 进程是否为孤儿（原逻辑）
+  # 判断 vitest/node 进程是否为孤儿（三层保护）
   is_orphan() {
     local pid=$1
-    if has_live_claude_ancestor "$pid"; then
+
+    # 保护层 A：TTY 检查——有 TTY 的进程绝对不杀（有头 Codex/Grok 等）
+    local tty
+    tty=$(ps -o tty= -p "$pid" 2>/dev/null | tr -d ' ')
+    if [ -n "$tty" ] && [ "$tty" != "??" ]; then
       return 1
     fi
+
+    # 保护层 B：祖先链遍历——找到 tmux/screen/sshd/login/claude → 不杀
     local current=$pid
     local depth=0
     local max_depth=20
     while [ $depth -lt $max_depth ]; do
       local ppid
       ppid=$(ps -o ppid= -p "$current" 2>/dev/null | tr -d ' ')
-      [ -z "$ppid" ] || [ "$ppid" = "0" ] && return 1
-      [ "$ppid" = "1" ] && return 0
+      [ -z "$ppid" ] || [ "$ppid" = "0" ] && break
+      [ "$ppid" = "1" ] && break
       local comm
       comm=$(ps -o comm= -p "$ppid" 2>/dev/null)
-      if echo "$comm" | grep -qi "claude"; then
+      if echo "$comm" | grep -qiE "tmux|screen|sshd|login|claude"; then
         return 1
       fi
       current=$ppid
       depth=$((depth + 1))
     done
+
+    # 保护层 C：cmdline 白名单——brain/server.js、cecelia-bridge.cjs、n8n → 不杀
+    local cmdline
+    cmdline=$(ps -o command= -p "$pid" 2>/dev/null || echo "")
+    if echo "$cmdline" | grep -qE "brain/server\.js|cecelia-bridge\.cjs|n8n"; then
+      return 1
+    fi
+
+    # 最终判断：PPID=1 → 真实孤儿
+    local ppid_final
+    ppid_final=$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')
+    [ "$ppid_final" = "1" ] && return 0
+
     return 1
   }
 
