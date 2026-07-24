@@ -1,3 +1,8 @@
+## [2026-07-24] golden-path 1.1.0 — created：GP 体系判定门面（想法→合格定义）+ doctrine 唯一权威版
+**症状**: 主理人丢一个粗想法想定义成 Golden Path 时没有入口——mapper 只接「切整个领域」、proposer/reviewer/controller 是无头流水线只接已命名 GP，scoping（判定粒度）从未部署过；「什么叫好的 GP」判定标准散落 mapper 附录/scoping/proposer 三处互相不引用。实测账本恶果：golden_paths 表 14 条里混着工作包/工厂件/加厚动作，3 组撞格重复，10 条锚点损坏（journey_id 空 6、挂 deprecated 1、悬空外键 3），无一条有承诺式骨干。
+**根因**: GP 体系只建了后段（提案→对抗→demo），缺前门判定 gate；判定标准无唯一权威文档；且判定类工作从不装载 journeys 已拍板 line→GP 地图，在真空里判"是不是路"（v1.0 eval 中连 AI 也把图上已有的 F5 指挥舱/F3 夜间体检重新发明成"新路"）。
+**修改**: 新建 golden-path skill（三模式：A 提炼=想法→判定链→承诺式骨干→GAN 三镜头对抗→呈拍板；B 划分=一坨东西→line/路格子坐标；C 概念答疑），references/doctrine.md 收编全部判定标准为唯一权威版（三问法/两把尺子/三反模式/承诺式骨干/场景八格/归位五关/七动作），1.1.0 迭代新增 §1.5 Line 判定、§1.6 判定链、Step 0 先装地图铁律（判定结论必须落格子坐标）、旧词 Ability/Feature 对齐、FR/NFR 归属、凌驾 steps 之上仅三样（路级断言/Gate/横切件）。Eval：14 条真实账本清洗，v1.1 10/10（对照 baseline 7/9，并纠出人工参考答案两处误判）。后续单独 PR：mapper/scoping 退役收编（退役不与新增混提交）。
+
 ## [2026-07-17] janitor 2.1.0 — daily 清单加第10项 docker 容器/镜像清理
 **症状**: us-mac 磁盘可用一度掉到 19-22Gi/228Gi，第2次因磁盘紧张被动处理（第1次是07-15的23G preview泄漏）。排查发现 OrbStack 虚拟磁盘占 59G，容器 rw layer snapshot 损坏一度导致 docker 清理命令卡死；复核时该损坏已自愈，但更根本的问题是 janitor.sh daily 清单 9 项完全没有 docker 容器/镜像清理，Exited 容器和旧版镜像 tag 会无限堆积不会自动回收。
 **根因**: janitor 的清扫清单是历史沿革的 9 项（日志/npm/brew/tmp/git分支/worktree），从未覆盖 docker 层——这是结构性缺口，不是一次性事件，只要有容器化部署（cecelia-brain 蓝绿部署每次 bump 版本都留一个旧 tag）就会持续复发。
