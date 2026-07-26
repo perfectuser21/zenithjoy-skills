@@ -1,3 +1,8 @@
+## [2026-07-26] harness-evaluator 1.32.2 — updated：统一 E2E 解析、跨仓 runtime 与 attempt 证据归属
+**症状**: Harness 的测试金字塔、ratchet、evaluator 各自解析 `Test Contract`，同一条 sprint E2E 在不同 gate 中被分别判成已登记或孤儿；evaluator 在非 Cecelia 仓库执行时还依赖不存在的本地脚本，导致合法合同在 Judge 前被基础设施自举死锁。
+**根因**: 合同路径解析存在多份实现，且 Skill 只描述调用 Cecelia 仓内脚本，没有把唯一解析器作为可执行 runtime 随 Skill 一起交付。
+**修改**: 同步 1.31.0 的 evidence ownership 规则并补齐所有 PASS/FAIL verdict 的 attempt 绑定；1.32.x 统一唯一 `## E2E 验收` 段与多个 bash fenced block 合并语义，并在 Skill 内嵌与 Cecelia canonical extractor 字节一致的 Node.js runtime，运行时先落 `/tmp` 再执行，因此 Claude/Codex/Grok 及跨仓 worker 均走同一套结构化证据解析，不从自然语言猜测。
+
 ## [2026-07-24] golden-path 1.1.0 — created：GP 体系判定门面（想法→合格定义）+ doctrine 唯一权威版
 **症状**: 主理人丢一个粗想法想定义成 Golden Path 时没有入口——mapper 只接「切整个领域」、proposer/reviewer/controller 是无头流水线只接已命名 GP，scoping（判定粒度）从未部署过；「什么叫好的 GP」判定标准散落 mapper 附录/scoping/proposer 三处互相不引用。实测账本恶果：golden_paths 表 14 条里混着工作包/工厂件/加厚动作，3 组撞格重复，10 条锚点损坏（journey_id 空 6、挂 deprecated 1、悬空外键 3），无一条有承诺式骨干。
 **根因**: GP 体系只建了后段（提案→对抗→demo），缺前门判定 gate；判定标准无唯一权威文档；且判定类工作从不装载 journeys 已拍板 line→GP 地图，在真空里判"是不是路"（v1.0 eval 中连 AI 也把图上已有的 F5 指挥舱/F3 夜间体检重新发明成"新路"）。
