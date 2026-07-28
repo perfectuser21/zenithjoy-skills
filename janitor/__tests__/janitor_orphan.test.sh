@@ -167,6 +167,27 @@ else
   fail "docker 不可用时的跳过逻辑缺失"
 fi
 
+# 验证 21: audiomxd 死循环兜底清理阈值存在（2026-07-28）
+if grep -q "AUDIOMXD_CPU_THRESHOLD=80" "$JANITOR" 2>/dev/null; then
+  ok "AUDIOMXD_CPU_THRESHOLD=80 已定义"
+else
+  fail "AUDIOMXD_CPU_THRESHOLD 未定义"
+fi
+
+# 验证 22: audiomxd kill 逻辑存在（sudo -n 保证无密码时静默跳过）
+if grep -q "sudo -n kill -9 \"\$audiomxd_pid\"" "$JANITOR" 2>/dev/null; then
+  ok "audiomxd kill 逻辑存在（sudo -n）"
+else
+  fail "audiomxd kill 逻辑缺失"
+fi
+
+# 验证 23: audiomxd 进程扫描不会误伤其他进程（用 [a]udiomxd 防止匹配到 grep 自身）
+if grep -q "grep '\[a\]udiomxd'" "$JANITOR" 2>/dev/null; then
+  ok "audiomxd 扫描用 [a]udiomxd 排除 grep 自身"
+else
+  fail "audiomxd 扫描未排除 grep 自身"
+fi
+
 echo ""
 echo "结果: $PASS 通过 / $FAIL 失败"
 [ "$FAIL" -eq 0 ] && exit 0 || exit 1

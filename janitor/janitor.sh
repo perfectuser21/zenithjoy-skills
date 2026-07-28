@@ -372,6 +372,22 @@ if [ "$MODE" = "frequent" ]; then
     echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] 清理完成：killed $KILLED 个孤儿进程（内存 ${MEM_PCT}%，CPU ${CPU_PCT}%）"
   fi
 
+  # ── audiomxd 蓝牙路由死循环兜底（2026-07-28 现场实测）────
+  # 已知 macOS bug：audiomxd 卡在 com.apple.mediaexperience.btroutingrequestqueue
+  # 反复注册同一通知观察者，占满一整个核心；关蓝牙不能根治（真实触发源未知，见
+  # decisions f418f03c）。这里只做止损：CPU 持续偏高就 kill，launchd 会自动拉起干净实例。
+  AUDIOMXD_CPU_THRESHOLD=80
+  audiomxd_line=$(ps aux | grep '[a]udiomxd' | head -1)
+  if [ -n "$audiomxd_line" ]; then
+    audiomxd_pid=$(echo "$audiomxd_line" | awk '{print $2}')
+    audiomxd_cpu=$(echo "$audiomxd_line" | awk '{print $3}' | cut -d. -f1)
+    if [ -n "$audiomxd_cpu" ] && [ "$audiomxd_cpu" -ge "$AUDIOMXD_CPU_THRESHOLD" ] 2>/dev/null; then
+      if sudo -n kill -9 "$audiomxd_pid" 2>/dev/null; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] killed audiomxd pid=$audiomxd_pid（CPU ${audiomxd_cpu}%，蓝牙路由死循环兜底）"
+      fi
+    fi
+  fi
+
   # 已退出的 harness relay 容器每小时新增 ~13 个（2026-07-19/20 现场验证），
   # daily 单次清理频率追不上堆积速度，这里每 15 分钟顺手清一次。只 prune 已退出的，
   # 不碰 running 容器（container prune 本身语义就只清 Exited/Created 状态，不会误删运行中的）。
