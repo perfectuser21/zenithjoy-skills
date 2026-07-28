@@ -181,11 +181,11 @@ else
   fail "audiomxd kill 逻辑缺失"
 fi
 
-# 验证 23: audiomxd 进程扫描不会误伤其他进程（用 [a]udiomxd 防止匹配到 grep 自身）
-if grep -q "grep '\[a\]udiomxd'" "$JANITOR" 2>/dev/null; then
-  ok "audiomxd 扫描用 [a]udiomxd 排除 grep 自身"
+# 验证 23: audiomxd 进程扫描用 pgrep -x 精确匹配进程名（避免 ps|grep 子串误命中）
+if grep -q "pgrep -x audiomxd" "$JANITOR" 2>/dev/null; then
+  ok "audiomxd 扫描用 pgrep -x 精确匹配"
 else
-  fail "audiomxd 扫描未排除 grep 自身"
+  fail "audiomxd 扫描未使用 pgrep -x 精确匹配"
 fi
 
 echo ""

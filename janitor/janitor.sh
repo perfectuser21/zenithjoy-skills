@@ -376,17 +376,18 @@ if [ "$MODE" = "frequent" ]; then
   # 已知 macOS bug：audiomxd 卡在 com.apple.mediaexperience.btroutingrequestqueue
   # 反复注册同一通知观察者，占满一整个核心；关蓝牙不能根治（真实触发源未知，见
   # decisions f418f03c）。这里只做止损：CPU 持续偏高就 kill，launchd 会自动拉起干净实例。
+  # 用 pgrep -x 按进程名精确匹配（避免 ps|grep 子串误命中其他命令行里带 "audiomxd" 字样的进程），
+  # 遍历每个匹配到的 PID 单独判断，避免多实例场景下只取第一个漏杀真正卡死的那个。
+  # 直接 kill -9（不走 SIGTERM 两段式）：这是内核态/系统框架层面的死循环，SIGTERM 大概率不会被响应。
   AUDIOMXD_CPU_THRESHOLD=80
-  audiomxd_line=$(ps aux | grep '[a]udiomxd' | head -1)
-  if [ -n "$audiomxd_line" ]; then
-    audiomxd_pid=$(echo "$audiomxd_line" | awk '{print $2}')
-    audiomxd_cpu=$(echo "$audiomxd_line" | awk '{print $3}' | cut -d. -f1)
+  for audiomxd_pid in $(pgrep -x audiomxd 2>/dev/null); do
+    audiomxd_cpu=$(ps -o %cpu= -p "$audiomxd_pid" 2>/dev/null | tr -d ' ' | cut -d. -f1)
     if [ -n "$audiomxd_cpu" ] && [ "$audiomxd_cpu" -ge "$AUDIOMXD_CPU_THRESHOLD" ] 2>/dev/null; then
       if sudo -n kill -9 "$audiomxd_pid" 2>/dev/null; then
         echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] killed audiomxd pid=$audiomxd_pid（CPU ${audiomxd_cpu}%，蓝牙路由死循环兜底）"
       fi
     fi
-  fi
+  done
 
   # 已退出的 harness relay 容器每小时新增 ~13 个（2026-07-19/20 现场验证），
   # daily 单次清理频率追不上堆积速度，这里每 15 分钟顺手清一次。只 prune 已退出的，
