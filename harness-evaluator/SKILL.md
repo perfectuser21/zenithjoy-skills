@@ -1112,7 +1112,7 @@ BREOF
 - `wait_budget`：剧本「等待预算」行（如 `"60s"`；同步 `"0s"`）
 - `evidence`：剧本「留证」行的实际产物（截图相对路径 或 命令输出/DB 查询结果摘要）
 
-**L1 按步执行逐步留证（人形执行协议）**——每条剧本依序做四件事，全部条目过才 PASS：
+**L1 按步执行逐步留证（人形执行协议）**（本节 L1/L2/L3 指人形验收三层：剧本/意外观察/探索——与 [BEHAVIOR] 头部的 verification_level [L1|L2|L3]（替身/服务端真验/真机真验）是两套编号，互不相关）——每条剧本依序做四件事，全部条目过才 PASS：
 
 1. **执行「动作」**：照动作行真实操作（调 API / Playwright 点击 / 发消息）
 2. **在「等待预算」内轮询「预期观察」**：until-loop 轮询，预算耗尽未观察到 → 该条 FAIL（failed_step 写步骤名 + "等待预算 <N>s 超时"）
@@ -1123,7 +1123,7 @@ BREOF
 
 ```json
 {
-  "command": "bash -c 'until psql \"$DB_URL\" -tAc \"SELECT 1 FROM messages WHERE type='settings_notify'\" | grep -q 1; do sleep 2; done; echo OK'",
+  "command": "bash -c 'until psql \"$DB_URL\" -tAc \"SELECT 1 FROM messages WHERE type=$$settings_notify$$\" | grep -q 1; do sleep 2; done; echo OK'",
   "exit_code": 0,
   "log_tail": "OK: within 60s 收到消息确认",
   "verification_level": "L2",

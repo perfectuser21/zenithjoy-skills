@@ -15,7 +15,7 @@ evaluator 像人一样按步骤操作验收，而非跑一行命令。三层设�
 
 ## Delta 设计
 
-### 1. harness-contract-proposer 9.14.0 → 9.15.0
+### 1. harness-contract-proposer 9.16.0 → 9.17.0
 
 - 三段式升级为**五行剧本**，每条新写 [BEHAVIOR] 必含：
   ```
@@ -38,7 +38,7 @@ evaluator 像人一样按步骤操作验收，而非跑一行命令。三层设�
   - 第 21 条：合同缺 `## 探索提示` 段，或探索面未覆盖高风险操作（错输入/重复提交/中途中断/边界值）→ 第 6 维低分打回，**feedback 必须给出具体探索提示内容**供 proposer 填入（"探索提示由 GAN reviewer 写进合同"的落地方式）。
 - **不动 7 个维度名**（dod_machineability 等是与 Brain ReviewerOutputSchema 的接口约定）。
 
-### 3. harness-evaluator 1.27.0 → 1.28.0
+### 3. harness-evaluator 1.32.2 → 1.33.0
 
 - **L1 按步执行+逐步留证**：每条剧本 执行动作 → within 等待预算轮询预期观察 → 采集留证（截图存 `SPRINT_DIR/screenshots/`、命令输出/DB 查询结果记入 behavior_tests.log_tail 或留证文件）→ 跑 Test: 命令。全过才 PASS。
 - **L2 意外观察**：执行任何步骤时发现"不对劲"（卡顿/控制台报错/布局歪/慢响应）必须录入 verdict JSON 新增顶层 `findings[]` 字段（`{severity, step, observation, evidence}`）。步骤照过，观察必留。additive 字段：Brain `EvaluatorOutputSchema` 非 strict，多余字段被 strip 不报错；findings 同时落 `SPRINT_DIR/findings.md` 文件留证。

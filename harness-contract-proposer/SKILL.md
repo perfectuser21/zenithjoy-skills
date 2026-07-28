@@ -333,7 +333,7 @@ vitest 测试文件还要写（generator TDD red-green 用），但**不再被 e
 | 动作 | 用户/系统执行的操作步骤（点击/发送/调用等），evaluator 照此真实执行 |
 | 预期观察 | 用户或系统可见的状态变化，evaluator 在预算内轮询观察 |
 | 等待预算 | 最多等多久（如 `30s`）；超时未观察到 = 该条 FAIL；同步观察写 `0s` |
-| 留证 | evaluator 必须采集的证据：截图存 `${SPRINT_DIR}/screenshots/`，命令输出/DB 查询结果进 behavior_tests.log_tail |
+| 留证 | evaluator 必须采集的证据：截图存 `${SPRINT_DIR}/screenshots/`，命令输出/DB 查询结果进 behavior_tests.log_tail 与 evidence 字段（evaluator 1.33.0）|
 | Test | 机器可跑断言，**必须单行完整命令**（见下）|
 
 ### Test: 单行铁律（机械闸兼容）
