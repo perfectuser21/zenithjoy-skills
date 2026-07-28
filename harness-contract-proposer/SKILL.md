@@ -325,7 +325,7 @@ vitest 测试文件还要写（generator TDD red-green 用），但**不再被 e
   预期观察: <人应该看到什么——消息到达/页面变化/DB出现记录>
   等待预算: <N>s（超时=FAIL；同步观察写 0s）
   留证: <截图路径 / 命令输出 / DB查询结果>
-  Test: manual:bash <单行验证命令>
+  Test: manual:bash -c '<单行验证命令>'
 ```
 
 | 行 | 说明 |
@@ -341,11 +341,11 @@ vitest 测试文件还要写（generator TDD red-green 用），但**不再被 e
 **Test: 行必须是单行完整命令**——三个机械闸都按单行解析：
 - cecelia `harness-contract-lint.mjs`：缺 Test: = MISSING_TEST 红
 - cecelia `harness-promote-regression.js`：`Test:\s*manual:(.+)$` 单行收割进回归合同——多行写法只收割到首词（如 `bash`），产出假绿回归条目（#149 实证隐患）
-- until-loop 等长命令用 `bash -c '...'` 包成单行
+- 统一写 `manual:bash -c '<单行命令>'`：lint strip `manual:` 后以 `bash -c` 开头命中白名单快速通道（引号内 grep/echo 不被误伤），evaluator strip 后即为可执行命令；until-loop 等长命令全部包进这一层引号
 
 ```bash
 # ✅ 异步 until-loop 单行范式（within 60s 等待预算）
-Test: manual:bash bash -c 'DEADLINE=$((SECONDS+60)); until psql "$DB_URL" -tAc "SELECT 1 FROM messages WHERE type='"'"'settings_notify'"'"' AND created_at > NOW()-INTERVAL '"'"'5m'"'"'" | grep -q 1; do [ $SECONDS -lt $DEADLINE ] || { echo "FAIL: within 60s 未收到消息"; exit 1; }; sleep 2; done; echo "OK: within 60s 收到消息确认"'
+Test: manual:bash -c 'DEADLINE=$((SECONDS+60)); until psql "$DB_URL" -tAc "SELECT 1 FROM messages WHERE type='"'"'settings_notify'"'"' AND created_at > NOW()-INTERVAL '"'"'5m'"'"'" | grep -q 1; do [ $SECONDS -lt $DEADLINE ] || { echo "FAIL: within 60s 未收到消息"; exit 1; }; sleep 2; done; echo "OK: within 60s 收到消息确认"'
 ```
 
 ### 正例（两条完整剧本）
@@ -358,7 +358,7 @@ Test: manual:bash bash -c 'DEADLINE=$((SECONDS+60)); until psql "$DB_URL" -tAc "
   预期观察: 页面立即出现「保存成功」toast，且设置项保持为开
   等待预算: 0s
   留证: ${SPRINT_DIR}/screenshots/b01-save-toast.png + DB 查询输出
-  Test: manual:bash bash -c 'curl -sf localhost:5221/api/settings | jq -e ".notify_enabled==true"'
+  Test: manual:bash -c 'curl -sf localhost:5221/api/settings | jq -e ".notify_enabled==true"'
 ```
 
 **正例 2 — 异步等待（消息推送类）：**
@@ -369,7 +369,7 @@ Test: manual:bash bash -c 'DEADLINE=$((SECONDS+60)); until psql "$DB_URL" -tAc "
   预期观察: within 60s 消息表出现 settings_notify 新条目，用户侧收到推送确认
   等待预算: 60s
   留证: until-loop 命令输出末 5 行（含 OK 行）
-  Test: manual:bash bash -c 'DEADLINE=$((SECONDS+60)); until psql "$DB_URL" -tAc "SELECT 1 FROM messages WHERE type='"'"'settings_notify'"'"'" | grep -q 1; do [ $SECONDS -lt $DEADLINE ] || { echo FAIL; exit 1; }; sleep 2; done; echo OK'
+  Test: manual:bash -c 'DEADLINE=$((SECONDS+60)); until psql "$DB_URL" -tAc "SELECT 1 FROM messages WHERE type='"'"'settings_notify'"'"'" | grep -q 1; do [ $SECONDS -lt $DEADLINE ] || { echo FAIL; exit 1; }; sleep 2; done; echo OK'
 ```
 
 ### 反例（禁止写法）
@@ -389,7 +389,7 @@ Test: manual:bash bash -c 'DEADLINE=$((SECONDS+60)); until psql "$DB_URL" -tAc "
   动作: 触发任务执行
   预期观察: 收到完成通知
   留证: 命令输出
-  Test: manual:bash bash -c 'psql "$DB_URL" -tAc "SELECT 1 FROM notifications" | grep -q 1'
+  Test: manual:bash -c 'psql "$DB_URL" -tAc "SELECT 1 FROM notifications" | grep -q 1'
 ```
 
 （异步观察没写等多久 = evaluator 无法判超时，FAIL 语义不确定。）
