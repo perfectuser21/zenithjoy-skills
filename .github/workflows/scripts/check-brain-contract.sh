@@ -69,6 +69,20 @@ for token in "${forbidden[@]}"; do
   fi
 done
 
+# ── 契约 5：Skills CI 只能观察 merge eligibility，不得自授 merge ──
+WORKFLOW=".github/workflows/lint-skills.yml"
+if grep -Eq '^[[:space:]]*(if[[:space:]]+)?gh[[:space:]]+pr[[:space:]]+merge' "$WORKFLOW"; then
+  err "$WORKFLOW 仍执行 gh pr merge；CI 不能绕过 Kernel/human merge authority"
+else
+  ok "$WORKFLOW 不执行 gh pr merge"
+fi
+if grep -Eq '^[[:space:]]+contents:[[:space:]]+read$' "$WORKFLOW" \
+  && grep -Eq '^[[:space:]]+pull-requests:[[:space:]]+read$' "$WORKFLOW"; then
+  ok "$WORKFLOW 仅持有只读 repository/PR 权限"
+else
+  err "$WORKFLOW 必须把 contents/pull-requests 权限收敛为 read"
+fi
+
 echo
 if [ "$FAIL" -eq 1 ]; then
   echo "❌ Brain 契约一致性检查失败。修法：更新对应 SKILL.md；若是契约本身变了，同步更新本脚本断言。"
