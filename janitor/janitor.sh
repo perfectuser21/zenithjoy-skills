@@ -384,7 +384,7 @@ if [ "$MODE" = "frequent" ]; then
     audiomxd_cpu=$(ps -o %cpu= -p "$audiomxd_pid" 2>/dev/null | tr -d ' ' | cut -d. -f1)
     if [ -n "$audiomxd_cpu" ] && [ "$audiomxd_cpu" -ge "$AUDIOMXD_CPU_THRESHOLD" ] 2>/dev/null; then
       if sudo -n kill -9 "$audiomxd_pid" 2>/dev/null; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] killed audiomxd pid=$audiomxd_pid（CPU ${audiomxd_cpu}%，蓝牙路由死循环兜底）"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] killed audiomxd pid=${audiomxd_pid}（CPU ${audiomxd_cpu}%，蓝牙路由死循环兜底）"
       fi
     fi
   done
