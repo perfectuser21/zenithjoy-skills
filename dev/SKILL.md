@@ -1,10 +1,11 @@
 ---
 name: dev
-version: 21.9.0
+version: 21.10.0
 updated: 2026-07-29
-description: Phase0 --task-id立即claim防tick抢跑→Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→Phase2.5 GitHub撞车检查→比对已有Steps展示Golden Path草稿→确认前置工作全部到位（含GP锚点检查）→用户确认PrepPRD→路由执行
+description: Phase0 --task-id立即claim防tick抢跑→Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→Phase2.5 GitHub撞车检查→比对已有Steps展示Golden Path草稿→确认前置工作全部到位（含GP锚点检查）→用户确认PrepPRD→路由执行（建worktree时经GP_ANCHOR env把锚机械写进.dev-mode）
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
+  - 21.10.0: GP锚定闭环刀6b——锚从口头声明变机械传递：worktree-manage.sh 建 .dev-mode 时写入 gp_anchor 行（调用方经 GP_ANCHOR env 传入 PrepPRD 拍板的锚）；branch-protect v31（cecelia#4450）起 .dev-mode 无合法 gp_anchor 会在首次 Write/Edit 被硬拦，headed 会话与 Brain 派发三变体（headless/headed-relay/kernel-v1，刀4 executor 闸）拦截口径对齐
   - 21.9.0: GP锚定闭环刀3——步骤2核对前置工作表新增「GP 锚点」行（file-existence gated：product-map/generated/product-map.json 存在则查id存在性，不存在则跳过不阻塞第三方仓库如cecelia）；大功能PrepPRD模板加「GP-Anchor声明」段，与刀2 lint-gp-anchor.sh的三形态声明规范一致。让孤儿任务在PrepPRD阶段就死掉，不必烧完整个pipeline才死在CI
   - 21.8.0: 判定点显性化进 /dev（九要素 T5 — decisions e035dad8）— 步骤 1 综合呈现从两流改三流（新增【判定点】流：逐条登记候选/所选/依据/误判后果，误判后果严重的升拍板点主动请教用户）；大功能 PrepPRD 模板加「判定点登记表」段；用户确认后路径 A/B 立即写 decisions category=judgment（保鲜守卫「判定点活性」指标数据源），路径 C 由 harness reviewer Step 5 从合同统一写库不重复；用户纠正的判定方法按 e035dad8 第④条走 Invariant Gate 升铁律
   - 21.7.0: 新增 Phase 0「--task-id 立即 claim」（有头模式第一动作，PrepPRD/Phase1 之前）— 起因 2026-07-09 同一 task（f30dace8）被人工 /dev 流程和 Brain tick 自动派发同时抢跑，各自独立产出 PR #3665/#3663；根因是注册任务默认 queued+claimed_by=NULL，tick 每 2 分钟扫一次无主任务，不 claim 必被抢；这不是查重能防的问题（两边都还没开分支/PR，互相查不到），唯一防线是注册后立刻用现成的 POST /tasks/:id/claim 上锁

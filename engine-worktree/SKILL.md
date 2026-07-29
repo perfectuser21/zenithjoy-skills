@@ -1,8 +1,8 @@
 ---
 name: engine-worktree
-version: 16.0.1
-updated: 2026-06-02
-description: Cecelia /dev 接力链 1/2。确保工作在独立 git worktree 的 cp-* 分支。Engine 独有（Superpowers using-git-worktrees 是交互式的，不适合 autonomous）。
+version: 16.1.0
+updated: 2026-07-29
+description: Cecelia /dev 接力链 1/2。确保工作在独立 git worktree 的 cp-* 分支（GP锚定闭环刀6b：经 GP_ANCHOR env 把锚写进 .dev-mode）。Engine 独有（Superpowers using-git-worktrees 是交互式的，不适合 autonomous）。
 trigger: /dev SKILL.md 的 TERMINAL IMPERATIVE 点火
 ---
 
@@ -11,7 +11,11 @@ trigger: /dev SKILL.md 的 TERMINAL IMPERATIVE 点火
 ## 运行
 
 ```bash
-bash packages/engine/skills/dev/scripts/worktree-manage.sh init-or-check "$TASK_NAME"
+# GP_ANCHOR = PrepPRD「GP-Anchor 声明」段拍板的锚（三形态：<line>/<gp>#stepN、
+# <line>/<gp> keep-green、none(infra|docs|config|backlog)）。
+# branch-protect v31（GP锚定闭环刀6）起 .dev-mode 无合法 gp_anchor 会在首次 Write/Edit
+# 被硬拦——不传 GP_ANCHOR 也能建 worktree，但写码前必须补锚（报错自带指引）。
+GP_ANCHOR="<PrepPRD拍板的锚>" bash packages/engine/skills/dev/scripts/worktree-manage.sh init-or-check "$TASK_NAME"
 ```
 
 该子命令：

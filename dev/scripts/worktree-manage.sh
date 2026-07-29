@@ -252,6 +252,9 @@ cmd_create() {
         echo -e "${GREEN}✅ .dev-lock 已写入: .dev-lock.${branch_name}${NC}" >&2
 
         # v19.0.0: 同步写 .dev-mode 标准格式（stop-dev.sh 用文件存在性判 /dev 流程身份）
+        # v21.10.0（GP锚定闭环刀6b）: 写入 gp_anchor 行——branch-protect v31 起 .dev-mode
+        # 必须含合法 gp_anchor 才放行 Write/Edit。调用方（/dev skill）经 GP_ANCHOR env 传入
+        # PrepPRD 拍板的锚；未传时写空值行，首次写码会被 hook 拦下并给自修复指引（机械兜底）。
         local dev_mode_file="$worktree_path/.dev-mode.${branch_name}"
         if [[ ! -f "$dev_mode_file" ]]; then
             cat > "$dev_mode_file" <<DEV_MODE_EOF
@@ -261,8 +264,13 @@ session_id: ${_claude_sid_create:-unknown}
 started: $(TZ=Asia/Shanghai date +%Y-%m-%dT%H:%M:%S+08:00)
 step_1_spec: pending
 harness_mode: false
+gp_anchor: ${GP_ANCHOR:-}
 DEV_MODE_EOF
-            echo -e "${GREEN}✅ .dev-mode 已写入: .dev-mode.${branch_name}${NC}" >&2
+            if [[ -n "${GP_ANCHOR:-}" ]]; then
+                echo -e "${GREEN}✅ .dev-mode 已写入（含 gp_anchor: ${GP_ANCHOR}）: .dev-mode.${branch_name}${NC}" >&2
+            else
+                echo -e "${YELLOW}⚠️  GP_ANCHOR 未传，.dev-mode 的 gp_anchor 为空——branch-protect v31 会在首次写码时拦下，请先补锚（echo 'gp_anchor: <锚>' >> ${dev_mode_file}）${NC}" >&2
+            fi
         fi
 
         # === v23 PR-3: 不再写 .cecelia/dev-active-*.json（已不被 hook 读，dev-mode-tool-guard 已切 lights/）===
