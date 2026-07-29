@@ -13,7 +13,7 @@ else
 fi
 
 # T2: .dev-mode heredoc 模板段包含 gp_anchor 行（防止只在别处出现字样糊弄 T1）
-if awk '/cat > "\$dev_mode_file"/,/DEV_MODE_EOF$/' "$SCRIPT" | grep -q 'gp_anchor'; then
+if awk '/cat > "\$dev_mode_file"/,/^DEV_MODE_EOF$/' "$SCRIPT" | grep -q 'gp_anchor'; then
   echo "PASS: T2 .dev-mode 模板含 gp_anchor 行"; PASS=$((PASS+1))
 else
   echo "FAIL: T2 .dev-mode heredoc 模板不含 gp_anchor 行"; FAIL=$((FAIL+1))
