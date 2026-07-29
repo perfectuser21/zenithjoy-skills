@@ -4,10 +4,11 @@ description: |
   Harness Contract Proposer — Harness v5 GAN Layer 2a：
   读 PRD，GAN 对抗写 Golden Path 合同（每步含真实验证命令）；
   Reviewer APPROVED 后倒推拆 task-plan.json。
-version: 9.17.0
+version: 9.18.0
 created: 2026-04-08
-updated: 2026-07-28
+updated: 2026-07-29
 changelog:
+  - 9.18.0: GP锚定闭环刀3——新增 Step 1.7「GP-Anchor 声明」，cross-repo file-existence gated（仅 product-map/generated/product-map.json 存在的仓库适用，其余跳过不阻塞）；合同须含 ## GP-Anchor 段，三形态声明与刀2 lint-gp-anchor.sh CI硬闸规范逐字一致，写前用jq核实id存在，让合同阶段就能发现"这个改动挂不上任何GP"而不是等CI最后一步才拦
   - 9.17.0: W7 人形验收（RD 2026-07-28，决策 d3021871）——三段式升级五行剧本：每条新写 [BEHAVIOR] 必含 动作/预期观察/等待预算/留证/Test: 五行；Test: 强制单行（长命令 bash -c 包裹，修 #149 多行验证命令被 promote-regression 收割成 cmd="bash" 隐患）；新增 ## 探索提示 合同段模板（L3 探索层输入，默认预算 10 分钟/15 动作）；接缝步骤（真机/异步/第三方）标 [接缝×2] 由 evaluator 重复执行判 FLAKY；补同步/异步正例各一 + 旧命令行长相/缺等待预算反例各一；legacy 标记条目继续豁免
   - 9.16.0: user_facing 预览闸硬规则：journey_type=user_facing 的 Golden Path 合同末尾必须含 ## staging 预览闸 段（步骤A落staging环境/步骤B Final-E2E在staging跑截图/步骤C Bark推主理人预览链接）；按 BASE_REPO 定模式：cecelia仓=通知式（Bark注明「24h无异议自动放行」，Brain PATCH promote_after时间戳）/zenithjoy仓=阻塞式（Bark注明需主理人放行，prod promote前核查decisions/approval字段，未放行禁promote）；其余journey_type（含autonomous/dev_pipeline/agent_remote）不受约束（零回归保护）
   - 9.15.0: gear 档位：新增 Step 3.1 HARNESS_GEAR=segmented 档位分支（移植自 cecelia #4027 harness-gear 一体化 60a80ddc 决策6），恢复 v7 前多 workstream task-plan.json schema（tasks[]/depends_on 线性链/estimated_minutes 20-60），段划分依据=Golden Path"后段依赖前段真机产物"接缝；default（缺省或非 segmented）保持单 ws1 现行为不变
@@ -618,6 +619,46 @@ curl -sf "localhost:5221/api/brain/registry?type=test&limit=30" > /tmp/test_regi
 - [ ] 判定点登记表：涉及真机/RPA/外部状态推断的点逐条列出
 - [ ] 失败语义：每种关键故障场景写了放行/拦截/重试策略
 - [ ] 效果确认：每个对外动作写了回执验证方式
+
+---
+
+### Step 1.7: GP-Anchor 声明（GP锚定闭环刀3 — cross-repo file-existence gated）
+
+**适用范围**：仅当前仓库根目录存在 `product-map/generated/product-map.json` 时（目前只有 `zenithjoy-workspace`）。该文件不存在（如 `cecelia` 等第三方仓库）→ 本段整体跳过，在 contract-draft.md 写一行 `gp-anchor: skipped (product-map.json not found)`，不阻塞。
+
+适用时，contract-draft.md 必须含 `## GP-Anchor` 段，三形态之一，与刀2 `lint-gp-anchor.sh` 的 CI 硬闸声明规范逐字一致：
+
+```markdown
+## GP-Anchor
+
+GP-Anchor: <line_id>/<gp_id>#stepN      ← 推进某业务步骤（本合同的 Golden Path 须触碰该GP的smoke_files）
+```
+
+或
+
+```markdown
+## GP-Anchor
+
+GP-Anchor: <line_id>/<gp_id> keep-green
+```
+
+或
+
+```markdown
+## GP-Anchor
+
+GP-Anchor: none(infra|docs|config|backlog)
+```
+
+写之前用 `jq` 核实 `<line_id>/<gp_id>` 组合真实存在于 `product-map/generated/product-map.json`：
+
+```bash
+jq --arg line "<line_id>" --arg gp "<gp_id>" \
+  '[.golden_paths[] | select(.line_id==$line and .id==$gp)] | length' \
+  product-map/generated/product-map.json
+```
+
+结果为 0（id 不存在）→ 不得凭空声明，回头向 PRD 来源确认正确的 line/GP，或改用 `none(backlog)`（须在 PRD/合同 notes 里带 Brain issue id）。
 
 ---
 
@@ -1254,6 +1295,7 @@ PRD `## Response Schema` 段定义的字段名（key 字面值）是**不可改�
 7. **Golden Path 溯源（v9.0 新加）**：对每条 `[BEHAVIOR]`，回答「这是 Golden Path 哪一步的用户可观察输出？」——答不出来 → 删掉该条目或补对应 Golden Path 步骤；命令里含 `MOCK_*` 环境变量或 mock 对象 → 不合格；Golden Path 含微信操作但 `target_environment` 写 `windows_cloud` → 路由错误，必须改 `windows_wechat`
 8. **真实链路四硬规则自查（v9.10 新加）**：①涉及设备/agent 调服务端 → contract-draft.md 有 `## 真实调用方请求 shape` 段，且 DoD 请求的认证方式/字段名与之逐字段一致；②涉及第三方 API → 至少一条 [BEHAVIOR] 真 key 真请求真响应校验；③DoD 含 `force_*`/stub/假数据 → 有 `## 未覆盖真实链路清单` 段（无 mock 则显式 N/A）；④target_environment 与 ability 真实运行环境匹配（微信 RPA = windows_wechat；Android 真机段未覆盖必须入清单）
 9. **禁 mock 边自查（v9.12 新加）**：contract-draft.md 有 `## 禁 mock 边清单` 段——本单涉及调度/状态机/跨模块数据传递/生命周期钩子/DB写路径之一 → 清单非空且逐条列被改的边（模块A↔模块B、代码↔DB表X），合同 tests/ 里这些边无 vi.mock/stub；空清单 → 写明理由（仅纯UI/纯文档类允许）
+10. **GP-Anchor 自查（v9.18 新加）**：当前仓库存在 `product-map/generated/product-map.json` → contract-draft.md 有 `## GP-Anchor` 段，三形态之一，且 `jq` 核实 id 真实存在；文件不存在 → 有 `gp-anchor: skipped (product-map.json not found)` 一行。缺失 → contract 作废重写
 
 任一断言 fail → contract 草案作废，**用 PRD 字面字段名 + ≥ 4 条 [BEHAVIOR] 重写**。
 

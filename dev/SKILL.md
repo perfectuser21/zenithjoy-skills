@@ -1,10 +1,11 @@
 ---
 name: dev
-version: 21.8.0
-updated: 2026-07-10
-description: Phase0 --task-id立即claim防tick抢跑→Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→Phase2.5 GitHub撞车检查→比对已有Steps展示Golden Path草稿→确认前置工作全部到位→用户确认PrepPRD→路由执行
+version: 21.9.0
+updated: 2026-07-29
+description: Phase0 --task-id立即claim防tick抢跑→Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→Phase2.5 GitHub撞车检查→比对已有Steps展示Golden Path草稿→确认前置工作全部到位（含GP锚点检查）→用户确认PrepPRD→路由执行
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
+  - 21.9.0: GP锚定闭环刀3——步骤2核对前置工作表新增「GP 锚点」行（file-existence gated：product-map/generated/product-map.json 存在则查id存在性，不存在则跳过不阻塞第三方仓库如cecelia）；大功能PrepPRD模板加「GP-Anchor声明」段，与刀2 lint-gp-anchor.sh的三形态声明规范一致。让孤儿任务在PrepPRD阶段就死掉，不必烧完整个pipeline才死在CI
   - 21.8.0: 判定点显性化进 /dev（九要素 T5 — decisions e035dad8）— 步骤 1 综合呈现从两流改三流（新增【判定点】流：逐条登记候选/所选/依据/误判后果，误判后果严重的升拍板点主动请教用户）；大功能 PrepPRD 模板加「判定点登记表」段；用户确认后路径 A/B 立即写 decisions category=judgment（保鲜守卫「判定点活性」指标数据源），路径 C 由 harness reviewer Step 5 从合同统一写库不重复；用户纠正的判定方法按 e035dad8 第④条走 Invariant Gate 升铁律
   - 21.7.0: 新增 Phase 0「--task-id 立即 claim」（有头模式第一动作，PrepPRD/Phase1 之前）— 起因 2026-07-09 同一 task（f30dace8）被人工 /dev 流程和 Brain tick 自动派发同时抢跑，各自独立产出 PR #3665/#3663；根因是注册任务默认 queued+claimed_by=NULL，tick 每 2 分钟扫一次无主任务，不 claim 必被抢；这不是查重能防的问题（两边都还没开分支/PR，互相查不到），唯一防线是注册后立刻用现成的 POST /tasks/:id/claim 上锁
   - 21.6.0: 新增 Phase 2.5「GitHub 撞车检查」（三路径共用，PrepPRD 前必做）— 起因 2026-07-09 同一 PRD 被 4 个并发 session 各自实现产出 4 个重复 PR；新增 gh pr list --search 查重步骤，查到接近可合并的同语义 PR 就认领而非重新实现，查到 stale/冲突/CI真失败的就先关旧 PR 再动手
@@ -274,6 +275,7 @@ curl -s -X POST localhost:5221/api/brain/strategic-decisions \
 | 用户本地脚本 | 路径存在且文件非空（`ls -la <path>`）| 让用户提供路径或上传到 repo |
 | 测试 fixture（视频/图片/数据）| 文件存在且大小合理（`ls -lh <path>`）| 让用户提供，或用 ffmpeg 合成最小合法素材 |
 | 外部服务接入 | API 端点、鉴权方式、示例 curl 已知 | 问用户要文档 |
+| **GP 锚点**（GP-Anchor Enforcement，仅当前仓库根目录存在 `product-map/generated/product-map.json` 时适用）| `jq --arg line "<line_id>" --arg gp "<gp_id>" '[.golden_paths[] \| select(.line_id==$line and .id==$gp)] \| length' product-map/generated/product-map.json` 结果 ≥1 | 不存在该文件（第三方仓库如 cecelia）→ 跳过本项，PrepPRD 里记一行 `gp-anchor: skipped (product-map.json not found, non-zenithjoy-workspace repo)`；文件存在但推断不出锚点或 id 查无 → 停下来问用户"这个功能该挂哪条 GP，还是走 `none(backlog)`"，不开工 |
 
 **全部 ✅ 才继续写 PrepPRD。有任何一项 ❌ → 停下来明确告诉用户缺什么，拿到后再继续。**
 
@@ -374,6 +376,18 @@ curl -s -X POST localhost:5221/api/brain/strategic-decisions \
 
 ## 涉及的 Ability / Feature
 - [名称]（新增 / 加厚 thin→medium）
+
+## GP-Anchor 声明（仅当前仓库存在 product-map/generated/product-map.json 时必填）
+
+三种形态之一，与刀2 `lint-gp-anchor.sh` 的 CI 硬闸声明规范一致：
+
+```
+GP-Anchor: <line_id>/<gp_id>#stepN      ← 推进某业务步骤
+GP-Anchor: <line_id>/<gp_id> keep-green ← 不推进但保持全绿
+GP-Anchor: none(infra|docs|config|backlog) ← 显式豁免
+```
+
+不存在 `product-map/generated/product-map.json`（第三方仓库）→ 写 `（本仓库无 product-map，N/A）`。
 
 ## 不包含
 - [本次不做的事]
