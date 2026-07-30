@@ -60,6 +60,18 @@ else
   err "$CONTROLLER 未使用 relay-runs/by-id/\${HARNESS_RUN_ID} 精确更新"
 fi
 
+if grep -q "\\.run\\.id // empty" "$CONTROLLER"; then
+  ok "$CONTROLLER 从 canonical create 响应的 run.id 取得 identity"
+else
+  err "$CONTROLLER 未从 canonical create 响应的 .run.id 读取 run identity"
+fi
+
+if grep -q 'created_source:\"foreground_handoff\"' "$CONTROLLER"; then
+  ok "$CONTROLLER 使用 Brain 允许的 foreground_handoff source"
+else
+  err "$CONTROLLER canonical create 使用了 Brain 不接受的 created_source"
+fi
+
 LEGACY_MUTATION=$(grep -nE 'curl .*-(X )?PATCH .*relay-runs/(\$|\$\{)HARNESS_INITIATIVE_ID' "$CONTROLLER" || true)
 if [ -z "$LEGACY_MUTATION" ]; then
   ok "$CONTROLLER 不再按 initiative_id PATCH run"
