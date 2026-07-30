@@ -12,9 +12,11 @@ description: |
   Mode 2（归位模式）：已有领域地图下，判定一个新东西该挂进哪条路的哪一步——不切新路，
   走频率判据→三问法→承诺翻译测试→四问归家→归位裁决单五关判定链，裁决单拍板后才落账。
   Mode 2 触发：归位、这个加到哪、放哪个golden path、XX算什么、帮我看看XX属于哪。
-version: 1.1.0
+version: 1.2.0
 created: 2026-07-17
 changelog:
+  - 1.2.0: 固化 GP 级 7 项合同与既有格子账本的引用关系；合同通过 golden_path_id →
+    golden_paths.journey_id → journey_step_links 找到账本，禁止复制正文或新建平行账本
   - 1.0.0: 首版（2026-07-17 主理人定型口径）——补上游「领域→切几条路」缺口；四件产物
     （GP清单/边界声明/横切件池/共享前置）+ 承诺式骨干规则（工序词黑名单）+ 三镜头切法对抗，
     与 golden-path-proposer/reviewer 同批同步升级「承诺式骨干」纪律
@@ -38,6 +40,21 @@ changelog:
 - **Mode 2：归位**（本次新增，见 Step 5 后）——领域地图已存在，判定主理人抛来的一个
   新东西该挂进哪条路的哪一步，不切新路。触发：归位、这个加到哪、放哪个golden path、
   XX算什么、帮我看看XX属于哪。
+
+## GP 合同与格子账本的唯一引用纪律
+
+地图拍板落账以及归位落账都必须遵守：
+
+1. `golden_paths.journey_id` 必须指向该 GP 所属领域 Journey，不允许留下空锚点；
+2. GP 级 7 项签字合同只通过
+   `golden_path_id → golden_paths.journey_id → journey_step_links` 引用格子账本；
+3. 7 项合同是每条 GP 的签字面；封版的 11 要素、场景与断言仍只落在
+   `journey_step_links` 的既有结构中；
+4. **禁止复制合同正文**到 Journey/步骤格，禁止把 11 要素复制进合同，禁止新建平行账本；
+5. 禁止为合同层修改 `journey_step_links` 表结构。缺锚点时先补正确关联，不能绕过锚点闸。
+
+mapper 只负责确定引用和归属，不起草、签署或修改 7 项合同正文；合同正文由
+golden-path-proposer 起草、reviewer 攻击、Owner 按版本签字。
 
 ---
 
@@ -139,7 +156,8 @@ P0/P1 打回修订；**真找不出实质漏洞时必须 APPROVED（禁凑数打
 ```
 
 **拍板后**（且仅拍板后）：调用 `Skill(db-update)` 规范，写 Brain `golden_paths` / `journeys` 账本；
-并提示主理人可逐条点火 `golden-path-controller` 深化成正式提案。
+写入时同时校验本文件的唯一引用纪律，并提示主理人可逐条点火 `golden-path-controller`
+深化成正式提案。
 
 **拍板前绝不写库**——地图是给主理人审的草案，不是既成事实。
 
