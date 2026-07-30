@@ -37,6 +37,12 @@ jobs:
       - name: Self-test — fixture 证明闸门能拦坏 skill
         run: python3 .github/workflows/scripts/test/test_lint_skills.py
 
+      - name: Self-test — GP 合同层守卫
+        run: python3 .github/workflows/scripts/test/test_lint_gp_contract_layer.py
+
+      - name: GP 合同层 Skill 守卫
+        run: python3 .github/workflows/scripts/lint-gp-contract-layer.py
+
       - name: Lint 全部 skill
         run: python3 .github/workflows/scripts/lint-skills.py
 
