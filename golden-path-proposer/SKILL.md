@@ -71,6 +71,9 @@ FEEDBACK（修订轮才有）      — .harness/feedback-r<N>.md（reviewer 合�
 .harness/gp-contract-v<N>.json
 ```
 
+这里的 `<N>` 是 proposer/reviewer 收敛轮次，只用于文件接力；Brain 接收最终 JSON 后会独立分配
+不可变的数据库合同版本号，禁止假定两者相等。
+
 JSON 必须是有效 JSON，不得带注释、Markdown 围栏或模板占位符，机器形状固定为：
 
 ```json

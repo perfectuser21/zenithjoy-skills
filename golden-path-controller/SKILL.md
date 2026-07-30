@@ -243,10 +243,13 @@ CONTRACT_RESPONSE=$(curl -sf -X POST \
   -H "Content-Type: application/json" \
   --data-binary "@.harness/gp-contract-v<N>.json")
 PENDING_ACTION_ID=$(printf '%s' "$CONTRACT_RESPONSE" | jq -er '.pending_action_id')
+CONTRACT_VERSION=$(printf '%s' "$CONTRACT_RESPONSE" | jq -er '.contract_version.version')
+CONTRACT_HASH=$(printf '%s' "$CONTRACT_RESPONSE" | jq -er '.contract_version.content_hash')
 ```
 
-POST 失败、没有 `pending_action_id` 或返回版本与 `<N>` 不一致，均为 BLOCKED；禁止继续 PATCH 成
-converged。成功后 append `contract-submit` 台账，再执行：
+文件名 `<N>` 是收敛轮次，`CONTRACT_VERSION` 是 Brain 分配的不可变合同版本，两者不要求相等。
+POST 失败，或缺少 `pending_action_id / CONTRACT_VERSION / CONTRACT_HASH`，均为 BLOCKED；禁止继续
+PATCH 成 converged。成功后 append `contract-submit` 台账，再执行：
 
 ```bash
 # candidate 手跑入口补流转（正常 Brain select 端点入口已是 proposed，本段跳过）
@@ -274,18 +277,18 @@ PATCH 后 GET 回读确认 status=converged 才算完成（外部真相优先）
 
 ## Step 6.5: 等 Owner 签字
 
-将 `pending_action_id` 写入任务 result 和最终摘要后停止。本 skill 不调用 pending-action approve，
-也不调用旧 `/golden-paths/:id/approve`。Owner 在批审桌按该具体合同版本签字后，Brain 才可创建
-绑定 `gp_contract_id/version/hash` 的 Harness 实现任务。
+将 `pending_action_id / CONTRACT_VERSION / CONTRACT_HASH` 写入任务 result 和最终摘要后停止。
+本 skill 不调用 pending-action approve，也不调用旧 `/golden-paths/:id/approve`。Owner 在批审桌
+按该具体合同版本签字后，Brain 才可创建绑定 `gp_contract_id/version/hash` 的 Harness 实现任务。
 
 ## Step 7: Report + 收尾
 
-1. task 回写：`PATCH tasks/$HARNESS_TASK_ID {"status":"completed","result":{"gp_id":"<uuid>","gp_status":"converged","demo_url":"<url>","rounds":<N>,"pending_action_id":"<uuid>"}}`（终局失败则 status=failed + failure_reason）
+1. task 回写：`PATCH tasks/$HARNESS_TASK_ID {"status":"completed","result":{"gp_id":"<uuid>","gp_status":"converged","demo_url":"<url>","rounds":<N>,"pending_action_id":"<uuid>","gp_contract_version":<CONTRACT_VERSION>,"gp_contract_hash":"<CONTRACT_HASH>"}}`（终局失败则 status=failed + failure_reason）
 2. relay-runs 终态回写（best-effort，同横切纪律 A 语义）：
    `PATCH relay-runs/$HARNESS_INITIATIVE_ID {"phase":"done","verdict":"PASS","cost":<总成本>,"pr_url":""}`
    ——GP 提案无 PR，pr_url 传空串；终局失败改 phase=failed + failure_reason
-3. 台账 append `report: done`，输出最终摘要（gp_id / 状态 / demo_url / 合同版本 /
-   pending_action_id / 轮次 / P0-P2 计数 / REFUTED 计数）
+3. 台账 append `report: done`，输出最终摘要（gp_id / 状态 / demo_url / 数据库合同版本与哈希 /
+   pending_action_id / 收敛轮次 / P0-P2 计数 / REFUTED 计数）
 4. **自杀式 tmux 关窗**（必须是最后一个动作，同 harness-controller 2.1.0）：
 
 ```bash

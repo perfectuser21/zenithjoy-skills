@@ -84,8 +84,8 @@ verdict 输出路径 — .harness/verdicts/gp-r<ROUND>-<LENS>.json
 7. `budget_guard`：总成本、单 atom 成本/时长/并发是否存在逃逸口或无限值。
 
 发现任一实质问题时 `contract_attack.verdict=REVISION`，并把定位到合同键的 finding 写入
-`findings`；全部可签字时才为 `PASS`。合同顶层出现第 8 个业务键，或把封版 11 要素搬进合同，
-直接 REVISION。
+`contract_attack.findings`；全部可签字时才为 `PASS`。合同顶层出现第 8 个业务键，或把封版
+11 要素搬进合同，直接 REVISION。
 
 ### 事故对照
 
