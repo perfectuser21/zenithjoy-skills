@@ -44,6 +44,48 @@ for f in harness-controller/SKILL.md harness-planner/SKILL.md; do
   fi
 done
 
+# ── 契约 4：Controller 的 Run 写入必须只按 canonical run_id 精确命中 ──
+# 来源：cecelia convergence repair PR2。initiative_id 只用于聚合/创建，不能再作为
+# 中间进度、verdict、PR URL 或终态的 mutation key。
+CONTROLLER="harness-controller/SKILL.md"
+if grep -q 'HARNESS_RUN_ID' "$CONTROLLER"; then
+  ok "$CONTROLLER 保存 canonical HARNESS_RUN_ID"
+else
+  err "$CONTROLLER 未保存 HARNESS_RUN_ID，无法精确回写当前 run"
+fi
+
+if grep -q 'relay-runs/by-id/${HARNESS_RUN_ID}' "$CONTROLLER"; then
+  ok "$CONTROLLER 使用 exact-run mutation endpoint"
+else
+  err "$CONTROLLER 未使用 relay-runs/by-id/\${HARNESS_RUN_ID} 精确更新"
+fi
+
+if grep -q "\\.run\\.id // empty" "$CONTROLLER"; then
+  ok "$CONTROLLER 从 canonical create 响应的 run.id 取得 identity"
+else
+  err "$CONTROLLER 未从 canonical create 响应的 .run.id 读取 run identity"
+fi
+
+if grep -q 'created_source:\"foreground_handoff\"' "$CONTROLLER"; then
+  ok "$CONTROLLER 使用 Brain 允许的 foreground_handoff source"
+else
+  err "$CONTROLLER canonical create 使用了 Brain 不接受的 created_source"
+fi
+
+LEGACY_MUTATION=$(grep -nE 'curl .*-(X )?PATCH .*relay-runs/(\$|\$\{)HARNESS_INITIATIVE_ID' "$CONTROLLER" || true)
+if [ -z "$LEGACY_MUTATION" ]; then
+  ok "$CONTROLLER 不再按 initiative_id PATCH run"
+else
+  err "$CONTROLLER 仍按 initiative_id PATCH，可能批量改写历史："
+  echo "$LEGACY_MUTATION"
+fi
+
+if grep -q '\\"run_id\\":\\"$HARNESS_RUN_ID\\"' "$CONTROLLER"; then
+  ok "$CONTROLLER Judge 请求携带 run_id"
+else
+  err "$CONTROLLER Judge 请求缺 run_id，裁决无法绑定 exact run"
+fi
+
 echo
 if [ "$FAIL" -eq 1 ]; then
   echo "❌ Brain 契约一致性检查失败。修法：更新对应 SKILL.md；若是契约本身变了，同步更新本脚本断言。"
