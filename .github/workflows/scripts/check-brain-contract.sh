@@ -35,14 +35,53 @@ else
   echo "$STALE"
 fi
 
-# ── 契约 3：harness 编排相关 skill 必须自洽声明 skill-relay ──
-for f in harness-controller/SKILL.md harness-planner/SKILL.md; do
-  if grep -q "skill-relay" "$f"; then
-    ok "$f 已声明 skill-relay 语义"
+# ── 契约 3：harness-controller 必须描述统一 Kernel 控制面 ──
+# Kernel v1 的执行真相在 Brain 的 initiative_runs / harness_attempts / result receipts。
+# harness-controller 只能描述统一合同，不能继续把 Claude one-session 当运行时 owner。
+CONTROLLER="harness-controller/SKILL.md"
+for token in \
+  "Kernel Run Controller" \
+  "每个 \`run_id\` 一个逻辑 Controller" \
+  "Attempts per role" \
+  "Fleet Supervisor.*machine-only" \
+  "exact-SHA" \
+  "effect receipt"
+do
+  if grep -Eq "$token" "$CONTROLLER"; then
+    ok "$CONTROLLER 含统一 Kernel 契约: $token"
   else
-    err "$f 未提及 skill-relay——编排语义可能还停留在图时代"
+    err "$CONTROLLER 缺统一 Kernel 契约: $token"
   fi
 done
+
+# ── 契约 4：旧 LLM 编排与副作用权威不得复活 ──
+forbidden=(
+  "唯一编排路径"
+  "PR-level 单 session"
+  "tmux kill-session"
+  "gh pr merge"
+)
+for token in "${forbidden[@]}"; do
+  if grep -Fq "$token" "$CONTROLLER"; then
+    err "$CONTROLLER 仍含已退役/越权语义: $token"
+  else
+    ok "$CONTROLLER 不含已退役/越权语义: $token"
+  fi
+done
+
+# ── 契约 5：Skills CI 只能观察 merge eligibility，不得自授 merge ──
+WORKFLOW=".github/workflows/lint-skills.yml"
+if grep -Eq '^[[:space:]]*(if[[:space:]]+)?gh[[:space:]]+pr[[:space:]]+merge' "$WORKFLOW"; then
+  err "$WORKFLOW 仍执行 gh pr merge；CI 不能绕过 Kernel/human merge authority"
+else
+  ok "$WORKFLOW 不执行 gh pr merge"
+fi
+if grep -Eq '^[[:space:]]+contents:[[:space:]]+read$' "$WORKFLOW" \
+  && grep -Eq '^[[:space:]]+pull-requests:[[:space:]]+read$' "$WORKFLOW"; then
+  ok "$WORKFLOW 仅持有只读 repository/PR 权限"
+else
+  err "$WORKFLOW 必须把 contents/pull-requests 权限收敛为 read"
+fi
 
 echo
 if [ "$FAIL" -eq 1 ]; then

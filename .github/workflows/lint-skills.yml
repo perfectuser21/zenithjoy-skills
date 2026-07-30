@@ -18,10 +18,10 @@ concurrency:
   group: lint-skills-${{ github.ref }}
   cancel-in-progress: true
 
-# auto-merge 需要 contents:write（合并 + 删分支）与 pull-requests:write
+# CI 只产客观证据；merge 必须由 Kernel/human authority 单独授权。
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+  pull-requests: read
 
 jobs:
   lint-skills:
@@ -61,39 +61,22 @@ jobs:
       # skills#127 回归：post-pr-create hook 对 rewrite/* 必须跳过 auto-merge（人工门）
       - name: Regression — post-pr-create rewrite/* 豁免
         run: bash hooks/__tests__/post-pr-create-rewrite.test.sh
-  # ─── 选择性 auto-merge：cp-* 分支 PR 且 lint 闸门绿 → 自动 squash 合并 ───
-  # 自指安全：auto-merge needs lint-skills，坏 gate 自己也过不了，不会乱合。
+  # ─── 兼容 job id：只观察 merge eligibility，不执行外部 effect ───
   auto-merge:
     needs: [lint-skills]
     if: needs.lint-skills.result == 'success' && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 2
     steps:
-      - name: Auto-merge cp-* PR（含重试）
+      - name: Kernel merge eligibility（只读）
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_BRANCH: ${{ github.head_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          IS_DRAFT: ${{ github.event.pull_request.draft }}
         run: |
-          # 只自动合并 cp-* 分支 PR，其余跳过
-          HEAD_BRANCH="${{ github.head_ref }}"
           if ! echo "$HEAD_BRANCH" | grep -qE '^cp-'; then
-            echo "ℹ️  非 cp-* 分支（$HEAD_BRANCH），跳过 auto-merge"
+            echo "ℹ️  非 cp-* 分支（$HEAD_BRANCH），仅记录 lint 结果"
             exit 0
           fi
-
-          MERGED=false
-          for attempt in 1 2; do
-            echo "Auto-merge 尝试 $attempt / 2"
-            if gh pr merge "$PR_NUMBER" --squash --delete-branch --repo "$GITHUB_REPOSITORY"; then
-              MERGED=true
-              echo "✅ Auto-merge 成功（尝试 $attempt）"
-              break
-            fi
-            echo "⚠️  尝试 $attempt 失败，重试..."
-            [ "$attempt" -lt 2 ] && sleep 10
-          done
-
-          if [ "$MERGED" != "true" ]; then
-            echo "❌ Auto-merge 失败（已重试 2 次）"
-            exit 1
-          fi
+          echo "✅ lint evidence ready: branch=$HEAD_BRANCH head=$HEAD_SHA draft=$IS_DRAFT"
+          echo "ℹ️  CI 无 merge 权限；等待 exact-SHA Kernel authorization 与所需人审"
