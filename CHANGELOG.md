@@ -1,3 +1,8 @@
+## [2026-07-30] harness-controller 2.10.0 — updated：Run 回写全面切换 canonical run_id
+**症状**: Controller 每个阶段都向 `relay-runs/:initiative_id` PATCH 中间态；同一 initiative 有多条历史 run 时，一次进度上报会批量覆盖整段历史，Judge 请求也无法证明裁决属于哪条 run。
+**根因**: Skill 只保存 initiative 聚合身份，没有接住 Brain canonical create 返回的 `run_id`，前台模式甚至把无 initiative_run、PATCH 404 当作正常路径。
+**修改**: Step 0 幂等取得、校验并持久化 `HARNESS_RUN_ID`，恢复时复用 receipt；全部进度/verdict/PR URL/终态 mutation 改走 `/relay-runs/by-id/:run_id`，Judge 显式传 `run_id`，identity 缺失或 task 归属不符 fail closed；Brain 契约 CI 新增回归断言，永久禁止 initiative-addressed PATCH 回流。
+
 ## [2026-07-26] harness-evaluator 1.32.2 — updated：统一 E2E 解析、跨仓 runtime 与 attempt 证据归属
 **症状**: Harness 的测试金字塔、ratchet、evaluator 各自解析 `Test Contract`，同一条 sprint E2E 在不同 gate 中被分别判成已登记或孤儿；evaluator 在非 Cecelia 仓库执行时还依赖不存在的本地脚本，导致合法合同在 Judge 前被基础设施自举死锁。
 **根因**: 合同路径解析存在多份实现，且 Skill 只描述调用 Cecelia 仓内脚本，没有把唯一解析器作为可执行 runtime 随 Skill 一起交付。
