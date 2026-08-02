@@ -4,10 +4,11 @@ description: |
   Harness Contract Proposer — Harness v5 GAN Layer 2a：
   读 PRD，GAN 对抗写 Golden Path 合同（每步含真实验证命令）；
   Reviewer APPROVED 后倒推拆 task-plan.json。
-version: 9.18.0
+version: 9.19.0
 created: 2026-04-08
-updated: 2026-07-29
+updated: 2026-08-02
 changelog:
+  - 9.19.0: Kernel local_api 资源闭环——需要 Postgres 的合同只声明由 Fleet 注入的短期 DB_URL；E2E 必须先对空库运行仓库真实 migration/schema bootstrap，再启动应用；业务 cookie/session/tenant 必须由同一 E2E 通过真实 signup/login 动态创建并用临时 cookie jar 持有，禁止要求预注入 AUTH_COOKIE/TENANT_ID 或复制生产数据/长期业务凭据
   - 9.18.0: GP锚定闭环刀3——新增 Step 1.7「GP-Anchor 声明」，cross-repo file-existence gated（仅 product-map/generated/product-map.json 存在的仓库适用，其余跳过不阻塞）；合同须含 ## GP-Anchor 段，三形态声明与刀2 lint-gp-anchor.sh CI硬闸规范逐字一致，写前用jq核实id存在，让合同阶段就能发现"这个改动挂不上任何GP"而不是等CI最后一步才拦
   - 9.17.0: W7 人形验收（RD 2026-07-28，决策 d3021871）——三段式升级五行剧本：每条新写 [BEHAVIOR] 必含 动作/预期观察/等待预算/留证/Test: 五行；Test: 强制单行（长命令 bash -c 包裹，修 #149 多行验证命令被 promote-regression 收割成 cmd="bash" 隐患）；新增 ## 探索提示 合同段模板（L3 探索层输入，默认预算 10 分钟/15 动作）；接缝步骤（真机/异步/第三方）标 [接缝×2] 由 evaluator 重复执行判 FLAKY；补同步/异步正例各一 + 旧命令行长相/缺等待预算反例各一；legacy 标记条目继续豁免
   - 9.16.0: user_facing 预览闸硬规则：journey_type=user_facing 的 Golden Path 合同末尾必须含 ## staging 预览闸 段（步骤A落staging环境/步骤B Final-E2E在staging跑截图/步骤C Bark推主理人预览链接）；按 BASE_REPO 定模式：cecelia仓=通知式（Bark注明「24h无异议自动放行」，Brain PATCH promote_after时间戳）/zenithjoy仓=阻塞式（Bark注明需主理人放行，prod promote前核查decisions/approval字段，未放行禁promote）；其余journey_type（含autonomous/dev_pipeline/agent_remote）不受约束（零回归保护）
@@ -134,6 +135,18 @@ GAN 收敛（Reviewer APPROVED）后输出第 4 件：
 | **真机 RPA / 生产环境集成**（微信/抖音真机操控、依赖生产中台 env 的链路）| Final E2E 必须在【真目标】上验证：真机微信真收真回（屏幕全程不闪）、生产 env 真返回结果（如 draft-generate 真出 reply），**不是 mock/CI 绿** | 假环境（CI/mock/开发机）跑绿就标 done；屏幕外坐标 / 假版本 / 假 env 值兜过 |
 
 判断领域以 Golden Path + journey_type + target_environment 为准。视频类合同缺 ffprobe、发布类缺真实出现验证、DB 类缺时间窗、UI 类缺可见断言、真机 RPA/生产 env 类缺真目标验证 → 合同不合格，必须补齐再交 Reviewer。
+
+### local_api 空库与业务登录自举（Kernel 硬规则）
+
+`target_environment=local_api` 且依赖数据库时，合同只能声明
+`${DB_URL:?}` 这一项 Fleet 运行时资源。该数据库是本 attempt 的全新空库：
+
+1. E2E 必须先用仓库现有 migration/schema bootstrap 初始化 `DB_URL`，并机检目标表存在；Fleet 不提供业务 schema，也不复制生产数据。
+2. 业务用户、session、cookie、tenant 必须在 E2E 内通过生产同形的真实 signup/login/onboarding API 动态创建；cookie 只进 `mktemp` cookie jar，tenant ID 从真实响应或本 attempt 数据库查询得到。
+3. 禁止把 `AUTH_COOKIE*`、`TENANT_ID*`、业务 access token 或其他预存业务状态写成必填环境变量。缺少可用的 signup/login 自举路径时，必须把它登记为合同阻塞，不能改成要求操作员注入凭据。
+4. 清理由 attempt 级数据库销毁兜底；脚本仍要用 `trap` 删除 cookie jar、停止应用进程，且不得打印 cookie/token。
+
+违反任一条时不得交 Reviewer。数据库 migration、真实登录和被测业务请求必须在同一个隔离 `DB_URL` 上完成。
 
 ### RPA 快验通道（dev-verify）— 真机 RPA 断言的标准可执行 oracle
 

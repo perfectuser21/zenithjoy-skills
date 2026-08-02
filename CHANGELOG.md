@@ -1,3 +1,8 @@
+## [2026-08-02] harness-contract-proposer 9.19.0 + harness-contract-reviewer 9.10.0 — Kernel local_api 资源闭环
+**症状**: 真实 Kernel canary 已完成 planner/GAN/generator 并打开全绿 PR，Evaluator 却因合同要求操作员预注入 `DB_URL`、两组 `AUTH_COOKIE` 和 `TENANT_ID` 返回 `needs_context`；即使补上隔离 Postgres，空库也没有业务 schema。
+**根因**: 合同技能只要求第三方 repo 显式传数据库 URL，没有定义 attempt-scoped 空库初始化和业务登录自举；Reviewer 因此把预存 session/tenant 当成合法环境前置放行。
+**修改**: Proposer 要求 local_api E2E 只消费 Fleet 注入的短期 `DB_URL`，先运行仓库真实 migration/schema bootstrap，再通过生产同形 signup/login/onboarding 动态创建临时用户、cookie jar 与 tenant；禁止预注入长期业务状态、复制生产数据或假设 sidecar 自带 schema。Reviewer 新增第 23 条镜像打回规则，将缺 migration、自举登录或依赖 `AUTH_COOKIE*`/`TENANT_ID*` 的合同判为 REVISION。
+
 ## [2026-07-30] harness-controller 2.10.0 — updated：Run 回写全面切换 canonical run_id
 **症状**: Controller 每个阶段都向 `relay-runs/:initiative_id` PATCH 中间态；同一 initiative 有多条历史 run 时，一次进度上报会批量覆盖整段历史，Judge 请求也无法证明裁决属于哪条 run。
 **根因**: Skill 只保存 initiative 聚合身份，没有接住 Brain canonical create 返回的 `run_id`，前台模式甚至把无 initiative_run、PATCH 404 当作正常路径。
