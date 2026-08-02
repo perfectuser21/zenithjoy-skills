@@ -1,3 +1,8 @@
+## [2026-08-02] harness-contract-proposer 9.19.1 — local_api 模板与硬规则对齐
+**症状**: 9.19.0 正文要求 Fleet `DB_URL`、真实 migration 和 signup/login 自举，但同一 Skill 的 local_api 示例仍使用 `$DB`、直接 INSERT 业务数据且没有会话自举；同步时还会再次删除 Cecelia 已补的 `android_realmachine` 枚举。
+**根因**: 新规则只加在领域约束和 Reviewer 条款，没有同步改写 Proposer 最常复制的 E2E 模板；SSOT 落后于 Cecelia 的 9.17.1 本地枚举补丁。
+**修改**: local_api 模板改为 attempt-scoped `DB_URL`，先跑仓库真实 migration/schema bootstrap，再启动 API、通过真实 signup/login 创建两个临时 cookie jar/tenant，最后走真实业务入口与时间窗 DB oracle；恢复 `android_realmachine` 枚举并加机械回归守卫。
+
 ## [2026-08-02] harness-contract-proposer 9.19.0 + harness-contract-reviewer 9.10.0 — Kernel local_api 资源闭环
 **症状**: 真实 Kernel canary 已完成 planner/GAN/generator 并打开全绿 PR，Evaluator 却因合同要求操作员预注入 `DB_URL`、两组 `AUTH_COOKIE` 和 `TENANT_ID` 返回 `needs_context`；即使补上隔离 Postgres，空库也没有业务 schema。
 **根因**: 合同技能只要求第三方 repo 显式传数据库 URL，没有定义 attempt-scoped 空库初始化和业务登录自举；Reviewer 因此把预存 session/tenant 当成合法环境前置放行。
