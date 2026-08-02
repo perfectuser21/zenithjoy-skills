@@ -4,10 +4,11 @@ description: |
   Harness Contract Proposer — Harness v5 GAN Layer 2a：
   读 PRD，GAN 对抗写 Golden Path 合同（每步含真实验证命令）；
   Reviewer APPROVED 后倒推拆 task-plan.json。
-version: 9.19.0
+version: 9.19.1
 created: 2026-04-08
 updated: 2026-08-02
 changelog:
+  - 9.19.1: 修复 local_api 示例与硬规则自相矛盾——模板改为 DB_URL + 真实 migration + signup/login 双 cookie jar 自举，禁止直接 INSERT 业务身份；同时保留 android_realmachine 枚举，防止 SSOT 同步再次回退 Cecelia 9.17.1 补丁
   - 9.19.0: Kernel local_api 资源闭环——需要 Postgres 的合同只声明由 Fleet 注入的短期 DB_URL；E2E 必须先对空库运行仓库真实 migration/schema bootstrap，再启动应用；业务 cookie/session/tenant 必须由同一 E2E 通过真实 signup/login 动态创建并用临时 cookie jar 持有，禁止要求预注入 AUTH_COOKIE/TENANT_ID 或复制生产数据/长期业务凭据
   - 9.18.0: GP锚定闭环刀3——新增 Step 1.7「GP-Anchor 声明」，cross-repo file-existence gated（仅 product-map/generated/product-map.json 存在的仓库适用，其余跳过不阻塞）；合同须含 ## GP-Anchor 段，三形态声明与刀2 lint-gp-anchor.sh CI硬闸规范逐字一致，写前用jq核实id存在，让合同阶段就能发现"这个改动挂不上任何GP"而不是等CI最后一步才拦
   - 9.17.0: W7 人形验收（RD 2026-07-28，决策 d3021871）——三段式升级五行剧本：每条新写 [BEHAVIOR] 必含 动作/预期观察/等待预算/留证/Test: 五行；Test: 强制单行（长命令 bash -c 包裹，修 #149 多行验证命令被 promote-regression 收割成 cmd="bash" 隐患）；新增 ## 探索提示 合同段模板（L3 探索层输入，默认预算 10 分钟/15 动作）；接缝步骤（真机/异步/第三方）标 [接缝×2] 由 evaluator 重复执行判 FLAKY；补同步/异步正例各一 + 旧命令行长相/缺等待预算反例各一；legacy 标记条目继续豁免
@@ -728,7 +729,7 @@ psql $DB -c "SELECT count(*) FROM brain_alerts WHERE task_id='$TASK_ID' AND crea
 ## E2E 验收（最终 final-e2e 跑 — 按 target_environment 选模板）
 
 **journey_type**: {autonomous|user_facing|dev_pipeline|agent_remote}
-**target_environment**: {local_api|mac_web|windows_cloud|windows_wechat|linux_server|playground}
+**target_environment**: {local_api|mac_web|windows_cloud|windows_wechat|linux_server|playground|android_realmachine}
 
 > **选模板规则**：看 PRD 末尾的 `target_environment` 字段，不是 `journey_type`。evaluator 模式B 按 `target_environment` SSH 派发到正确机器，合同 E2E 脚本必须与目标机器匹配。
 > `windows_wechat` 与 `windows_cloud` 的区别：前者走 xian-rog self-hosted runner（含真实微信 4.1.8），后者走 GHA windows-latest（无微信，适合 Agent 安装包/Publisher 测试）。
@@ -740,25 +741,61 @@ psql $DB -c "SELECT count(*) FROM brain_alerts WHERE task_id='$TASK_ID' AND crea
 
 ```bash
 #!/bin/bash
-set -e
+set -euo pipefail
+: "${DB_URL:?Fleet must inject an attempt-scoped DB_URL}"
+export DATABASE_URL="$DB_URL"
+BASE_URL="${BASE_URL:-http://127.0.0.1:{app_port}}"
+COOKIE_A=$(mktemp)
+COOKIE_B=$(mktemp)
+APP_PID=""
+cleanup() {
+  [ -z "$APP_PID" ] || kill "$APP_PID" 2>/dev/null || true
+  rm -f "$COOKIE_A" "$COOKIE_B" /tmp/signup-a.json /tmp/signup-b.json
+}
+trap cleanup EXIT
 
-# 1. 注入测试数据 / 触发入口（操作真实 Brain API）
-TARGET_TASK_ID=$(psql $DB -t -c "INSERT INTO tasks (task_type, status, payload) VALUES ('{task_type}', 'queued', '{}') RETURNING id" | tr -d ' ')
+# 1. 必须替换为仓库真实 migration/schema bootstrap；空库里机检目标表。
+{run repository migration or schema bootstrap with DB_URL="$DB_URL"}
+psql "$DB_URL" -tAc "SELECT to_regclass('{required_business_table}') IS NOT NULL" | grep -qx t
 
-# 2. 触发处理（tick 或主动 POST）
-curl -f -X POST localhost:5221/api/brain/{trigger_endpoint}
+# 2. 启动真实 API，并等待健康端点。
+{start the repository's real API with DB_URL="$DB_URL"} >/tmp/harness-api.log 2>&1 &
+APP_PID=$!
+for i in $(seq 1 60); do
+  curl -sf "$BASE_URL/{health_endpoint}" >/dev/null && break
+  [ "$i" = 60 ] && { echo "FAIL: API 未就绪"; exit 1; }
+  sleep 1
+done
 
-# 3. 等待处理（最多 30 秒，带时间窗口防止利用历史数据造假）
+# 3. 通过真实 signup/login/onboarding 创建两个临时主体；端点和响应路径必须按仓库实情替换。
+EMAIL_A="harness-a-${RANDOM}-$(date +%s)@example.invalid"
+EMAIL_B="harness-b-${RANDOM}-$(date +%s)@example.invalid"
+curl -sfS -c "$COOKIE_A" -H 'content-type: application/json' \
+  -d "{\"email\":\"$EMAIL_A\",\"password\":\"temporary-only-Aa1!\"}" \
+  "$BASE_URL/{real_signup_or_login_endpoint}" > /tmp/signup-a.json
+curl -sfS -c "$COOKIE_B" -H 'content-type: application/json' \
+  -d "{\"email\":\"$EMAIL_B\",\"password\":\"temporary-only-Bb2!\"}" \
+  "$BASE_URL/{real_signup_or_login_endpoint}" > /tmp/signup-b.json
+TENANT_A=$(jq -er '{real_tenant_path}' /tmp/signup-a.json)
+TENANT_B=$(jq -er '{real_tenant_path}' /tmp/signup-b.json)
+[ "$TENANT_A" != "$TENANT_B" ]
+
+# 4. 用临时 cookie jar 走真实业务入口；禁止直接 INSERT 业务身份或伪造 session。
+RESP=$(curl -sfS -b "$COOKIE_A" -H 'content-type: application/json' \
+  -X POST "$BASE_URL/{trigger_endpoint}" -d '{real_request_body}')
+TARGET_TASK_ID=$(echo "$RESP" | jq -er '.task_id')
+
+# 5. 等待真实处理（最多 30 秒，带时间窗口防止利用历史数据造假）。
 MAX_WAIT=30
 for i in $(seq 1 $MAX_WAIT); do
-  STATUS=$(curl -sf localhost:5221/api/brain/tasks/$TARGET_TASK_ID | jq -r '.status')
+  STATUS=$(curl -sfS -b "$COOKIE_A" "$BASE_URL/{task_status_endpoint}/$TARGET_TASK_ID" | jq -r '.status')
   [ "$STATUS" = "completed" ] && break
   [ "$i" = "$MAX_WAIT" ] && { echo "FAIL: 超时 status=$STATUS"; exit 1; }
   sleep 1
 done
 
-# 4. 验证副作用（DB 状态，带时间窗口）
-COUNT=$(psql $DB -t -c "SELECT count(*) FROM {result_table} WHERE task_id='$TARGET_TASK_ID' AND created_at > NOW() - interval '5 minutes'" | tr -d ' ')
+# 6. 验证本 attempt 空库中的真实副作用（带时间窗口）。
+COUNT=$(psql "$DB_URL" -tAc "SELECT count(*) FROM {result_table} WHERE task_id='$TARGET_TASK_ID' AND created_at > NOW() - interval '5 minutes'")
 [ "$COUNT" -ge 1 ] || { echo "FAIL: DB 无记录"; exit 1; }
 
 echo "✅ Golden Path 验证通过"
