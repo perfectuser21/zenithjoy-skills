@@ -1,9 +1,10 @@
 ---
 name: plan
-version: 1.8.0
+version: 1.9.0
 created: 2026-02-17
-updated: 2026-03-21
+updated: 2026-08-04
 changelog:
+  - 1.9.0: 【弃用对话入口】决策 2b3f7b14（2026-08-04 Alex 拍板）：对话中的任务识别/层级路由统一走 /golden-path，本 skill 不再作为对话入口触发；仅保留 Brain headless 派发的 suggestion_plan（[SUGGESTION_MODE]）用途
   - 1.8.0: PR→层级映射修复（1PR=Task 不是 Initiative）；工作量维度引用 capacity-budget API 动态校准；加入 Scope 层；默认 Task 不是 Initiative
   - 1.7.0: 加入 Stage 0.5 领域判断（domain detection）+ owner_role 匹配，输出格式增加 domain/owner_role，路由表按 domain 分流
   - 1.6.0: 层级重命名 Mission/Vision/Area OKR + /architect 加入路由
@@ -14,13 +15,15 @@ changelog:
   - 1.1.0: 加入 Stage 2 Capability 查询，识别输出格式增加已有能力和缺口
   - 1.0.0: 初始版本
 description: |
-  用户意图识别 + 层级引导 + Capability 匹配。
-  用户说任何一件想做的事，自动识别是哪个层级（OKR/Project/Initiative/Task），
-  查询已有能力和缺口，然后告诉用户下一步走哪个 skill。
-  这是用户和系统之间的"翻译层"。
+  【已弃用对话入口——决策 2b3f7b14】用户描述任务/新想法时不要触发本 skill，
+  统一走 /golden-path（判定归位→GAN对抗→拍板→golden-path-controller）。
+  本 skill 仅保留给 Brain headless 派发的 suggestion_plan 任务（[SUGGESTION_MODE]）使用。
 ---
 
 # /plan - 意图识别 + 层级引导
+
+> ⛔ **对话入口已弃用（2026-08-04，决策 2b3f7b14）**：用户描述任务 → 走 `/golden-path`，不走本 skill。
+> 本 skill 仅剩一个合法用途：Brain 派发的 `suggestion_plan` 任务（见文末「无头 Suggestion 模式」）。
 
 ## 触发方式
 
