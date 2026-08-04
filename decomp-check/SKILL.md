@@ -1,21 +1,20 @@
 ---
 name: decomp-check
-version: 2.1.0
+version: 2.2.0
 model: claude-sonnet-4-6
 created: 2026-02-27
-updated: 2026-03-21
+updated: 2026-08-04
 changelog:
+  - 2.2.0: 【弃用对话入口】决策 2b3f7b14（2026-08-04 Alex 拍板）：对话拆解统一走 /golden-path，本 skill 不再作为对话触发；仅保留 Brain headless decomp_review 任务用途，随 /decomp 退役
   - 2.1.0: 新增 PR 数量校验（基于 capacity-budget API 动态产能），confidence 容差规则，findings 新增 PR 数量字段
   - 2.0.0: 新增 Project→Scope 和 Scope→Initiative 审查标准；支持 SPIDR 拆分质检；更新输入格式支持 scope 类型
   - 1.2.0: 对齐产能模型 — Initiative 数量改为动态范围、新增 Initiative→Task 和 KR→Project 数量检查、修正 Initiative 内部串联依赖定义
   - 1.1.0: 加入 type 字段验证和层级跳跃检测，rejected 条件加入层级跳跃
   - 1.0.0: 从 /vivian 重写。改名 decomp-check，升级为 Sonnet，覆盖所有层，加入打回重拆机制
 description: |
-  OKR 拆解质检引擎。供 Vivian 角色调用，用 Sonnet 模型审查 /decomp 的产出质量。
-  覆盖所有层级（OKR→KR / KR→Project / Project→Scope / Scope→Initiative）。
-  给出 approved / needs_revision / rejected 三态裁决。
-  rejected 时自动触发秋米重拆。
-  触发词：审查拆解、质检、decomp-check、Vivian 被调用。
+  【已弃用对话入口——决策 2b3f7b14】对话中不要触发本 skill；GP 流程的质检由
+  golden-path-reviewer 承担。本 skill 仅保留给 Brain headless 派发的 decomp_review
+  任务使用，随 /decomp headless 链 GP 化后一并退役。
 ---
 
 > **CRITICAL LANGUAGE RULE: 所有输出必须使用简体中文。**

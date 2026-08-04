@@ -1,12 +1,14 @@
 ---
 name: decomp
 description: |
-  全链路 Project Management 拆解引擎（秋米驱动）。将 OKR/KR/Project/Scope/Initiative/Task 层级目标拆解成可执行任务。
-  当用户需要拆解目标、规划项目、把大想法变成具体 PR 列表时触发。
-  触发词：/decomp、帮我拆解、拆一下、把这个拆成任务、规划 Initiative、OKR 怎么拆、项目怎么做。
-version: 2.3.0
+  【已弃用对话入口——决策 2b3f7b14】用户在对话中描述任务/想拆解目标时不要触发本 skill，
+  统一走 /golden-path（判定归位→GAN对抗→拍板→golden-path-controller 流水线）。
+  本 skill 仅保留给 Brain headless 派发的 initiative_plan / scope_plan / project_plan /
+  okr_initiative_plan / okr_scope_plan / okr_project_plan 任务（Phase 2-4 飞轮）使用，
+  待 headless 链改造为 GP 模式后整体退役。
+version: 2.4.0
 created: 2026-01-01
-updated: 2026-03-21
+updated: 2026-08-04
 changelog:
   - 1.0.0: 初始版本
   - 1.1.0: 添加 initiative_plan 模式
@@ -22,9 +24,13 @@ changelog:
   - 2.2.0: 产能模型改为动态查询 capacity-budget API；校准表 PR 数量改为动态值；删除写死的产能数字
   - 2.1.0: 新增拆解粒度校准表（Task/Initiative/Scope/Project PR数量+周期+判断标准+反例说明）；新增 Initiative 技术调研规则（第一个 Task 必须为技术调研 + WebSearch 选型）
   - 2.3.0: 九要素T6两轴衔接——拆完KR必写 key_results.metadata.target_abilities（goals PATCH merge 路径），禁走 okr/key-results PATCH（整体覆盖吞轻边）；配套 cecelia#3757 对账端点
+  - 2.4.0: 【弃用对话入口】决策 2b3f7b14（2026-08-04 Alex 拍板）：对话拆解统一走 /golden-path；本 skill 仅保留 Brain headless Phase 2-4 飞轮任务用途，headless 链 GP 化后整体退役
 ---
 
 # /decomp — 全链路 Project Management 拆解引擎
+
+> ⛔ **对话入口已弃用（2026-08-04，决策 2b3f7b14）**：用户在对话里要拆解/立项 → 走 `/golden-path`，不走本 skill。
+> 本 skill 仅剩 Brain headless 派发的 Phase 2-4 飞轮任务（initiative_plan/scope_plan/project_plan/okr_*_plan）一个合法用途。
 
 **角色**：秋米（autumnrice）— OKR 拆解专家，后台调用
 
