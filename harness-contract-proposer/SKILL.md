@@ -4,10 +4,12 @@ description: |
   Harness Contract Proposer — Harness v5 GAN Layer 2a：
   读 PRD，GAN 对抗写 Golden Path 合同（每步含真实验证命令）；
   Reviewer APPROVED 后倒推拆 task-plan.json。
-version: 9.19.1
+version: 9.21.0
 created: 2026-04-08
-updated: 2026-08-02
+updated: 2026-08-04
 changelog:
+  - 9.21.0: 案卷式 GAN 协议（配套 cecelia kernel 1.267.207+，与 reviewer 9.12.0 配套）——新增「案卷 closure 声明」步骤：改合同前先读 `inputs.case_file`，对上一轮 reviewer 行的每条 blocker 按编号（R<round>-<seq>）逐条输出 closure 声明（做了什么/为什么足以关闭），写进本轮结果 `case_file.blockers` 与 `feedback_md`；结果 JSON 顶层新增 `case_file:{blockers[],feedback_md}`，`decision` 新增 `contract_round` 与 push 后的 `contract_sha`（供 Kernel 案卷锚定）；bundle 有 `thin_prd`/`prep_prd_body` 时作为 PRD 正文来源优先于自行推断。
+  - 9.20.0: Kernel validation identity late-binding——GAN authoring identity 只作作者 provenance，禁止把 Planner/Proposer/Reviewer 的 attempt/account/capability snapshot 固化为未来验收身份；合同必须使用 Runner 在实际执行角色中注入的 HARNESS_* / CAPABILITY_SNAPSHOT_ID，并用证据摘要串联 Evaluator 与 Judge
   - 9.19.1: 修复 local_api 示例与硬规则自相矛盾——模板改为 DB_URL + 真实 migration + signup/login 双 cookie jar 自举，禁止直接 INSERT 业务身份；同时保留 android_realmachine 枚举，防止 SSOT 同步再次回退 Cecelia 9.17.1 补丁
   - 9.19.0: Kernel local_api 资源闭环——需要 Postgres 的合同只声明由 Fleet 注入的短期 DB_URL；E2E 必须先对空库运行仓库真实 migration/schema bootstrap，再启动应用；业务 cookie/session/tenant 必须由同一 E2E 通过真实 signup/login 动态创建并用临时 cookie jar 持有，禁止要求预注入 AUTH_COOKIE/TENANT_ID 或复制生产数据/长期业务凭据
   - 9.18.0: GP锚定闭环刀3——新增 Step 1.7「GP-Anchor 声明」，cross-repo file-existence gated（仅 product-map/generated/product-map.json 存在的仓库适用，其余跳过不阻塞）；合同须含 ## GP-Anchor 段，三形态声明与刀2 lint-gp-anchor.sh CI硬闸规范逐字一致，写前用jq核实id存在，让合同阶段就能发现"这个改动挂不上任何GP"而不是等CI最后一步才拦
@@ -148,6 +150,17 @@ GAN 收敛（Reviewer APPROVED）后输出第 4 件：
 4. 清理由 attempt 级数据库销毁兜底；脚本仍要用 `trap` 删除 cookie jar、停止应用进程，且不得打印 cookie/token。
 
 违反任一条时不得交 Reviewer。数据库 migration、真实登录和被测业务请求必须在同一个隔离 `DB_URL` 上完成。
+
+### Kernel validation identity 必须 late-bound（硬规则）
+
+Task bundle 顶层 `attempt_id` 以及 `inputs.capability_snapshot_id`、`capability_evidence` 描述的是**当前起草角色**的 `GAN authoring identity`，只证明谁写了本轮合同。Generator、Evaluator、Judge 的 attempt 在此时尚未创建，因此这些值绝不可能是未来的 validation identity。
+
+1. **禁止把 Proposer、Planner 或 Reviewer 的 UUID/account/snapshot 写进合同、DoD 或测试期望。** 也禁止根据 Reviewer feedback 把旧 Proposer 值替换成 Reviewer task bundle 的值；那只会让下一角色再次不匹配。
+2. 合同 E2E 执行时必须从 Runner 注入的 `HARNESS_ATTEMPT_ID`、`HARNESS_PROVIDER`、`HARNESS_ACCOUNT`、`HARNESS_MACHINE`、`HARNESS_MODEL`、`HARNESS_RUNNER_DIGEST`、`CAPABILITY_SNAPSHOT_ID` 读取**当前执行角色**身份。例如 `ATTEMPT_ID="$HARNESS_ATTEMPT_ID"`，不得写 UUID 字面值。
+3. `run_id`、仓库、PR 号、base SHA、候选 final SHA 是运行开始前已冻结的稳定对象，可以按 PRD 固定；可变的 role attempt/capability 只能 late-bound。
+4. 每个角色保留自己的 provenance：Evaluator 证据写自己的 attempt/capability 并引用被测 Generator/PR receipt；Independent Judge 写自己的 attempt/capability，并引用 Evaluator 证据 SHA-256。禁止要求三个角色共用同一个 attempt/account/snapshot。
+
+提交前搜索 `attempt_id|ATTEMPT_ID|capability_snapshot_id|snapshotId|CAPABILITY_SNAPSHOT_ID`：若同一行出现 UUID 字面值，必须改成运行时变量，否则确定性 approval gate 会直接 REVISION。
 
 ### RPA 快验通道（dev-verify）— 真机 RPA 断言的标准可执行 oracle
 
@@ -473,6 +486,8 @@ git show "origin/${PLANNER_BRANCH}:${SPRINT_DIR}/sprint-prd.md" 2>/dev/null || \
 JOURNEY_TYPE=$(grep -m1 "^## journey_type:" "${SPRINT_DIR}/sprint-prd.md" | sed 's/## journey_type: //' | tr -d ' ') || JOURNEY_TYPE="autonomous"
 ```
 
+**PRD 正文来源优先级（v9.21）**：bundle `inputs.thin_prd` / `inputs.prep_prd_body` 有值时，是比 `sprint-prd.md` 更精炼的 PRD 正文，起草合同时优先以其为准（`sprint-prd.md` 仍读作补充上下文，不冲突时两者一致）；两者都缺失才完全依赖 `sprint-prd.md` 自行推断。
+
 ---
 
 ### Step 1.1: 读技术上下文（从registry推导现有规范）
@@ -552,6 +567,20 @@ curl -sf "localhost:5221/api/brain/registry?type=test&limit=30" > /tmp/test_regi
    ```
    取回的累积 FR 摘要作为「已知约束」输入，写进 contract-draft.md 的 `## 已知约束` 章节（与 Step 1.2 回归测试约束同章节，标注来源 `[累积FR]`）。端点不可达时记一行 `context-manifest: unavailable`，不得静默跳过。
 3. **回归测试约束**：见 Step 1.2（已有流程，不重复）。
+
+---
+
+### Step 1.4: 案卷 closure 声明（v9.21 — 案卷式 GAN 协议，修订轮必做）
+
+**背景**：Reviewer 每轮都是全新会话，不再靠自己记忆判断"上轮我提的问题解决了没有"，改由 Kernel 把历轮 blocker 台账注入 `inputs.case_file`（数组，行 = `{round, author_role:'proposer'|'reviewer', attempt_id, contract_sha, rubric_scores, blockers[], feedback_md|null, created_at}`）。Proposer 侧的配套义务：改合同之前，先对上一轮 Reviewer 提出的每条 blocker 做出**closure 声明**，供下一轮 Reviewer 核对（Reviewer 会以合同实际内容为准复核，声明只是线索，不能替代真改）。
+
+**执行步骤（propose_round > 1 时必做；propose_round = 1 时 `inputs.case_file` 为空，跳过本步）**：
+
+1. 读 `inputs.case_file`，取出 `author_role: 'reviewer'` 且 `round` 为上一轮的那一行，逐条取出 `blockers[]`（每条带编号 `R<round>-<seq>`）。
+2. 对每条 blocker，按编号输出 closure 声明：**做了什么改动**（合同/DoD/E2E 脚本的具体变更）+ **为什么这个改动足以关闭该 blocker**（对应到 Reviewer 原话指出的缺口）。真改不动的 blocker 不得声明 closed——写不出"做了什么"就说明还没改，如实标注未关闭原因。
+3. 把 closure 声明写进本轮结果 `case_file.blockers`（格式 `[{"id":"R<round>-<seq>","closure":"<做了什么/为什么足以关闭>"}]`），并同步写入 `feedback_md`（本轮修订说明，含逐条 closure 表）。
+
+**死规则**：closure 声明是给 Reviewer 复核用的，不是自我宣布"已解决"就算数——Reviewer Step 2.5 会逐条对照本轮合同实际内容复核，声明与实际不符（合同没改到位）会被判 still-open，且此类"声明与实际脱节"本身会被记入 Reviewer 对 Proposer 诚信度的观感（虽不直接扣 rubric，但会导致该轮更细致的复核）。
 
 ---
 
@@ -1346,6 +1375,7 @@ PRD `## Response Schema` 段定义的字段名（key 字面值）是**不可改�
 8. **真实链路四硬规则自查（v9.10 新加）**：①涉及设备/agent 调服务端 → contract-draft.md 有 `## 真实调用方请求 shape` 段，且 DoD 请求的认证方式/字段名与之逐字段一致；②涉及第三方 API → 至少一条 [BEHAVIOR] 真 key 真请求真响应校验；③DoD 含 `force_*`/stub/假数据 → 有 `## 未覆盖真实链路清单` 段（无 mock 则显式 N/A）；④target_environment 与 ability 真实运行环境匹配（微信 RPA = windows_wechat；Android 真机段未覆盖必须入清单）
 9. **禁 mock 边自查（v9.12 新加）**：contract-draft.md 有 `## 禁 mock 边清单` 段——本单涉及调度/状态机/跨模块数据传递/生命周期钩子/DB写路径之一 → 清单非空且逐条列被改的边（模块A↔模块B、代码↔DB表X），合同 tests/ 里这些边无 vi.mock/stub；空清单 → 写明理由（仅纯UI/纯文档类允许）
 10. **GP-Anchor 自查（v9.18 新加）**：当前仓库存在 `product-map/generated/product-map.json` → contract-draft.md 有 `## GP-Anchor` 段，三形态之一，且 `jq` 核实 id 真实存在；文件不存在 → 有 `gp-anchor: skipped (product-map.json not found)` 一行。缺失 → contract 作废重写
+11. **案卷 closure 声明自查（v9.21 新加）**：`propose_round > 1` 时，`inputs.case_file` 上一轮 reviewer 行的每条 blocker 是否都有对应 closure 声明（写进本轮 `case_file.blockers` 与 `feedback_md`）；声明的"做了什么"是否能在本轮 contract-draft.md/contract-dod.md 里找到对应改动——找不到就是空头声明，必须先真改再声明。`propose_round = 1` 时跳过（案卷为空）。
 
 任一断言 fail → contract 草案作废，**用 PRD 字面字段名 + ≥ 4 条 [BEHAVIOR] 重写**。
 
@@ -1692,6 +1722,9 @@ git add "${SPRINT_DIR}/contract-draft.md" \
 
 git commit -m "feat(contract): round-${PROPOSE_ROUND} Golden Path draft + DoD + tests + task-plan"
 git push origin "${PROPOSE_BRANCH}"
+
+# 案卷锚定用的合同 SHA（v9.21 — push 后取，供 decision.contract_sha 与 case_file 引用）
+CONTRACT_SHA=$(git rev-parse HEAD)
 ```
 
 **结果文件写入**（每轮 — 含被 REVISION 打回轮）：
@@ -1699,17 +1732,21 @@ git push origin "${PROPOSE_BRANCH}"
 ```bash
 # 写结果文件（Brain 读文件，不读 stdout；容器内 /workspace，宿主 fallback 用 WORKSPACE_PATH）
 cat > "${WORKSPACE_PATH:-/workspace}/.brain-result.json" << BREOF
-{"propose_branch":"${PROPOSE_BRANCH}","workstream_count":1,"task_plan_path":"${SPRINT_DIR}/task-plan.json"}
+{"propose_branch":"${PROPOSE_BRANCH}","workstream_count":1,"task_plan_path":"${SPRINT_DIR}/task-plan.json","decision":{"contract_round":${PROPOSE_ROUND},"contract_sha":"${CONTRACT_SHA}"},"case_file":{"blockers":[{"id":"R<round>-<seq>","closure":"<做了什么/为什么足以关闭>"}],"feedback_md":"<本轮修订说明 markdown 原文，含逐条 closure 表>"}}
 BREOF
-echo "[proposer] .brain-result.json 写入完成 propose_branch=${PROPOSE_BRANCH}"
+echo "[proposer] .brain-result.json 写入完成 propose_branch=${PROPOSE_BRANCH} contract_sha=${CONTRACT_SHA}"
 ```
 
-**输出契约（v8.0.0+ — 文件协议）**：
+**输出契约（v8.0.0+ 文件协议；v9.21 案卷式扩展）**：
 
 proposer 调用结束时必须向 `${WORKSPACE_PATH:-/workspace}/.brain-result.json` 写入 JSON（与 evaluator 同款宿主 fallback 写法）：
 - `propose_branch`：Brain 注入的 `$PROPOSE_BRANCH` 值
 - `workstream_count`：固定为 1（一个 Sprint = 一个 Generator）
 - `task_plan_path`：`${SPRINT_DIR}/task-plan.json`
+- `decision.contract_round`：本轮 `$PROPOSE_ROUND`（已有惯例，随结果文件一并落库）
+- `decision.contract_sha`：push 后 `git rev-parse HEAD` 取得的合同分支 commit SHA，Kernel 用于案卷锚定（下一轮 Reviewer 的 `inputs.case_file` 会带上这个值核对）
+- `case_file.blockers`：propose_round = 1 时为 `[]`（无上一轮案卷）；propose_round > 1 时是 Step 1.4 产出的逐条 closure 声明数组
+- `case_file.feedback_md`：本轮修订说明的 markdown 原文（含 Step 1.4 的逐条 closure 表），供 Kernel 落库 `gan_case_file` 表、供下一轮 Reviewer 读回
 
 Brain 读此文件获取结果，不解析 stdout。`$PROPOSE_BRANCH` 由 Brain 注入，proposer 直接使用。
 
