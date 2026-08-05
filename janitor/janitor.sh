@@ -94,23 +94,30 @@ if [ "$MODE" = "frequent" ]; then
   fi
 
   # ── 工具函数 ──────────────────────────────────────
-  # etime 格式（[[DD-]HH:]MM:SS）转秒数
+  # etime 格式（[[DD-]HH:]MM:SS）转秒数；非法输入返回 0。
+  # 勿删 10#：前导零会被 bash 按八进制解析，days=08/09（进程运行满 8 天）曾致命报错
+  # 并返回空串穿透调用点阈值检查，见 __tests__/janitor_etime_octal.test.sh
   etime_to_secs() {
     local elapsed="$1"
     local secs=0
-    if echo "$elapsed" | grep -q '-'; then
+    local re='^([0-9]+-)?[0-9]{1,2}(:[0-9]{2}){0,2}$'
+    if ! [[ "$elapsed" =~ $re ]]; then
+      echo 0
+      return
+    fi
+    if echo "$elapsed" | command grep -q '-'; then
       local days rest
       days=$(echo "$elapsed" | cut -d'-' -f1)
       rest=$(echo "$elapsed" | cut -d'-' -f2)
-      secs=$((days * 86400))
+      secs=$((10#$days * 86400))
       elapsed="$rest"
     fi
     local parts
     IFS=: read -ra parts <<< "$elapsed"
     case ${#parts[@]} in
-      3) secs=$((secs + ${parts[0]#0}*3600 + ${parts[1]#0}*60 + ${parts[2]#0})) ;;
-      2) secs=$((secs + ${parts[0]#0}*60 + ${parts[1]#0})) ;;
-      1) secs=$((secs + ${parts[0]#0})) ;;
+      3) secs=$((secs + 10#${parts[0]}*3600 + 10#${parts[1]}*60 + 10#${parts[2]})) ;;
+      2) secs=$((secs + 10#${parts[0]}*60 + 10#${parts[1]})) ;;
+      1) secs=$((secs + 10#${parts[0]})) ;;
     esac
     echo "$secs"
   }
@@ -269,6 +276,7 @@ if [ "$MODE" = "frequent" ]; then
     elapsed=$(ps -o etime= -p "$pid" 2>/dev/null | tr -d ' ')
     [ -z "$elapsed" ] && return
     secs=$(etime_to_secs "$elapsed")
+    [ -z "$secs" ] && { echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] etime_to_secs 解析失败 elapsed=$elapsed pid=$pid，保守跳过"; secs=0; }
     [ "$secs" -lt "$threshold" ] && return
 
     if is_orphan "$pid"; then
@@ -326,6 +334,7 @@ if [ "$MODE" = "frequent" ]; then
     elapsed=$(ps -o etime= -p "$pid" 2>/dev/null | tr -d ' ')
     [ -z "$elapsed" ] && return
     secs=$(etime_to_secs "$elapsed")
+    [ -z "$secs" ] && { echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] etime_to_secs 解析失败 elapsed=$elapsed pid=$pid，保守跳过"; secs=0; }
     [ "$secs" -lt "$threshold" ] && return
 
     if is_claude_orphan "$pid" "$tty" "$ppid"; then
