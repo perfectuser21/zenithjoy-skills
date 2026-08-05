@@ -21,7 +21,7 @@ fi
 
 # 从 janitor.sh 里原样抽取 audiomxd kill 成功后的那行 echo 语句（不是重新抄一遍逻辑，
 # 直接跑文件里真实存在的那行，避免"测试和实现各写一份、实现改了测试没跟着改"）。
-ECHO_LINE=$(grep -m1 "killed audiomxd pid=" "$JANITOR")
+ECHO_LINE=$(grep -m1 "jailed audiomxd pid=" "$JANITOR")
 if [ -z "$ECHO_LINE" ]; then
   fail "在 janitor.sh 里找不到 audiomxd kill 日志行"
   echo ""
