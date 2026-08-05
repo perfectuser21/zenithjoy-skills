@@ -279,10 +279,24 @@ if [ "$MODE" = "frequent" ]; then
     [ -z "$secs" ] && { echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] etime_to_secs 解析失败 elapsed=$elapsed pid=$pid，保守跳过"; secs=0; }
     [ "$secs" -lt "$threshold" ] && return
 
+    # cecelia 常驻服务豁免（fleet-worker/toolchain 等，issue ab1da1d7 误伤实证）。
+    # 全路径子串匹配（覆盖外部解释器拉起形态）；禁用裸 *cecelia*——会误豁免
+    # ~/perfect21/cecelia* 开发目录进程，那些正是本函数该管的对象。
+    local cmd
+    cmd=$(ps -o command= -p "$pid" 2>/dev/null)
+    case "$cmd" in *"/usr/local/libexec/cecelia/"*) return ;; esac
+
     if is_orphan "$pid"; then
       kill "$pid" 2>/dev/null
       sleep 1
       kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null
+      # kill 后复查：无 sudo 杀非本人进程会 EPERM 静默失败，此前仍计数打 killed
+      # 日志（谎报数周，issue ab1da1d7）。仍存活 → 打 kill-failed 不计数。
+      sleep 1
+      if kill -0 "$pid" 2>/dev/null; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] kill-failed node/vitest pid=$pid 仍存活（疑似权限不足），不计数"
+        return
+      fi
       KILLED=$((KILLED + 1))
       echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] killed node/vitest orphan pid=$pid (${secs}s)"
     fi
@@ -337,6 +351,11 @@ if [ "$MODE" = "frequent" ]; then
     [ -z "$secs" ] && { echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] etime_to_secs 解析失败 elapsed=$elapsed pid=$pid，保守跳过"; secs=0; }
     [ "$secs" -lt "$threshold" ] && return
 
+    # cecelia 常驻服务豁免（同 kill_if_orphan，issue ab1da1d7）
+    local cmd
+    cmd=$(ps -o command= -p "$pid" 2>/dev/null)
+    case "$cmd" in *"/usr/local/libexec/cecelia/"*) return ;; esac
+
     if is_claude_orphan "$pid" "$tty" "$ppid"; then
       # kill 前先取工作目录（kill 后进程消失 lsof 无效）
       local cwd
@@ -345,6 +364,11 @@ if [ "$MODE" = "frequent" ]; then
       kill "$pid" 2>/dev/null
       sleep 1
       kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null
+      sleep 1
+      if kill -0 "$pid" 2>/dev/null; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] kill-failed claude pid=$pid 仍存活（疑似权限不足），不计数"
+        return
+      fi
       KILLED=$((KILLED + 1))
       echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] killed claude orphan pid=$pid tty=$tty ppid=$ppid (${secs}s)"
 
