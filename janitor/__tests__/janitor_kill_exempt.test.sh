@@ -26,7 +26,7 @@ else
 fi
 
 # 3. kill-failed 复查分支存在（两处）
-KF_COUNT=$(grep -c 'kill-failed' "$JANITOR")
+KF_COUNT=$(grep -c '\[frequent\] kill-failed' "$JANITOR")
 if [ "$KF_COUNT" -ge 2 ]; then
   ok "kill-failed 复查分支存在（${KF_COUNT}处）"
 else
@@ -34,8 +34,10 @@ else
 fi
 
 # 4. 行序：每个 KILLED 自增之前必须先有 kill-failed 复查（用 awk 检查每个
-#    'KILLED=$((KILLED + 1))' 行号之前 12 行内出现过 kill-failed）
+#    'KILLED=$((KILLED + 1))' 行号之前 12 行内出现过 kill-failed）。
+#    行序正则只认 KILLED=$((KILLED + 1)) 精确形态，重构计数写法须同步本断言。
 ORDER_OK=$(awk '
+  /^[[:space:]]*#/ { next }
   /kill-failed/ { last_kf = NR }
   /KILLED=\$\(\(KILLED \+ 1\)\)/ { if (last_kf == 0 || NR - last_kf > 12) bad = 1 }
   END { print (bad ? "BAD" : "OK") }

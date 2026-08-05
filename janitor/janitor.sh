@@ -291,7 +291,7 @@ if [ "$MODE" = "frequent" ]; then
       sleep 1
       kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null
       # kill 后复查：无 sudo 杀非本人进程会 EPERM 静默失败，此前仍计数打 killed
-      # 日志（谎报数周，issue ab1da1d7）。仍存活 → 打 kill-failed 不计数。
+      # 日志（谎报数周，issue ab1da1d7）。仍存活 → 打 复查失败 不计数。
       sleep 1
       if kill -0 "$pid" 2>/dev/null; then
         echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] kill-failed node/vitest pid=$pid 仍存活（疑似权限不足），不计数"
@@ -364,6 +364,8 @@ if [ "$MODE" = "frequent" ]; then
       kill "$pid" 2>/dev/null
       sleep 1
       kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null
+      # kill 后复查：无 sudo 杀非本人进程会 EPERM 静默失败，此前仍计数打 killed
+      # 日志（谎报数周，issue ab1da1d7）。仍存活 → 打 复查失败 不计数。
       sleep 1
       if kill -0 "$pid" 2>/dev/null; then
         echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] kill-failed claude pid=$pid 仍存活（疑似权限不足），不计数"
