@@ -174,11 +174,11 @@ else
   fail "AUDIOMXD_CPU_THRESHOLD 未定义"
 fi
 
-# 验证 22: audiomxd kill 逻辑存在（sudo -n 保证无密码时静默跳过）
-if grep -q "sudo -n kill -9 \"\$audiomxd_pid\"" "$JANITOR" 2>/dev/null; then
-  ok "audiomxd kill 逻辑存在（sudo -n）"
+# 验证 22: audiomxd E核监狱逻辑存在（v2 决策 db79a1d3：taskpolicy 绝对路径，不再 kill）
+if grep -q "sudo -n /usr/sbin/taskpolicy -b -p \"\$audiomxd_pid\"" "$JANITOR" 2>/dev/null; then
+  ok "audiomxd E核监狱逻辑存在（taskpolicy 绝对路径）"
 else
-  fail "audiomxd kill 逻辑缺失"
+  fail "audiomxd E核监狱逻辑缺失"
 fi
 
 # 验证 23: audiomxd 进程扫描用 pgrep -x 精确匹配进程名（避免 ps|grep 子串误命中）
