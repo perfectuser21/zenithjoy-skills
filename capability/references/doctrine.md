@@ -1,17 +1,24 @@
 # Golden Path Doctrine（承诺地图体系 · 判定标准全集）
 
-> 本文件收编原先散落三处的判定标准：golden-path-mapper 附录（三问法/承诺式骨干/七动作/场景牌组，
+> 本文件收编原先散落三处的判定标准：capability-mapper 附录（三问法/承诺式骨干/七动作/场景牌组，
 > 2026-07-17 主理人拍板口径）、golden-path-scoping（两把尺子/三反模式，未部署遗产）、
-> golden-path-proposer 铁律（验收断言/验证等级）。此处为唯一权威版本。
+> capability-proposer 铁律（验收断言/验证等级）。此处为唯一权威版本。
 
 ## 0-pre. 行业词汇对照（决策 a340f100，2026-08-06——本表为对外/UI/新文档的唯一术语标准）
 
 本教义正文写于对照拍板之前，保留原词以维持判定链语义完整；**对外沟通、UI、新文档一律用右列行业词**。
 
+**追加拍板（2026-08-06 当天二次拍板）**：Golden Path 从"保留内部别名"升级为**全面退役，含
+skill 层**——本 skill 家族已改名 golden-path→capability / golden-path-mapper→capability-mapper
+/ golden-path-controller→capability-controller / golden-path-proposer→capability-proposer /
+golden-path-reviewer→capability-reviewer，触发词、frontmatter name、skill 间 `Skill(...)` 调用
+同步换新名。本文件正文judgment-chain 说明性文字里的"GP/Golden Path"字样**保留不做全文替换**
+（避免动到判定链措辞语义），仅解释历史/内部机制时可用，新长出的文字一律用 Capability。
+
 | 教义原词 | 正式中文 | 正式英文 |
 |---|---|---|
 | 线 / Line | 价值流 | Value Stream |
-| 路 / Golden Path / 大Ability | 能力 | Capability（Golden Path 为内部别名） |
+| 路 / Golden Path / 大Ability | 能力 | Capability |
 | 骨干步骤 | 主干活动 | Backbone Activities |
 | 承诺 | 成果 | Outcome |
 | 挂片·价值件（旧ability） | 特性 | Feature |
@@ -25,7 +32,7 @@
 | 工厂域 | 内部平台 | Internal Platform |
 | 推进项 | 工作项 | Work Item |
 
-**硬规则**：ability/大Ability/小ability 全面退役，仅解释历史时可作括号注解。
+**硬规则**：ability/大Ability/小ability/golden-path(skill名) 全面退役，仅解释历史时可作括号注解。
 
 ## 0. 名词一锤定音
 

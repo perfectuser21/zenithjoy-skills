@@ -1,22 +1,28 @@
 ---
-name: golden-path
+name: capability
 description: |
-  Golden Path 门面 — 主理人的承诺路径参谋（有头交互）。主理人丢来一个粗糙想法/一版土骨干
-  （"我觉得应该是第一步到第七步"）→ 判定它是不是一条路 → GAN 三镜头对抗攻击草稿（漏步骤/
-  漏失败路径/漏场景格）→ 收敛成一条定义合格的 Golden Path（承诺式骨干+验收断言锚点）呈拍板。
-  也接"一坨东西划几条路"（两把尺子+三问法快判；全新大领域完整地图转 golden-path-mapper）和
-  "什么是 Golden Path"概念答疑（doctrine 教学）。
-  只要主理人在（1）想把一个想法/功能变成正式的 golden path（2）纠结某东西是 line 还是路、
-  一条还是几条、算不算路、该归到哪（3）问 golden path/happy path/walking skeleton/贯穿/
-  加厚/骨干/挂片/line 这些概念，哪怕没说 "golden path" 原词，都必须触发本 skill。
-  触发：/golden-path、帮我定义一条golden path、把这个想法变成golden path、对抗一下我的骨干、
-  这算不算一条路、这是一条还是几条、这是line还是path、这条line里有几条路、帮我划一下路、
-  什么是golden path、帮我归位。判定第一动作=装载 journeys 地图，结论必须落格子坐标。
+  Capability 门面（原 Golden Path，决策 a340f100 词汇终局全面退役）— 主理人的承诺路径参谋
+  （有头交互）。主理人丢来一个粗糙想法/一版土骨干（"我觉得应该是第一步到第七步"）→ 判定它是不是
+  一条能力 → GAN 三镜头对抗攻击草稿（漏步骤/漏失败路径/漏场景格）→ 收敛成一条定义合格的
+  Capability（承诺式骨干+验收断言锚点）呈拍板。
+  也接"一坨东西划几条能力"（两把尺子+三问法快判；全新大领域完整地图转 capability-mapper）和
+  "什么是 Capability"概念答疑（doctrine 教学）。
+  只要主理人在（1）想把一个想法/功能变成正式的能力/Capability（2）纠结某东西是价值流(Value
+  Stream)还是能力、一条还是几条、算不算能力、该归到哪（3）问 Capability/happy path/walking
+  skeleton/贯穿/加厚/骨干/挂片/价值流 这些概念，哪怕没说 "Capability" 原词（含旧词 "golden
+  path"/"ability"），都必须触发本 skill。
+  触发：/capability、帮我定义一条能力、把这个想法变成一条能力、对抗一下我的骨干、
+  这算不算一条能力、这是一条还是几条、这是价值流还是能力、这条价值流里有几条能力、帮我划一下、
+  什么是Capability、帮我归位（旧触发词 /golden-path、golden path 兼容识别，输出一律用新词）。
+  判定第一动作=装载 journeys 地图，结论必须落格子坐标。
   定义层工作，不读实现代码不做现状标注、不写提案文档、不开 PR——拍板后下游：写库走 db-update，
-  完整提案（现状探索+对抗+demo）点火 golden-path-controller 流水线。
-version: 1.1.0
+  完整提案（现状探索+对抗+demo）点火 capability-controller 流水线。
+version: 1.2.0
 created: 2026-07-24
 changelog:
+  - 1.2.0: skill 整体改名 golden-path→capability + 触发词同步（决策 a340f100 词汇终局，
+    Alex 08-06 拍板：Golden Path 从"保留内部别名"升级为全面退役，含 skill 层）；家族 5 个
+    skill 同步改名（golden-path-mapper/controller/proposer/reviewer→capability-*）
   - 1.1.0: 14条清洗实战复盘升级——新增 Step 0 先装地图铁律（journeys=已拍板 line→GP 格子，
     判定结论必须落格子坐标，禁真空判路；教训=曾把图上已有的 F5/F3 重新发明成新路）；
     doctrine 补 §1.5 Line 判定 / §1.6 判定链 / 旧词 Ability-Feature 对齐 / FR-NFR 归属 /
@@ -30,7 +36,7 @@ changelog:
 > **角色**: 主理人的 GP 参谋。主理人给的是土见解，你的职责是把它打磨成合格定义——
 > 但**定义的主人始终是主理人**：对抗收敛后呈报拍板，拍板前绝不写库。
 
-# /golden-path — 承诺路径门面
+# /capability — 承诺路径门面
 
 判定标准全集（Line 判定/判定链/三问法/两把尺子/承诺式骨干/场景牌组/归位判定链/七动作）在
 `references/doctrine.md`——**开工前先读它**，本文件只写流程，不重复标准细节。
@@ -57,7 +63,7 @@ curl -s "$BRAIN/api/brain/golden-paths"  # 已登记的路/提案
 | 概念问题（GP/happy path/贯穿/挂片是啥） | **C 答疑** | 按 doctrine 讲清楚，不启动流程 |
 
 边界：B 模式遇到**全新大领域要出完整地图**（边界声明/横切件池/共享前置四件套）→ 转
-`Skill(golden-path-mapper)` Mode 1，那是它的主场；已有地图下判定单个新东西归哪 → 本 skill
+`Skill(capability-mapper)` Mode 1，那是它的主场；已有地图下判定单个新东西归哪 → 本 skill
 直接跑归位判定链（doctrine §8），结论如需正式落账再走 mapper Mode 2。
 
 ## Mode A：提炼（想法 → 合格 GP 定义）
@@ -91,7 +97,7 @@ curl -s "$BRAIN/api/brain/golden-paths"  # 已登记的路/提案
 
 ### A4. GAN 对抗（本 skill 的核心价值）
 
-派 **3 个 fresh subagent**（Task tool，并行）攻击 A3 草稿。不复用 golden-path-reviewer
+派 **3 个 fresh subagent**（Task tool，并行）攻击 A3 草稿。不复用 capability-reviewer
 ——它审的是带现状标注的提案文档（7 维 rubric 要读代码抽验），这里审的是**定义本身**。
 每个镜头的 prompt 带上：草稿全文 + doctrine.md 路径（让它先读）+ 各自的攻击面：
 
@@ -121,7 +127,7 @@ curl -s "$BRAIN/api/brain/golden-paths"  # 已登记的路/提案
 ## 待拍板问题（拿不准的不硬填，列这里）
 ## 下一步（拍板后）
 - 落账：Skill(db-update) 写 golden_paths（status=candidate）
-- 深化：点火 golden-path-controller 走完整提案（现状探索+读代码标注+demo）
+- 深化：点火 capability-controller 走完整提案（现状探索+读代码标注+demo）
 ```
 
 拍板后主理人说"落账/继续"→ 按下一步执行；说"改"→ 回 A3。

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Guard the four Golden Path skills' shared contract-layer protocol."""
+"""Guard the four Capability (原 Golden Path) skills' shared contract-layer protocol."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 RULES = {
-    "golden-path-proposer/SKILL.md": {
+    "capability-proposer/SKILL.md": {
         "proposer:seven_contract_items": [
             "fr_summary",
             "lifelines_and_nfr",
@@ -24,7 +24,7 @@ RULES = {
             "gp-contract-v<N>.json",
         ],
     },
-    "golden-path-reviewer/SKILL.md": {
+    "capability-reviewer/SKILL.md": {
         "reviewer:contract_attack": ["GP_CONTRACT", "contract_attack"],
         "reviewer:incident_comparison": [
             "INCIDENT_CONTEXT",
@@ -32,14 +32,14 @@ RULES = {
             "unavailable",
         ],
     },
-    "golden-path-mapper/SKILL.md": {
+    "capability-mapper/SKILL.md": {
         "mapper:ledger_reference": [
             "golden_paths.journey_id",
             "journey_step_links",
             "禁止复制合同正文",
         ],
     },
-    "golden-path-controller/SKILL.md": {
+    "capability-controller/SKILL.md": {
         "controller:contract_submission": [
             "gp-contract-v<N>.json",
             "/golden-paths/$GP_ID/contracts",

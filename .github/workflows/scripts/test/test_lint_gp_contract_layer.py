@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fixture tests for the Golden Path contract-layer skill guard."""
+"""Fixture tests for the Capability (原 Golden Path) contract-layer skill guard."""
 
 from __future__ import annotations
 
@@ -24,19 +24,19 @@ EXPECTED = {
 }
 
 COMPLETE_FIXTURES = {
-    "golden-path-proposer/SKILL.md": """
+    "capability-proposer/SKILL.md": """
 fr_summary lifelines_and_nfr yield_order external_commitment_changes
 release_and_blast_radius success_and_close budget_guard
 lifeline best_effort gp-contract-v<N>.json
 """,
-    "golden-path-reviewer/SKILL.md": """
+    "capability-reviewer/SKILL.md": """
 GP_CONTRACT contract_attack
 INCIDENT_CONTEXT incident_comparison unavailable
 """,
-    "golden-path-mapper/SKILL.md": """
+    "capability-mapper/SKILL.md": """
 golden_paths.journey_id journey_step_links 禁止复制合同正文
 """,
-    "golden-path-controller/SKILL.md": """
+    "capability-controller/SKILL.md": """
 gp-contract-v<N>.json /golden-paths/$GP_ID/contracts pending_action_id
 """,
 }
