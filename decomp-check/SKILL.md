@@ -13,8 +13,8 @@ changelog:
   - 1.0.0: 从 /vivian 重写。改名 decomp-check，升级为 Sonnet，覆盖所有层，加入打回重拆机制
 description: |
   【已弃用对话入口——决策 2b3f7b14】对话中不要触发本 skill；GP 流程的质检由
-  golden-path-reviewer 承担。本 skill 仅保留给 Brain headless 派发的 decomp_review
-  任务使用，随 /decomp headless 链 GP 化后一并退役。
+  capability-reviewer（原 golden-path-reviewer，决策 a340f100 改名）承担。本 skill 仅保留给
+  Brain headless 派发的 decomp_review 任务使用，随 /decomp headless 链 GP 化后一并退役。
 ---
 
 > **CRITICAL LANGUAGE RULE: 所有输出必须使用简体中文。**
