@@ -4,6 +4,29 @@
 > 2026-07-17 主理人拍板口径）、golden-path-scoping（两把尺子/三反模式，未部署遗产）、
 > golden-path-proposer 铁律（验收断言/验证等级）。此处为唯一权威版本。
 
+## 0-pre. 行业词汇对照（决策 a340f100，2026-08-06——本表为对外/UI/新文档的唯一术语标准）
+
+本教义正文写于对照拍板之前，保留原词以维持判定链语义完整；**对外沟通、UI、新文档一律用右列行业词**。
+
+| 教义原词 | 正式中文 | 正式英文 |
+|---|---|---|
+| 线 / Line | 价值流 | Value Stream |
+| 路 / Golden Path / 大Ability | 能力 | Capability（Golden Path 为内部别名） |
+| 骨干步骤 | 主干活动 | Backbone Activities |
+| 承诺 | 成果 | Outcome |
+| 挂片·价值件（旧ability） | 特性 | Feature |
+| 挂片·使能件 | 使能项 | Enabler |
+| 格子 | 验收标准 | Acceptance Criteria |
+| 11要素 | DoD + NFRs | DoD + NFRs |
+| 加厚 | 增量 | Increment |
+| 厚度 | 成熟度 | Maturity |
+| 横切件 | 横切关注点 | Cross-cutting Concern |
+| 共享前置 | 入驻流程 | Onboarding |
+| 工厂域 | 内部平台 | Internal Platform |
+| 推进项 | 工作项 | Work Item |
+
+**硬规则**：ability/大Ability/小ability 全面退役，仅解释历史时可作括号注解。
+
 ## 0. 名词一锤定音
 
 **我们的 Golden Path ≠ 业界的 Golden Path。**
