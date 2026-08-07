@@ -433,7 +433,9 @@ if [ "$MODE" = "frequent" ]; then
   # daily 单次清理频率追不上堆积速度，这里每 15 分钟顺手清一次。只 prune 已退出的，
   # 不碰 running 容器（container prune 本身语义就只清 Exited/Created 状态，不会误删运行中的）。
   if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-    relay_prune_out=$(docker container prune -f 2>/dev/null || true)
+    # --filter until=1h：给刚死的容器留 1 小时尸检窗口（2026-08-07 W1-W3 三条 harness run
+    # 死因灭失实证：无过滤 prune 在 forensic 抓 docker logs 之前把尸体清了）。堆积仍受控。
+    relay_prune_out=$(docker container prune -f --filter "until=1h" 2>/dev/null || true)
     relay_reclaimed=$(echo "$relay_prune_out" | grep "Total reclaimed space" | awk -F': ' '{print $2}')
     [ -n "$relay_reclaimed" ] && [ "$relay_reclaimed" != "0B" ] && \
       echo "$(date '+%Y-%m-%d %H:%M:%S') [frequent] 已退出容器 prune 回收 ${relay_reclaimed}"
@@ -560,7 +562,7 @@ log "  ✓ 清理 $wt_cleaned 个残留 worktree"
 # 10. Docker 容器/镜像清理（Exited 容器 + 未引用旧版 cecelia-brain 镜像）
 log "[10/$TOTAL_STEPS] Docker 容器/镜像清理..."
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-  prune_out=$(docker container prune -f 2>/dev/null || true)
+  prune_out=$(docker container prune -f --filter "until=1h" 2>/dev/null || true)  # 同 frequent：留 1h 尸检窗口
   reclaimed=$(echo "$prune_out" | grep "Total reclaimed space" | awk -F': ' '{print $2}')
   [ -z "$reclaimed" ] && reclaimed="0B"
 
