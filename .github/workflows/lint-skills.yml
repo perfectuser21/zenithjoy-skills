@@ -62,21 +62,9 @@ jobs:
       - name: Regression — post-pr-create rewrite/* 豁免
         run: bash hooks/__tests__/post-pr-create-rewrite.test.sh
 
-      # 回归守卫：janitor etime 八进制换算（决策 616183dc）
-      - name: Regression — janitor etime 八进制换算
-        run: bash janitor/__tests__/janitor_etime_octal.test.sh
+      # janitor 回归守卫已随脚本迁往 cecelia 仓（决策 c14a3e6f，cecelia#4769/#4774），
+      # 现由 cecelia CI 的 ops-tests-shell job 执行。
 
-      # 回归守卫：janitor audiomxd E核监狱日志格式（决策 db79a1d3）
-      - name: Regression — janitor audiomxd 日志格式
-        run: bash janitor/__tests__/janitor_audiomxd_log_format.test.sh
-
-      # 回归守卫：janitor kill 豁免与复查（决策 e8427238）
-      - name: Regression — janitor kill 豁免与复查
-        run: bash janitor/__tests__/janitor_kill_exempt.test.sh
-
-      # 存量守卫接入：janitor 基础函数/阈值断言（此前从未进 CI）
-      - name: Regression — janitor 基础断言
-        run: bash janitor/__tests__/janitor_orphan.test.sh
   # ─── 选择性 auto-merge：cp-* 分支 PR 且 lint 闸门绿 → 自动 squash 合并 ───
   # 自指安全：auto-merge needs lint-skills，坏 gate 自己也过不了，不会乱合。
   auto-merge:
