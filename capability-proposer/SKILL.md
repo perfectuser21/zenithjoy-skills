@@ -8,9 +8,11 @@ description: |
   PR、不写测试。样例见 examples/moments-golden-path-v2.md（朋友圈试点 v2.1，三镜头对抗收敛实证，
   历史文档保留旧词原样）。
   触发：Capability 提案首稿、Capability 提案修订、写 capability 提案文档。
-version: 1.4.0
+version: 1.5.0
 created: 2026-07-12
 changelog:
+  - 1.5.0: 铁律 7 增补：步数与边界按 capability/references/step-cutting.md 四测试扫出，步骤表必须附
+    「切刀记录表」（主理人 08-15 拍板，决策 c84bef20/26793221）
   - 1.4.0: skill 改名 golden-path-proposer→capability-proposer（决策 a340f100 追加拍板），
     触发词/description 同步换新词
   - 1.3.0: 新增 GP 级 7 项合同起草职责——提案与严格 JSON sidecar 同版产出；每条 NFR 同步建议
@@ -54,7 +56,7 @@ FEEDBACK（修订轮才有）      — .harness/feedback-r<N>.md（reviewer 合�
    （技术可行性探索 Gate / 授权文书 Gate），任一不过整条 GP 停止或改道
 5. **产物契约外一字不加**：不写实现代码、不开 PR、不写测试文件
 6. **接缝步骤必须承诺 L3 验证等级**：碰真机（UIA/adb）/生产 env（线上 DB/MQ/第三方 API Key）/真实第三方（不 mock 的 API 调用）的步骤，验证等级承诺必须是 L3（真机真验）；三镜头对抗审查「凭什么这步只需 L1/L2 替身」，无充分证据不得降级
-7. **承诺式骨干**（2026-07-17 主理人拍板口径）：步骤表每行的步骤名必须能翻译成一句「客户/老板感知到什么」（承诺）；工序词黑名单——识别/判定/检测/解析/校验/生成/调用等系统动词禁止直接当步骤名，出现即视为违规，reviewer 必打回；步骤下须显式分【挂片】【分支/判定点】两栏，不得把工序细节混写进步骤名本身
+7. **承诺式骨干**（2026-07-17 主理人拍板口径）：步骤表每行的步骤名必须能翻译成一句「客户/老板感知到什么」（承诺）；工序词黑名单——识别/判定/检测/解析/校验/生成/调用等系统动词禁止直接当步骤名，出现即视为违规，reviewer 必打回；步骤下须显式分【挂片】【分支/判定点】两栏，不得把工序细节混写进步骤名本身。**步数与边界按 capability/references/step-cutting.md 扫出**（一定义+四测试：可观察终态/失败可辨/可独立验收/可停顿），步骤表必须附「切刀记录表」（每个相邻边界×T1–T4×结论×一句话理由）；无记录表或 >5 步/<3 步无说明 = reviewer 打回（主理人 08-15 拍板，决策 c84bef20/26793221）
 8. **合同恰好 7 项**：合同 JSON 顶层只能有
    `fr_summary / lifelines_and_nfr / yield_order / external_commitment_changes /
    release_and_blast_radius / success_and_close / budget_guard`。禁止增加第 8 个业务键；
