@@ -8,9 +8,11 @@ description: |
   收敛轮兼裁 proposer 的 REFUTE 反驳是否成立。审查对象是提案文档质量（现状标注真实性/
   路径完整性/断言可验证性/判定点完备/风险与门），不是代码、不是合同测试。
   触发：Capability 提案审查、镜头审查 capability、裁决 REFUTE。
-version: 1.4.0
+version: 1.5.0
 created: 2026-07-12
 changelog:
+  - 1.5.0: rubric 6 commitment_purity 增补：缺切刀记录表 / 记录表某刀四测未全过仍成步 / 步数越界无说明 = P1，
+    引用 capability/references/step-cutting.md（主理人 08-15 拍板，决策 c84bef20/26793221）
   - 1.4.0: skill 改名 golden-path-reviewer→capability-reviewer（决策 a340f100 追加拍板），
     触发词/description 同步换新词
   - 1.3.0: 新增 GP_CONTRACT 红方攻击与 INCIDENT_CONTEXT 事故对照；不改变既有 7 维提案 rubric，
@@ -66,7 +68,7 @@ verdict 输出路径 — .harness/verdicts/gp-r<ROUND>-<LENS>.json
 | 3 | assertion_verifiability | 每条验收断言可转 exit-code 验证或可观察证据（psql/UIA 读回/截图/API），证据方式与路线条件自洽 | 断言是「功能正常」类空话，或证据方式在该路线下不可得 |
 | 4 | judgment_completeness | 所有「系统推断外部真实状态」的接缝逐条登记（候选/所选/依据/误判后果）；误判后果严重的标 ⚠️；无接缝显式 N/A | 有明显接缝判定点未登记，或登记表整体缺失 |
 | 5 | risk_gates | 不可逆动作全部有前置 Gate；校验路径 fail-closed；有熔断/灰度（碰真实客户时） | 碰真实客户号/对外发布无 Gate 无授权，或校验失败静默放行 |
-| 6 | commitment_purity（骨干承诺纯度，2026-07-17 新增） | 逐步骤检查步骤名是否都能翻译成客户/老板可感知的承诺，无一处工序词（识别/判定/检测/解析/校验/生成/调用等）直接当步骤名，工序细节均已下沉到【挂片】【分支/判定点】 | 存在工序词直接当步骤名（发现即 P1 finding，要求该步骤降级为挂片或分支） |
+| 6 | commitment_purity（骨干承诺纯度，2026-07-17 新增） | 逐步骤检查步骤名是否都能翻译成客户/老板可感知的承诺，无一处工序词（识别/判定/检测/解析/校验/生成/调用等）直接当步骤名，工序细节均已下沉到【挂片】【分支/判定点】 | 存在工序词直接当步骤名（发现即 P1 finding，要求该步骤降级为挂片或分支）；缺「切刀记录表」、或记录表里某一刀 T1–T4 任一为 ✘ 却仍成步、或步数 >5/<3 无说明（发现即 P1 finding，引用 capability/references/step-cutting.md 要求重扫） |
 | 7 | multi_platform_completeness（多端完整性，2026-07-18 新增） | 提案涉及 ≥2 种 os_type/device_platform（如安卓 vs Windows）时，逐一确认对应展示层（列表/筛选/图标/状态）已区分，且提案文档里明确写出区分方式；单一设备类型场景本维直接 N/A 记满分 | 涉及多设备类型但展示层混为一谈（同一张表/同一组件无区分字段），或提案对此只字未提 |
 
 **收敛纪律（B50 同精神）**：阻塞问题必须逐轮减少；新增 finding 只能是「路径真实漏洞」，
