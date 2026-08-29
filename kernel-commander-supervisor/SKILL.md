@@ -41,8 +41,20 @@ GROUP BY ir.id
 HAVING MAX(dl.created_at) < NOW() - INTERVAL '15 minutes';
 ```
 
-- idle ≥15 分钟 且 lease 未过期 → **半死 controller**（r80 形状）：记录 + 等租约过期
-  （主权闸禁外科），过期后确认 tick 抢主（新 hop 出现）；20 分钟后仍无新 hop → Bark 告警。
+- **08-30 翻案（46 批，Brain ≥1.273.149）**：r80 不是"半死 controller"——控制循环每 90s
+  照常迭代续租，卡在只心跳不落行的静默等待分支（Commander 替换提案因 bundle 游标滞后被
+  静默丢弃 + 人审去重认了已裁决的旧请求）。46 批起 loop 在静默等待点 ≥15 分钟无新行会
+  自己落 `result:wait_stalled` 行（detail.waiting_on / idle_minutes / last_action）并发
+  `run.wait_stalled` 事件唤醒 Commander。所以：
+  - 上面 SQL 里 idle ≥15 分钟**且最新行不是 result:wait_stalled** → 停摆检测本身失效
+    （老版本 Brain / loop 真死 / 进程没了）→ 查 kernel 子进程日志 logs/kernel/kernel-<run>.log
+    尾巴 + `ps` 看 orchestrator_pid 是否还在；进程在但无行 → Bark 告警记台账；进程不在且
+    lease 未过期 → 等租约过期后确认 tick 抢主。
+  - 最新行是 `result:wait_stalled` → 停摆已可见，按 `detail.waiting_on` 对号：
+    `human_review_pending` = 人审没人批（走第 2 段速批/通知 Alex）；`commander_*` =
+    Commander attempt 在途/游标冲突超时（查该 attempt 状态与 worker 日志）；`wait_running`
+    = 在途 attempt 迟迟无回执（幽灵回执，查 harness_attempts lease）；`expired_attempt_*`
+    = 过期 attempt 收养循环。连续 ≥3 行同 waiting_on（≥45 分钟）→ Bark 告警 + 记台账。
 - idle ≥15 分钟 且 lease 已过期 且无新 hop → tick 没接手 → Bark 告警 + 记台账。
 - 派发空转（同 result:dispatch BLOCKED 连续 ≥10 条）→ 读 reason 对号：
   - `capacity_contended` = 排队，正常，不动
