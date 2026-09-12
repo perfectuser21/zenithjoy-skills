@@ -1,0 +1,24 @@
+{
+  "skill_name": "rpa-audit",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "审计这个 Android RPA skill 及其控制器脚本，找出所有反模式问题并输出审计报告：skill 文件 fixtures/douyin-phone-runtime-SKILL.md，控制器脚本 fixtures/douyin-phone-adb（zsh，真实生产脚本）。输出一份 audit-report.md。",
+      "expected_output": "带 file:line 证据、P0-P2 分级、28 条全覆盖的审计报告，且不修改被审计对象",
+      "files": [
+        "fixtures/douyin-phone-runtime-SKILL.md",
+        "fixtures/douyin-phone-adb"
+      ],
+      "assertions": [
+        "报告为每条违规给出 file:line + 原文摘录证据",
+        "发现死代码/损坏代码问题：ui_evidence_retry 函数从未被调用且内部被改坏（F2 金丝雀）",
+        "发现控制器脚本不在 git 仓库的问题（F1）",
+        "对吞错模式（|| true / 2>/dev/null / 忽略返回码）做了逐个核对（D1）",
+        "28 条规则每条都有着落（违规/通过/SKIP 三选一），无静默遗漏",
+        "发现 UI 文案锚点散落问题（依赖『搜索结果为空』等中文精确匹配）（C6）",
+        "报告有 P0/P1/P2 严重级分级且排序输出",
+        "只报不改：未修改任何 fixtures 下的被审计文件"
+      ]
+    }
+  ]
+}
