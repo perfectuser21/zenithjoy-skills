@@ -1,0 +1,4 @@
+interface:
+  display_name: "OPC 下钻式晨报"
+  short_description: "从底层事实逐级归并到公司经营结论的每日下钻式晨报系统"
+  default_prompt: "Use $opc-morning-brief to build today’s bottom-up OPC operating brief from verified evidence."

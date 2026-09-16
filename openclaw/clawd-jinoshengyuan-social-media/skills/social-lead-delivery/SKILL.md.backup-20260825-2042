@@ -1,0 +1,30 @@
+---
+name: social-lead-delivery
+description: "Classify collected social comments into lead categories, exclude peers/spam, deduplicate across videos and previous runs, batch-write qualified leads to the tenant-configured destination, verify the write, and update keyword/date cursors. Use as the final stage of a reusable cross-company social lead-generation workflow."
+---
+
+# 社媒线索判定与交付
+
+当由 `agentic-workflow-runtime` 调用时，结束前必须按其协议返回唯一 `WORKER_RESULT`，包含去重、新增、失败、目标记录 ID、回读证据和可重试性。
+
+只处理 `comment-leads.json`，不操作手机或平台页面。
+
+## 判定与去重
+
+1. 按租户业务规则分为强意向、弱意向、同行、无关、广告异常；只交付允许类别。
+2. 保存评论原文、判断理由、置信度、目标人群、关键词、视频 ID 和全部来源。
+3. 使用租户定义的稳定去重键，优先平台用户 ID/主页标识，其次规范化主页链接；昵称单独使用时必须标记低置信度。
+4. 同一运行内先去重，再一次性读取目标系统已有记录做跨运行去重。
+
+## 批量交付
+
+- 目标系统和凭据只来自 `destination_adapter` 与 `tenant_context.resources`。
+- 先校验全部原始评论已按稳定 ID 存在于 `resources.raw_comments`。对每条原始记录原位更新业务相关性、意向等级、处理状态、AI 判断理由或排除原因；不得只在服务器工件中保存判定过程。
+- 批量写入合格线索，不设置新增数量上限；随后批量回读验证记录 ID 和关键字段。
+- 最终线索写入并回读后，把对应原始记录更新为“进入最终线索”，并写入目标记录关联。被排除记录保留在原始池，状态为已淘汰且必须有原因。
+- 更新关键词效果和“最后成功发现时间”游标。只有 discovery、qualification、collection 和 delivery 全部成功时才能推进日期游标；部分失败不得掩盖未扫描区间。
+- 话术分配和对外发送是下游独立 Workflow。未经明确授权不得评论、私信或发送任何内容。
+
+## 输出
+
+写 `delivery.json`，包含合格、排除、重复、写入、回读、游标更新和错误。目标系统暂时不可用时保留工件并设为 `blocked`，恢复后幂等补写。

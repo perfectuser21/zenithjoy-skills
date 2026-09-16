@@ -1,0 +1,4 @@
+interface:
+  display_name: "社媒视频二段判定"
+  short_description: "Screen metadata and judge each opening fifteen seconds"
+  default_prompt: "Use $social-video-qualifier to perform metadata screening and a first-15-seconds qualification."

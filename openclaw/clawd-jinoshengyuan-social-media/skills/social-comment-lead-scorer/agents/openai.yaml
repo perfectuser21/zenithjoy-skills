@@ -1,0 +1,4 @@
+interface:
+  display_name: "社媒评论线索评分"
+  short_description: "分批评判评论意向、同行和广告内容，输出合格线索候选结果"
+  default_prompt: "使用 $social-comment-lead-scorer 对已采集的社媒评论分批评分并输出合格线索候选。"

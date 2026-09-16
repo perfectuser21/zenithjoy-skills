@@ -1,0 +1,4 @@
+interface:
+  display_name: "社媒视频发现"
+  short_description: "Discover visible videos by keyword and date window"
+  default_prompt: "Use $social-video-discovery to discover all visible videos within a configured date window."

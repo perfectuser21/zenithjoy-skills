@@ -1,0 +1,58 @@
+---
+name: social-video-discovery
+description: "Discover and deduplicate platform-visible social videos for tenant-provided keywords inside a date window. Use for the discovery stage of a social lead-generation workflow, including an explicitly requested bounded discovery_smoke profile."
+---
+
+# 社媒视频发现
+
+只负责从关键词生成发现工件；不判断评论线索，不写原始评论、最终线索或关键词游标。
+
+## 输入与边界
+
+读取可信任务中的租户、平台适配器、目标人群、关键词、日期窗口和执行 profile。所有平台动作只通过已登记的 `platform_adapter`；禁止点赞、关注、评论、私信、分享或发布。
+
+普通 `full` profile 对每个关键词持续扫描，直到日期边界、连续无新稳定 ID、平台结果结束或安全停止；不得按固定视频数量提前停止。
+
+只有任务同时显式声明 `mode=discovery_smoke` 和 `tenant_context.smoke_test.enabled=true` 时，才使用有界测试 profile：
+
+- 处理任务指定的全部 smoke 关键词；
+- 每个关键词最多读取 `max_screens_per_keyword` 屏，默认 1 屏；
+- 最多保留 `max_candidates_total` 个带稳定 ID 和日期证据的观察候选，默认 5 个；
+- 停止原因写为 `smoke_boundary`，不得声称完成正式全量发现；
+- 只写本地测试工件，业务系统写入、游标更新和外部互动必须全部为 0。
+
+## 发现证据
+
+每个可见候选记录稳定 ID 或可复核页面标识、标题/文案、作者、发布时间、互动和截图证据。只把发布日期落入窗口的对象计为候选；日期未知时记录为排除项。同一稳定视频 ID 只保留一次，并合并命中关键词。
+
+## Worker Result v2
+
+结束时最终可见回复必须只有一条 `WORKER_RESULT` JSON。`status` 只能是 `completed | blocked | failed`，绝不使用 `success`。零候选在扫描边界证据完整时属于 `completed`。
+
+```json
+{
+  "type": "WORKER_RESULT",
+  "schema_version": 2,
+  "run_id": "required",
+  "attempt_id": "required",
+  "execution_id": "required",
+  "stage_id": "discovery",
+  "stage_attempt": 1,
+  "tenant_id": "required",
+  "worker_agent_id": "jinoshengyuan-social-media",
+  "status": "completed",
+  "summary": "required",
+  "metrics": {
+    "keywords_processed": 0,
+    "screens_scanned": 0,
+    "candidates": 0,
+    "external_writes": 0,
+    "external_interactions": 0
+  },
+  "artifacts": [],
+  "evidence": [],
+  "warnings": [],
+  "retryable": false,
+  "recommended_next_action": "accept"
+}
+```

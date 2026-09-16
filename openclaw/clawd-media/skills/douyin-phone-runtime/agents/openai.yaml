@@ -1,0 +1,4 @@
+interface:
+  display_name: "抖音手机运行适配器"
+  short_description: "Adapt generic social workflows to registered Douyin phones"
+  default_prompt: "Use $douyin-phone-runtime to operate the tenant-selected Douyin phone safely."

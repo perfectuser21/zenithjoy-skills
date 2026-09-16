@@ -1,0 +1,40 @@
+{
+  "version": "1.0",
+  "updated_at": "2026-08-25T00:00:00+08:00",
+  "source_of_truth": "remote_openclaw_gateway",
+  "application_registry": [
+    {"account_id": "main", "app_id": "cli_a9f33da9543adbc7", "role": "OPC 中枢 / Workflow 卡片发送与回调入口", "status": "verified_remote"},
+    {"account_id": "yujin", "app_id": "cli_aa0d705d64b81bb5", "role": "于瑾业务账号", "status": "verified_remote"},
+    {"account_id": "suyanqing", "app_id": "cli_aa02b8a955799bce", "role": "苏彦卿业务账号", "status": "verified_remote"},
+    {"account_id": "jinoshengyuan", "app_id": "cli_aa06b03cc0b9dbee", "role": "金诺盛源 Social Media", "status": "verified_remote"}
+  ],
+  "member_registry": [
+    {"id": "ceo", "display_name": "OPC CEO", "runtime_agent": "main", "queue": "owner-inbox", "status": "active"},
+    {"id": "people-ops", "display_name": "OPC People Ops", "runtime_agent": "people", "queue": "people-ops", "status": "active"},
+    {"id": "media", "display_name": "OPC Media / Growth", "runtime_agent": "media", "queue": "growth", "status": "active"},
+    {"id": "fde", "display_name": "OPC FDE", "runtime_agent": "fde", "queue": "fde-opportunities", "status": "active"},
+    {"id": "dev", "display_name": "OPC Dev", "runtime_agent": "dev", "queue": "engineering", "status": "active"},
+    {"id": "infra", "display_name": "OPC Infra", "runtime_agent": "infra", "queue": "infra-reliability", "status": "active"},
+    {"id": "jinoshengyuan-social-media", "display_name": "金诺盛源 Social Media", "runtime_agent": "jinoshengyuan-social-media", "queue": "jinoshengyuan-content", "status": "active"}
+  ],
+  "group_registry": [
+    {"group_key": "vps-status", "name": "VPS 状态", "chat_id": "oc_ef60d6e3f199d90dd695b6ecc213d662", "visibility": "internal", "status": "verified_remote"},
+    {"group_key": "yue-sheng-yun", "name": "悦升云端", "chat_id": "oc_ee3fe04cf2541c4187f0fc054ae826de", "visibility": "internal", "status": "verified_remote"},
+    {"group_key": "opc-control", "name": "OPC 经营总控群", "chat_id": null, "visibility": "internal", "status": "needs_chat_registration"},
+    {"group_key": "jinoshengyuan-execution", "name": "金诺盛源场地与执行群", "chat_id": null, "visibility": "restricted", "status": "needs_chat_registration"},
+    {"group_key": "salon-collaboration", "name": "沙龙四方协同群", "chat_id": null, "visibility": "external_approval", "status": "needs_chat_registration"},
+    {"group_key": "content-growth", "name": "内容与增长群", "chat_id": null, "visibility": "internal", "status": "needs_chat_registration"}
+  ],
+  "push_routes": [
+    {"route_key": "internal-default", "business_lines": ["company-control", "people-operations", "engineering-product", "infra-reliability"], "group_key": "vps-status", "sender_account": "main", "card_variant": "workflow_summary_card"},
+    {"route_key": "yue-sheng-yun-delivery", "business_lines": ["event-discovery", "fde-delivery", "zenithjoy-business"], "group_key": "yue-sheng-yun", "sender_account": "main", "card_variant": "workflow_summary_card"},
+    {"route_key": "jinoshengyuan-internal", "business_lines": ["jinoshengyuan-social"], "group_key": "jinoshengyuan-execution", "sender_account": "jinoshengyuan", "card_variant": "task_detail_card"},
+    {"route_key": "external-collaboration", "business_lines": ["event-discovery", "fde-delivery"], "group_key": "salon-collaboration", "sender_account": "main", "card_variant": "redacted_workflow_card", "approval_required": true}
+  ],
+  "card_registry_contract": {
+    "primary_key": ["workflow_run_id", "object_id", "audience_key"],
+    "required_fields": ["message_id", "chat_id", "sender_account", "card_type", "version", "last_action_at"],
+    "actions": ["open_task_detail", "open_workflow_summary", "open_evidence", "mark_blocked"],
+    "callback_gate": "card.action.trigger must be received and acknowledged before production cards are enabled"
+  }
+}

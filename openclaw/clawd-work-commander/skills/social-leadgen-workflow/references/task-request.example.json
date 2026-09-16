@@ -1,0 +1,41 @@
+{
+  "task_name": "金诺盛源｜AI学习人群评论线索采集",
+  "tenant_id": "jinnuoshengyuan",
+  "audience": "近期主动寻找 AI 学习、培训或落地帮助的人群",
+  "keywords": ["AI怎么学", "零基础学AI"],
+  "search_policy": {
+    "sort": "most_commented",
+    "time_layers": ["one_week", "six_months"],
+    "duration": "unlimited",
+    "scope": "unlimited",
+    "location": "unlimited",
+    "exhaust_visible_results": true
+  },
+  "qualification_policy": {
+    "transcript_coverage": "full",
+    "verdict_mode": "single_full_transcript",
+    "low_confidence": "review"
+  },
+  "comment_policy": {
+    "mode": "visible_window_exhaustive",
+    "window": "follow_video_layer",
+    "batch_size": 30,
+    "scheduler": "round_robin",
+    "per_video_limit": null
+  },
+  "scoring_policy": {
+    "deliver_categories": ["strong_intent", "weak_intent"],
+    "low_confidence": "review"
+  },
+  "delivery_policy": {
+    "destination": "tenant_final_leads",
+    "dedupe": ["video", "comment", "person", "prior_runs"],
+    "external_outreach": false
+  },
+  "card_target": {
+    "audience_key": "jinoshengyuan-internal",
+    "chat_id": "configured-by-intake",
+    "visibility": "internal"
+  },
+  "defaults_applied": ["search_policy.sort", "search_policy.time_layers", "search_policy.duration", "search_policy.scope", "search_policy.location", "comment_policy"]
+}

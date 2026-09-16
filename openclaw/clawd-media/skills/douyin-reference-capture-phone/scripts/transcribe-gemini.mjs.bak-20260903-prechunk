@@ -1,0 +1,150 @@
+#!/usr/bin/env node
+
+import fs from 'node:fs';
+import path from 'node:path';
+
+function parseArgs(argv) {
+  const out = {};
+  for (let i = 2; i < argv.length; i += 1) {
+    const key = argv[i];
+    if (!key.startsWith('--')) throw new Error(`Unexpected argument: ${key}`);
+    const name = key.slice(2);
+    if (name === 'dry-run') out[name] = true;
+    else {
+      if (i + 1 >= argv.length) throw new Error(`Missing value for ${key}`);
+      out[name] = argv[++i];
+    }
+  }
+  return out;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function audioFormat(input) {
+  const ext = path.extname(input).slice(1).toLowerCase();
+  const supported = new Set(['wav', 'mp3', 'm4a', 'aac', 'flac', 'ogg']);
+  if (!supported.has(ext)) throw new Error(`Unsupported audio extension: .${ext}`);
+  return ext;
+}
+
+function repetitionSignals(text) {
+  const compact = text.replace(/\s+/g, ' ').trim();
+  const signals = [];
+  const sentences = compact.split(/(?<=[。！？!?])/).map((x) => x.trim()).filter(Boolean);
+  for (let width = 1; width <= Math.min(3, Math.floor(sentences.length / 2)); width += 1) {
+    const tail = sentences.slice(-width).join('');
+    const previous = sentences.slice(-2 * width, -width).join('');
+    if (tail.length >= 8 && tail === previous) signals.push(`repeated_tail_${width}_sentences`);
+  }
+  return [...new Set(signals)];
+}
+
+function redactResponse(payload) {
+  const copy = structuredClone(payload);
+  if (copy?.request) delete copy.request;
+  return copy;
+}
+
+async function main() {
+  const args = parseArgs(process.argv);
+  if (!args.input || !args['output-dir']) {
+    throw new Error('Usage: transcribe-gemini.mjs --input FILE --output-dir DIR [--segment-id ID] [--source-start SEC] [--dry-run]');
+  }
+  const input = path.resolve(args.input);
+  const outputDir = path.resolve(args['output-dir']);
+  const model = args.model || 'gemini-2.5-flash-lite-official';
+  const apiBase = (args['api-base'] || 'https://toapis.com/v1').replace(/\/$/, '');
+  const keyFile = args['api-key-file'] || '/root/.openclaw/credentials/toapis-api-key';
+  const segmentId = args['segment-id'] || path.basename(input, path.extname(input));
+  const sourceStart = Number(args['source-start'] || 0);
+  const stat = fs.statSync(input);
+  if (!stat.isFile() || stat.size === 0) throw new Error(`Input is empty or not a file: ${input}`);
+  if (stat.size > 20 * 1024 * 1024) throw new Error('Audio segment exceeds 20 MiB; split it before inline upload');
+  fs.mkdirSync(outputDir, { recursive: true });
+
+  if (args['dry-run']) {
+    const result = { ok: true, dry_run: true, input, bytes: stat.size, model, segment_id: segmentId, source_start: sourceStart };
+    fs.writeFileSync(path.join(outputDir, 'result.json'), `${JSON.stringify(result, null, 2)}\n`);
+    process.stdout.write(`${JSON.stringify(result)}\n`);
+    return;
+  }
+
+  let apiKey = process.env.TOAPIS_API_KEY?.trim();
+  if (!apiKey && fs.existsSync(keyFile)) apiKey = fs.readFileSync(keyFile, 'utf8').trim();
+  if (!apiKey) throw new Error('Missing TOAPIS_API_KEY and API key file');
+
+  const data = fs.readFileSync(input).toString('base64');
+  const prompt = args.prompt || [
+    '请逐字转写这段中文短视频音频。',
+    '只输出实际听到的口语，不总结、不续写、不翻译。',
+    '保留自然分段和标点；专名不确定时写[听不清]。',
+    '静音或结束后不要重复前文，也不要输出说明。'
+  ].join('');
+  const body = {
+    model,
+    temperature: 0,
+    messages: [{
+      role: 'user',
+      content: [
+        { type: 'text', text: prompt },
+        { type: 'input_audio', input_audio: { data, format: audioFormat(input) } }
+      ]
+    }]
+  };
+
+  const started = Date.now();
+  let responsePayload;
+  let status = 0;
+  let lastError;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const response = await fetch(`${apiBase}/chat/completions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(120_000)
+      });
+      status = response.status;
+      const text = await response.text();
+      try { responsePayload = JSON.parse(text); } catch { responsePayload = { error: { message: text.slice(0, 1000) } }; }
+      if (response.ok) break;
+      const retryable = response.status === 408 || response.status === 429 || response.status >= 500;
+      lastError = new Error(`ASR HTTP ${response.status}: ${responsePayload?.error?.message || 'unknown error'}`);
+      if (!retryable || attempt === 3) throw lastError;
+    } catch (error) {
+      lastError = error;
+      if (attempt === 3) throw error;
+    }
+    await sleep(750 * (2 ** (attempt - 1)));
+  }
+
+  const transcript = responsePayload?.choices?.[0]?.message?.content?.trim();
+  if (!transcript) throw lastError || new Error('ASR returned no transcript');
+  const signals = repetitionSignals(transcript);
+  const result = {
+    ok: true,
+    segment_id: segmentId,
+    source_start: sourceStart,
+    input,
+    bytes: stat.size,
+    model,
+    provider: 'toapis-openai-compatible',
+    http_status: status,
+    elapsed_ms: Date.now() - started,
+    usage: responsePayload.usage || null,
+    finish_reason: responsePayload?.choices?.[0]?.finish_reason || null,
+    repetition_signals: signals,
+    needs_review: signals.length > 0
+  };
+  fs.writeFileSync(path.join(outputDir, 'transcript.txt'), `${transcript}\n`);
+  fs.writeFileSync(path.join(outputDir, 'raw-response.json'), `${JSON.stringify(redactResponse(responsePayload), null, 2)}\n`);
+  fs.writeFileSync(path.join(outputDir, 'result.json'), `${JSON.stringify(result, null, 2)}\n`);
+  process.stdout.write(`${JSON.stringify(result)}\n`);
+}
+
+main().catch((error) => {
+  process.stderr.write(`${error.message}\n`);
+  process.exitCode = 1;
+});

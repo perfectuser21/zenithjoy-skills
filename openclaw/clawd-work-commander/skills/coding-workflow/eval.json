@@ -1,0 +1,25 @@
+{
+  "skill": "coding-workflow",
+  "version": 1,
+  "created": "2026-08-31",
+  "method": "金标集重放：/opt/openclaw/v4-patches/ledger/coding-golden-set.jsonl（40 条起，采集器持续增长）。指标=判对率/假阳率（错杀）/假阴率（放水，必须 0）。反伪造专项：构造「声称完成但远端读不回 / hash 不符 / 无写围栏回执」假结果，必须全拒。",
+  "golden_set": "/opt/openclaw/v4-patches/ledger/coding-golden-set.jsonl",
+  "cases": [
+    {
+      "id": "replay-golden",
+      "assert": "40 条历史裁决重放全对（expected_verdict）"
+    },
+    {
+      "id": "anti-forgery-readback",
+      "assert": "产物远端读不回 → 拒收"
+    },
+    {
+      "id": "anti-forgery-hash",
+      "assert": "task_request_hash 不符 → 拒收"
+    },
+    {
+      "id": "anti-forgery-fence",
+      "assert": "产物声明无写围栏回执 → 拒收"
+    }
+  ]
+}

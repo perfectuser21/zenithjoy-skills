@@ -1,0 +1,351 @@
+{
+  "schema_version": 1,
+  "workflow_id": "social-keyword-leadgen",
+  "version": "3.2.0",
+  "objective": "Execute the validated and immutable task_request exactly: discover videos under its selected filters, obtain and judge every full transcript once, collect comments to the requested boundary, score every comment, deduplicate people, deliver qualified leads, optionally claim and privately contact approved leads under the frozen human approval, and cleanly exit the platform.",
+  "dedicated_tenant": false,
+  "worker_agent_binding": "trusted_tenant_context.agent_id",
+  "orchestrator": {
+    "type": "n8n",
+    "workflow_id": "AwrSocialLeadgenN8nV3",
+    "event_protocol": "n8n-agent-node-v1",
+    "max_parallel_stages": 1,
+    "resume_from_first_unaccepted_stage": true,
+    "worker_may_spawn_agents": false,
+    "commander_fallback": "work-commander",
+    "commander_supervision": {
+      "enabled": true,
+      "workflow_id": "AwrSocialLeadgenV4",
+      "stage_call_protocol": "commander-stage-v1",
+      "commander_agent_id": "work-commander",
+      "verdicts": [
+        "accepted",
+        "retry",
+        "blocked",
+        "stopped"
+      ],
+      "stage_retry_owner": "n8n_canvas"
+    }
+  },
+  "execution_profiles": {
+    "full": {
+      "stages": [
+        "preflight",
+        "discovery",
+        "qualification",
+        "collection",
+        "scoring",
+        "delivery",
+        "outreach",
+        "cleanup"
+      ],
+      "workflow_steps": 8,
+      "business_writes": true,
+      "external_interactions": "task_request.outreach_policy.enabled"
+    },
+    "discovery_smoke": {
+      "stages": [
+        "preflight",
+        "discovery",
+        "cleanup"
+      ],
+      "workflow_steps": 2,
+      "terminal_status": "stopped",
+      "business_writes": false,
+      "external_interactions": false,
+      "discovery_limits": {
+        "max_screens_per_keyword": 1,
+        "max_candidates_total": 5
+      },
+      "acceptance": [
+        "all requested smoke keywords processed",
+        "at most one result screen per keyword",
+        "local evidence artifact present",
+        "zero business writes and cursor updates",
+        "cleanup verified"
+      ]
+    }
+  },
+  "task_contract": {
+    "schema": "references/task-request.schema.json",
+    "validator": "scripts/validate-task-request.mjs",
+    "renderer": "scripts/render-task-description.mjs",
+    "immutable_after_attempt_creation": true,
+    "stage_hash_field": "task_request_hash",
+    "recommended_defaults": {
+      "sort": "most_commented",
+      "time_layers": [
+        "one_week",
+        "six_months"
+      ],
+      "duration": "unlimited",
+      "scope": "unlimited",
+      "location": "unlimited",
+      "comment_mode": "visible_window_exhaustive",
+      "comment_batch_size": 30
+    }
+  },
+  "tenant_requirements": [
+    "tenant_id",
+    "agent_id",
+    "platform",
+    "platform_adapter",
+    "destination_adapter",
+    "device.node",
+    "device.profile",
+    "device.serial",
+    "search_account.marker",
+    "audience",
+    "resources",
+    "task_request"
+  ],
+  "stages": [
+    {
+      "id": "preflight",
+      "skill": "douyin-phone-runtime",
+      "objective": "Acquire the registered platform lock; verify exact device, call state, foreground safety and primary search account identity without reusing another tenant or device.",
+      "depends_on": [],
+      "acceptance": [
+        "registered node, profile, serial and model match tenant context",
+        "no active or incoming call",
+        "primary search account marker is verified",
+        "platform lock is held by this run"
+      ],
+      "retry": {
+        "max_attempts": 4,
+        "retry_on": [
+          "transient transport failure",
+          "single screenshot failure"
+        ]
+      },
+      "safety": {
+        "stop_on": [
+          "device mismatch",
+          "account mismatch",
+          "verification challenge",
+          "risk control",
+          "active call",
+          "unregistered controller"
+        ]
+      }
+    },
+    {
+      "id": "discovery",
+      "skill": "social-video-discovery",
+      "objective": "For every keyword, execute the exact sort, ordered time layers, duration, scope, location and exhaustion boundary in the validated task_request, then return a reopenable link for every deduplicated platform-visible candidate.",
+      "depends_on": [
+        "preflight"
+      ],
+      "acceptance": [
+        "full profile returns at least one fully validated candidate; zero candidates is not successful lead acquisition and is retryable within the canvas attempt limit",
+        "every requested keyword was processed or an evidence-backed block is reported",
+        "visible filter evidence exactly matches task_request.search_policy",
+        "time layers were processed in task_request order and later layers were deduplicated",
+        "every candidate has a platform video ID, reopenable link, observed timestamp and date evidence",
+        "stopping matches the task_request exhaustion or explicit limit boundary",
+        "artifact task_request_hash matches the frozen contract"
+      ],
+      "retry": {
+        "max_attempts": 4,
+        "retry_on": [
+          "zero validated candidates in full lead-generation mode",
+          "transient navigation failure",
+          "single screenshot failure",
+          "incomplete pagination evidence"
+        ]
+      },
+      "safety": {
+        "stop_on": [
+          "verification challenge",
+          "risk control",
+          "account changed",
+          "device disconnected",
+          "active call"
+        ]
+      }
+    },
+    {
+      "id": "qualification",
+      "skill": "social-video-qualifier",
+      "objective": "For every discovered link, obtain a verified full ASR transcript, let Luna conservatively correct it, and issue one final qualified, rejected or review decision for comment-lead collection.",
+      "depends_on": [
+        "discovery"
+      ],
+      "acceptance": [
+        "every discovered candidate has a transcript package or explicit retryable block",
+        "normal decisions require coverage=full and verified Feishu transcript readback",
+        "every candidate has exactly one qualified, rejected or review decision",
+        "each decision contains corrected transcript, audience match, lead value, confidence and reason",
+        "artifact task_request_hash matches the frozen contract"
+      ],
+      "retry": {
+        "max_attempts": 4,
+        "retry_on": [
+          "missing candidate output",
+          "transient acquisition failure",
+          "single ASR segment failure",
+          "transcript delivery readback failure"
+        ]
+      },
+      "safety": {
+        "stop_on": [
+          "verification challenge",
+          "risk control",
+          "account changed",
+          "device disconnected",
+          "active call"
+        ]
+      }
+    },
+    {
+      "id": "collection",
+      "skill": "social-comment-lead-collector",
+      "objective": "For every qualified video, execute the exact comment mode, window, batch size, scheduler and per-video limit in task_request, checkpoint every batch, and mirror raw evidence into the tenant-visible resource without interacting with users.",
+      "depends_on": [
+        "qualification"
+      ],
+      "acceptance": [
+        "only qualified videos were inspected",
+        "round-robin tasks give all eligible videos one configured batch before the next round",
+        "every batch persists next_cursor, exhausted and exhaustion_reason",
+        "each raw comment contains source video, comment evidence, stable comment and user marker, and observed timestamp",
+        "every video reached the exact task_request stop boundary",
+        "every batch was idempotently mirrored to resources.raw_comments and read back",
+        "artifact task_request_hash matches the frozen contract"
+      ],
+      "retry": {
+        "max_attempts": 4,
+        "retry_on": [
+          "transient comment loading failure",
+          "single screenshot failure",
+          "missing source linkage"
+        ]
+      },
+      "safety": {
+        "stop_on": [
+          "verification challenge",
+          "risk control",
+          "account changed",
+          "device disconnected",
+          "active call",
+          "interaction action attempted"
+        ]
+      }
+    },
+    {
+      "id": "scoring",
+      "skill": "social-comment-lead-scorer",
+      "objective": "Use Luna to score every collected comment in bounded batches, update the visible raw-comment record with category and reason, and produce a complete scored candidate artifact.",
+      "depends_on": [
+        "collection"
+      ],
+      "acceptance": [
+        "every raw comment has exactly one category, score, confidence and reason",
+        "only categories selected by task_request become delivery candidates",
+        "every scoring batch was written back to the visible raw pool and read back",
+        "all collection batches are represented in scored-comments.json",
+        "artifact task_request_hash matches the frozen contract"
+      ],
+      "retry": {
+        "max_attempts": 2,
+        "retry_on": [
+          "missing scoring batch",
+          "transient destination error",
+          "read-back timeout"
+        ]
+      },
+      "safety": {
+        "stop_on": [
+          "wrong tenant destination",
+          "credential mismatch",
+          "unknown write outcome",
+          "external message attempted during scoring"
+        ]
+      }
+    },
+    {
+      "id": "delivery",
+      "skill": "social-lead-delivery",
+      "objective": "Deterministically deduplicate scored candidates by video, comment, person and prior destination records; write only qualified people and verify all links and cursor updates.",
+      "depends_on": [
+        "scoring"
+      ],
+      "acceptance": [
+        "full profile delivers at least one verified final lead; zero delivered leads is a blocked business outcome that requires a new frozen task_request rather than false completion",
+        "no comment was rescored in delivery",
+        "cross-video, cross-comment, cross-run and destination person deduplication completed",
+        "all successful final writes have destination record identifiers",
+        "raw-to-final links, written records and keyword updates were read back",
+        "partial failures are reported without duplicate replay",
+        "artifact task_request_hash matches the frozen contract"
+      ],
+      "retry": {
+        "max_attempts": 3,
+        "retry_on": [
+          "rate limit",
+          "transient destination error",
+          "read-back timeout"
+        ]
+      },
+      "safety": {
+        "stop_on": [
+          "wrong tenant destination",
+          "credential mismatch",
+          "unknown write outcome",
+          "external message attempted during delivery"
+        ]
+      }
+    },
+    {
+      "id": "outreach",
+      "skill": "social-lead-outreach",
+      "objective": "For each approved final lead, obtain an idempotent tenant claim, choose only an enabled and approved script plus an eligible distribution account, verify the exact sending account, send one Douyin private message, read back the sent bubble, and reconcile the claim and lead records.",
+      "depends_on": [
+        "delivery"
+      ],
+      "acceptance": [
+        "contract_test performs zero phone actions, zero business reads or writes, and zero external interactions",
+        "disabled outreach exits accepted with zero claims and zero messages",
+        "enabled outreach has a frozen human approval id, approver and approval timestamp",
+        "every selected lead is unique by tenant, channel and stable platform user identity",
+        "a durable claim is created and read back before account switching or message input",
+        "only enabled, qualification-verified and send-enabled tenant scripts are used verbatim",
+        "the current Douyin account is read back and equals the selected approved distribution account before sending",
+        "every message send has before-send evidence and a matching sent-bubble readback",
+        "the claim, final lead and account counters are reconciled and read back",
+        "artifact task_request_hash matches the frozen contract"
+      ],
+      "retry": {
+        "max_attempts": 2,
+        "retry_on": [
+          "transient destination read failure before claim",
+          "account switch navigation failure before message input",
+          "single UI evidence failure before send"
+        ]
+      },
+      "safety": {
+        "stop_on": [
+          "missing or stale human approval",
+          "claim already held or already sent",
+          "script not enabled, qualification-verified and send-enabled",
+          "distribution account mismatch",
+          "target identity is not stable or cannot be read back",
+          "unknown send outcome",
+          "verification challenge",
+          "risk control",
+          "active call"
+        ]
+      }
+    }
+  ],
+  "cleanup": {
+    "always": true,
+    "skill": "douyin-phone-runtime",
+    "acceptance": [
+      "Douyin is no longer foreground",
+      "launcher or safe desktop is visible",
+      "platform lock is released"
+    ],
+    "on_cleanup_failure": "report_failed_cleanup_and_stop"
+  }
+}

@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "workflow_id": "coding-harness",
+  "version": "0.2.0",
+  "objective": "Execute the frozen thin_prd exactly on the V4 skeleton: plan, adversarial contract, seal, RED→GREEN generation, real evaluation, independent judge, publish with green CI, human-stamped merge, and verified cleanup.",
+  "dedicated_tenant": false,
+  "worker_agent_binding": "trusted_tenant_context.agent_id",
+  "orchestrator": {
+    "type": "n8n",
+    "workflow_id": "AwrCodingHarnessV4",
+    "event_protocol": "n8n-agent-node-v1",
+    "max_parallel_stages": 1,
+    "resume_from_first_unaccepted_stage": true,
+    "worker_may_spawn_agents": false,
+    "commander_fallback": "work-commander",
+    "commander_supervision": {
+      "enabled": true,
+      "workflow_id": "AwrCodingHarnessV4",
+      "stage_call_protocol": "commander-stage-v1",
+      "commander_agent_id": "work-commander",
+      "verdicts": [
+        "accepted",
+        "retry",
+        "blocked",
+        "stopped"
+      ],
+      "stage_retry_owner": "n8n_canvas"
+    }
+  },
+  "execution_profiles": {
+    "full": {
+      "stages": [
+        "plan",
+        "contract",
+        "seal",
+        "generate",
+        "evaluate",
+        "judge",
+        "publish",
+        "merge",
+        "cleanup"
+      ],
+      "workflow_steps": 9,
+      "business_writes": true
+    },
+    "contract_test": {
+      "stages": [
+        "plan",
+        "contract",
+        "seal",
+        "generate",
+        "evaluate",
+        "judge",
+        "publish",
+        "merge",
+        "cleanup"
+      ],
+      "workflow_steps": 9,
+      "business_writes": false,
+      "external_interactions": false,
+      "acceptance": [
+        "every stage skill and envelope verified usable",
+        "zero repository writes, zero GitHub writes, zero Brain writes",
+        "one WORKER_RESULT per stage with echoed identity"
+      ]
+    }
+  },
+  "tenant_requirements": [
+    "tenant_id",
+    "agent_id",
+    "base_repo",
+    "target_environment",
+    "task_request"
+  ],
+  "stages": [
+    {
+      "id": "plan",
+      "skill": "coding-planner",
+      "objective": "从冻结的 thin_prd 产出 sprint-prd（范围、Golden Path 步骤、验收断言），不写代码",
+      "depends_on": [],
+      "acceptance": [
+        "sprint-prd 工件存在且引用了冻结 task_request_hash",
+        "每条验收断言可被测试文件覆盖",
+        "不包含范围外事项"
+      ],
+      "retry": {
+        "max_attempts": 2,
+        "retry_on": [
+          "worker transient failure",
+          "artifact write incomplete"
+        ]
+      },
+      "safety": {
+        "stop_on": [
+          "thin_prd 与 base_repo 不一致",
+          "仓库不可访问"
+        ]
+      }
+    },
+    {
+      "id": "contract",
+      "skill": "coding-contract",
+      "objective": "proposer 起草合同（contract-draft + contract-dod + Test Contract 表），reviewer 对抗审查；本阶段一轮，retry=下一轮",
+      "depends_on": [
+        "plan"
+      ],
+      "acceptance": [
+        "contract-draft/contract-dod 工件存在",
+        "Test Contract 表每行声明的测试文件路径与 it() 名可解析",
+        "reviewer verdict=APPROVED 且 blockers 为空",
+        "WORKER_RESULT evidence 含合法 seal_coordinates（bridge_run_id/sprint_dir/branch/approved_sha/base_sha 五字段齐全）"
+      ],
+      "retry": {
+        "max_attempts": 3,
+        "retry_on": [
+          "reviewer CHANGES_REQUESTED（下一轮）",
+          "worker transient failure"
+        ]
+      },
+      "safety": {
+        "stop_on": [
+          "合同自相矛盾且两轮未收敛",
+          "范围超出 thin_prd"
+        ]
+      }
+    },
+    {
+      "id": "seal",
+      "skill": "coding-seal",
+      "objective": "机械封印已批准合同：冻结四件套 + Test Contract 可解析校验 + 产物 hash",
+      "depends_on": [
+        "contract"
+      ],
+      "acceptance": [
+        "frozen contract manifest 存在且 hash 记录",
+        "Test Contract 表全部行可解析到冻结产物或仓库既有路径"
+      ],
+      "retry": {
+        "max_attempts": 1,
+        "retry_on": []
+      },
+      "safety": {
+        "stop_on": [
+          "TEST_CONTRACT_UNRESOLVABLE（回合同阶段重写）"
+        ]
+      }
+    },
+    {
+      "id": "generate",
+      "skill": "coding-generator",
+      "objective": "按冻结合同 RED→GREEN 实现：先提交失败测试再提交实现，产出候选分支",
+      "depends_on": [
+        "seal"
+      ],
+      "acceptance": [
+        "候选分支存在 RED 与 GREEN 两次提交",
+        "声明的测试文件全部存在",
+        "本地测试全绿的证据（命令与输出摘要）",
+        "候选不推远端为设计（验收禁止要求远端读回；本地 RED/GREEN 证据链+写围栏回执即可，真验证在 evaluate）"
+      ],
+      "retry": {
+        "max_attempts": 2,
+        "retry_on": [
+          "worker transient failure",
+          "workspace resolution failed"
+        ]
+      },
+      "safety": {
+        "stop_on": [
+          "合同不可实现（CONTRACT_SELF_CONTRADICTION）",
+          "越权改动冻结产物"
+        ]
+      }
+    },
+    {
+      "id": "evaluate",
+      "skill": "coding-evaluator",
+      "objective": "在候选分支上真跑验收：Test Contract 覆盖、断言脚本、lint/DevGate",
+      "depends_on": [
+        "generate"
+      ],
+      "acceptance": [
+        "evaluate verdict PASS/FAIL 带 pr_head_sha 与 contract_identity",
+        "失败时带 failure_class 与 failure_signature"
+      ],
+      "retry": {
+        "max_attempts": 2,
+        "retry_on": [
+          "evidence collection transient failure"
+        ]
+      },
+      "safety": {
+        "stop_on": [
+          "证据不可采集且两次复采失败"
+        ]
+      }
+    },
+    {
+      "id": "judge",
+      "skill": "coding-judge",
+      "objective": "独立裁判复核 evaluator 证据，给出 PASS/FAIL；FAIL 回 generate（fix）",
+      "depends_on": [
+        "evaluate"
+      ],
+      "acceptance": [
+        "judge verdict 落记录且引用 evaluate 证据",
+        "FAIL 时 failure_class 明确"
+      ],
+      "retry": {
+        "max_attempts": 1,
+        "retry_on": []
+      },
+      "safety": {
+        "stop_on": [
+          "裁判无法采信证据"
+        ]
+      }
+    },
+    {
+      "id": "publish",
+      "skill": "coding-publisher",
+      "objective": "把 judge PASS 的精确候选 sha 发布为 PR，轮询 CI 至绿；CI 红 → retry（generator-fix 一轮）",
+      "depends_on": [
+        "judge"
+      ],
+      "acceptance": [
+        "PR 存在且 head == 候选 sha",
+        "CI 全绿（或 retry 携带失败 check 清单）"
+      ],
+      "retry": {
+        "max_attempts": 3,
+        "retry_on": [
+          "CI 红（fix 一轮）",
+          "PR BEHIND（update-branch）"
+        ]
+      },
+      "safety": {
+        "stop_on": [
+          "PR DIRTY 三次未解",
+          "分支保护拒绝"
+        ]
+      }
+    },
+    {
+      "id": "merge",
+      "skill": "coding-merger",
+      "objective": "人审（画布 Wait 线，公章）通过后合并 PR 并回写 Brain 任务",
+      "depends_on": [
+        "publish"
+      ],
+      "acceptance": [
+        "PR merged 且 merge commit 记录",
+        "Brain task 回写 completed 带 pr_url"
+      ],
+      "retry": {
+        "max_attempts": 1,
+        "retry_on": []
+      },
+      "safety": {
+        "stop_on": [
+          "人审拒绝",
+          "merge 冲突"
+        ]
+      }
+    },
+    {
+      "id": "cleanup",
+      "skill": "coding-cleanup",
+      "objective": "释放候选工作区、容器与预览环境，验证无残留",
+      "depends_on": [
+        "merge"
+      ],
+      "acceptance": [
+        "worktree/容器/预览已释放且验证",
+        "运行账本终局记录"
+      ],
+      "retry": {
+        "max_attempts": 1,
+        "retry_on": [
+          "transient cleanup failure"
+        ]
+      },
+      "safety": {
+        "stop_on": []
+      }
+    }
+  ],
+  "cleanup": {
+    "always": true,
+    "acceptance": [
+      "候选工作区、容器与预览环境已释放并验证",
+      "账本终局记录存在"
+    ]
+  },
+  "task_contract": {
+    "schema": "references/task-request.schema.json",
+    "validator": "scripts/validate-task-request.mjs",
+    "renderer": "scripts/render-task-description.mjs",
+    "immutable_after_attempt_creation": true,
+    "stage_hash_field": "task_request_hash"
+  }
+}

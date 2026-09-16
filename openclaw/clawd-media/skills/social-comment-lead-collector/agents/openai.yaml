@@ -1,0 +1,4 @@
+interface:
+  display_name: "社媒评论线索采集"
+  short_description: "Collect comment evidence from qualified social videos"
+  default_prompt: "Use $social-comment-lead-collector to collect comment leads from qualified videos."

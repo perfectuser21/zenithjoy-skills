@@ -1,0 +1,6 @@
+interface:
+  display_name: "悦升云端朋友圈安卓发布器"
+  short_description: "从隔离的发布执行中心读取已批准任务并回写核验证据。"
+  default_prompt: "Use $wechat-moments-publisher-android to preflight an approved YueShengYun WeChat Moments publish task without bypassing any account or device safety checks."
+policy:
+  allow_implicit_invocation: true

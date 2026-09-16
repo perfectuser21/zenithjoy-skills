@@ -1,0 +1,4 @@
+interface:
+  display_name: "增长情报经理"
+  short_description: "统筹热点、关键词、竞品、技术与增长机会"
+  default_prompt: "读取悦升云端企业档案，调度增长情报 Worker，并输出可追溯的中文情报报告。"
