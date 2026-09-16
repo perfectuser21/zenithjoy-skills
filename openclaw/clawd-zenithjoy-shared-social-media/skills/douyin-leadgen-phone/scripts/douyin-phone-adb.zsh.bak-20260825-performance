@@ -1,0 +1,116 @@
+#!/bin/zsh
+
+set -euo pipefail
+setopt EXTENDED_GLOB
+
+ADB="${DOUYIN_ADB_BIN:-/opt/homebrew/bin/adb}"
+REGISTRY="${DOUYIN_PHONE_REGISTRY:-${HOME}/.config/openclaw/douyin-phone-profiles.tsv}"
+
+die() {
+  print -u2 -- "$1"
+  exit 2
+}
+
+require_uint() {
+  [[ "$1" == <-> ]] || die "expected non-negative integer"
+}
+
+[[ "${1:-}" == "--profile" && "$#" -ge 3 ]] || die "usage: douyin-phone-adb --profile PROFILE COMMAND [ARGS...]"
+PROFILE="$2"
+shift 2
+
+[[ -r "$REGISTRY" ]] || die "phone profile registry is not readable"
+profile_line="$(/usr/bin/awk -F '\t' -v profile="$PROFILE" '$1 == profile { print; exit }' "$REGISTRY")"
+[[ -n "$profile_line" ]] || die "unknown phone profile: $PROFILE"
+
+IFS=$'\t' read -r registry_profile SERIAL MODEL MAX_X MAX_Y <<< "$profile_line"
+[[ "$registry_profile" == "$PROFILE" && -n "$SERIAL" && -n "$MODEL" ]] || die "invalid phone profile registry row"
+require_uint "$MAX_X"
+require_uint "$MAX_Y"
+
+REMOTE_SHOT="/sdcard/douyin-leadgen-shot-${PROFILE}.png"
+LOCAL_SHOT="/private/tmp/openclaw-phone/douyin-leadgen-shot-${PROFILE}.png"
+
+check_target() {
+  local state actual_model
+  state="$($ADB -s "$SERIAL" get-state 2>/dev/null || print -- offline)"
+  if [[ "$state" != "device" ]]; then
+    "$ADB" start-server >/dev/null 2>&1 || true
+    state="$($ADB -s "$SERIAL" get-state 2>/dev/null || print -- offline)"
+  fi
+  [[ "$state" == "device" ]] || die "target phone is offline after adb auto-refresh"
+  actual_model="$($ADB -s "$SERIAL" shell getprop ro.product.model | tr -d '\r')"
+  [[ "$actual_model" == "$MODEL" ]] || die "target model mismatch"
+}
+
+command="${1:-}"
+case "$command" in
+  status)
+    check_target
+    print -- "$SERIAL device $MODEL"
+    ;;
+  diagnose)
+    print -- "profile=$PROFILE serial=$SERIAL expected_model=$MODEL"
+    print -- "target_state=$($ADB -s "$SERIAL" get-state 2>/dev/null || print -- offline)"
+    print -- "target_model=$($ADB -s "$SERIAL" shell getprop ro.product.model 2>/dev/null | tr -d '\r' || print -- unknown)"
+    exec "$ADB" devices -l
+    ;;
+  refresh)
+    "$ADB" kill-server
+    "$ADB" start-server
+    exec "$ADB" devices -l
+    ;;
+  telecom)
+    check_target
+    exec "$ADB" -s "$SERIAL" shell dumpsys telecom
+    ;;
+  window)
+    check_target
+    exec "$ADB" -s "$SERIAL" shell dumpsys window
+    ;;
+  screencap)
+    check_target
+    exec "$ADB" -s "$SERIAL" shell screencap -p "$REMOTE_SHOT"
+    ;;
+  pull)
+    check_target
+    /bin/mkdir -p "${LOCAL_SHOT:h}"
+    exec "$ADB" -s "$SERIAL" pull "$REMOTE_SHOT" "$LOCAL_SHOT"
+    ;;
+  tap)
+    [[ "$#" == 3 ]] || die "usage: douyin-phone-adb --profile PROFILE tap X Y"
+    require_uint "$2"; require_uint "$3"
+    (( $2 <= MAX_X && $3 <= MAX_Y )) || die "tap is outside target screen"
+    check_target
+    exec "$ADB" -s "$SERIAL" shell input tap "$2" "$3"
+    ;;
+  swipe)
+    [[ "$#" == 6 ]] || die "usage: douyin-phone-adb --profile PROFILE swipe X1 Y1 X2 Y2 MS"
+    require_uint "$2"; require_uint "$3"; require_uint "$4"; require_uint "$5"; require_uint "$6"
+    (( $2 <= MAX_X && $4 <= MAX_X && $3 <= MAX_Y && $5 <= MAX_Y && $6 <= 5000 )) || die "swipe arguments are outside limits"
+    check_target
+    exec "$ADB" -s "$SERIAL" shell input swipe "$2" "$3" "$4" "$5" "$6"
+    ;;
+  back)
+    check_target
+    exec "$ADB" -s "$SERIAL" shell input keyevent 4
+    ;;
+  wake)
+    check_target
+    exec "$ADB" -s "$SERIAL" shell input keyevent 224
+    ;;
+  unlock)
+    check_target
+    "$ADB" -s "$SERIAL" shell input keyevent 224
+    exec "$ADB" -s "$SERIAL" shell wm dismiss-keyguard
+    ;;
+  open-search)
+    [[ "$#" == 2 ]] || die "usage: douyin-phone-adb --profile PROFILE open-search URL_ENCODED_KEYWORD"
+    [[ "$2" == [A-Za-z0-9._%+-]## ]] || die "keyword must be URL encoded"
+    check_target
+    exec "$ADB" -s "$SERIAL" shell am start -a android.intent.action.VIEW -d "snssdk1128://search/tabs?keyword=$2"
+    ;;
+  *)
+    die "allowed commands: status diagnose refresh telecom window screencap pull tap swipe back wake unlock open-search"
+    ;;
+esac

@@ -1,0 +1,6 @@
+interface:
+  display_name: "朋友圈内容规划与文案生成器"
+  short_description: "跨部门隔离 Base 读取脱敏 CRM 洞察，生成并审核朋友圈内容。"
+  default_prompt: "Use $wechat-moments-planner to resolve the tenant's department-isolated Feishu Bases, use only sanitized CRM insights for content, save copy for review, and create a publish handoff only when explicitly authorized."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "coding-task-request-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["task_title", "thin_prd", "base_repo", "base_branch", "target_environment", "gp_anchor", "change_kind", "tenant_id"],
+  "properties": {
+    "task_title": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "thin_prd": { "type": "string", "minLength": 1, "maxLength": 20000 },
+    "base_repo": { "type": "string", "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(\\.git)?$" },
+    "base_branch": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "target_environment": { "enum": ["mac_web", "windows_cloud", "windows_wechat", "linux_server", "local_api", "playground"] },
+    "gp_anchor": { "type": "string", "pattern": "^([a-z0-9_]+/[a-z0-9_]+(#step[0-9]+|\\s+keep-green)|none\\((infra|docs|config|backlog)\\))$" },
+    "change_kind": { "enum": ["new_capability", "capability_change", "bugfix", "parameter_only"] },
+    "tenant_id": { "type": "string", "minLength": 1, "maxLength": 64 }
+  }
+}

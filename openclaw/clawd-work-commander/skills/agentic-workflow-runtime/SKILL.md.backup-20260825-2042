@@ -1,0 +1,73 @@
+---
+name: agentic-workflow-runtime
+description: "Run manifest-driven multi-step workflows under the dedicated Work Commander, with immutable execution attempts, isolated OpenClaw workers, evidence validation, n8n lifecycle relay, Feishu card projection, retries and resumable checkpoints. Use for any OPC workflow with two or more dependent stages; do not use for a single bounded Task."
+---
+
+# Agentic Workflow Runtime v2
+
+n8n owns intake, run/attempt identity, event ingress, callback routing and card projection. Work Commander owns workflow reasoning and terminal truth. Business Agents own one bounded stage. Feishu cards are projections of the run ledger.
+
+Read [protocol.md](references/protocol.md) before every run. Validate the selected package manifest with `scripts/validate-manifest.mjs`.
+
+## Start
+
+1. Require `run_id`, `attempt_id`, `execution_id`, `object_id`, `workflow_id`, `workflow_skill`, `worker_agent_id`, `tenant_context`, `card_target`, `objective` and `mode` from trusted n8n ingress.
+2. Verify session key is `agent:work-commander:workflow-<run_id>-attempt-<attempt_id>` and that `execution_id=<run_id>:<attempt_id>`.
+3. Reject `main` as a tenant worker and reject any tenant/worker mismatch.
+4. Load the Workflow Package from this workspace and validate its manifest. Do not ask the worker to supply or reinterpret the manifest.
+5. Initialize the ledger:
+
+```text
+node skills/agentic-workflow-runtime/scripts/workflow-state.mjs init --run-id <run> --attempt-id <attempt> --object-id <object> --workflow-id <workflow> --worker-agent-id <agent> --total-steps <count> --audience-key <key> --chat-id <chat> --visibility <visibility> [--resumes-execution-id <id>]
+```
+
+6. Relay `started` using the state script. Do not spawn before `relayed=true`.
+
+## Relay an event
+
+```text
+node skills/agentic-workflow-runtime/scripts/workflow-state.mjs event --run-id <run> --attempt-id <attempt> --event <event> --status <status> --stage-id <stage> --stage-attempt <n> --current-step <n> --summary <text> --next-action <text> [--evidence-json <json>]
+```
+
+The script allocates `event_seq`, updates the atomic ledger and POSTs the complete event to n8n. Retry once for a transport failure. If it still fails, preserve the ledger and block before another mutating stage.
+
+## Supervise a stage
+
+1. Build a self-contained worker task from the manifest, tenant context, accepted prior artifacts and safety constraints.
+2. Relay `stage_started`.
+3. Call `sessions_spawn` exactly once with explicit `agentId=<worker_agent_id>`, stable `taskName`, `mode=run`, `cleanup=keep`. Do not fork the Commander transcript and do not pass `runTimeoutSeconds`.
+4. Parse the actual spawn result. Yield only when it contains `status=accepted`, non-empty `runId` and `childSessionKey`.
+5. Validate the final `WORKER_RESULT`, artifacts and evidence against every acceptance and safety criterion.
+6. Choose `accept`, `steer`, `retry`, `block`, or `stop`; relay the choice before continuing.
+
+Retry always creates a fresh worker stage attempt. Never retry safety stops, tenant/device/account mismatch, verification challenges, external approvals, or unknown non-idempotent outcomes.
+
+## Resume
+
+- A terminal execution never resumes.
+- n8n creates a new `attempt_id` and session, plus `resumes_execution_id`.
+- The state script accepts a resume only when the source ledger exists under the same `run_id` and its terminal status is `blocked` or `failed`. It deterministically rejects missing, non-terminal, `completed`, or `stopped` sources before any worker starts.
+- Import only checkpoints with verified artifacts and unchanged acceptance criteria.
+- Relay `started` with a summary of imported checkpoints, then continue from the first unaccepted stage.
+
+## Control
+
+Process `WORKFLOW_CONTROL` only for the matching execution. `mark_blocked` stops new stage starts and relays a blocked event. `cancel` runs cleanup and terminates `stopped`. `resume` on the same attempt is rejected.
+
+## Finish
+
+Run cleanup on every outcome. Then call:
+
+```text
+node skills/agentic-workflow-runtime/scripts/workflow-state.mjs terminal --run-id <run> --attempt-id <attempt> --status <status> --accepted-stages-json <json> --metrics-json <json> --writes-json <json> --cleanup-json <json> --stop-reason <text>
+```
+
+Only `completed` is valid when all required stages, writes/read-backs and cleanup checks pass. After `relayed=true`, emit the returned `WORKFLOW_TERMINAL` object as the first and only terminal marker in the assistant response. Never continue that execution afterward.
+
+## Boundaries
+
+- Never operate phones, accounts, tenant destinations or business APIs as Commander.
+- Never hard-code tenant IDs, device IDs, credentials, account names or table IDs into this runtime Skill.
+- Never let n8n make business acceptance decisions.
+- Never let a worker own run status or emit workflow terminal truth.
+- Consequential external actions still require the manifest's explicit approval gate.

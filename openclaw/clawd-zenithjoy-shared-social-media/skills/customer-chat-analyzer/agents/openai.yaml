@@ -1,0 +1,13 @@
+interface:
+  display_name: "客户聊天分析与 CRM 更新"
+  short_description: "分析客户聊天，并在授权后只更新隔离的销售 CRM。"
+  default_prompt: "Use $customer-chat-analyzer to analyze these customer chats and prepare an authorized Feishu CRM update."
+  icon_small: "assets/icon.svg"
+  icon_large: "assets/icon.svg"
+policy:
+  products:
+    - chatgpt
+    - codex
+    - api
+    - atlas
+  allow_implicit_invocation: true

@@ -1,0 +1,125 @@
+---
+name: agentic-workflow-runtime
+description: "Run manifest-driven multi-step workflows with either n8n as the deterministic workflow owner or Work Commander as the dynamic reasoning owner. Provides immutable attempts, isolated OpenClaw Agent nodes, evidence validation, lifecycle events, Feishu card projection, retries and resumable checkpoints. Use for OPC workflows with two or more dependent stages."
+---
+
+# Agentic Workflow Runtime v3
+
+n8n always owns intake, run/attempt identity, event ingress, callback routing and card projection. For a manifest with `orchestrator.type=n8n`, n8n also owns stage order and terminal truth. For a legacy manifest with `commander`, Work Commander owns dynamic reasoning and terminal truth. Business Agents always own only one bounded stage. Feishu cards are projections, never workflow truth.
+
+## n8n-owned fixed workflows
+
+Use this mode when stage order is declared in the manifest.
+
+1. n8n validates and freezes `task_request`, calculates `task_request_hash`, creates `run_id`, `attempt_id`, `execution_id` and a unique stage idempotency key.
+2. n8n calls the tenant Worker directly through `/v1/responses` with explicit `x-openclaw-agent-id`; each stage uses an isolated Session key.
+3. The stage envelope contains `orchestrator=n8n`, immutable execution identity, `stage_id`, `stage_attempt`, `skill`, frozen task request and hash, accepted prior artifacts, allowed actions, idempotency key and execution mode.
+4. The Worker must not call `sessions_spawn`, Work Commander, another Agent, the n8n run webhook, or the next stage. It returns exactly one `N8N_NODE_RESULT` or compatible `WORKER_RESULT`.
+5. n8n validates identity, hash, stage and status before projecting `stage_accepted` and starting the next node. Retry creates a new `stage_attempt`; a terminal attempt never resumes.
+6. Run Cleanup from every success, failure, timeout and cancellation branch. Emit terminal only after cleanup verification.
+7. In `contract_test`, Workers only verify that the requested Skill and envelope are usable; phone, business reads/writes and external interactions must all remain zero.
+
+## n8n-driven Commander stages (commander_supervision)
+
+Use this mode when the manifest's `orchestrator` object contains `commander_supervision.enabled=true`. n8n still owns intake, run/attempt identity, **stage order**, stage-level retry counting and card projection invocation; Work Commander supervises every single stage: it spawns the bounded tenant Worker, validates evidence, decides, and reports one verdict per request. The Commander never chooses the next stage; n8n never makes a business acceptance decision. The Commander session is `agent:work-commander:workflow-<run_id>-attempt-<attempt_id>`, one per attempt.
+
+Three request kinds arrive as single messages. Each expects **exactly one reply line**: `COMMANDER_STAGE_RESULT {json}` — one JSON object echoing `run_id`, `attempt_id`, `execution_id`, `stage_id`, `stage_attempt`, `idempotency_key`, `task_request_hash`, `nonce`, plus `verdict`, `summary`, `metrics`, `artifact_refs`, `warnings` (and `terminal_status` for finalize). The verdict vocabulary is closed: `accepted | retry | blocked | stopped`. Any other word, a missing field, or extra terminal markers will be rejected by the n8n schema gate and will block the run — never improvise fields.
+
+1. `WORKFLOW_RUN_INIT {json}` — full frozen identity, `task_request`, `task_description`, `control_token`, declared stage list. Validate identity/manifest/tenant binding exactly as in Start (steps 1–6), run the task-contract validator, calculate `task_request_hash`, initialize the v2 ledger, persist the validated `task_request` JSON into the run state directory beside the ledger (later stage requests carry only the hash; reload it from there after any session loss), relay exactly one `started` event. Do **not** spawn any worker. Reply with `request_kind=init`, `verdict=accepted`, and the calculated `task_request_hash` (n8n stores it and stamps it into every later envelope). The renderer output is the canonical `task_description`: if the request-supplied description differs, adopt the renderer output and proceed — a prose mismatch is not a rejection reason; the contract is the frozen `task_request` and its hash.
+2. `WORKFLOW_STAGE_REQUEST {json}` — one stage envelope with `stage_def`, `stage_attempt`, `idempotency_key=<execution_id>:<stage_id>:<stage_attempt>`, `task_request_hash` and trimmed `accepted_prior_results` — it does NOT carry the full task_request; load the persisted copy from the run state directory and verify its hash matches before spawning.
+   - **Idempotent replay:** if the ledger already records a decision for this exact `idempotency_key`, re-emit that recorded result verbatim. Never spawn again, never relay duplicate lifecycle events. This makes duplicate delivery from n8n retries safe.
+   - Otherwise: relay `stage_started`, then run "Supervise a stage" unchanged (spawn exactly once, validate `WORKER_RESULT`, evidence and write fences). Decide and map to the reply verdict: accept→`accepted`, retry→`retry`, block→`blocked`, stop→`stopped`. `steer` stays internal to the current spawn and never surfaces as a verdict.
+   - **Retry ownership:** in this mode do not spawn a second worker inside the same stage attempt. Surface `retry` to n8n; the canvas owns the retry counter and will send a new `WORKFLOW_STAGE_REQUEST` with `stage_attempt+1`. Record every decision under its idempotency key before replying.
+   - Relay the decision event before replying. Late results from fenced prior sessions are rejected exactly as in the Commander-owned mode.
+3. `WORKFLOW_RUN_FINALIZE {json}` — `desired_status` `completed` or `abort`. Verify every required stage is accepted (or run abort cleanup), run Finish (cleanup verification, terminal relay, one `WORKFLOW_TERMINAL`), then reply with `terminal_status`. A finalize on an already-terminal attempt re-emits the recorded terminal result idempotently.
+
+Safety rules of the Commander-owned mode apply unchanged: never operate tenant devices or business APIs yourself, never accept a result whose `task_request_hash` mismatches, never revive a terminal attempt, and reject any envelope whose identity does not match the session's run and attempt.
+
+Keep the Commander-specific protocol below only for manifests that still declare `commander`.
+
+Read [protocol.md](references/protocol.md) before every run. Validate the selected package manifest with `scripts/validate-manifest.mjs`.
+
+## Start
+
+1. Require `run_id`, `attempt_id`, `execution_id`, `object_id`, `workflow_id`, `workflow_skill`, `worker_agent_id`, `tenant_context`, `card_target`, `objective`, `mode` and a 32+ character `control_token` from trusted n8n ingress. If the selected manifest declares `task_contract`, also require the complete normalized `task_request`; run its validator and renderer before creating the ledger. Never echo or expose the token in cards, lifecycle events, terminal output or status responses.
+2. Verify session key is `agent:work-commander:workflow-<run_id>-attempt-<attempt_id>` and that `execution_id=<run_id>:<attempt_id>`.
+3. Reject `main` as a tenant worker and reject any tenant/worker mismatch. A reusable manifest uses `worker_agent_binding=trusted_tenant_context.agent_id`; resolve it only from n8n's registered tenant route and require `worker_agent_id=tenant_context.agent_id`. A dedicated manifest may instead contain one literal `worker_agent_id`.
+4. Load the Workflow Package from this workspace and validate its manifest. Do not ask the worker to supply or reinterpret the manifest, and never replace a trusted tenant binding with a default company or device.
+5. For a manifest with `task_contract`, calculate the validator-returned SHA-256, require the rendered human description to be present on the Workflow card, and freeze both under the Intake object. A resume may reuse the same hash only; any task change creates a new run, not a new attempt.
+6. Initialize the ledger:
+
+```text
+node skills/agentic-workflow-runtime/scripts/workflow-state.mjs init --run-id <run> --attempt-id <attempt> --object-id <object> --workflow-id <workflow> --worker-agent-id <agent> --total-steps <count> --audience-key <key> --chat-id <chat> --visibility <visibility> --control-token <token> [--task-request-hash <sha256>] [--resumes-execution-id <id>]
+```
+
+7. Relay `started` using the state script. Do not spawn before `relayed=true`.
+8. Keep the returned `lease_id` and resolve the canonical absolute path of `scripts/workflow-write-guard.mjs`. Confirm that path is executable. These two values are mandatory inputs to every worker task; they are never invented by a business Agent.
+9. Build `write_guard.command` by invoking the executable guard script directly. Its `#!/usr/bin/env node` shebang resolves the installed Node runtime. Never guess or hard-code `/usr/bin/node`, `/usr/local/bin/node`, or any other Node path into a Worker task.
+
+## Relay an event
+
+```text
+node skills/agentic-workflow-runtime/scripts/workflow-state.mjs event --run-id <run> --attempt-id <attempt> --event <event> --status <status> --stage-id <stage> --stage-attempt <n> --current-step <n> --summary <text> --next-action <text> [--evidence-json <json>]
+```
+
+The script allocates `event_seq`, updates the atomic ledger and POSTs the complete event to n8n. Retry once for a transport failure. If it still fails, preserve the ledger and block before another mutating stage.
+
+## Supervise a stage
+
+1. Build a self-contained worker task from the manifest, frozen task request, tenant context, accepted prior artifacts and safety constraints. Include immutable `run_id`, `attempt_id`, `execution_id`, `worker_agent_id`, `stage_id`, `stage_attempt`, `task_request_hash` when present, the ledger `lease_id`, and a complete `write_guard.command` using the executable guard script path directly plus the state directory.
+2. Relay `stage_started`.
+3. Re-read the ledger and verify that its latest transition is the exact relayed `stage_started`; use that `event_id` as the expected write-fence event. Never spawn from a pending relay or a terminal ledger.
+4. Call `sessions_spawn` exactly once with explicit `agentId=<worker_agent_id>`, stable `taskName`, `mode=run`, `cleanup=keep`. Do not fork the Commander transcript and do not pass `runTimeoutSeconds`.
+5. Parse the actual spawn result. Yield only when it contains `status=accepted`, non-empty `runId` and `childSessionKey`.
+6. Validate the final `WORKER_RESULT`, artifacts and evidence against every acceptance and safety criterion. When the ledger has `task_request_hash`, every stage result and artifact must carry the same hash; reject missing or mismatched values. Every artifact or destination mutation must include a guard receipt whose `commander_event_id` equals the expected stage event and whose `fence_token` matches the execution, lease, worker, stage, attempt and intent. A claimed write without a valid receipt is rejected.
+7. Choose `accept`, `steer`, `retry`, `block`, or `stop`; relay the choice before continuing. Once `retrying`, a later stage starts, or terminal state is recorded, the prior Session's next guard call must fail and its late result must never be accepted.
+
+Retry always creates a fresh worker stage attempt. Never retry safety stops, tenant/device/account mismatch, verification challenges, external approvals, or unknown non-idempotent outcomes.
+
+## Write fencing
+
+The guard is checked immediately before each artifact or business-system mutation:
+
+```text
+<absolute_guard_script> authorize --run-id <run> --attempt-id <attempt> --execution-id <execution> --lease-id <lease> --worker-agent-id <agent> --stage-id <stage> --stage-attempt <n> --intent <intent> --state-dir <absolute_state_dir>
+```
+
+The first token must be the verified executable `workflow-write-guard.mjs` path. A command beginning with a guessed interpreter path is invalid and must not be sent to a Worker.
+
+Allowed intents are stage-scoped: `artifact_write`; collection-only `raw_comment_insert`; scoring and delivery `raw_comment_update`; delivery-only `final_lead_write` and `keyword_cursor_write`. Authorization is denied for terminal executions, pending event relays, stale attempts, stage changes, worker mismatches or lease mismatches. The guard never performs the write; it only returns the receipt that the Worker must preserve beside the immediate batch result.
+
+## Resume
+
+- A terminal execution never resumes.
+- n8n creates a new `attempt_id` and session, plus `resumes_execution_id`.
+- The state script accepts a resume only when the source ledger exists under the same `run_id` and its terminal status is `blocked` or `failed`. It deterministically rejects missing, non-terminal, `completed`, or `stopped` sources before any worker starts.
+- Import only checkpoints with verified artifacts and unchanged acceptance criteria.
+- Relay `started` with a summary of imported checkpoints, then continue from the first unaccepted stage.
+
+## Control
+
+Process `WORKFLOW_CONTROL` only for the matching execution and only after this command returns `authorized=true`:
+
+```text
+node skills/agentic-workflow-runtime/scripts/workflow-state.mjs verify-control --run-id <run> --attempt-id <attempt> --control-token <token>
+```
+
+Never act on a missing, malformed or mismatched token. Never reveal the token or its ledger hash. `mark_blocked` stops new stage starts and relays a blocked event. On `cancel`, immediately fence the active stage, use the `subagents` control tool to kill every still-running child Session recorded for this execution, record each kill receipt, then start one fresh cleanup Worker and terminate `stopped`. Never run cleanup concurrently with an unfenced active Worker. `resume` on the same attempt is rejected.
+
+## Finish
+
+Run cleanup on every outcome. Then call:
+
+```text
+node skills/agentic-workflow-runtime/scripts/workflow-state.mjs terminal --run-id <run> --attempt-id <attempt> --status <status> --accepted-stages-json <json> --metrics-json <json> --writes-json <json> --cleanup-json <json> --stop-reason <text>
+```
+
+Only `completed` is valid when all required stages, writes/read-backs and cleanup checks pass. After `relayed=true`, emit the returned `WORKFLOW_TERMINAL` object as the first and only terminal marker in the assistant response. Never continue that execution afterward.
+
+## Boundaries
+
+- Never operate phones, accounts, tenant destinations or business APIs as Commander.
+- Never hard-code tenant IDs, device IDs, credentials, account names or table IDs into this runtime Skill.
+- Never let n8n make business acceptance decisions.
+- Never let a worker own run status or emit workflow terminal truth.
+- Consequential external actions still require the manifest's explicit approval gate.

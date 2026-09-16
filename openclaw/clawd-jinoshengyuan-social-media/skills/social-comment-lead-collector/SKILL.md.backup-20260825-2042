@@ -1,0 +1,34 @@
+---
+name: social-comment-lead-collector
+description: "Collect comment and commenter evidence only from videos that passed two-stage qualification, using a tenant-configured comment policy and platform adapter. Use as the collection stage of a reusable cross-company social-video lead-generation workflow; do not perform final lead classification or delivery."
+---
+
+# 社媒评论线索采集
+
+当由 `agentic-workflow-runtime` 调用时，结束前必须按其协议返回唯一 `WORKER_RESULT`，包含来源关联、评论证据、采样统计、风险状态和可重试性。
+
+只读取 `qualification.json` 中 `pass_15s` 的视频。未通过、待复核或缺少二段判定的视频禁止进入评论区。
+
+## 采集
+
+1. 读取租户 `comment_policy`：可为前 N 条、时间窗口或平台可见评论穷尽；Skill 不自设数量。
+2. 通过 `platform_adapter` 打开对应视频评论区。必须从当前截图或可访问性树重新定位明确的“评论”入口，禁止复用上一视频的绝对坐标，禁止把评论列表底部、输入栏或发送按钮附近的坐标当作评论入口。
+3. 每次进入评论区后立即截图验收：页面必须显示评论列表且输入框未聚焦、软键盘未弹出。若只发生一次“空白评论框误聚焦”，且没有输入任何字符、没有草稿、没有触发发送，可立即按返回键一次并重新截图；确认键盘消失、评论为空、未产生对外动作后，重新定位明确评论入口并只重试一次。这属于可恢复导航偏差，记录 warning，不算对外互动。若出现任何文字输入、草稿、发送控件触发，或一次退回后仍停留在输入状态，立即安全停止。
+4. 记录评论原文、评论者显示名、稳定用户标识/主页标识、视频 ID、采集位置和截图证据。
+5. 同一用户在同一或不同视频重复出现时保留来源列表，不重复创建原始用户对象。
+6. 页面没有更多评论、连续无新增达到配置阈值或安全条件触发时结束该视频，并记录实际数量和原因。
+7. 只查看必要主页信息；禁止点赞、关注、回复、私信、输入文字或触发发送。
+
+## 断点与恢复
+
+- 开始前读取已有 `comment-leads.json`。仅当 `run_id`、租户、设备、账号和 qualification 输入指纹全部一致时才允许恢复；否则不得复用。
+- 每完成一个视频，立即原子更新一次 `comment-leads.json`，写入该视频实际评论数、停止依据、截图证据、去重后的用户来源列表和 `completed_video_ids`。不得等所有视频结束后才首次落盘。
+- 当 `tenant_context.resources.raw_comments` 已登记时，每次断点更新后都通过 `destination_adapter` 把该视频新增的原始评论幂等同步到可见原始池。使用稳定 `raw_comment_id` 查重；只写来源、原文、用户、证据和“待判定”状态，不做最终意向分类，也不得写最终线索表。同步失败时保留本地断点并把阶段设为可恢复，不得假装用户已经能看到。
+- 中断或可重试失败时保留 `incomplete_video_ids` 和 `next_video_id`。恢复运行必须重新预检并重新获取同一 `run_id` 的锁，只处理未完成视频；不得重跑已完成视频，也不得把不完整 artifact 送入分类或交付。
+- 最后只有 qualification 中全部 `pass_15s` 视频都处于 completed，且指标与逐视频记录可回算一致，才把阶段状态写为 `completed`。
+
+## 输出
+
+写 `comment-leads.json`，并在租户配置了 `raw_comments` 时同步可见原始池。本阶段只做证据采集和结构化，不把评论直接认定为客户，不写最终线索表。
+
+遇到验证码、登录挑战、账号/设备不匹配、来电、风控、实际对外互动风险或连续页面失败时停止，通过适配器清理前台 App，并把未完成视频保留为可恢复状态。

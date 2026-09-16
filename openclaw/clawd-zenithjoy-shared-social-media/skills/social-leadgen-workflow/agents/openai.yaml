@@ -1,0 +1,4 @@
+interface:
+  display_name: "社媒线索采集 Workflow"
+  short_description: "Orchestrate reusable tenant social lead stages"
+  default_prompt: "Use $social-leadgen-workflow to run a tenant-configured social-video lead generation workflow."

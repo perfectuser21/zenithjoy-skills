@@ -1,0 +1,6 @@
+interface:
+  display_name: "抖音对标采集与转写"
+  short_description: "主题搜索或抖音直链转写，完成分析并交付飞书"
+  default_prompt: "使用 $douyin-reference-capture-phone 处理我的抖音任务：如果我提供链接就直接打开指定视频，否则按主题在手机搜索筛选；随后采集、Gemini 转写、Luna 校对分析并交付飞书。"
+policy:
+  allow_implicit_invocation: true

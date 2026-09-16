@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agentic Workflow Runtime"
+  short_description: "Commander 监督式多 Session 工作流运行框架"
+  default_prompt: "Use $agentic-workflow-runtime to run a supervised multi-session workflow from its manifest."

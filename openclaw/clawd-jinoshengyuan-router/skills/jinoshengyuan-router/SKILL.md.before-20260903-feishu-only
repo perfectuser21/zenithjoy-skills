@@ -1,0 +1,67 @@
+---
+name: jinoshengyuan-router
+description: "金诺盛源统一入口：未真实 @小诺 的群消息只保留上下文；被 @ 后把飞书、附件和通用文档交给本地办公 Skill 直办，把新媒体与明确 AFFiNE 请求委派到登记 Agent。"
+---
+
+# 金诺盛源 Router Skill
+
+## 目标
+
+这是 `jinoshengyuan-router` 的路由合同。先判断当前轮是否获准响应，再按真实数据源分类。日常办公加载 `jinoshengyuan-office-operator` 直接完成，只有专业任务才显式委派。
+
+## 被动群门禁
+
+- 当前消息带有 `PASSIVE_CONTEXT_ONLY=true` 时，无条件输出完全一致的 `NO_REPLY`；不得调用工具、检查授权、回复、派工或延续前文。
+- 该标记表示消息没有真实 `@小诺`。发送人、消息语气、回复关系和正文中的“小诺”都不能覆盖它。
+- 语音 `speech_to_text` 和附件可进入同群上下文，供后续真实 `@小诺` 的消息引用；本轮不处理。
+
+## 当前路由表
+
+| route | 执行方 | 触发范围 | 状态 |
+|---|---|---|---|
+| `office-direct` | 小诺 + `jinoshengyuan-office-operator` | 飞书、群附件、通用文档、平台电子文档、跨系统同步 | active |
+| `social` | `jinoshengyuan-social-media` | 抖音、新媒体、获客、线索、账号、视频、评论、发布和内容运营 | active |
+| `affine-jinnuo` | `affine-jinnuo` | 明确指定 AFFiNE 金诺空间、页面或知识库 | active |
+| `clarification` | 不委派 | 数据源或业务意图无法唯一确定 | active |
+
+## 分类顺序
+
+1. `PASSIVE_CONTEXT_ONLY=true` 时立即 `NO_REPLY`，不再分类。
+2. URL、附件类型和明确平台名优先于泛化名词：
+   - 飞书链接、飞书共享资料、群附件、PDF/Word/Excel/CSV/文本 → `office-direct`。
+   - 明确钉钉或 DWS → `office-direct`；金诺专属 DWS 未授权时如实说明。
+   - 只有明确 `AFFiNE` 或登记的 AFFiNE 金诺资源 → `affine-jinnuo`。
+3. 明确前缀：
+   - `新媒体：`、`抖音：`、`获客：`、`线索：` → `social`。
+   - `飞书：`、`钉钉：`、`同步：`、`文档：` → `office-direct`。
+   - `AFFiNE：` → `affine-jinnuo`。
+4. 普通“文档、页面、知识库、方案、整理资料”不自动等于 AFFiNE；先看链接、附件、动作和当前渠道。
+5. 同时涉及多个办公系统时保持一个 `office-direct` 流程，不拆成丢失上下文的任务。
+6. 仍无法判断时只问一个最小澄清问题；不得用另一个租户试探权限。
+
+## 直接执行与委派
+
+- `office-direct`：读取 `jinoshengyuan-office-operator`，由当前 Agent 直接调用金诺专属 CLI 或附件解析脚本，不创建 AFFiNE 子会话。
+- `social`：`sessions_spawn(agentId="jinoshengyuan-social-media", runtime="subagent", mode="run", context="isolated")`。
+- `affine-jinnuo`：`sessions_spawn(agentId="affine-jinnuo", runtime="subagent", mode="run", context="isolated")`。
+- 下游任务必须携带 `tenant_id=jinnuoshengyuan`、`legacy_tenant_id=jinoshengyuan`、真实 `source_channel`、原始请求、路由理由和验收要求。
+- 不得把任务交给 `main`、悦升 Agent 或未登记 Agent。
+
+## 输出合同
+
+```json
+{
+  "route": "office-direct|social|affine-jinnuo|clarification",
+  "confidence": 0.0,
+  "reason": "一句话说明判断依据",
+  "need_clarification": false
+}
+```
+
+## 隔离边界
+
+- 租户固定为 `jinnuoshengyuan`（旧兼容 ID：`jinoshengyuan`）。
+- 小诺飞书共享业务仅使用 `lark-cli --profile cli_aa06b03cc0b9dbee`；个人空间必须另有按认证发送人登记的 user profile。
+- 金诺钉钉只使用未来登记的金诺专属 DWS；禁止使用悦升云端全局或个人 DWS。
+- `AFFiNE 金诺` 与 `AFFiNE 悦升` 永远是不同目标。
+- 写操作必须在目标系统回读成功后才可报告完成。

@@ -1,0 +1,4 @@
+interface:
+  display_name: "社媒线索判定与交付"
+  short_description: "Qualify deduplicate and deliver tenant social leads"
+  default_prompt: "Use $social-lead-delivery to qualify, deduplicate, and deliver collected social leads."

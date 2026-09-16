@@ -1,0 +1,59 @@
+# Commander protocol v2
+
+## Identity
+
+Every marker requires `schema_version=2`, `run_id`, `attempt_id`, `execution_id`, `object_id`, `workflow_id`, `worker_agent_id`, monotonic `event_seq`, unique `event_id` and `dedupe_key`.
+
+Every run also has a caller-held `control_token`. The ledger stores only its SHA-256 hash. The token is transport-private control authority: it never appears in lifecycle markers, cards, status responses or terminal output. A control message is ignored until `workflow-state.mjs verify-control` authorizes it against the exact attempt ledger.
+
+- `execution_id` is `<run_id>:<attempt_id>`.
+- `event_id` is `<execution_id>:<event_seq>`.
+- `dedupe_key` equals `event_id` unless a stricter business key is supplied.
+
+## Event line
+
+```text
+WORKFLOW_EVENT {"schema_version":2,"run_id":"...","attempt_id":"a1","execution_id":"...:a1","object_id":"...","workflow_id":"...","worker_agent_id":"...","event_seq":1,"event_id":"...:a1:1","dedupe_key":"...:a1:1","event":"started|stage_started|stage_accepted|retrying|blocked|cleanup_started|cleanup_verified","stage_id":"...","stage_attempt":1,"status":"running|waiting|completed|blocked|failed","summary":"...","evidence":[],"next_action":"...","current_step":1,"total_steps":5,"owner_lease":{"owner":"work-commander","lease_id":"...","expires_at":"ISO-8601"},"card_target":{"audience_key":"vps-status","chat_id":"oc_...","visibility":"internal"},"observed_at":"ISO-8601"}
+```
+
+`event_seq` is allocated by the local run ledger. Relay each event to n8n before the next mutating stage.
+
+## Terminal line
+
+```text
+WORKFLOW_TERMINAL {"schema_version":2,"run_id":"...","attempt_id":"a1","execution_id":"...:a1","object_id":"...","workflow_id":"...","worker_agent_id":"...","event_seq":9,"event_id":"...:a1:9","dedupe_key":"...:a1:9","status":"completed|blocked|failed|stopped","accepted_stages":[],"metrics":{},"writes":{},"cleanup":{"attempted":true,"verified":true},"stop_reason":"","card_target":{"audience_key":"vps-status","chat_id":"oc_...","visibility":"internal"},"finished_at":"ISO-8601"}
+```
+
+Terminal state is immutable per `execution_id`. Recovery creates a new `attempt_id`, records `resumes_execution_id`, and imports only explicitly accepted checkpoints.
+
+## Worker result
+
+```text
+WORKER_RESULT {"schema_version":2,"run_id":"...","attempt_id":"a1","execution_id":"...:a1","worker_agent_id":"...","lease_id":"...","stage_id":"...","stage_attempt":1,"status":"completed|blocked|failed","summary":"...","metrics":{},"artifacts":[],"evidence":[],"write_fences":[],"warnings":[],"retryable":false,"recommended_next_action":"accept|retry|stop|request_approval"}
+```
+
+Workers never emit `WORKFLOW_TERMINAL`. Mutation success requires both read-back evidence and a matching guard receipt in `write_fences`; read-only stages may return an empty array only when they created no artifact.
+
+Each write-fence receipt contains `execution_id`, `worker_agent_id`, `stage_id`, `stage_attempt`, `intent`, `commander_event_id` and `fence_token`. The Commander accepts it only for the exact active stage event. A receipt from an earlier retry, another worker or a terminal execution is invalid even if the external write later succeeds.
+
+The Worker receives the canonical executable `workflow-write-guard.mjs` path and invokes it directly. The script's `#!/usr/bin/env node` shebang selects the available Node runtime; Commander and Worker must never guess an interpreter path such as `/usr/bin/node`.
+
+## Spawn receipt
+
+Before yielding, the Commander must possess:
+
+```json
+{"status":"accepted","runId":"non-empty","childSessionKey":"non-empty"}
+```
+
+If any field is missing, no worker exists and yielding is forbidden.
+
+## Decisions
+
+- `accept`: all acceptance and evidence checks pass.
+- `steer`: a live worker can be corrected without changing scope.
+- `retry`: the manifest allows it, the action is idempotent, and attempts remain.
+- `block`: approval or unavailable external state is required.
+- `stop`: safety, identity mismatch, policy violation or unknown non-idempotent outcome.
+
+Every retry states the failed criterion, prior evidence, changed instruction and unchanged safety boundary.

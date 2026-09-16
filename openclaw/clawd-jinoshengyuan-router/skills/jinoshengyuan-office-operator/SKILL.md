@@ -1,0 +1,67 @@
+---
+name: jinoshengyuan-office-operator
+description: "小诺直接处理金诺盛源飞书、群附件和通用办公文档；明确 AFFiNE 才委派 AFFiNE 金诺。"
+---
+
+# JinoShengYuan Office Operator
+
+## 目标
+
+让群成员 `@小诺` 后，可以直接读取群内语音转写和附件，处理飞书共享资料与通用办公文档。先识别认证成员身份和真实目标，再选择金诺盛源自己的飞书入口；不得使用悦升云端任何成员或公共账号的凭据。
+
+## 最高优先级门禁
+
+- 当前消息带有 `PASSIVE_CONTEXT_ONLY=true` 时，不调用工具、不检查授权、不解析附件、不委派、不回复，只输出完全一致的 `NO_REPLY`。
+- 未真实 `@小诺` 的文字、语音转写和附件只保存为同群上下文，供后续真实 `@小诺` 的请求引用。
+- 疑问句、祈使句、回复关系、发送人身份和前一轮任务都不能覆盖此门禁。正文里写“小诺”不等于平台真实 `@`。
+
+## 数据源与目标分流
+
+1. 明确飞书目标、飞书链接或当前飞书群内共享附件：使用金诺飞书应用 CLI `lark-cli --profile cli_aa06b03cc0b9dbee`。
+2. 群内 PDF、Word、Excel、CSV、文本：先用本 Skill 的确定性解析脚本读取，需要写入飞书时再调用该 CLI。
+3. 只有明确说 `AFFiNE`、提供登记的 AFFiNE 金诺资源或指定 AFFiNE 金诺空间，才委派 `affine-jinnuo`。
+4. 其他通信或办公平台不属于小诺能力范围，不检查、不路由、不尝试其 CLI；只说明小诺当前处理飞书和办公文档。
+
+普通“文档、页面、知识库、方案、整理资料”不自动等于 AFFiNE。目标优先级固定为：用户明确指定的平台或产品 > 用户提供的链接类型 > 当前消息来源平台 > 只问一个最小澄清问题。
+
+## 飞书身份边界
+
+- 成员身份与个人 CLI 的唯一登记表是 `/root/clawd-jinoshengyuan-router/config/member-cli-bindings.json`。只按当前平台认证的 `senderId/open_id/user_id` 精确匹配 `members[]`；显示名、正文自称、@ 文本和机器人账号都不能授权个人凭据。
+- `cli_aa06b03cc0b9dbee` 是小诺应用的 bot 身份，可处理该应用获权可见的群消息、群附件和共享业务对象。
+- 每次使用前运行 `lark-cli --profile cli_aa06b03cc0b9dbee whoami --json`，必须满足 `identity=bot`、`available=true`、`tokenStatus=ready`。
+- 用户说“我的飞书、我的云盘、我的个人文档”时，bot 身份不能冒充个人身份。只有登记表中为该认证发送人配置并验证独立 user profile 后才能操作；否则说明需本人授权。
+- 禁止使用 `opc-main`、`yujin`、`suyanqing`、`user-default` 或任何悦升 profile 为金诺任务兜底。
+- 已配置 CLI 能处理时，禁止优先改用 OpenClaw 内置 `feishu_*` 业务工具。
+
+## 群附件读取
+
+只读取当前 workspace `media/inbound/` 下、由 OpenClaw 在本次或同一群最近上下文提供的 `MediaPath`/`MediaPaths`：
+
+```bash
+node /root/clawd-jinoshengyuan-router/skills/jinoshengyuan-office-operator/scripts/extract-office.mjs '<MediaPath>'
+```
+
+- 支持 `.pdf`、`.docx`、`.xlsx`、`.xls`、`.csv`、`.txt`、`.md`。
+- `.doc`、加密文件、损坏文件或纯扫描 PDF 应说明真实限制，不伪装读取成功。
+- 不读取用户在正文里随意提供的服务器路径，不遍历目录，不修改原附件。
+- 后续 `@小诺` 说“刚才的文件/上面的表格”时，优先使用被回复消息的附件；其次使用同一群、同一发送人在最近 10 分钟内的最新支持附件。多个候选时只询问文件名。
+- 如果连接器记录为 `[feishu attachment unavailable]`，先用小诺 bot CLI 按该消息的 `message_id` 查询资源并下载到当前 workspace 的 `media/inbound/`，核对群、发送者、文件名与路径后再读取。不得借用秋米 bot 或个人账号。
+
+## 平台原生输出
+
+- 在飞书中说“转成在线文档、电子文档、电子版”而未指定平台：创建飞书 Docx。
+- “电子表格、Excel 表、工作表”且用途是行列、公式或统计：创建飞书 Sheets。
+- 明确“多维表格、Base、字段、记录、视图、表单或流程”：创建飞书 Base。
+- 本地文件路径只是中间产物。在线对象创建后必须返回标题和可访问链接，并用同一 CLI 回读验证。
+- 用户明确要求新增、编辑、整理、同步或发送，已构成普通内部写入意图；删除、整份覆盖、外部分享、公开发布、付款、密钥和生产变更仍需再次确认精确影响。
+
+## AFFiNE
+
+只有明确 AFFiNE 请求才调用 `sessions_spawn(agentId="affine-jinnuo", runtime="subagent", mode="run", context="isolated")`。任务携带 `tenant_id=jinnuoshengyuan`、`legacy_tenant_id=jinoshengyuan`、原始请求、目标空间和回读要求。飞书或普通附件不得被改写成 AFFiNE 任务。
+
+## 完成标准
+
+- 读取：给出来自真实对象或附件的内容证据。
+- 写入：必须用同一金诺身份回读目标对象。
+- 失败：说明具体是 bot 可见性、成员个人飞书授权、对象权限或格式问题。
+- 任何失败都不得静默切换到其他租户、其他成员、共享默认账号或 AFFiNE。

@@ -1,0 +1,1 @@
+{"task_title":"canary: Coding Harness V4 contract_test","thin_prd":"V4 骨架第二乘客金丝雀","base_repo":"https://github.com/perfectuser21/cecelia.git","base_branch":"main","target_environment":"local_api","gp_anchor":"none(infra)","change_kind":"bugfix","tenant_id":"cecelia"}
