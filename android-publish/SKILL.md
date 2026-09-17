@@ -23,7 +23,7 @@ description: 安卓真机多平台自动发布——公共底座（设备通道/
 
 | 机器 | 序列号 | 宿主 | 命令模板 |
 |---|---|---|---|
-| 小龙虾（HONOR 100，家里） | `ANGYVB4311010223` | xian-rog（Windows） | `ssh xian-rog "adb -s <serial> <cmd>"` |
+| 小龙虾（HONOR 100，家里） | `ANGYVB4311010223` | **xian-m1（macOS，0917 实测更新）**，历史曾在 xian-rog（Windows），会跨机移动，用前先 `adb devices` 确认当前宿主 | `ssh xian-m1 "adb -s <serial> <cmd>"` |
 | 金诺机（HONOR MAA-AN00，办公室） | `ANGYVB4227006983` | xian-m4（macOS） | `ssh xian-m4 "adb -s <serial> <cmd>"` |
 
 - 小龙虾：2026-08-29 起 USB ADB 可用（HONOR Suite 官方驱动，详见 memory machines.md）；
