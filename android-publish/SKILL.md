@@ -205,3 +205,36 @@ WS 只认 collect_task，HTTP 心跳 queued_tasks 无 publish 分支，全要新
 10. 输入法用完即还原（已是铁律）；同机切换不同 App 账号操作之间留 ≥5 分钟冷却。
 
 **画像自查**：如果回看今天的操作日志，一个真人做得出来吗？做不出来的模式（秒级跨App、像素级重复点击、凌晨3点发布）就是要消灭的特征。参考获客线频控实证：私信间隔 120-180s 随机、fail-open 教训。
+
+## 设备锁协议（0917 生效——防多任务互抢手机，Brain device_locks 表纳管）
+
+四台手机已按 serial 纳管进 Brain `device_locks`（migration 448，生产 v1.302.0 起）。**任何自动化占用手机前必须过锁**，两条路径：
+
+**路径A：Brain 派发的任务（首选，全自动）**
+建单时 payload 带 `device_serial`（即上方设备通道表的 serial），锁全自动：派发前抢锁（被占→留队列下轮重试；serial 未注册→任务判死+告警）、终态自动释放、超时 30 分钟 TTL 自愈。**除了建单带字段，什么都不用做。**
+
+```bash
+curl -s -X POST localhost:5221/api/brain/tasks -H "Content-Type: application/json" -d '{
+  "title": "...", "task_type": "...",
+  "payload": {"device_serial": "ANGYVB4311010223", "device_ttl_minutes": 60}
+}'
+# device_ttl_minutes 可选，默认 30，clamp [1,240]——预计超 30 分钟的长发布单自己带够
+```
+
+**路径B：有头/人肉直接操作手机（SOP 约束）**
+开工前抢锁、收工释放；抢不到=有别的任务在用这台机，**换机或等待，禁止硬抢**：
+
+```bash
+# 抢锁（locked_by 用自由身份如 manual-alex；只受 TTL 管，不会被对账秒扫）
+curl -s -X POST localhost:5221/api/brain/device-locks/acquire -H "Content-Type: application/json" \
+  -d '{"device_name":"<serial>","locked_by":"manual-<who>","ttl_minutes":60}'
+# → {"acquired":true,...} 才能动手机；{"acquired":false,"locked_by":...} = 被占，换机/等
+
+# 收工释放（忘了释放 = 白占到 TTL 过期，别人干等）
+curl -s -X POST localhost:5221/api/brain/device-locks/release -H "Content-Type: application/json" \
+  -d '{"device_name":"<serial>","locked_by":"manual-<who>"}'
+```
+
+**辅助**：查占用 `GET localhost:5221/api/brain/device-locks`；新手机/换宿主幂等注册 `POST /api/brain/device-locks/register` body `{"device_name","host","device_type":"phone"}`。
+
+**铁律**：①锁按 serial 键，宿主机只是登记信息——寻机（`adb devices`）之后、动手之前抢锁；②一次只锁自己要用的那台，用几台锁几台；③长任务锁被人抢不走（持有任务 in_progress 期间过期也不可抢），但收工必须释放，别靠 TTL 兜底。
