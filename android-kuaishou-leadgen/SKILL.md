@@ -1,3 +1,9 @@
+---
+name: android-kuaishou-leadgen
+description: 安卓真机快手关键词获客序列（搜索→评论区提取潜在客户→私信触达，🔬 2026-09-19 首次真机探索通过，含平台官方私信频控规则实证）。底座见 android-publish。
+  触发场景：快手获客 / 快手关键词获客 / kuaishou android leadgen / kuaishou lead generation。
+---
+
 # 安卓快手关键词获客（com.smile.gifmaker）
 
 > **熟化阶段：EXPLORE**（第1次，0919 首次蹚通）· 连续零新坑 0/3

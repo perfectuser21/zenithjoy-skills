@@ -1,3 +1,9 @@
+---
+name: android-xiaohongshu-leadgen
+description: 安卓真机小红书关键词获客序列（搜索→评论区提取潜在客户→私信触达，🔬 2026-09-19 首次真机探索通过，含平台官方私信频控规则+分享评论破冰机制实证）。底座见 android-publish。
+  触发场景：小红书获客 / 小红书关键词获客 / xhs android leadgen / xiaohongshu lead generation。
+---
+
 # 安卓小红书关键词获客（com.xingin.xhs）
 
 > **熟化阶段：EXPLORE**（第1次，0919 首次蹚通）· 连续零新坑 0/3

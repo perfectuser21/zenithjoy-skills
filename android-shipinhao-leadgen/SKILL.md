@@ -1,3 +1,9 @@
+---
+name: android-shipinhao-leadgen
+description: 安卓真机视频号关键词获客探索（搜索/评论区提取可行，⚠️ 2026-09-19 实证私信触达路径不通——普通用户间无私信入口，仅商家号"客服"通道）。底座见 android-publish。
+  触发场景：视频号获客 / 视频号关键词获客 / shipinhao android leadgen / 微信视频号 lead generation。
+---
+
 # 安卓视频号关键词获客（com.tencent.mm 内嵌 Finder）—— ⚠️ 私信路径不通，仅搜索/评论区可用
 
 > **熟化阶段：EXPLORE**（第1次，0919 首次蹚通）· 连续零新坑 0/3
