@@ -13,7 +13,7 @@ Worker 在输出最后那一行 `WORKER_RESULT {json}` **之前**，必须先用
 把**完全相同**的 JSON 写到账本目录的确定路径：
 
 ```
-/root/clawd-work-commander/state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json
+/Users/administrator/openclaw-root/workspaces-root/clawd-work-commander/state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json
 ```
 
 理由：会话完成通道不保证把最后一条消息完整送到 Commander。0912 实证——worker 自己会话里
@@ -33,7 +33,7 @@ Worker 在输出最后那一行 `WORKER_RESULT {json}` **之前**，必须先用
 写到这个确定路径：
 
 ```
-/root/clawd-work-commander/state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json
+/Users/administrator/openclaw-root/workspaces-root/clawd-work-commander/state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json
 ```
 
 这条路径是可写的（0913 实证：preflight 第 3 次正是靠它写成、Commander 读到、阶段才通过）。
@@ -51,12 +51,12 @@ Worker 手里有两类工具，它们**在不同机器上**：
 | 工具 | 实际执行位置 | 看得见的文件系统 |
 |---|---|---|
 | `exec` / `node_exec` | **执行节点**（如 XIAN-M4-PHONE，macOS） | 节点的 `/Users/<用户>/clawd-*` |
-| 文件读写工具（read/write/edit）、`file_fetch` | **网关侧** | 网关的 `/root/clawd-*` |
+| 文件读写工具（read/write/edit）、`file_fetch` | **网关侧** | 网关的 `/Users/administrator/openclaw-root/workspaces-root/clawd-*` |
 
 由此产生三条硬规则：
 
 1. **绝不用 `exec` 去读自己的 skill 文件。** 任务里给出的 skill 路径是网关侧的
-   `/root/clawd-*/skills/...`，节点上不存在。要看 skill 就用文件读工具。
+   `/Users/administrator/openclaw-root/workspaces-root/clawd-*/skills/...`，节点上不存在。要看 skill 就用文件读工具。
    0912 实证：某次 discovery worker 用 `sed` 读 `/root/.../social-video-discovery/SKILL.md`
    失败后改用 `rg`（节点没装）、再 `find /` 满盘搜，60 秒超时，整次尝试作废且回传被截断。
 2. **绝不把网关侧路径交给 `exec`，也绝不把节点侧临时路径当成网关可读的产物。**
@@ -144,7 +144,7 @@ The script allocates `event_seq`, updates the atomic ledger and POSTs the comple
    那它**就不是截断**——无论它多短、`status` 是什么。
 2. 只有解析失败或字段确实缺失时，才去找那份尽力而为的落盘，按顺序试两处：
    ①本工作区 `state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json`；
-   ②**被派 Worker 自己工作区**的同名路径 `/root/clawd-<worker 工作区>/state/workflow-runs/<同一文件名>`
+   ②**被派 Worker 自己工作区**的同名路径 `/Users/administrator/openclaw-root/workspaces-root/clawd-<worker 工作区>/state/workflow-runs/<同一文件名>`
    ——Worker 没有写 Commander 工作区的权限，它的回执只会落在自己那边。
 3. 两者都拿不到，才可以说"回传不完整"，并且必须写明已按路径找过。
 
@@ -155,13 +155,13 @@ The script allocates `event_seq`, updates the atomic ledger and POSTs the comple
 Worker 的完整会话记录就在网关磁盘上，你有网关侧文件读取能力：
 
 ```
-/root/.openclaw/agents/<worker_agent_id>/agent/codex-home/sessions/<YYYY>/<MM>/<DD>/rollout-*.jsonl
+/Users/administrator/.openclaw/agents/<worker_agent_id>/agent/codex-home/sessions/<YYYY>/<MM>/<DD>/rollout-*.jsonl
 ```
 
 **0913 深夜起推理已下放 MMV**：会话文件改落在 MMV 上,网关本地那条路径会扑空。用 exec(网关本地 shell)跨机读:
 
 ```
-ssh -i /root/.openclaw/mmv_key -o BatchMode=yes administrator@100.71.151.105 \
+ssh -i /Users/administrator/.openclaw/mmv_key -o BatchMode=yes administrator@100.71.151.105 \
   "ls -t /Users/administrator/.codex-gwremote/sessions/<YYYY>/<MM>/<DD>/rollout-*.jsonl | head -5"
 ```
 
@@ -189,7 +189,7 @@ ssh -i /root/.openclaw/mmv_key -o BatchMode=yes administrator@100.71.151.105 \
 所以有一份持久文件替你记：
 
 ```
-/root/clawd-work-commander/state/FINDINGS.md
+/Users/administrator/openclaw-root/workspaces-root/clawd-work-commander/state/FINDINGS.md
 ```
 
 - **每次开工（收到 stage 请求后、派 Worker 之前）先完整读一遍。**

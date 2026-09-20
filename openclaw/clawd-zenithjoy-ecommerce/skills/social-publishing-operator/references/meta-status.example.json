@@ -1,0 +1,7 @@
+{
+  "tenant_id": "zenithjoy",
+  "content_object_id": "system-check-meta",
+  "platform": "facebook",
+  "delivery_mode": "public",
+  "action": "status"
+}

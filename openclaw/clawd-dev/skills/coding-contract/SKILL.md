@@ -17,7 +17,7 @@ description: "Coding harness stage `contract`（合同）worker for the V4 Comma
 `status=completed`，`summary` 写明"contract_test: envelope verified for stage contract"，`metrics={"external_interactions":0,"business_writes":0}`，`artifacts=[]`，`evidence=[{"type":"envelope_check","stage_id":"contract","ok":true}]`，`write_fences=[]`，`recommended_next_action=accept`。
 
 ## mode=run（真实执行）
-真实执行通过 Cecelia Brain fleet 桥接完成（本容器只发 HTTP，不碰仓库、不跑代码）。完整调用配方、凭据加载、终态映射表见 `/root/clawd-dev/BRAIN_BRIDGE.md`；本阶段 role=`proposer`。
+真实执行通过 Cecelia Brain fleet 桥接完成（本容器只发 HTTP，不碰仓库、不跑代码）。完整调用配方、凭据加载、终态映射表见 `/Users/administrator/openclaw-root/workspaces-root/clawd-dev/BRAIN_BRIDGE.md`；本阶段 role=`proposer`。
 **proposer 初稿常备要求**（金丝雀 #17/#27/#28 里 reviewer 反复退回的三样，初稿就带上少挨一轮）：①枚举类断言一律写成**封闭集合**（恰好 N 项、逐项列名、断言不多不少），禁用"包含"式弱断言；②每个正向 oracle 配至少一个**负向 oracle**（不该发生的事有测试证明不发生）；③范围断言用**这个 canonical 模板**（逐字用它，别自己发明——#28/#30 两发都死在自创写法上）：
 ```ts
 it('范围 oracle：全仓 diff 恰好等于交付清单', () => {

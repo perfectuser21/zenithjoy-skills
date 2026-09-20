@@ -1,0 +1,67 @@
+{
+  "object_id": "product-exp-us-001",
+  "tenant_id": "zenithjoy",
+  "market": "US",
+  "source_url": "https://supplier.example/item/001",
+  "human_owner": "store-owner",
+  "ai_owner": "media",
+  "status": "candidate",
+  "next_action": "Review compliance, margin and creative angles",
+  "next_check_at": "2026-09-12T10:00:00+08:00",
+  "acceptance_criteria": "Draft product is readable in Shopify and remains unpublished",
+  "evidence_url": "",
+  "updated_at": "2026-09-11T22:30:00+08:00",
+  "economics": {
+    "currency": "USD",
+    "unit_cost": 8.5,
+    "shipping_cost": 5.5,
+    "sale_price": 29.99,
+    "payment_fee_rate": 0.035,
+    "refund_reserve_rate": 0.08,
+    "target_cpa": 8
+  },
+  "compliance": {
+    "ip_review": "review",
+    "product_safety_review": "review",
+    "claims_review": "review",
+    "asset_rights_review": "review",
+    "notes": "Replace example data and complete every review before public launch."
+  },
+  "product": {
+    "title": "Example Problem-Solving Product",
+    "description_html": "<p>Example copy for a Shopify draft. Replace it with substantiated customer benefits and clear delivery expectations.</p>",
+    "vendor": "Zenithjoy",
+    "product_type": "Home & Living",
+    "tags": ["us-test", "openclaw", "draft"],
+    "options": [
+      {
+        "name": "Color",
+        "values": ["Black", "White"]
+      }
+    ],
+    "variants": [
+      {
+        "sku": "ZJ-EXAMPLE-BLK",
+        "price": 29.99,
+        "compare_at_price": 39.99,
+        "option_values": {"Color": "Black"}
+      },
+      {
+        "sku": "ZJ-EXAMPLE-WHT",
+        "price": 29.99,
+        "compare_at_price": 39.99,
+        "option_values": {"Color": "White"}
+      }
+    ],
+    "files": []
+  },
+  "creative_hypotheses": [
+    {
+      "creative_id": "angle-001",
+      "hook": "Show the painful before state in the first two seconds",
+      "proof": "Demonstrate the product in one continuous shot",
+      "cta": "See how it works"
+    }
+  ]
+}
+

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Social Publishing Operator"
+  short_description: "Safely publish ZenithJoy content to Meta and TikTok"
+  default_prompt: "Use $social-publishing-operator to preview, approve, publish, and verify one ZenithJoy social content item."

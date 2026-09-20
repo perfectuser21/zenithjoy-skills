@@ -20,7 +20,7 @@ description: "Coding harness stage `publish`（发布）worker for the V4 Comman
 本阶段调 Brain 的开 PR 端点（Brain ≥1.273.168），不派容器、不碰仓库：
 
 ```bash
-. /root/clawd-dev/.brain-bridge.env
+. /Users/administrator/openclaw-root/workspaces-root/clawd-dev/.brain-bridge.env
 curl -s -m 60 -X POST "$BRAIN_BRIDGE_URL/api/brain/harness/attempt-run/publish-pr" \
   -H "Authorization: Bearer $BRAIN_INTERNAL_TOKEN" -H "Content-Type: application/json" \
   -d '{"branch":"<candidate_coordinates.branch>","head_sha":"<candidate_coordinates.head_sha（必须=judge 裁过的那个头）>","title":"Harness approved candidate <workflow run_id>","body":"<一段话：合同标题+judge PASS 摘要+run_id>","source_attempt_id":"<candidate_coordinates.source_attempt_id>"}'

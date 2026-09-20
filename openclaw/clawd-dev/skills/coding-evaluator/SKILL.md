@@ -17,7 +17,7 @@ description: "Coding harness stage `evaluate`（验收）worker for the V4 Comma
 `status=completed`，`summary` 写明"contract_test: envelope verified for stage evaluate"，`metrics={"external_interactions":0,"business_writes":0}`，`artifacts=[]`，`evidence=[{"type":"envelope_check","stage_id":"evaluate","ok":true}]`，`write_fences=[]`，`recommended_next_action=accept`。
 
 ## mode=run（真实执行）
-真实执行通过 Cecelia Brain fleet 桥接完成（本容器只发 HTTP，不碰仓库、不跑代码）。完整调用配方、凭据加载、终态映射表见 `/root/clawd-dev/BRAIN_BRIDGE.md`；本阶段 role=`evaluator`。
+真实执行通过 Cecelia Brain fleet 桥接完成（本容器只发 HTTP，不碰仓库、不跑代码）。完整调用配方、凭据加载、终态映射表见 `/Users/administrator/openclaw-root/workspaces-root/clawd-dev/BRAIN_BRIDGE.md`；本阶段 role=`evaluator`。
 **合同身份（必带）**：payload 带 `"contract_id"`/`"approved_sha"`/`"contract_version"`（从 sealed_contract 取，同 generate）。
 **坐标**：派发 payload 的 `candidate` = STAGE_REQUEST 上下文 `candidate_coordinates` 的 {repo, branch, head_sha, source_attempt_id} 原样（repo/source_attempt_id 必带）；**派发必须带 `"run_id": "<candidate_coordinates.bridge_run_id>"` 复用 generate 的共享桥接 run**（候选只活在该 run 的保留工作区）；缺失 → blocked candidate_coordinates_missing，禁自己猜。
 流程：POST attempt-run（role=evaluator，payload 从信封 task_request 取 sprint_dir/base_repo/base_sha/branch）→ 每 30s GET 轮询至终态 → 按 BRAIN_BRIDGE.md 封闭映射表产 WORKER_RESULT。派发/执行失败一律结构化原样上报（evidence 带 attempt_id），禁止在本机模拟或假装完成；Brain 不可达 → `status=blocked`、`summary="brain_bridge_unreachable: stage evaluate"`、`retryable=true`。

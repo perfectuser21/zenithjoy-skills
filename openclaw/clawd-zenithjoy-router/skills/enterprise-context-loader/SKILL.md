@@ -5,9 +5,9 @@ description: "在热点、关键词、内容、获客、FDE方案或经营分析
 
 # 企业上下文加载器
 
-从 `/root/clawd/company-data/<tenant_id>/current/` 读取企业运行副本。`enterprise-master.md` 是企业叙事主文档，YAML 是结构化索引。这个 Skill 只读；飞书同步、修改企业资料和外部动作不属于本 Skill。
+从 `/Users/administrator/openclaw-root/workspaces-root/clawd/company-data/<tenant_id>/current/` 读取企业运行副本。`enterprise-master.md` 是企业叙事主文档，YAML 是结构化索引。这个 Skill 只读；飞书同步、修改企业资料和外部动作不属于本 Skill。
 
-读取前先核对 `/root/clawd/config/enterprise-context/tenant-registry.json`。租户必须存在，且注册表必须明确设置 `cross_tenant_fallback=false`；不得因为多个企业处于同一飞书组织就借用其他企业的 App、Agent、文档或 Base。
+读取前先核对 `/Users/administrator/openclaw-root/workspaces-root/clawd/config/enterprise-context/tenant-registry.json`。租户必须存在，且注册表必须明确设置 `cross_tenant_fallback=false`；不得因为多个企业处于同一飞书组织就借用其他企业的 App、Agent、文档或 Base。
 
 ## 输入
 
@@ -20,7 +20,7 @@ description: "在热点、关键词、内容、获客、FDE方案或经营分析
 1. 运行：
 
    ```bash
-   node /root/clawd/skills/enterprise-context-loader/scripts/load-context.mjs \
+   node /Users/administrator/openclaw-root/workspaces-root/clawd/skills/enterprise-context-loader/scripts/load-context.mjs \
      --tenant <tenant_id> --task <task_type>
    ```
 
@@ -51,8 +51,8 @@ description: "在热点、关键词、内容、获客、FDE方案或经营分析
 运行以下命令，必须退出码为 0，且输出 `tenant_id`、`version`、`task_type`、`completeness`：
 
 ```bash
-node /root/clawd/skills/enterprise-context-loader/scripts/load-context.mjs \
-  --root /root/clawd/company-data \
-  --registry /root/clawd/config/enterprise-context/tenant-registry.json \
+node /Users/administrator/openclaw-root/workspaces-root/clawd/skills/enterprise-context-loader/scripts/load-context.mjs \
+  --root /Users/administrator/openclaw-root/workspaces-root/clawd/company-data \
+  --registry /Users/administrator/openclaw-root/workspaces-root/clawd/config/enterprise-context/tenant-registry.json \
   --tenant yueshengyun --task hot_news
 ```

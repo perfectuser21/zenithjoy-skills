@@ -62,11 +62,11 @@ ssh xian-m4 "adb -s <serial> shell screencap -p /sdcard/s.png; \
 ```python
 from PIL import Image
 img = Image.open(src); w,h = img.size
-img.crop((0, int(h*0.084), w, int(h*0.335))).save(dst)   # 主图页参考值
+img.crop((0, int(h*0.12), w, int(h*0.335))).save(dst)   # 主图页参考值
 ```
 
-实测 `0.084` 在某些页面会把**底部缩略图条一角**带进来，成品图顶部出现黑块，且下游 AI 不会帮你修（见 `codex-image-cleanup` 坑2）。
-**每张裁完必须看一眼**，不合适改起点（实测 `0.12` 可避开）。
+早期版本用过 `0.084`，实测在某些页面会把**底部缩略图条一角**带进来，成品图顶部出现黑块，且下游 AI 不会帮你修（见 `codex-image-cleanup` 坑2）——已改用 `0.12` 避开此问题。
+**每张裁完仍须看一眼**，个别页面结构特殊仍可能需要微调起点。
 
 ## 商品页能读到的信息
 

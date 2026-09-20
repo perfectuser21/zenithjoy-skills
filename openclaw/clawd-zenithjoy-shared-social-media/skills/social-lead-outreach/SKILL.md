@@ -11,7 +11,7 @@ description: "Claim, assign, and privately contact already-delivered social lead
 写到这个确定路径：
 
 ```
-/root/clawd-work-commander/state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json
+/Users/administrator/openclaw-root/workspaces-root/clawd-work-commander/state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json
 ```
 
 这条路径是可写的（0913 实证：preflight 第 3 次正是靠它写成、Commander 读到、阶段才通过）。
@@ -100,7 +100,7 @@ claim 至少保存 `claim_key`、lead record ID、run/execution、话术 ID、�
 - `sent`：先获得 `final_lead_write` 与 `outreach_account_update` 围栏，再把 claim、最终线索发送状态/时间/话术/账号和账号今日已触达数写回并逐项回读。
 - `unknown`：只写 claim 与最终线索为“发送结果待人工复核”，不得把账号计数或线索标成成功。
 - 每个写入回执必须与当前 Commander event 和 fence token 一致。
-- 写入（必须用 OpenClaw 文件写工具，严禁 exec 在节点上写——节点无此路径，见 discovery 同款 0912 实证）`/root/clawd-work-commander/artifacts/outreach/<execution-safe>_outreach.json` 前获得 `artifact_write`，工件保存所有 claim、分配、发送证据、回写回读与哈希。
+- 写入（必须用 OpenClaw 文件写工具，严禁 exec 在节点上写——节点无此路径，见 discovery 同款 0912 实证）`/Users/administrator/openclaw-root/workspaces-root/clawd-work-commander/artifacts/outreach/<execution-safe>_outreach.json` 前获得 `artifact_write`，工件保存所有 claim、分配、发送证据、回写回读与哈希。
 
 ## 输出
 

@@ -17,7 +17,7 @@ description: "Coding harness stage `generate`（实现）worker for the V4 Comma
 `status=completed`，`summary` 写明"contract_test: envelope verified for stage generate"，`metrics={"external_interactions":0,"business_writes":0}`，`artifacts=[]`，`evidence=[{"type":"envelope_check","stage_id":"generate","ok":true}]`，`write_fences=[]`，`recommended_next_action=accept`。
 
 ## mode=run（真实执行）
-真实执行通过 Cecelia Brain fleet 桥接完成（本容器只发 HTTP，不碰仓库、不跑代码）。完整调用配方、凭据加载、终态映射表见 `/root/clawd-dev/BRAIN_BRIDGE.md`；本阶段 role=`generator`。
+真实执行通过 Cecelia Brain fleet 桥接完成（本容器只发 HTTP，不碰仓库、不跑代码）。完整调用配方、凭据加载、终态映射表见 `/Users/administrator/openclaw-root/workspaces-root/clawd-dev/BRAIN_BRIDGE.md`；本阶段 role=`generator`。
 **合同身份（Brain ≥1.273.165，必带）**：派发 payload 必须含 `"contract_id"`=sealed_contract.contract_id、`"approved_sha"`=sealed_contract.approved_sha、`"contract_version"`=sealed_contract.contract_version——Brain 据此装配冻结合同（缺则 prepare 400）。timeout 用默认（不传 timeout_seconds）。
 **坐标（金丝雀 #19 案卷）**：派发 payload 的 `branch` 必须= STAGE_REQUEST 上下文里 `seal_coordinates.branch`（被封印的合同分支——工作区从它起，禁用 cp-<run_id> 派生规则），`base_sha`=`seal_coordinates.base_sha`，并带 `propose_branch`=同分支、`propose_branch_sha`=`seal_coordinates.approved_sha`；坐标缺失 → blocked seal_coordinates_missing。
 **禁止 close（#31 实证）**：本阶段结束时**不要**调 close——这个共享 run 要活到 evaluate/judge 用完候选，由 cleanup 阶段统一收尾；提前 close = evaluate 必死 "shared run is terminal"。

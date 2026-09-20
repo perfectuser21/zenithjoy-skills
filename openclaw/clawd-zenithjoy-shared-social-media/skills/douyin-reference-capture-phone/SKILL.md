@@ -33,7 +33,7 @@ ffmpeg -hide_banner -i <wav> -af volumedetect -f null /dev/null 2>&1 | grep mean
 写到这个确定路径：
 
 ```
-/root/clawd-work-commander/state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json
+/Users/administrator/openclaw-root/workspaces-root/clawd-work-commander/state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json
 ```
 
 这条路径是可写的（0913 实证：preflight 第 3 次正是靠它写成、Commander 读到、阶段才通过）。
@@ -159,9 +159,9 @@ ffmpeg -hide_banner -i <wav> -af volumedetect -f null /dev/null 2>&1 | grep mean
 3. 转写（脚本内置纯 JS 分片 20 秒/片 + 复读清洗，无需 ffmpeg，大音频自动处理）：
    `node "$HOME"/.local/asr-tools/transcribe-gemini.mjs --input /绝对路径/<id>.16k.wav --segment-id <候选ID> --api-key-file "$HOME"/.config/openclaw/dashscope-api-key`
    **路径必须是执行节点上的路径**（`exec` 跑在节点，不是网关）。不要把"本 skill 目录"解析成
-   `/root/clawd-*/skills/...`——那是网关侧路径，节点上不存在，会得到 `MODULE_NOT_FOUND`
+   `/Users/administrator/openclaw-root/workspaces-root/clawd-*/skills/...`——那是网关侧路径，节点上不存在，会得到 `MODULE_NOT_FOUND`
    （0913 实证：judgment 阶段连续四次因此失败，而节点上 `~/.local/asr-tools/transcribe-gemini.mjs`、
    `~/.config/openclaw/dashscope-api-key`、`ffmpeg`、`node` 其实一应俱全）。
-   - API key 自动读 `/root/.openclaw/credentials/toapis-api-key`，无需任何配置。
+   - API key 自动读 `/Users/administrator/.openclaw/credentials/toapis-api-key`，无需任何配置。
    - 成功输出：stdout 单行 JSON（ok=true、chars、transcript_preview）；完整全文在同目录 `<候选ID>.transcript.txt` 与 `.transcript.json` 的 `transcript` 字段。
 4. 失败时读 stdout JSON 的 error 后重试本条；禁止直发 toapis 原始 HTTP 请求、禁止 ffmpeg 切片、禁止改写本脚本。

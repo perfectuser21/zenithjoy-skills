@@ -20,7 +20,7 @@ Only accept a JSON object with `action` and `workflow_run_id`, plus inbound mess
 3. Run exactly once:
 
 ```text
-node /root/clawd/skills/opc-workflow-card/scripts/card-registry.mjs action --payload-base64 <base64-json>
+node /Users/administrator/openclaw-root/workspaces-root/clawd/skills/opc-workflow-card/scripts/card-registry.mjs action --payload-base64 <base64-json>
 ```
 
 4. Trust the script's registry lookup and dedupe result. Do not send or patch another card manually.

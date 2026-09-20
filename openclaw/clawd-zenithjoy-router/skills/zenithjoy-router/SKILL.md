@@ -14,7 +14,7 @@ description: "悦升云端统一入口：按认证发送者和真实数据源决
 | route | 下游 Agent | 触发范围 | 状态 |
 |---|---|---|---|
 | `office-direct` | 秋米 + `zenithjoy-office-operator` | 飞书、钉钉、附件、通用文档、跨系统同步 | active |
-| `social` | `social-media-manager` | 抖音、新媒体、获客、线索、账号、视频、评论、发布和内容运营 | active_local_blueprint_remote_pending |
+| `social` | `zenithjoy-ecommerce`（暂代 `social-media-manager` 角色，专属 Agent 未独立注册前的过渡指派） | 抖音、新媒体、获客、线索、账号、视频、评论、发布和内容运营 | active_local_blueprint_remote_pending |
 | `affine-yuesheng` | `affine-yuesheng` | 明确指定 AFFiNE、悦升 AFFiNE 空间或 AFFiNE 页面 | active_mcp_verified |
 | `research` | `zenithjoy-shared-research` | 公共资料查询和行业研究 | active |
 | `personal` | 对应个人 Agent | 超出日常办公 Skill 的个人专属任务 | active |
@@ -23,7 +23,7 @@ description: "悦升云端统一入口：按认证发送者和真实数据源决
 ## 分类顺序
 
 1. 先按平台认证身份固定映射：
-   - Feishu `ou_b55157edaba4755ba081121b26989eb2` → 徐啸 → 飞书 `/root/clawd-zenithjoy-owner/.cli/bin/lark-cli` / 钉钉 `/root/clawd-zenithjoy-owner/.cli/bin/dws` → `tenant_admin`。
+   - Feishu `ou_b55157edaba4755ba081121b26989eb2` → 徐啸 → 飞书 `/Users/administrator/openclaw-root/workspaces-root/clawd-zenithjoy-owner/.cli/bin/lark-cli` / 钉钉 `/Users/administrator/openclaw-root/workspaces-root/clawd-zenithjoy-owner/.cli/bin/dws` → `tenant_admin`。
    - Feishu `ou_09604ed82e6ad2b3f67b7bfce4988961` → 于瑾 → 飞书 `/usr/local/bin/lark-cli --profile yujin` / 于瑾 DWS。
    - Feishu `ou_4f507879ba4f29bc1e36aa72caee1e81` → 苏彦卿 → 飞书 `/usr/local/bin/lark-cli --profile suyanqing` / 苏彦卿 DWS。
    - DingTalk `0203574007653232` → 于瑾；`056841303232959464` → 苏彦卿。
@@ -42,7 +42,7 @@ description: "悦升云端统一入口：按认证发送者和真实数据源决
 6. 身份未知时不得尝试任何已登记人员的个人 CLI；写操作停止并说明缺少的身份映射。
 7. 已验证的成员不得再次要求提供系统已经收到的 `senderId/open_id/user_id`。
 8. `user-default` 只可能是绑定身份预设，绝不是可传给 `--profile` 的 profile 名。任何 CLI 入口都必须来自本 Skill 的固定映射或 CLI 自身的 `profile list`，不得猜名称。
-9. executable 和 profile 是一个不可拆分的路由值。徐啸的隔离 wrapper 只能用于徐啸，禁止执行 `/root/clawd-zenithjoy-owner/.cli/bin/lark-cli --profile yujin` 或 `/root/clawd-zenithjoy-owner/.cli/bin/lark-cli --profile suyanqing`。
+9. executable 和 profile 是一个不可拆分的路由值。徐啸的隔离 wrapper 只能用于徐啸，禁止执行 `/Users/administrator/openclaw-root/workspaces-root/clawd-zenithjoy-owner/.cli/bin/lark-cli --profile yujin` 或 `/Users/administrator/openclaw-root/workspaces-root/clawd-zenithjoy-owner/.cli/bin/lark-cli --profile suyanqing`。
 10. **强制身份预检（写操作前必做，不可省略）**：任何 `dws` 或 `lark-cli` 写操作（发消息、建文档、改内容等）之前，必须先用**同一个 executable/profile 组合**跑一次身份校验命令（`dws auth status` 或对应 `lark-cli whoami`），并且把返回的 `user_name`（或飞书身份字段）与本次任务的目标人姓名逐字比对：
     - 完全一致 → 才可以继续执行写操作。
     - 不一致、缺失、或校验命令本身失败 → 立即停止，不得执行写操作，必须直接告知用户"身份校验未通过，本次操作已中止"，禁止用任何理由继续执行或事后补救。
@@ -119,5 +119,5 @@ description: "悦升云端统一入口：按认证发送者和真实数据源决
 - Router 仅可按 `zenithjoy-office-operator` 直接使用已登记成员的飞书/DWS CLI和通用文档工具；禁止跨成员、跨租户使用凭据。
 - Router 不直接使用 AFFiNE MCP；明确的 AFFiNE 任务仍委派 `affine-yuesheng`。普通飞书、钉钉或附件任务不得委派给它。
 - 下游任务必须携带 `tenant_id=zenithjoy`、`source_channel=feishu`、原始请求和路由结果。
-- Social 请求必须继续携带 `manager_agent_id=social-media-manager`，由 Manager 再加载 ZenithJoy Profile 并调用 `social-leadgen-workflow`；Router 不得直接调用手机 Worker。
+- Social 请求必须继续携带 `manager_agent_id=zenithjoy-ecommerce`（`social-media-manager` 角色的当前实际承担方，专属 Agent 未独立注册前不得写成一个并不存在的 agent id），由该 Agent 再加载 ZenithJoy Profile 并调用 `social-leadgen-workflow`；Router 不得直接调用手机 Worker。
 - `AFFiNE 悦升` 与 `AFFiNE 金诺` 永远是两个不同目标；不能因为关键词相似而跨空间尝试。

@@ -18,7 +18,7 @@ description: "Run an end-to-end Douyin reference-video job through OpenClaw → 
 完整任务不能塞进一个 Agent 回合。Gateway 单轮约 630 秒会超时并触发 fresh fallback，可能重复启动 App。父 Agent 只负责编排，必须先初始化持久状态，然后通过 `sessions_spawn` 把阶段交给独立子任务。每一次 `sessions_spawn` 都必须显式传 `model: "gpt-5.6-luna"`、`thinking: "low"`、`runTimeoutSeconds: 480`，并让 `task` 或 `label` 带上 job_id 和阶段名；不得省略 `model` 后继承系统默认模型，也不得使用 Sol。父 Agent 等待自动 completion event；无事件时调用 `sessions_yield`，不要轮询。
 
 ```bash
-/usr/local/bin/node /root/clawd-media/skills/douyin-reference-capture-phone/scripts/job-state.mjs init \
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/job-state.mjs init \
   --job-dir <gateway-job-dir> --job-id <job_id> --topic <topic>
 ```
 
@@ -34,24 +34,24 @@ description: "Run an end-to-end Douyin reference-video job through OpenClaw → 
 任何会操作手机的 `discovery` 或 `acquisition` 子任务，开始前必须取得全局手机锁，结束（含 blocked/failed）时释放。拿不到锁就退出并保留 pending，不能与另一会话抢手机：
 
 ```bash
-/usr/local/bin/node /root/clawd-media/skills/douyin-reference-capture-phone/scripts/phone-lock.mjs acquire --job-id <job_id> --stage <stage>
-/usr/local/bin/node /root/clawd-media/skills/douyin-reference-capture-phone/scripts/phone-lock.mjs release --job-id <job_id>
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/phone-lock.mjs acquire --job-id <job_id> --stage <stage>
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/phone-lock.mjs release --job-id <job_id>
 ```
 
 ```bash
-/usr/local/bin/node /root/clawd-media/skills/douyin-reference-capture-phone/scripts/job-state.mjs set \
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/job-state.mjs set \
   --job-dir <gateway-job-dir> --stage discovery --status running
 ```
 
 ## 固定运行环境
 
 - 手机控制节点：`XIAN-M4-PHONE`
-- 工作手机绑定：读取 `/root/clawd-media/config/douyin-phone.json`；当前生产设备为 USB `ANGYVB4402004137`（`MAA_AN00`）
+- 工作手机绑定：读取 `/Users/administrator/openclaw-root/workspaces-root/clawd-media/config/douyin-phone.json`；当前生产设备为 USB `ANGYVB4402004137`（`MAA_AN00`）
 - ADB：`/opt/homebrew/bin/adb`
 - 手机工件目录：`/private/tmp/openclaw-phone/<job_id>/`
-- Gateway Skill：`/root/clawd-media/skills/douyin-reference-capture-phone/`
+- Gateway Skill：`/Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/`
 - ASR：`gemini-2.5-flash-lite-official`，通过 Gateway 上的 ToAPIs 兼容接口调用
-- ASR 密钥：只从 `TOAPIS_API_KEY` 或 `/root/.openclaw/credentials/toapis-api-key` 读取，绝不打印或写入工件
+- ASR 密钥：只从 `TOAPIS_API_KEY` 或 `/Users/administrator/.openclaw/credentials/toapis-api-key` 读取，绝不打印或写入工件
 - 手机操作、阶段编排、校对、结构分析和原创改写：`gpt-5.6-luna`；所有阶段子任务均在 `sessions_spawn` 中显式指定，禁止默认回落到 Sol
 - 队列与交付：飞书多维表格 + 飞书文档；字段约定见 `references/feishu-queue.md`
 
@@ -67,7 +67,7 @@ description: "Run an end-to-end Douyin reference-video job through OpenClaw → 
 - **直链模式**：用户消息中含 `douyin.com`、`v.douyin.com`、`iesdouyin.com` 的视频链接或抖音分享文本；只处理该视频，不再搜索相似候选。先运行：
 
 ```bash
-/usr/local/bin/node /root/clawd-media/skills/douyin-reference-capture-phone/scripts/normalize-input.mjs \
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/normalize-input.mjs \
   --input <用户原始消息> --output <job-dir>/normalized-input.json
 ```
 
@@ -90,7 +90,7 @@ description: "Run an end-to-end Douyin reference-video job through OpenClaw → 
 
 1. 生成 `job_id`，格式 `dyref-YYYYMMDD-HHMMSS`。
 2. 先运行 `normalize-input.mjs`。若 `mode=direct_url`，保存原始链接、解析后链接、视频 ID 和 App URI；若 `mode=topic`，保存主题文本。
-3. 读取 `/root/clawd-media/config/douyin-phone.json`，再单独执行 `/opt/homebrew/bin/adb devices -l`。只使用配置中的 `adb_serial`，并核对 `expected_model`。多个 ADB 端点可能是同一手机的 USB/网络镜像，不能选择列表第一台，也不能自动改用另一台。绑定设备离线时报告阻塞。
+3. 读取 `/Users/administrator/openclaw-root/workspaces-root/clawd-media/config/douyin-phone.json`，再单独执行 `/opt/homebrew/bin/adb devices -l`。只使用配置中的 `adb_serial`，并核对 `expected_model`。多个 ADB 端点可能是同一手机的 USB/网络镜像，不能选择列表第一台，也不能自动改用另一台。绑定设备离线时报告阻塞。
 4. 单独截图、拉回并视觉确认是抖音 App。若是登录、验证码、风控或账号切换页，停止。
 5. 创建或读取飞书队列；主题模式状态设为 `searching`，直链模式设为 `opening`。
 
@@ -136,10 +136,10 @@ description: "Run an end-to-end Douyin reference-video job through OpenClaw → 
 在 Mac 上用 `/opt/homebrew/bin/ffmpeg` 从 Mac 本地原视频提取 16 kHz、单声道 WAV，并按 30 秒切片。不要在 Gateway 上调用 ffmpeg、ffprobe 或拼接视频。每个 segment 记录 `segment_id`、`source_start`、`source_end`、`status`、`attempt_count`、`local_path`、`gateway_path`。只重试失败片段。Gateway 没有 Python；不要用 Python heredoc 或 node-scoped `file_write` 创建 Gateway manifest，使用随 Skill 部署的 Node 脚本：
 
 ```bash
-/usr/local/bin/node /root/clawd-media/skills/douyin-reference-capture-phone/scripts/manifest.mjs init \
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/manifest.mjs init \
   --manifest <job-dir>/segments.json --job-id <job_id>
 
-/usr/local/bin/node /root/clawd-media/skills/douyin-reference-capture-phone/scripts/manifest.mjs upsert \
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/manifest.mjs upsert \
   --manifest <job-dir>/segments.json --segment-id <segment_id> \
   --source-start <seconds> --source-end <seconds> --status transcribed \
   --transcript-path <path> --result-path <path>
@@ -150,7 +150,7 @@ description: "Run an end-to-end Douyin reference-video job through OpenClaw → 
 逐个用 `file_fetch` 把切片传回 Gateway，然后在 Gateway 执行：
 
 ```bash
-/usr/local/bin/node /root/clawd-media/skills/douyin-reference-capture-phone/scripts/transcribe-gemini.mjs \
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/transcribe-gemini.mjs \
   --input <gateway-wav-path> \
   --output-dir <gateway-segment-output-dir> \
   --segment-id <segment_id> \
@@ -162,7 +162,7 @@ description: "Run an end-to-end Douyin reference-video job through OpenClaw → 
 全部片段完成后执行：
 
 ```bash
-/usr/local/bin/node /root/clawd-media/skills/douyin-reference-capture-phone/scripts/merge-transcripts.mjs \
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/merge-transcripts.mjs \
   --manifest <segments.json> \
   --output-dir <merged-output-dir>
 ```

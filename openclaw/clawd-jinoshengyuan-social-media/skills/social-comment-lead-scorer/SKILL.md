@@ -10,7 +10,7 @@ description: "Use Luna to score every collected social comment in bounded batche
 写到这个确定路径：
 
 ```
-/root/clawd-work-commander/state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json
+/Users/administrator/openclaw-root/workspaces-root/clawd-work-commander/state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json
 ```
 
 这条路径是可写的（0913 实证：preflight 第 3 次正是靠它写成、Commander 读到、阶段才通过）。
@@ -58,7 +58,7 @@ description: "Use Luna to score every collected social comment in bounded batche
 | `spam` | 营销引流、机器重复或异常广告 | 否 |
 | `review` | 证据不足或语义无法可靠判断 | 否 |
 
-每条输出 `category`、`score_0_100`、`confidence`、`reason`、`audience_match`、`candidate_for_delivery`和原始证据引用。不使用单一关键词命中替代语义判断。
+每条输出 `category`、`score_0_100`、`confidence`、`reason`、`audience_match`、`candidate_for_delivery`和原始证据引用。不使用单一关键词命中替代语义判断。`score_0_100` 仅供排序参考，下游判定一律以 `category` 为准；二者不一致时以 `category` 为准。
 
 ## 输出与回写
 

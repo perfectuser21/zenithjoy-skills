@@ -45,7 +45,7 @@ description: "Exhaust platform-visible comments inside the configured date windo
 写到这个确定路径：
 
 ```
-/root/clawd-work-commander/state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json
+/Users/administrator/openclaw-root/workspaces-root/clawd-work-commander/state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json
 ```
 
 这条路径是可写的（0913 实证：preflight 第 3 次正是靠它写成、Commander 读到、阶段才通过）。
@@ -105,7 +105,7 @@ description: "Exhaust platform-visible comments inside the configured date windo
 
 - `video_id`、`batch_no`、`batch_size`、`new_comments`、`total_comments_collected`；
 - `next_cursor`、`exhausted`、`exhaustion_reason`、`oldest_comment_observed_at`；
-- 评论原文、评论者显示名、稳定用户标识/主页标识、评论 ID、视频 ID、发布时间和截图证据；
+- 评论原文、评论者显示名、现场读回的稳定抖音号 `douyin_id`、评论 ID、视频 ID、发布时间和截图证据；
 - 已写入原始池的稳定 `raw_comment_id` 和回读证据。
 
 评论列表即使有数千或数万条，也不得一次性放入模型上下文。只按批次读取、写入和恢复。
@@ -114,6 +114,7 @@ description: "Exhaust platform-visible comments inside the configured date windo
 
 - 每次进入评论区后验收评论列表可见、输入框未聚焦、软键盘未弹出。
 - 必须从当前截图或可访问性树重新定位评论入口，不复用过期坐标。
+- 对每条准备写入原始池的评论，必须通过已登记适配器的评论者身份语义命令打开该评论者主页，读回显示名和“抖音号”，再返回同一评论上下文；只有昵称而无 `douyin_id` 的对象保留为不可触达证据，不得在后续搜索或私信。
 - 禁止点赞、关注、回复、私信、输入文字或发送。
 - 验证码、登录挑战、账号/设备不匹配、来电、风控或对外互动风险时立即停止并保留游标。
 
@@ -126,6 +127,10 @@ description: "Exhaust platform-visible comments inside the configured date windo
 ## Runtime 写入栅栏与输出
 
 当 `orchestrator=n8n` 时不得召唤 Commander、其他 Agent 或下一阶段。只处理本节点输入并回传相同的执行身份、阶段、幂等键和 `task_request_hash`；由 n8n 验收并推进。`contract_test` 只验证合同，不操作手机、不读取评论、不写原始池。
+
+### 不可变身份回显
+
+`WORKER_RESULT` 中的 `run_id`、`attempt_id`、`execution_id`、`object_id`、`workflow_id`、`worker_agent_id`、`lease_id`、`stage_id`、`stage_attempt`、`idempotency_key` 和 `task_request_hash` 必须从 Commander 传入值逐字符复制。禁止推导、截断、缩写、重组、正则提取或只保留 nonce/后缀。输出前必须逐字段与输入原值做完全相等自检；任一字符不同时先更正，不得发出结果。本条同样适用于 `contract_test`。
 
 - 每次更新本地工件前申请 `artifact_write`；每批写原始池前申请 `raw_comment_insert`。
 - 每个授权回执只覆盖紧随其后的同一批写入。
