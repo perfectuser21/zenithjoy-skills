@@ -1,0 +1,5 @@
+interface:
+  display_name: "Shopify 商业运营器"
+  short_description: "Validate experiments and safely create Shopify drafts"
+  default_prompt: "Use $shopify-commerce-operator to verify Shopify access and turn an approved product experiment into a safe draft product."
+

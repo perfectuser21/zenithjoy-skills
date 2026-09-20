@@ -1,0 +1,7 @@
+{
+  "tenant_id": "zenithjoy",
+  "content_object_id": "system-check-tiktok",
+  "platform": "tiktok",
+  "delivery_mode": "draft",
+  "action": "status"
+}

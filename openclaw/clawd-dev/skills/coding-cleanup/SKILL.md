@@ -20,7 +20,7 @@ description: "Coding harness stage `cleanup`（清理）worker for the V4 Comman
 本阶段收尾桥接资源，不派容器：对上下文里出现过的每个共享桥接 run（candidate_coordinates.bridge_run_id 等）：
 
 ```bash
-. /root/clawd-dev/.brain-bridge.env
+. /Users/administrator/openclaw-root/workspaces-root/clawd-dev/.brain-bridge.env
 curl -s -m 30 -X POST "$BRAIN_BRIDGE_URL/api/brain/harness/attempt-run/close" \
   -H "Authorization: Bearer $BRAIN_INTERNAL_TOKEN" -H "Content-Type: application/json" \
   -d '{"run_id":"<bridge_run_id>"}'

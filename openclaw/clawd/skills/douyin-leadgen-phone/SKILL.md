@@ -68,11 +68,11 @@ description: "通过 XIAN-M4-PHONE 的 adb 操控已登录抖音 App，按飞书
 
 ### 2. 读取配置
 
-飞书脚本位于 OpenClaw 容器，不在 M4。必须调用工具名为 `bash` 的网关本地执行工具，并以 `/root/clawd-media` 为 cwd；禁止用 `node_exec` 或 `exec host=node` 运行飞书脚本。使用下面两个完整命令读取关键词表和线索表，参数为位置参数，禁止改成 flags，也禁止无参数运行脚本：
+飞书脚本位于 OpenClaw 容器，不在 M4。必须调用工具名为 `bash` 的网关本地执行工具，并以 `/Users/administrator/openclaw-root/workspaces-root/clawd-media` 为 cwd；禁止用 `node_exec` 或 `exec host=node` 运行飞书脚本。使用下面两个完整命令读取关键词表和线索表，参数为位置参数，禁止改成 flags，也禁止无参数运行脚本：
 
 ```text
-node /root/clawd-media/skills/douyin-leadgen-phone/scripts/feishu-bitable.mjs list H3OrbAH49aLNebs7XvOcpS1enec tblyKCp5vc7y2S40
-node /root/clawd-media/skills/douyin-leadgen-phone/scripts/feishu-bitable.mjs list SMxlbynYqapWwWsBguzcmonkn2c tbltRdCwVMBNT40P
+node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-leadgen-phone/scripts/feishu-bitable.mjs list H3OrbAH49aLNebs7XvOcpS1enec tblyKCp5vc7y2S40
+node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-leadgen-phone/scripts/feishu-bitable.mjs list SMxlbynYqapWwWsBguzcmonkn2c tbltRdCwVMBNT40P
 ```
 
 筛选启用项，按业务线和优先级应用本轮轮换。没有启用关键词时正常结束。
@@ -100,7 +100,7 @@ Deeplink 有时只把关键词填进搜索框，不会自动提交。如果截�
 按“抖音昵称/主页链接”查重。不存在时用下面的完整形式写入线索表，状态设为“待触达”，同时保存业务线、命中关键词、评论原文和判断理由：
 
 ```text
-node /root/clawd-media/skills/douyin-leadgen-phone/scripts/feishu-bitable.mjs create SMxlbynYqapWwWsBguzcmonkn2c tbltRdCwVMBNT40P '<FIELDS_JSON>'
+node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-leadgen-phone/scripts/feishu-bitable.mjs create SMxlbynYqapWwWsBguzcmonkn2c tbltRdCwVMBNT40P '<FIELDS_JSON>'
 ```
 
 写入后重新读取并核验。

@@ -40,7 +40,7 @@ description: "Discover, link, and deduplicate platform-visible social videos by 
 写到这个确定路径：
 
 ```
-/root/clawd-work-commander/state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json
+/Users/administrator/openclaw-root/workspaces-root/clawd-work-commander/state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json
 ```
 
 这条路径是可写的（0913 实证：preflight 第 3 次正是靠它写成、Commander 读到、阶段才通过）。
@@ -153,7 +153,7 @@ description: "Discover, link, and deduplicate platform-visible social videos by 
 
 旧 Commander 兼容模式必须在 Worker 任务中传入 `run_id`、`attempt_id`、`execution_id`、`lease_id`、`worker_agent_id`、`stage_id=discovery`、`stage_attempt`、完整 frozen `task_request`、`task_request_hash` 和 `write_guard.command`。写入或替换发现工件前调用一次 `artifact_write` 授权；授权失败时不得写文件，并返回 stale/fenced 的失败结果。最终 `WORKER_RESULT` 必须带上相同 `task_request_hash` 以及授权回执中的 `fence_token` 与 `commander_event_id`。
 
-正式模式的 discovery 工件和 guard receipt 必须写到 Commander 可读的网关侧绝对路径 `/root/clawd-work-commander/artifacts/discovery/`。**写入必须用 OpenClaw 的文件写工具（write/edit，它们落在网关侧文件系统）；严禁用 exec 在执行节点上写**——exec 跑在远程节点（如 XIAN-M4-PHONE），节点上不存在 `/root/clawd-work-commander`，会得到 read-only/ENOENT（0912 实证：attempt2 用 exec 写失败，attempt3 改用文件工具写即 accepted）。禁止返回 `artifacts/...` 相对路径或只在 Worker Session 中存在的临时路径。先用文件工具创建该精确目录，再执行 `write_guard.command`，把完整授权回执写成与工件同 basename 的 `.guard.json`，随后写发现 JSON；两者都必须立即按绝对路径回读并验证非空、`task_request_hash` 与当前执行一致、guard 的 `commander_event_id` / `fence_token` 与本阶段授权一致。最终 `artifacts` 和 `write_fences` 只能列这些已回读的绝对路径；Commander 读不到任一路径时不得声称 completed。
+正式模式的 discovery 工件和 guard receipt 必须写到 Commander 可读的网关侧绝对路径 `/Users/administrator/openclaw-root/workspaces-root/clawd-work-commander/artifacts/discovery/`。**写入必须用 OpenClaw 的文件写工具（write/edit，它们落在网关侧文件系统）；严禁用 exec 在执行节点上写**——exec 跑在远程节点（如 XIAN-M4-PHONE），节点上不存在 `/Users/administrator/openclaw-root/workspaces-root/clawd-work-commander`，会得到 read-only/ENOENT（0912 实证：attempt2 用 exec 写失败，attempt3 改用文件工具写即 accepted）。禁止返回 `artifacts/...` 相对路径或只在 Worker Session 中存在的临时路径。先用文件工具创建该精确目录，再执行 `write_guard.command`，把完整授权回执写成与工件同 basename 的 `.guard.json`，随后写发现 JSON；两者都必须立即按绝对路径回读并验证非空、`task_request_hash` 与当前执行一致、guard 的 `commander_event_id` / `fence_token` 与本阶段授权一致。最终 `artifacts` 和 `write_fences` 只能列这些已回读的绝对路径；Commander 读不到任一路径时不得声称 completed。
 
 `stage_id=discovery` 无论返回 `completed | blocked | failed`，都严禁调用 `close-app` 或 `lock-release`；非 cleanup Worker 没有清理权，必须把 App 和同 run 锁留给编排器。若 `stage_attempt > 1` 且上一个 discovery Worker 违规导致同 run 锁为 free，本次允许且仅允许一次同 `run_id` 恢复：运行 `preflight`、`lock-acquire <run_id>`、`open-app` 并重新验收设备/通话；账号身份若本 run 的 preflight 阶段已验证且期间锁从未被其他 owner 持有，视为仍然有效，**禁止为复核账号而离开当前搜索上下文导航到账号页**（搜索结果页导航去「我」页失败率高，是已知死因）。然后继续当前 discovery；不得抢占其他 owner 的锁。这不是新的 preflight 阶段，不改动 n8n 阶段和裁决协议，只是对上一次违规清理的同阶段安全恢复。
 

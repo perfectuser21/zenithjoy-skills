@@ -43,7 +43,7 @@ description: 识别并操作已部署的 OPC OpenClaw 远程系统，先核对 G
 - `fde`：需求发现、方案、评测、交付和验收。
 - `dev`：研发、测试、Skill/连接器和技术文档。
 - `infra`：Gateway、节点、容器、网络、备份、监控和安全。
-- `main` 已有 `taskflow-router` 与 `task-progress-card`；`taskflow-router` 的远程参考路径是 `/root/clawd/skills/taskflow-router/SKILL.md`。
+- `main` 已有 `taskflow-router` 与 `task-progress-card`；`taskflow-router` 的远程参考路径是 `/Users/administrator/openclaw-root/workspaces-root/clawd/skills/taskflow-router/SKILL.md`。
 - `main` 已有 `opc-morning-brief`，会调用五个专业 Agent 采集证据。
 - 媒体侧已有 `douyin-leadgen-phone` 与 `douyin-reference-capture-phone` 等 Skill；涉及手机、账号、飞书写入时必须遵守其设备绑定和审批边界。
 
@@ -82,7 +82,7 @@ description: 识别并操作已部署的 OPC OpenClaw 远程系统，先核对 G
 - 验收命令或可观察证据；
 - 与已有 Skill 的复用关系，避免重复造轮子。
 
-本 Skill 的 canonical 本地路径是 `/Users/XX/.codex/skills/opc-openclaw-context/SKILL.md`。如果要让行康服务器上的 OpenClaw 使用它，必须另行把同一版本写入远程 Gateway 的 `/root/clawd/skills/opc-openclaw-context/SKILL.md`，并回读验证；本地存在不等于远程已安装。
+本 Skill 的 canonical 本地路径是 `/Users/XX/.codex/skills/opc-openclaw-context/SKILL.md`。如果要让行康服务器上的 OpenClaw 使用它，必须另行把同一版本写入远程 Gateway 的 `/Users/administrator/openclaw-root/workspaces-root/clawd/skills/opc-openclaw-context/SKILL.md`，并回读验证；本地存在不等于远程已安装。
 
 ### 远程变更
 
@@ -99,7 +99,7 @@ description: 识别并操作已部署的 OPC OpenClaw 远程系统，先核对 G
 任何修改 Gateway 配置、替换容器或执行重启前，必须先运行：
 
 ```bash
-docker exec openclaw-gateway node /root/clawd/skills/opc-openclaw-context/scripts/check-gateway-maintenance.mjs
+docker exec openclaw-gateway node /Users/administrator/openclaw-root/workspaces-root/clawd/skills/opc-openclaw-context/scripts/check-gateway-maintenance.mjs
 ```
 
 - 命令发现任一 `Work Commander` ledger 尚未写入不可变 `terminal` 时，退出码为 `2`；此时禁止重启、替换或停止 Gateway，等待流程结束或进入明确的协调维护窗口。

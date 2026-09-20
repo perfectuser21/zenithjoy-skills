@@ -20,7 +20,7 @@ description: "Coding harness stage `merge`（合并）worker for the V4 Commande
 本阶段执行**已获人审批准**的合并（Brain ≥1.273.169，决策 3d7d64e1）。前提铁律：STAGE_REQUEST 上下文必须含 `human_approval.approved: true`（画布人审恢复注入）——没有它=人没批，回 `blocked human_approval_missing`，绝不合并。
 
 ```bash
-. /root/clawd-dev/.brain-bridge.env
+. /Users/administrator/openclaw-root/workspaces-root/clawd-dev/.brain-bridge.env
 curl -s -m 60 -X POST "$BRAIN_BRIDGE_URL/api/brain/harness/attempt-run/merge-pr" \
   -H "Authorization: Bearer $BRAIN_INTERNAL_TOKEN" -H "Content-Type: application/json" \
   -d '{"pr_number": <published_pr.pr_number>, "head_sha": "<published_pr.head_sha（人审卡片上批的那个头）>"}'

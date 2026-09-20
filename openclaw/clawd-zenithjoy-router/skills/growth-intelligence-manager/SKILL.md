@@ -17,7 +17,7 @@ description: 统筹悦升云端增长情报部：读取企业档案，分派公�
 
 ## 当前编制
 
-第一阶段只启用 `open-web-intelligence`，执行 Agent 为 `zenithjoy-shared-research`。其余 Worker 按顺序逐步接入：抖音关键词、抖音对标账号、技术前沿、GEO/SEO、市场竞品机会。
+第一阶段只启用 `open-web-intelligence`，执行 Agent 为 `zenithjoy-shared-research`。其余5个 Worker（抖音关键词、抖音对标账号、技术前沿、GEO/SEO、市场竞品机会）**尚未实现**，按此顺序逐步接入；在各自接入前调用会失败，不要假设它们已可用。
 
 ## 输入
 

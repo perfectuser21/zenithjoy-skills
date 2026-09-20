@@ -20,7 +20,7 @@ description: "Coding harness stage `seal`（封印）worker for the V4 Commander
 本阶段调 Brain 的机械封印端点（Brain ≥1.273.159），不派发执行容器、不改任何文件：
 
 ```bash
-. /root/clawd-dev/.brain-bridge.env
+. /Users/administrator/openclaw-root/workspaces-root/clawd-dev/.brain-bridge.env
 curl -s -m 120 -X POST "$BRAIN_BRIDGE_URL/api/brain/harness/attempt-run/contract-seal" \
   -H "Authorization: Bearer $BRAIN_INTERNAL_TOKEN" -H "Content-Type: application/json" \
   -d '{"run_id":"<contract 阶段共享的桥接 run_id>","sprint_dir":"<同 contract 阶段>","branch":"<reviewer APPROVED 那版合同所在分支>","approved_sha":"<该分支被批准时的 40 位头 sha>"}'

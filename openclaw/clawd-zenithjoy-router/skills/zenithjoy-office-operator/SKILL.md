@@ -15,15 +15,15 @@ description: "秋米按认证发送者选择悦升成员的个人 CLI，直接�
 
 | 人员 | 认证身份 | 飞书入口 | 钉钉入口 |
 |---|---|---|---|
-| 徐啸 | Feishu `ou_b55157edaba4755ba081121b26989eb2` | `/root/clawd-zenithjoy-owner/.cli/bin/lark-cli` | `/root/clawd-zenithjoy-owner/.cli/bin/dws` |
-| 于瑾 | Feishu `ou_09604ed82e6ad2b3f67b7bfce4988961`；DingTalk `0203574007653232` | `/usr/local/bin/lark-cli --profile yujin` | `/root/clawd-zenithjoy-yujin/.cli/bin/dws` |
-| 苏彦卿 | Feishu `ou_4f507879ba4f29bc1e36aa72caee1e81`；DingTalk `056841303232959464` | `/usr/local/bin/lark-cli --profile suyanqing` | `/root/clawd-zenithjoy-suyanqing/.cli/bin/dws` |
+| 徐啸 | Feishu `ou_b55157edaba4755ba081121b26989eb2` | `/Users/administrator/openclaw-root/workspaces-root/clawd-zenithjoy-owner/.cli/bin/lark-cli` | `/Users/administrator/openclaw-root/workspaces-root/clawd-zenithjoy-owner/.cli/bin/dws` |
+| 于瑾 | Feishu `ou_09604ed82e6ad2b3f67b7bfce4988961`；DingTalk `0203574007653232` | `/usr/local/bin/lark-cli --profile yujin` | `/Users/administrator/openclaw-root/workspaces-root/clawd-zenithjoy-yujin/.cli/bin/dws` |
+| 苏彦卿 | Feishu `ou_4f507879ba4f29bc1e36aa72caee1e81`；DingTalk `056841303232959464` | `/usr/local/bin/lark-cli --profile suyanqing` | `/Users/administrator/openclaw-root/workspaces-root/clawd-zenithjoy-suyanqing/.cli/bin/dws` |
 
 徐啸的办公任务也由秋米直接检查上述两个个人 wrapper，不为普通飞书、钉钉或附件任务委派个人 Agent。当前徐啸飞书 wrapper 未绑定、DWS 登录已撤销时，应直接报告这两个真实状态；不得借用于瑾、苏彦卿、全局 `opc-main` 或其他共享凭据。
 
 身份未知时停止个人 CLI 操作。写操作不得降级成共享账号、其他成员或默认 profile。`user-default` 是 `lark-cli config bind` 的身份预设，不是 profile 名；禁止执行 `lark-cli --profile user-default ...`，也禁止发明 `owner`、`xuxiao`、`main` 等未由 `profile list` 返回的 profile。
 
-飞书表中的 executable 和 profile 是一个不可拆分的路由值，必须原样使用。徐啸的隔离 wrapper 只能处理徐啸身份；禁止把 `/root/clawd-zenithjoy-owner/.cli/bin/lark-cli` 与 `yujin` 或 `suyanqing` profile 组合。于瑾的只读预检命令固定为 `/usr/local/bin/lark-cli --profile yujin whoami`，苏彦卿则固定为 `/usr/local/bin/lark-cli --profile suyanqing whoami`。
+飞书表中的 executable 和 profile 是一个不可拆分的路由值，必须原样使用。徐啸的隔离 wrapper 只能处理徐啸身份；禁止把 `/Users/administrator/openclaw-root/workspaces-root/clawd-zenithjoy-owner/.cli/bin/lark-cli` 与 `yujin` 或 `suyanqing` profile 组合。于瑾的只读预检命令固定为 `/usr/local/bin/lark-cli --profile yujin whoami`，苏彦卿则固定为 `/usr/local/bin/lark-cli --profile suyanqing whoami`。
 
 于瑾和苏彦卿的 profile 已固定为 bot-only；除 `whoami` 外，两人的所有飞书产品命令都必须显式加 `--as bot`。这条成员级身份约束覆盖 `lark-base` 等通用 Skill 的“优先 `--as user`”建议；不得先试 `--as user`、失败后再降级为 bot。
 
@@ -79,7 +79,7 @@ description: "秋米按认证发送者选择悦升成员的个人 CLI，直接�
 只读取当前 workspace `media/inbound/` 下、由 OpenClaw 在本次或同一群最近上下文提供的 `MediaPath`/`MediaPaths`：
 
 ```bash
-node /root/clawd-zenithjoy-router/skills/zenithjoy-office-operator/scripts/extract-office.mjs '<MediaPath>'
+node /Users/administrator/openclaw-root/workspaces-root/clawd-zenithjoy-router/skills/zenithjoy-office-operator/scripts/extract-office.mjs '<MediaPath>'
 ```
 
 - 支持 `.pdf`、`.docx`、`.xlsx`、`.xls`、`.csv`、`.txt`、`.md`。
@@ -87,7 +87,7 @@ node /root/clawd-zenithjoy-router/skills/zenithjoy-office-operator/scripts/extra
 - 解析结果直接用于摘要、提炼、分类、改写或表格汇总，不派工、不建任务卡。
 - 不读取用户在文字中自行提供的任意服务器路径，不遍历目录，不修改原附件。
 - 未 `@秋米` 的文件消息只进入会话并输出 `NO_REPLY`；后续回复该文件并 `@秋米` 后再处理。
-- 用户说“上面的文件”“刚才的附件”时，先检查当前/最近同群上下文是否包含 `MediaPath`/`MediaPaths`。如果当前或最近同群附件记录明确带有飞书系统生成的 `[message_id: om_...]` 和 `[feishu attachment unavailable]`，不得立刻要求用户重发；先调用 `lark-cli im +messages-mget --as bot --profile opc-main --message-ids '<附件消息的 message_id>' --no-reactions` 读取这条消息的文件名、`file_key`、群 ID 与发送者，再从 `/root/clawd-zenithjoy-router/media/inbound/` 执行 `lark-cli im +messages-resources-download --as bot --profile opc-main --message-id '<附件消息的 message_id>' --file-key '<file_key>' --type file --output './recovered-<message_id>.<原扩展名>'`。禁止在此兜底流程中使用 `--download-resources`，因为线程消息会展开并下载同一线程里的其他附件。`opc-main` 在这里仅作为秋米应用的附件传输身份，不得用于个人云空间读写。
+- 用户说“上面的文件”“刚才的附件”时，先检查当前/最近同群上下文是否包含 `MediaPath`/`MediaPaths`。如果当前或最近同群附件记录明确带有飞书系统生成的 `[message_id: om_...]` 和 `[feishu attachment unavailable]`，不得立刻要求用户重发；先调用 `lark-cli im +messages-mget --as bot --profile opc-main --message-ids '<附件消息的 message_id>' --no-reactions` 读取这条消息的文件名、`file_key`、群 ID 与发送者，再从 `/Users/administrator/openclaw-root/workspaces-root/clawd-zenithjoy-router/media/inbound/` 执行 `lark-cli im +messages-resources-download --as bot --profile opc-main --message-id '<附件消息的 message_id>' --file-key '<file_key>' --type file --output './recovered-<message_id>.<原扩展名>'`。禁止在此兜底流程中使用 `--download-resources`，因为线程消息会展开并下载同一线程里的其他附件。`opc-main` 在这里仅作为秋米应用的附件传输身份，不得用于个人云空间读写。
 - 恢复附件后必须核对消息返回的 `sender.id` 等于当前认证 `senderId`、文件名与当前或被回复的附件一致，且 `resources[].local_path` 仍在 `media/inbound/` 下；校验通过才可读取、同步或转换。恢复失败时报告真实错误（权限、文件失效、超限或格式不支持），不得笼统声称“没有收到附件”，也不得无条件要求用户反复重发。
 
 ### 飞书

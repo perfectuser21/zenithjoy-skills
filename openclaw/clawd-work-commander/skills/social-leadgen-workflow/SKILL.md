@@ -10,7 +10,7 @@ description: "Define the n8n-owned, task-contract-driven social-video lead-gener
 写到这个确定路径：
 
 ```
-/root/clawd-work-commander/state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json
+/Users/administrator/openclaw-root/workspaces-root/clawd-work-commander/state/workflow-runs/<run_id>__<attempt_id>.<stage_id>.<stage_attempt>.worker-result.json
 ```
 
 这条路径是可写的（0913 实证：preflight 第 3 次正是靠它写成、Commander 读到、阶段才通过）。
@@ -36,7 +36,15 @@ description: "Define the n8n-owned, task-contract-driven social-video lead-gener
 
 把一次任务编排为五个可恢复业务阶段，不直接包含公司、账号、设备、表格或平台命令。
 
-这是一个由 n8n 持有唯一流程状态的 Workflow Package。n8n 读取并验证 [workflow-manifest.json](references/workflow-manifest.json)，为每个阶段创建独立 OpenClaw Agent 节点，负责顺序、超时、重试、卡片、Cleanup 和终态。本业务 Agent 只执行一个有界阶段，不得召唤其他 Agent，也不得自行推进 Workflow。启用 `commander_supervision` 后，每个阶段由 n8n 请求 `work-commander` 监工执行：Commander 负责 spawn 有界 Worker、验收证据并返回封闭词表 verdict；n8n 仍持有阶段顺序、重试计数与卡片。`work-commander` 同时保留为开放式复杂任务的回退节点。
+这是一个由 n8n 持有唯一流程状态的 Workflow Package。n8n 读取并验证 [workflow-manifest.json](references/workflow-manifest.json)，为每个阶段创建独立 OpenClaw Agent 节点，负责顺序、超时、重试、卡片、Cleanup 和终态。谁能推进阶段、谁持有终态，按下面两个互斥子模式区分：
+
+### 直连模式（n8n 直调 Worker）
+
+manifest 的 `orchestrator` 未启用 `commander_supervision` 时适用。本业务 Agent 只执行一个有界阶段，不得召唤其他 Agent，也不得自行推进 Workflow；n8n 直接持有阶段顺序、重试计数、卡片与终态。
+
+### commander_supervision 模式（n8n → Commander → Worker）
+
+manifest 的 `orchestrator` 对象 `commander_supervision.enabled=true` 时适用。每个阶段由 n8n 请求 `work-commander` 监工执行：Commander 负责 spawn 有界 Worker、验收证据并返回封闭词表 verdict；Commander 不选择下一阶段，n8n 仍持有阶段顺序、重试计数与卡片投影。`work-commander` 同时保留为开放式复杂任务的回退节点。
 
 ## 输入合同
 
