@@ -1,0 +1,91 @@
+--- /Users/jinnuoshengyuan/.local/bin/douyin-phone-adb	2026-09-15 13:58:12
++++ /Users/jinnuoshengyuan/.local/bin/douyin-phone-adb.dev-accountid	2026-09-20 21:56:38
+@@ -1916,7 +1916,88 @@
+     print -- "state=device"
+     print -- "call_state=$(call_state)"
+     print -- "foreground=$(foreground_package)"
++    ;;
++  account-identity)
++    # 新增(0920 目标架构 preflight账号核验 + 视频上传者身份过滤，同一个命令服务两个用途):
++    # 读取"当前这个 UserProfileActivity 页面"（可以是自己的"我"页，也可以是别人的主页）
++    # 的 抖音号/昵称。真机实测验证：resource-id 在自己主页和他人主页上完全一致。
++    # 调用方职责：先导航到目标 profile 页（自己"我"tab 或点开某个作者主页），再调本命令读身份，
++    # 由调用方自己决定这个身份是否等于目标账号 / 是否命中自有小号名单。本命令不做业务判断。
++    [[ "$#" == 2 ]] || die "usage: douyin-phone-adb --profile PROFILE account-identity EVIDENCE_ID"
++    check_target
++    ai_xml="$(ui_evidence "$2-acctid")" || die "could not capture profile page hierarchy"
++    ai_id_line="$(/usr/bin/grep -oE 'text="[^"]*"[^>]*resource-id="com\.ss\.android\.ugc\.aweme:id/5-n"' "$ai_xml" | /usr/bin/head -1)"
++    [[ -n "$ai_id_line" ]] || die "could not locate 抖音号 field on current page; is this a profile page?" TARGET_ABSENT
++    ai_id="$(print -- "$ai_id_line" | /usr/bin/sed -E 's/text="抖音号[：:]([^"]*)".*/\1/')"
++    [[ -n "$ai_id" && "$ai_id" != "$ai_id_line" ]] || die "could not parse douyin_id from profile field"
++    ai_nick_line="$(/usr/bin/grep -oE 'text="[^"]*"[^>]*resource-id="com\.ss\.android\.ugc\.aweme:id/ttw"' "$ai_xml" | /usr/bin/head -1)"
++    ai_nick=""
++    [[ -n "$ai_nick_line" ]] && ai_nick="$(print -- "$ai_nick_line" | /usr/bin/sed -E 's/.*text="([^"]*)".*/\1/')"
++    print -- "douyin_id=$ai_id"
++    print -- "nickname=$ai_nick"
++    print -- "evidence=$ai_xml"
++    ;;
++  tap-video-author)
++    # 新增(0920 目标架构 视频级自有小号前置过滤): 在视频详情页上，语义定位右侧
++    # 头像圆圈(resource-id=user_avatar，真机验证：即使详情页自动播放导致 uiautomator
++    # 报 could not get idle state，媒体键暂停后能拿到完整树)，点击后落到上传者主页。
++    # 调用方随后应调 account-identity 读取该主页身份，判断完 account-identity 再 back
++    # 回详情页，不在本命令里做业务判断。
++    [[ "$#" == 2 ]] || die "usage: douyin-phone-adb --profile PROFILE tap-video-author EVIDENCE_ID"
++    check_target
++    tva_xml="$(ui_evidence "$2-tva")" || die "could not capture video detail page hierarchy"
++    tva_line="$(/usr/bin/grep -oE '<node[^>]*resource-id="com\.ss\.android\.ugc\.aweme:id/user_avatar"[^>]*bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"' "$tva_xml" | /usr/bin/head -1)"
++    [[ -n "$tva_line" ]] || die "could not locate user_avatar node on current page; is this a video detail page?" TARGET_ABSENT
++    read tva_x tva_y <<< "$(node_center "$tva_line")"
++    "$ADB" -s "$SERIAL" shell input tap "$tva_x" "$tva_y"
++    wait_ms 2500
++    tva_after="$(ui_evidence "$2-tva-after")" || die "author profile did not settle into a readable page after tap"
++    print -- "tapped=$tva_x $tva_y"
++    print -- "evidence=$tva_after"
+     ;;
++  preflight-full)
++    # 新增(0920 目标架构): 在基础 preflight(设备/序列号/型号/通话状态)之上，
++    # 加一层账号身份核验——回主页"我"tab，读 account-identity，
++    # 核对是否命中该 profile 在 ACCOUNT_REGISTRY 里登记的任一账号。
++    # 不命中就 die，防止账号被切换了还在往下跑真机动作。
++    [[ "$#" == 2 ]] || die "usage: douyin-phone-adb --profile PROFILE preflight-full EVIDENCE_ID"
++    check_target
++    print -- "profile=$PROFILE"
++    print -- "serial=$SERIAL"
++    print -- "model=$MODEL"
++    print -- "state=device"
++    pf_call_state="$(call_state)"
++    print -- "call_state=$pf_call_state"
++    [[ "$pf_call_state" == "idle" ]] || die "call_state is not idle; refusing to proceed" WRONG_FOREGROUND
++    pf_fg="$(foreground_package)"
++    print -- "foreground=$pf_fg"
++    # 回到抖音主页"我"tab：语义定位 text="我" 的底部导航节点(内容描述"我，按钮"，
++    # resource-id 是混淆过的会随版本变，不认它，认文字)。
++    pf_home_xml="$(ui_evidence "$2-pfhome")" || die "could not capture home page for account check"
++    pf_tab_line="$(/usr/bin/grep -oE '<node[^>]*text="我"[^>]*bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"' "$pf_home_xml" | /usr/bin/head -1)"
++    if [[ -n "$pf_tab_line" ]]; then
++      read pf_tx pf_ty <<< "$(node_center "$pf_tab_line")"
++      "$ADB" -s "$SERIAL" shell input tap "$pf_tx" "$pf_ty"
++      wait_ms 1500
++    fi
++    pf_acct_xml="$(ui_evidence "$2-pfacct")" || die "could not capture 我 tab hierarchy"
++    pf_id_line="$(/usr/bin/grep -oE 'text="[^"]*"[^>]*resource-id="com\.ss\.android\.ugc\.aweme:id/5-n"' "$pf_acct_xml" | /usr/bin/head -1)"
++    [[ -n "$pf_id_line" ]] || die "could not locate 抖音号 field on 我 tab" TARGET_ABSENT
++    pf_dyid="$(print -- "$pf_id_line" | /usr/bin/sed -E 's/text="抖音号[：:]([^"]*)".*/\1/')"
++    pf_nick_line="$(/usr/bin/grep -oE 'text="[^"]*"[^>]*resource-id="com\.ss\.android\.ugc\.aweme:id/ttw"' "$pf_acct_xml" | /usr/bin/head -1)"
++    pf_nick=""
++    [[ -n "$pf_nick_line" ]] && pf_nick="$(print -- "$pf_nick_line" | /usr/bin/sed -E 's/.*text="([^"]*)".*/\1/')"
++    print -- "douyin_id=$pf_dyid"
++    print -- "nickname=$pf_nick"
++    [[ -n "$pf_dyid" ]] || die "could not read douyin_id on 我 tab; account identity check failed" TARGET_ABSENT
++    [[ -r "$ACCOUNT_REGISTRY" ]] || die "account registry not readable: $ACCOUNT_REGISTRY"
++    pf_match=0
++    while IFS=$'\t' read -r ar_profile ar_dyid ar_rest; do
++      [[ "$ar_profile" == "$PROFILE" && "$ar_dyid" == "$pf_dyid" ]] && { pf_match=1; break; }
++    done < "$ACCOUNT_REGISTRY"
++    (( pf_match )) || die "account mismatch: logged in as $pf_nick($pf_dyid) but profile $PROFILE registry does not list this account; refusing to proceed" TARGET_ABSENT
++    print -- "account_verified=1"
++    ;;
+   foreground)
+     [[ "$#" == 1 ]] || die "usage: douyin-phone-adb --profile PROFILE foreground"
+     check_target_fast
