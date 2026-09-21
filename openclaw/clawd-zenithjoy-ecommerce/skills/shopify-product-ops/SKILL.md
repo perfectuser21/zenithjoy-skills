@@ -116,3 +116,11 @@ curl -s "https://${DOMAIN}/admin/api/2026-01/shop.json"          -H "X-Shopify-A
 ## 6. 安全策略（P0 已实现）
 
 `zenithjoy-shopify-bridge` 有 `SHOPIFY_MCP_TOOL_ACCESS_MODE=p0-draft-only`：工具面收窄到只读白名单 + `create-product`，且 status **服务端强制 DRAFT**（不管调用方传什么）。给 AI/agent 调用时用这个模式，别开全权限。
+
+## 7. 必填字段缺失时禁止编造（金丝雀实测：price 缺失场景会被编造）
+
+`price`、`compareAtPrice`、`sku`、`vendor` 这类商品必填字段，调用方没有给出真实值时：
+**禁止填一个"看起来合理"的数字或占位文本去凑齐请求**。正确处理：
+- 能确定该字段本次不需要写入（如仅改标题）→ 不带这个字段。
+- 该字段是本次操作必须的、但调用方没提供 → 不发起 mutation，报告"缺少 <字段名>，需要调用方提供"，等待补充。
+- 绝不用同类商品的历史价格、行业均价或任意数字替代真实值——草稿即使标了 DRAFT，编造的价格一旦被后台人工放行发布，就是真实的错误定价。
