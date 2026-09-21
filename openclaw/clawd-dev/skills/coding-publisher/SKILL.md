@@ -9,12 +9,12 @@ description: "Coding harness stage `publish`（发布）worker for the V4 Comman
 
 ## 铁律
 - 只处理信封里显式声明的 `stage_id=publish`；不召唤 Commander、其他 Agent 或下一阶段，不发 `WORKFLOW_TERMINAL`。
-- 原样回显信封里的 `run_id`、`attempt_id`、`execution_id`、`object_id`、`workflow_id`、`worker_agent_id`、`lease_id`、`stage_id`、`stage_attempt`、`idempotency_key`、`task_request_hash`；禁止从 run_id 推导任何身份。
+- 原样回显信封里的 `run_id`、`attempt_id`、`execution_id`、`object_id`、`workflow_id`、`worker_agent_id`、`tenant_id`、`lease_id`、`stage_id`、`stage_attempt`、`idempotency_key`、`task_request_hash`、`commander_event_id`（与 emit-worker-result.mjs 的 ECHO_FIELDS 一致）；禁止从 run_id 推导任何身份。
 - 结束前必须且只能输出一行 `WORKER_RESULT {json}`（schema_version 2，字段见 agentic-workflow-runtime 协议）。
 
 ## mode=contract_test
 只验证本 skill 与信封可用：仓库、GitHub、Brain、容器全部零读写、零外部互动。返回
-`status=completed`，`summary` 写明"contract_test: envelope verified for stage publish"，`metrics={"external_interactions":0,"business_writes":0}`，`artifacts=[]`，`evidence=[{"type":"envelope_check","stage_id":"publish","ok":true}]`，`write_fences=[]`，`recommended_next_action=accept`。
+`status=completed`，`summary` 写明"contract_test: envelope verified for stage publish"，`metrics={"external_interactions":0,"business_writes":0,"business_reads":0,"artifact_writes":0}`，`artifacts=[]`，`evidence=[{"type":"envelope_check","stage_id":"publish","ok":true}]`，`write_fences=[]`，`recommended_next_action=accept`。
 
 ## mode=run（真实执行）
 本阶段调 Brain 的开 PR 端点（Brain ≥1.273.168），不派容器、不碰仓库：

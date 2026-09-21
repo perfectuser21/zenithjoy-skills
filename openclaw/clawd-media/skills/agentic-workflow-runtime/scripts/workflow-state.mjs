@@ -4,7 +4,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-const DEFAULT_STATE_DIR = '/root/clawd-work-commander/state/workflow-runs';
+// 这是 work-commander 的共享账本目录，本脚本可能被别的agent工作区里的拷贝调用，
+// 不能从自己所在位置反推——调用方必须显式传 --state-dir，或设置
+// OPENCLAW_WORKFLOW_STATE_DIR。缺了直接报错，不要悄悄落到一个装错环境就不存在的路径。
+const DEFAULT_STATE_DIR = process.env.OPENCLAW_WORKFLOW_STATE_DIR || null;
 const DEFAULT_EVENT_URL = 'https://vps-hk.tailce7a8b.ts.net:8444/webhook/agentic-workflow-runner-v1/event';
 let activeRelease = null;
 
@@ -68,7 +71,9 @@ function jsonArg(args, key, fallback) {
 function statePath(args) {
   const runId = safeId(required(args, 'run-id'), 'run_id');
   const attemptId = safeId(required(args, 'attempt-id'), 'attempt_id');
-  const dir = path.resolve(String(args['state-dir'] || DEFAULT_STATE_DIR));
+  const rawStateDir = args['state-dir'] || DEFAULT_STATE_DIR;
+  if (!rawStateDir) fail('state-dir is required: pass --state-dir <path> or set OPENCLAW_WORKFLOW_STATE_DIR');
+  const dir = path.resolve(String(rawStateDir));
   fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
   return { runId, attemptId, dir, file: path.join(dir, `${runId}__${attemptId}.json`) };
 }

@@ -9,12 +9,12 @@ description: "Coding harness stage `merge`（合并）worker for the V4 Commande
 
 ## 铁律
 - 只处理信封里显式声明的 `stage_id=merge`；不召唤 Commander、其他 Agent 或下一阶段，不发 `WORKFLOW_TERMINAL`。
-- 原样回显信封里的 `run_id`、`attempt_id`、`execution_id`、`object_id`、`workflow_id`、`worker_agent_id`、`lease_id`、`stage_id`、`stage_attempt`、`idempotency_key`、`task_request_hash`；禁止从 run_id 推导任何身份。
+- 原样回显信封里的 `run_id`、`attempt_id`、`execution_id`、`object_id`、`workflow_id`、`worker_agent_id`、`tenant_id`、`lease_id`、`stage_id`、`stage_attempt`、`idempotency_key`、`task_request_hash`、`commander_event_id`（与 emit-worker-result.mjs 的 ECHO_FIELDS 一致）；禁止从 run_id 推导任何身份。
 - 结束前必须且只能输出一行 `WORKER_RESULT {json}`（schema_version 2，字段见 agentic-workflow-runtime 协议）。
 
 ## mode=contract_test
 只验证本 skill 与信封可用：仓库、GitHub、Brain、容器全部零读写、零外部互动。返回
-`status=completed`，`summary` 写明"contract_test: envelope verified for stage merge"，`metrics={"external_interactions":0,"business_writes":0}`，`artifacts=[]`，`evidence=[{"type":"envelope_check","stage_id":"merge","ok":true}]`，`write_fences=[]`，`recommended_next_action=accept`。
+`status=completed`，`summary` 写明"contract_test: envelope verified for stage merge"，`metrics={"external_interactions":0,"business_writes":0,"business_reads":0,"artifact_writes":0}`，`artifacts=[]`，`evidence=[{"type":"envelope_check","stage_id":"merge","ok":true}]`，`write_fences=[]`，`recommended_next_action=accept`。
 
 ## mode=run（真实执行）
 本阶段执行**已获人审批准**的合并（Brain ≥1.273.169，决策 3d7d64e1）。前提铁律：STAGE_REQUEST 上下文必须含 `human_approval.approved: true`（画布人审恢复注入）——没有它=人没批，回 `blocked human_approval_missing`，绝不合并。

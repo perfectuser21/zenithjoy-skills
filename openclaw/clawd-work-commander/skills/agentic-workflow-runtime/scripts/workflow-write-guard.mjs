@@ -4,7 +4,10 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const DEFAULT_STATE_DIR = '/root/clawd-work-commander/state/workflow-runs';
+// 这是 work-commander 的共享账本目录，本脚本可能被别的agent工作区里的拷贝调用，
+// 不能从自己所在位置反推——调用方必须显式传 --state-dir，或设置
+// OPENCLAW_WORKFLOW_STATE_DIR。缺了直接报错，不要悄悄落到一个装错环境就不存在的路径。
+const DEFAULT_STATE_DIR = process.env.OPENCLAW_WORKFLOW_STATE_DIR || null;
 const WRITE_INTENTS = {
   artifact_write: new Set(['preflight', 'discovery', 'qualification', 'collection', 'scoring', 'delivery', 'outreach', 'cleanup', 'plan', 'contract', 'seal', 'generate', 'evaluate', 'judge', 'publish', 'merge']),
   raw_comment_insert: new Set(['collection']),
@@ -83,7 +86,9 @@ if (!Number.isInteger(stageAttempt) || stageAttempt < 1) fail('Invalid stage_att
 if (!WRITE_INTENTS[intent]) fail('Unknown write intent', { intent });
 if (!WRITE_INTENTS[intent].has(stageId)) fail('Write intent is not allowed for this stage', { intent, stage_id: stageId });
 
-const stateDir = path.resolve(String(args['state-dir'] || DEFAULT_STATE_DIR));
+const rawStateDir = args['state-dir'] || DEFAULT_STATE_DIR;
+if (!rawStateDir) fail('state-dir is required: pass --state-dir <path> or set OPENCLAW_WORKFLOW_STATE_DIR');
+const stateDir = path.resolve(String(rawStateDir));
 const stateFile = path.join(stateDir, `${runId}__${attemptId}.json`);
 const state = readLedger(stateFile);
 
