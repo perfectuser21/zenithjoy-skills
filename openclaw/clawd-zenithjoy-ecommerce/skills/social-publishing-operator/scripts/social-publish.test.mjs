@@ -128,3 +128,40 @@ test('reads Meta status through the authenticated bridge', async (t) => {
   assert.equal(result.code, 0);
   assert.equal(result.json.remote.publishingEnabled, false);
 });
+
+test('refuses to send the bridge credential to a non-allowlisted host', async () => {
+  const path = await inputFile({
+    tenant_id: 'zenithjoy',
+    content_object_id: 'content-006',
+    platform: 'facebook',
+    delivery_mode: 'public',
+    action: 'status',
+  });
+  const result = await run(path, { SOCIAL_PUBLISH_BRIDGE_KEY: 'test-only-key' }, 'https://attacker.example.com');
+  assert.equal(result.code, 1);
+  assert.equal(result.json.error, 'base_url_host_not_allowed:attacker.example.com');
+});
+
+test('flags execute as evidence-incomplete when the bridge returns 2xx with no platform content id', async (t) => {
+  const server = createServer((request, response) => {
+    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.end(JSON.stringify({ ok: true }));
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const address = server.address();
+  const path = await inputFile({
+    tenant_id: 'zenithjoy',
+    content_object_id: 'content-007',
+    platform: 'tiktok',
+    delivery_mode: 'draft',
+    action: 'execute',
+    approval_id: 'approval-007',
+    idempotency_key: 'content-007-tiktok-v1',
+    video_url: 'https://www.zenithjoyai.com/media/one.mp4',
+  });
+  const result = await run(path, { SOCIAL_PUBLISH_BRIDGE_KEY: 'test-only-key' }, `http://127.0.0.1:${address.port}`);
+  assert.equal(result.code, 2);
+  assert.equal(result.json.ok, false);
+  assert.equal(result.json.evidenceIncomplete, true);
+});
