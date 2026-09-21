@@ -318,6 +318,12 @@ try {
       } else {
         const status = required(args, 'status');
         if (!['completed', 'blocked', 'failed', 'stopped'].includes(status)) fail('Invalid terminal status');
+        // 诚实性闸门：声称做过cleanup但没验证成功，不能报completed——防止Commander
+        // 忘记/幻觉验证结果时把没收尾干净的run悄悄标成功。
+        const cleanupClaim = jsonArg(args, 'cleanup-json', { attempted: false, verified: false });
+        if (status === 'completed' && cleanupClaim && cleanupClaim.attempted === true && cleanupClaim.verified !== true) {
+          fail('cleanup.attempted=true but cleanup.verified is not true — cannot report completed');
+        }
         const base = commonEvent(state, seq);
         const payload = {
           ...base,

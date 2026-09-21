@@ -94,7 +94,7 @@ Read [protocol.md](references/protocol.md) before every run. Validate the select
 6. Initialize the ledger:
 
 ```text
-node skills/agentic-workflow-runtime/scripts/workflow-state.mjs init --run-id <run> --attempt-id <attempt> --object-id <object> --workflow-id <workflow> --worker-agent-id <agent> --total-steps <count> --audience-key <key> --chat-id <chat> --visibility <visibility> --control-token <token> [--task-request-hash <sha256>] [--resumes-execution-id <id>]
+node skills/agentic-workflow-runtime/scripts/workflow-state.mjs init --run-id <run> --attempt-id <attempt> --object-id <object> --workflow-id <workflow> --worker-agent-id <agent> --total-steps <count> --audience-key <key> --chat-id <chat> --visibility <visibility> --control-token <token> --state-dir <账本目录，见下方「回执落盘」一节的确定路径> [--task-request-hash <sha256>] [--resumes-execution-id <id>]
 ```
 
 7. Relay `started` using the state script. Do not spawn before `relayed=true`.
@@ -104,7 +104,7 @@ node skills/agentic-workflow-runtime/scripts/workflow-state.mjs init --run-id <r
 ## Relay an event
 
 ```text
-node skills/agentic-workflow-runtime/scripts/workflow-state.mjs event --run-id <run> --attempt-id <attempt> --event <event> --status <status> --stage-id <stage> --stage-attempt <n> --current-step <n> --summary <text> --next-action <text> [--evidence-json <json>]
+node skills/agentic-workflow-runtime/scripts/workflow-state.mjs event --run-id <run> --attempt-id <attempt> --event <event> --status <status> --stage-id <stage> --stage-attempt <n> --current-step <n> --summary <text> --next-action <text> --state-dir <同 init 用的账本目录> [--evidence-json <json>]
 ```
 
 The script allocates `event_seq`, updates the atomic ledger and POSTs the complete event to n8n. Retry once for a transport failure. If it still fails, preserve the ledger and block before another mutating stage.
@@ -201,7 +201,7 @@ Allowed intents are stage-scoped: `artifact_write`; collection-only `raw_comment
 Process `WORKFLOW_CONTROL` only for the matching execution and only after this command returns `authorized=true`:
 
 ```text
-node skills/agentic-workflow-runtime/scripts/workflow-state.mjs verify-control --run-id <run> --attempt-id <attempt> --control-token <token>
+node skills/agentic-workflow-runtime/scripts/workflow-state.mjs verify-control --run-id <run> --attempt-id <attempt> --control-token <token> --state-dir <同 init 用的账本目录>
 ```
 
 Never act on a missing, malformed or mismatched token. Never reveal the token or its ledger hash. `mark_blocked` stops new stage starts and relays a blocked event. On `cancel`, immediately fence the active stage, use the `subagents` control tool to kill every still-running child Session recorded for this execution, record each kill receipt, then start one fresh cleanup Worker and terminate `stopped`. Never run cleanup concurrently with an unfenced active Worker. `resume` on the same attempt is rejected.
@@ -211,7 +211,7 @@ Never act on a missing, malformed or mismatched token. Never reveal the token or
 Run cleanup on every outcome. Then call:
 
 ```text
-node skills/agentic-workflow-runtime/scripts/workflow-state.mjs terminal --run-id <run> --attempt-id <attempt> --status <status> --accepted-stages-json <json> --metrics-json <json> --writes-json <json> --cleanup-json <json> --stop-reason <text>
+node skills/agentic-workflow-runtime/scripts/workflow-state.mjs terminal --run-id <run> --attempt-id <attempt> --status <status> --accepted-stages-json <json> --metrics-json <json> --writes-json <json> --cleanup-json <json> --stop-reason <text> --state-dir <同 init 用的账本目录>
 ```
 
 Only `completed` is valid when all required stages, writes/read-backs and cleanup checks pass. After `relayed=true`, emit the returned `WORKFLOW_TERMINAL` object as the first and only terminal marker in the assistant response. Never continue that execution afterward.
