@@ -53,7 +53,8 @@ description: "金诺盛源统一入口：未真实 @小诺 的群消息只保留
   "route": "office-direct|social|affine-personal|clarification",
   "confidence": 0.0,
   "reason": "一句话说明判断依据",
-  "need_clarification": false
+  "need_clarification": false,
+  "question": "need_clarification=true 时必填：唯一的最小澄清问题原文；false 时为 null"
 }
 ```
 

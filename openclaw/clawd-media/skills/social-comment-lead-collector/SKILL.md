@@ -89,7 +89,7 @@ description: "Exhaust platform-visible comments inside the configured date windo
 
 `visible_window_exhaustive` 使用“日期窗口内可见评论穷尽＋公平轮转”：
 
-1. 从 `task_request.comment_policy` 读取 `window`、`batch_size`、`scheduler`、`per_video_limit`和无新增阈值。租户策略只供 Intake 补默认值，Worker 不再读取它覆盖本次合同。
+1. 从 `task_request.comment_policy` 读取 `window`、`batch_size`、`scheduler`、`per_video_limit`和 `no_new_streak_limit`（连续几批零新增即判定该视频 exhausted）。租户策略只供 Intake 补默认值，Worker 不再读取它覆盖本次合同。
 2. 对每个合格视频先采一轮最多 `batch_size` 条，立即写入断点和租户可见原始评论池。
 3. 转到下一个合格视频，直到所有视频都完成当前轮。
 4. 然后回到 `exhausted=false` 的视频读取下一批 `batch_size` 条，持续轮转。

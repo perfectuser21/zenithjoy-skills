@@ -131,7 +131,8 @@
         "window",
         "batch_size",
         "scheduler",
-        "per_video_limit"
+        "per_video_limit",
+        "no_new_streak_limit"
       ],
       "properties": {
         "mode": {
@@ -142,6 +143,11 @@
         },
         "window": {
           "const": "follow_video_layer"
+        },
+        "no_new_streak_limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
         },
         "batch_size": {
           "type": "integer",
