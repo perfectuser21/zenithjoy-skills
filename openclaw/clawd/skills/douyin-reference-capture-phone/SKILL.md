@@ -1,6 +1,6 @@
 ---
 name: douyin-reference-capture-phone
-description: "Run an end-to-end Douyin reference-video job through OpenClaw → XIAN-M4-PHONE → ADB from either a research topic or a specific Douyin URL/share text: search or open the logged-in phone app, capture selected evidence, transcribe audio with Gemini 2.5 Flash-Lite, clean and analyze with Luna, and deliver records and documents to Feishu. Use for 对标视频、指定抖音链接转录、近期热点、爆款文案、音频转写、结构拆解、飞书交付. Never use for fake engagement, bulk scraping, CAPTCHA bypass, publishing, or unsolicited messaging."
+description: "Run an end-to-end Douyin reference-video job through OpenClaw → XIAN-M4-PHONE → ADB from either a research topic or a specific Douyin URL/share text: search or open the logged-in phone app, capture selected evidence, transcribe audio with DashScope (qwen-audio-3.0-asr-flash, higher accuracy on fast-forward-recorded Chinese audio; Gemini 2.5 Flash-Lite kept as fallback only), clean and analyze with Luna, and deliver records and documents to Feishu. Use for 对标视频、指定抖音链接转录、近期热点、爆款文案、音频转写、结构拆解、飞书交付. Never use for fake engagement, bulk scraping, CAPTCHA bypass, publishing, or unsolicited messaging."
 ---
 
 # 抖音对标采集与文案交付
@@ -9,7 +9,7 @@ description: "Run an end-to-end Douyin reference-video job through OpenClaw → 
 
 把用户的一句研究指令或一个抖音链接独立执行为一条完整流水线：
 
-`主题搜索或直链打开 → 飞书入队 → 获取视频或录制兜底 → 音频切片 → Gemini ASR → Luna 校对/分析 → 飞书文档交付`
+`主题搜索或直链打开 → 飞书入队 → 获取视频或录制兜底 → 音频切片 → DashScope ASR(默认,Gemini为fallback) → Luna 校对/分析 → 飞书文档交付`
 
 这是一个用户可直接调用的 Skill，内部包含确定性脚本和模型判断。不要把步骤重新交给用户操作，也不要在每个候选处等待确认；默认完成一个小批次后统一汇报。涉及验证码、账号风控、权利不清或公开发布时才停下来请求人工处理。
 
@@ -18,7 +18,7 @@ description: "Run an end-to-end Douyin reference-video job through OpenClaw → 
 完整任务不能塞进一个 Agent 回合。Gateway 单轮约 630 秒会超时并触发 fresh fallback，可能重复启动 App。父 Agent 只负责编排，必须先初始化持久状态，然后通过 `sessions_spawn` 把阶段交给独立子任务。每一次 `sessions_spawn` 都必须显式传 `model: "gpt-5.6-luna"`、`thinking: "low"`、`runTimeoutSeconds: 480`，并让 `task` 或 `label` 带上 job_id 和阶段名；不得省略 `model` 后继承系统默认模型，也不得使用 Sol。父 Agent 等待自动 completion event；无事件时调用 `sessions_yield`，不要轮询。
 
 ```bash
-/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/job-state.mjs init \
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd/skills/douyin-reference-capture-phone/scripts/job-state.mjs init \
   --job-dir <gateway-job-dir> --job-id <job_id> --topic <topic>
 ```
 
@@ -26,7 +26,7 @@ description: "Run an end-to-end Douyin reference-video job through OpenClaw → 
 
 1. `discovery`：识别输入模式；主题模式在手机搜索并选 1–3 条，直链模式解析、打开并核对指定视频；写 `normalized-input.json`、`candidate.json` 和飞书 discovered/shortlisted 记录；
 2. `acquisition`：只处理 candidate.json 中入选项，在 Mac 获取或录制并用 ffprobe 验证，写 source evidence；原视频留在 Mac，禁止回传 Gateway；
-3. `transcription`：切片、Gemini、manifest、merge，写原始稿和清洗稿；
+3. `transcription`：切片、DashScope ASR(默认，Gemini为fallback)、manifest、merge，写原始稿和清洗稿；
 4. `delivery`：Luna 校对分析、build-delivery、飞书 create→write→read、记录 delivered。
 
 子任务开始和结束都用 `job-state.mjs set` 写状态。后续调用先执行 `show`，只恢复第一个非 completed 阶段。任何 fresh fallback 也必须先读 state：completed 阶段禁止重跑；`acquisition` 已存在 PID/有效源文件时禁止重复录制；已有相同 `job_id + 来源链接` 的飞书记录禁止重复创建。
@@ -34,12 +34,12 @@ description: "Run an end-to-end Douyin reference-video job through OpenClaw → 
 任何会操作手机的 `discovery` 或 `acquisition` 子任务，开始前必须取得全局手机锁，结束（含 blocked/failed）时释放。拿不到锁就退出并保留 pending，不能与另一会话抢手机：
 
 ```bash
-/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/phone-lock.mjs acquire --job-id <job_id> --stage <stage>
-/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/phone-lock.mjs release --job-id <job_id>
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd/skills/douyin-reference-capture-phone/scripts/phone-lock.mjs acquire --job-id <job_id> --stage <stage>
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd/skills/douyin-reference-capture-phone/scripts/phone-lock.mjs release --job-id <job_id>
 ```
 
 ```bash
-/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/job-state.mjs set \
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd/skills/douyin-reference-capture-phone/scripts/job-state.mjs set \
   --job-dir <gateway-job-dir> --stage discovery --status running
 ```
 
@@ -50,8 +50,8 @@ description: "Run an end-to-end Douyin reference-video job through OpenClaw → 
 - ADB：`/opt/homebrew/bin/adb`
 - 手机工件目录：`/private/tmp/openclaw-phone/<job_id>/`
 - Gateway Skill：`/Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/`
-- ASR：`gemini-2.5-flash-lite-official`，通过 Gateway 上的 ToAPIs 兼容接口调用
-- ASR 密钥：只从 `TOAPIS_API_KEY` 或 `/Users/administrator/.openclaw/credentials/toapis-api-key` 读取，绝不打印或写入工件
+- ASR：默认 `qwen-audio-3.0-asr-flash`（通义 DashScope，直连 `dashscope.aliyuncs.com`）——2026-09-11 实测认定：3倍速录制音频下 Gemini 2.5 Flash-Lite 字级准确率仅70.7%、业务关键词2/9，DashScope中文专有名词/数字/关键钩子零失误，故切为默认；`gemini-2.5-flash-lite-official`（通过 Gateway 上的 ToAPIs 兼容接口）保留为显式 `--provider gemini` 的 fallback 通道，不再是主链路
+- ASR 密钥：DashScope 从 `DASHSCOPE_API_KEY` 或 `/Users/administrator/.openclaw/credentials/dashscope-api-key` 读取；Gemini fallback 从 `TOAPIS_API_KEY` 或 `/Users/administrator/.openclaw/credentials/toapis-api-key` 读取，绝不打印或写入工件
 - 手机操作、阶段编排、校对、结构分析和原创改写：`gpt-5.6-luna`；所有阶段子任务均在 `sessions_spawn` 中显式指定，禁止默认回落到 Sol
 - 队列与交付：飞书多维表格 + 飞书文档；字段约定见 `references/feishu-queue.md`
 
@@ -67,7 +67,7 @@ description: "Run an end-to-end Douyin reference-video job through OpenClaw → 
 - **直链模式**：用户消息中含 `douyin.com`、`v.douyin.com`、`iesdouyin.com` 的视频链接或抖音分享文本；只处理该视频，不再搜索相似候选。先运行：
 
 ```bash
-/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/normalize-input.mjs \
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd/skills/douyin-reference-capture-phone/scripts/normalize-input.mjs \
   --input <用户原始消息> --output <job-dir>/normalized-input.json
 ```
 
@@ -136,21 +136,21 @@ description: "Run an end-to-end Douyin reference-video job through OpenClaw → 
 在 Mac 上用 `/opt/homebrew/bin/ffmpeg` 从 Mac 本地原视频提取 16 kHz、单声道 WAV，并按 30 秒切片。不要在 Gateway 上调用 ffmpeg、ffprobe 或拼接视频。每个 segment 记录 `segment_id`、`source_start`、`source_end`、`status`、`attempt_count`、`local_path`、`gateway_path`。只重试失败片段。Gateway 没有 Python；不要用 Python heredoc 或 node-scoped `file_write` 创建 Gateway manifest，使用随 Skill 部署的 Node 脚本：
 
 ```bash
-/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/manifest.mjs init \
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd/skills/douyin-reference-capture-phone/scripts/manifest.mjs init \
   --manifest <job-dir>/segments.json --job-id <job_id>
 
-/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/manifest.mjs upsert \
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd/skills/douyin-reference-capture-phone/scripts/manifest.mjs upsert \
   --manifest <job-dir>/segments.json --segment-id <segment_id> \
   --source-start <seconds> --source-end <seconds> --status transcribed \
   --transcript-path <path> --result-path <path>
 ```
 
-### 5. Gemini 转写
+### 5. 音频转写（DashScope 默认，Gemini fallback）
 
-逐个用 `file_fetch` 把切片传回 Gateway，然后在 Gateway 执行：
+逐个用 `file_fetch` 把切片传回 Gateway，然后在 Gateway 执行（不传 `--provider` 即走默认的 DashScope）：
 
 ```bash
-/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/transcribe-gemini.mjs \
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd/skills/douyin-reference-capture-phone/scripts/transcribe-gemini.mjs \
   --input <gateway-wav-path> \
   --output-dir <gateway-segment-output-dir> \
   --segment-id <segment_id> \
@@ -162,14 +162,14 @@ description: "Run an end-to-end Douyin reference-video job through OpenClaw → 
 全部片段完成后执行：
 
 ```bash
-/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd-media/skills/douyin-reference-capture-phone/scripts/merge-transcripts.mjs \
+/usr/local/bin/node /Users/administrator/openclaw-root/workspaces-root/clawd/skills/douyin-reference-capture-phone/scripts/merge-transcripts.mjs \
   --manifest <segments.json> \
   --output-dir <merged-output-dir>
 ```
 
 保留 `raw-transcript.txt` 和 `clean-transcript.txt` 两份。清洗稿可以删除切片重叠和明显的无声尾部复读，但不得凭空补字；疑词标 `[听不清]`。
 
-若 Gemini 不可用，降级到 Mac 本地 Whisper，并在交付物标记 `asr_provider=local-whisper-fallback`；不能把降级结果伪装成 Gemini。
+DashScope 不可用时，显式传 `--provider gemini` 走 fallback 通道；两者都不可用才降级到 Mac 本地 Whisper，并在交付物标记 `asr_provider=local-whisper-fallback`；不能把降级结果伪装成 DashScope 或 Gemini。
 
 ### 6. Luna 校对和分析
 

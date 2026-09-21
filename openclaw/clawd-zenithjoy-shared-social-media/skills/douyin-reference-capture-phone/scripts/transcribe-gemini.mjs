@@ -252,8 +252,8 @@ async function main() {
   const model = args.model || (isDash ? 'qwen-audio-3.0-asr-flash' : 'gemini-2.5-flash-lite-official');
   const apiBase = (args['api-base'] || 'https://toapis.com/v1').replace(/\/$/, '');
   const defaultKeyFile = isDash
-    ? '/root/.openclaw/credentials/dashscope-api-key'
-    : '/root/.openclaw/credentials/toapis-api-key';
+    ? '/Users/administrator/.openclaw/credentials/dashscope-api-key'
+    : '/Users/administrator/.openclaw/credentials/toapis-api-key';
   const keyFile = args['api-key-file'] || defaultKeyFile;
   // 录制倍速：3 倍速录制时传 3，时间戳换算成视频真实时刻
   const speed = Number(args.speed || 1);
