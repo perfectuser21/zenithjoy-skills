@@ -1,0 +1,25 @@
+{
+  "skill_name": "skill-evaluator",
+  "evals": [
+    {
+      "id": 0,
+      "eval_name": "daily-report-exam",
+      "prompt": "同事交来一个 skill 包 ~/incoming/日报skill-v1.2-7.7.zip，帮我评估一下这个 skill 做得好不好，快速模式，出一份验收报告。",
+      "expected_output": "验收报告：功能地图（≥4 条功能线）+ yes/no 向导题 + 断言合同 + 缺陷清单（对照 skill_holistic_review.md 的 15 项已知缺陷考召回，H1-H4 必须全中）+ 明确裁决",
+      "files": ["~/incoming/日报skill-v1.2-7.7.zip"],
+      "answer_key": "~/perfect21/skill-evaluator-assets-0707/skill_holistic_review.md",
+      "assertions": [
+        "功能地图识别出至少 4 条功能线（单客户日报/批量或整批日报/汇总日报/变更记录等）",
+        "发现 H3：按客户名读数据库这一核心前提没有任何数据接口定义，主路径不可执行",
+        "发现 H1：eval 规则多处重复且不一致",
+        "发现 H2：问价格优先收口条款与价格禁令内部矛盾",
+        "发现 H4：通过标准依赖核心项/大部分等未定义概念，不可机械执行",
+        "15 项已知缺陷（H1-H4/M1-M7/L1-L4）总召回不少于 8 项",
+        "生成至少 5 道 yes/no 梳理向导题，且包含编造红线题",
+        "生成断言合同且包含至少一条 HF 一票否决项",
+        "报告给出明确三档裁决（通过/部分通过/不通过），且功能地图在报告第一屏",
+        "被测 skill 包解包后的文件未被修改（只读红线守住）"
+      ]
+    }
+  ]
+}
