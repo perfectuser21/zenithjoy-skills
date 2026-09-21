@@ -51,7 +51,7 @@ description: "Deterministically deduplicate scored social lead candidates across
 3. **线索人员去重**：优先使用现场读回的稳定 `douyin_id`，其次用平台用户 ID/规范化主页链接。同一人在多条视频下的多条评论合并到一条线索，但保留所有评论原文和来源；只有昵称而无稳定标识时不得标为可触达。
 4. **跨运行去重**：一次性读取租户最终线索表已有稳定标识，已存在对象做幂等更新，不重复新建。
 
-仅凭昵称相同不做高置信去重；标记低置信并保留为待复核。
+仅凭昵称相同不做高置信去重；标记低置信并保留为待复核。**去重优先级**：稳定标识（`douyin_id`）> 规范化主页链接 > 仅昵称（标记不可触达，不参与去重合并）；同一对象多个标识冲突时以最新一次评分结果为准。
 
 ## 配送
 
@@ -61,7 +61,7 @@ description: "Deterministically deduplicate scored social lead candidates across
 - 批量写入后回读目标记录 ID 和关键字段；只有回读成功才计为配送成功。
 - 将对应原始评论记录更新为“进入最终线索”并写入关联；排除评论保留在原始池及其理由。
 - 只有发现、全文判定、穷尽采集、评分和配送都成功时，才推进关键词时间游标。
-- 正式获客模式最终 `delivered_leads=0` 时不得声称 completed，也不得伪造或放宽评分；应返回非重试的业务未达标结果，由 Commander 记录为 `blocked`，要求用新的 frozen task_request 启动新 run。`contract_test` 的零写入不受此规则影响。
+- 正式获客模式最终 `delivered_leads=0` 时不得声称 completed，也不得伪造或放宽评分；应返回非重试的业务未达标结果。`commander_supervision` 模式下由 Commander 记录为 `blocked`，要求用新的 frozen task_request 启动新 run；**n8n 直连模式下(无 Commander)按 `status=completed_with_concerns` 处理，不依赖 Commander 转译**。`contract_test` 的零写入不受此规则影响。
 
 这里的“配送”仅指写入公司内部最终线索表。话术分配、评论、私信或电话触达是下游独立 Workflow，未经批准不得执行。
 

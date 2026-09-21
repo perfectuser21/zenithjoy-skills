@@ -14,7 +14,7 @@ description: "Coding harness stage `seal`（封印）worker for the V4 Commander
 
 ## mode=contract_test
 只验证本 skill 与信封可用：仓库、GitHub、Brain、容器全部零读写、零外部互动。返回
-`status=completed`，`summary` 写明"contract_test: envelope verified for stage seal"，`metrics={"external_interactions":0,"business_writes":0}`，`artifacts=[]`，`evidence=[{"type":"envelope_check","stage_id":"seal","ok":true}]`，`write_fences=[]`，`recommended_next_action=accept`。
+`status=completed`，`summary` 写明"contract_test: envelope verified for stage seal"，`metrics={"external_interactions":0,"business_writes":0,"business_reads":0,"artifact_writes":0}`，`artifacts=[]`，`evidence=[{"type":"envelope_check","stage_id":"seal","ok":true}]`，`write_fences=[]`，`recommended_next_action=accept`。
 
 ## mode=run（真实执行）
 本阶段调 Brain 的机械封印端点（Brain ≥1.273.159），不派发执行容器、不改任何文件：
@@ -31,6 +31,7 @@ curl -s -m 120 -X POST "$BRAIN_BRIDGE_URL/api/brain/harness/attempt-run/contract
 - 200 {ok:true} → status=completed。**evidence 必须含 sealed_contract 坐标（generate 只认这条）**：`{"type":"sealed_contract","contract_id":"<响应 sealed.id>","contract_version":<响应 sealed.version>,"approved_sha":"<本次封印用的 approved_sha>","branch":"<合同分支>","sprint_dir":"<sprint_dir>","base_sha":"<冻结基线>"}`。
 - 409 contract_seal_rejected → 机械校验不过（Test Contract 不可解析 / 产物缺失 / 防篡改守卫），status=blocked，detail 原样进 summary，recommended_next_action=stop（Commander 决定是否打回 proposer）。
 - 网络不通 → blocked brain_bridge_unreachable: stage seal，retryable=true。
+- 200 {ok:false} → status=blocked，detail 原样上报，不得当作 completed。
 
 
 - **approval_provenance 一律不传**（金丝雀 #17 实证：DB 约束只认 NULL 或 direct 快审对象；V4 对抗审查路径=NULL）。

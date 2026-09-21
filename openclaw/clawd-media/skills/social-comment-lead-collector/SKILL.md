@@ -27,7 +27,7 @@ description: "Exhaust platform-visible comments inside the configured date windo
 
 成功输出 `nickname=`、`douyin_id=`、`account_type=` 三行。**按 account_type 处置（0913 死规则）**：
 - `personal`：正常客资，进原始评论池；
-- `organization`：企业/组织认证号（主页无抖音号是平台常态）——**几乎必然是同行蹭评论，标记 `non_lead_org` 记录后排除**，不算失败；
+- `organization`：企业/组织认证号（账号类型层面的粗筛，非意向判断）——标记 `non_lead_org` 记录后排除，不算失败；
 - `id_not_visible`：昵称已核验但号不可见，写入时标 `identity_partial`。
 
 **部分成功必须写入（一颗老鼠屎不许毒死整批）**：批内每条评论独立结算——身份验证成功的照常写入原始评论池；
@@ -136,4 +136,4 @@ description: "Exhaust platform-visible comments inside the configured date windo
 - 每个授权回执只覆盖紧随其后的同一批写入。
 - 最终只有全部合格视频都 `exhausted=true`、批次指标可回算、原始池写入已回读，阶段才能 `completed`。
 
-输出 `comment-leads.json` 和批次工件；两者都必须包含 `task_request_hash`。本阶段不评判强/弱意向、同行或广告，不写最终线索表。
+输出 `comment-leads.json` 和批次工件；两者都必须包含 `task_request_hash`。本阶段除 account_type 粗筛外，不评判强/弱意向或广告类型，细粒度同行/广告判定留给 scoring 阶段，不写最终线索表。

@@ -29,6 +29,7 @@ curl -s -m 60 -X POST "$BRAIN_BRIDGE_URL/api/brain/harness/attempt-run/merge-pr"
 - 坐标来源：publish 阶段转交的 `published_pr`（pr_number/head_sha）；缺失 → blocked published_pr_missing。
 - 200 {merged:true} → completed，evidence 带 merge_commit_sha；existing:true（已合并）同样算成功。
 - 409 merge_head_mismatch → blocked（批准后头漂移，禁止合并），detail 原样上报——这是防线不是故障。
+- 其余未枚举的HTTP状态码、超时或网络错误 → status=failed，retryable=true，evidence带原始状态码/错误信息，禁止默认当作成功或直接吞掉。
 
 
 ## 验收（Commander 据此判定）

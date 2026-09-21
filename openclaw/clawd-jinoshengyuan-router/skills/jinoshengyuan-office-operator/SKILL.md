@@ -57,7 +57,7 @@ node /Users/administrator/openclaw-root/workspaces-root/clawd-jinoshengyuan-rout
 
 ## AFFiNE
 
-只有明确 AFFiNE 请求才调用 `sessions_spawn(agentId="affine-jinnuo", runtime="subagent", mode="run", context="isolated")`。任务携带 `tenant_id=jinnuoshengyuan`、`legacy_tenant_id=jinoshengyuan`、原始请求、目标空间和回读要求。飞书或普通附件不得被改写成 AFFiNE 任务。
+只有明确 AFFiNE 请求才调用 `sessions_spawn(agentId="affine-jinnuo", runtime="subagent", mode="run", context="isolated")`。任务携带 `tenant_id=jinoshengyuan`、`legacy_tenant_id=jinnuoshengyuan`（历史遗留拼写）、原始请求、目标空间和回读要求。飞书或普通附件不得被改写成 AFFiNE 任务。
 
 ## 完成标准
 

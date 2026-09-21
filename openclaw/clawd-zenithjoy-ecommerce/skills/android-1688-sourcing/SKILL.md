@@ -37,19 +37,23 @@ description: 1688 安卓真机选品 + 商品素材采集（✅ 2026-09-11 金�
 
 ## 选品与采集
 
+`<搜索框>` 每次用 `uiautomator dump` 现场定位坐标，不像登录流程固定——搜索入口位置随进入路径变化，不可写死坐标。`<serial>` 用 `adb devices` 列出的真实设备序列号，与 `android-publish` 底座的设备选择约定一致。
+
 ```bash
 # 搜索
-adb shell input tap <搜索框>             # SearchInputActivity
+adb shell input tap <搜索框>             # SearchInputActivity，坐标现场用 uiautomator dump 定位
 adb shell ime set com.android.adbkeyboard/.AdbIME
 adb shell am broadcast -a ADB_INPUT_B64 --es msg $(printf '关键词' | base64)
 adb shell input keyevent 66
 
-# 进商品详情（DetailActivity），滑图集逐张截图
+# 进商品详情（DetailActivity），滑图集逐张截图：循环滑动+截图，直到某张截图与上一张视觉重复
+# （判定图集已采完）；单商品按 p<商品ID>_<序号>.png 命名；采集数量优先核对商品页读到的
+# 「图集张数」字段是否达标，达标或判定重复即终止循环
 adb shell input swipe 1000 500 200 500 300
 adb shell screencap -p /sdcard/s.png
 ```
 
-截图回传（m4 宿主走 base64 管道）：
+截图回传（m4 宿主走 base64 管道，`<serial>` 用 `adb devices` 输出的真实序列号）：
 ```bash
 ssh xian-m4 "adb -s <serial> shell screencap -p /sdcard/s.png; \
   adb -s <serial> pull /sdcard/s.png /tmp/s.png 1>&2; base64 -i /tmp/s.png" 2>/dev/null | base64 -d > local.png
