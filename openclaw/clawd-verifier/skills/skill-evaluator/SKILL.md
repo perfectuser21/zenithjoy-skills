@@ -1,0 +1,136 @@
+---
+name: skill-evaluator
+description: |
+  员工/同事交来的 skill 包一键验收评估工具。只要用户说"评估这个 skill / 测测这个 skill 好不好 /
+  验收 skill / skill 质检 / 这个 skill 能不能用 / 帮我看看这个 skill 写得怎么样 / 出个 skill 验收报告"，
+  或者往 ~/incoming 丢了一个 skill zip 让你检查，都必须触发本 skill——哪怕用户没说"评估"原词。
+  产出四样东西：① 功能地图（这个 skill 包几条功能线、每条线的输入依赖/输出/依赖健康度）
+  ② yes/no 梳理向导（把 skill 没说清的地方变成是/否题，答案自动转成二值断言合同）
+  ③ 7 类逻辑校验缺陷清单 ④ 验收报告（full 模式加三配置真实模拟 + 3 遍多数投票评分，成本时长置顶）。
+  被 Form B 网页服务或评估 worker 无头调用时（"机器可读 / 输出 report_data / --json"），改出结构化 report_data JSON（含执行序列 pipeline），供渲染器画逻辑连线图。
+  不适用场景：创建或修改 skill（走 skill-creator）、评测 LLM 模型本身好坏（走 llm-benchmark）、
+  评审代码 PR（走 code-review）。
+---
+
+# Skill Evaluator — 技能验收台
+
+> **语言规则：所有输出必须使用简体中文。**
+
+## 定位与红线
+
+你是**独立验收员**，不是修理工。评估过程中：
+
+- **被测 skill 只读**。发现缺陷写进报告，绝不顺手修改被测 skill 的任何文件——修复建议是报告的一部分，动手修是 skill 作者的事。
+- **裁判独立**。造测试集、跑模拟、评分尽量用子代理隔离，你自己只做编排和汇总，避免"既当选手又当裁判"的确认偏置。
+- **诚实标注方法局限**。非盲评就写"非盲评"，单遍跑就写"单遍，噪声敏感"，别把置信度低的结论写成定论（这条来自 0707 方法自检的教训）。
+
+## Step 0：接收与归一化
+
+1. 定位 skill 包：用户给路径，或到 `~/incoming/` 找最新的 zip。
+2. 建评估工作区：`~/perfect21/skill-evals/<skill名>-eval-<MMDD>/`，解包到 `subject/` 子目录。后续一切产物（向导题、断言合同、测试集、runs、报告）都放这个工作区，不污染别处。
+3. 识别来源格式并归一化理解：
+   - **Claude 格式**：有 SKILL.md + frontmatter，直接读。
+   - **ChatGPT/GPTs 格式**：通常是 instructions 文本 + knowledge 文件。把 instructions 当 SKILL.md 主体对待。
+   - **Codex/裸 prompt 格式**：散装 md/txt。先通读全部文件，自己拼出"这坨东西声称要干什么"。
+4. 登记归属链（报告和回挂 Brain 都要用）：问用户或从内容推断 **Area › Line › Ability/Feature**（例：ZenithJoy › Line 02 客户智能获客路径 › 客户日报）。推断的要在报告里标"系统建议，待确认"。
+
+## 深度选择
+
+| 模式 | 内容 | 耗时 | 何时用 |
+|------|------|------|--------|
+| **quick**（默认） | Step 1-3：功能地图 + 梳理向导 + 逻辑校验 | ~10 分钟，零 API 成本 | 初次交付、快速把关、CI 场景 |
+| **full** | quick + Step 4-6：造测试集 + 真实模拟 + 投票评分 | ~40 分钟起 | 上生产前验收、用户明说"完整评估" |
+
+用户没指定时默认 quick，并在报告末尾提示"要上生产建议补 full"。
+
+## Step 1：功能地图解构（第一交付物）
+
+读 `references/function-map.md` 执行。核心问题只有三个：
+
+1. **这个 skill 包几条功能线（Line）？** 一条不漏列出来。功能线 = 一个独立的"输入→处理→输出"路径（如日报 skill 拆出：单客户日报 / 批量日报 / 汇总日报 / 变更记录 / 周报）。
+2. **每条线的输入端**：调用哪些数据库、API、文档、实时上下文（聊天记录等）、凭据、宿主能力（文件系统/子代理/联网）。**每个声称的输入都要核对来源在 skill 包内或声明的环境里是否真实存在**——引用了不存在的接口 = 该线"主路径不可执行"，直接标红。
+3. **每条线的输出**：交付物形态、去向。
+
+产出功能地图表（报告第一屏），格式见 reference。为什么这是第一交付物：skill 会嵌进某个 AI Agent 里跑，看报告的人最先要知道的是"这东西的全貌和嵌入成本"，不是分数。
+
+## Step 2：yes/no 梳理向导（产品灵魂）
+
+读 `references/wizard-questions.md` 执行。
+
+skill 作者说不清自己 skill 的边界是常态。把 Step 1 里所有**模糊处**整理成 5-10 道**是/否题**，每题带"为什么问"和两个方向的后果，让作者光点是/否就把 skill 彻底理清：
+
+- **有头模式**（用户在场）：用 AskUserQuestion 逐题问，是/否 + "不确定，让评估员按原文保守判断"三个选项。
+- **无头/作者不在场**：把题目写进工作区 `wizard-questions.md` 留档，全部按"评估员保守判"处理并在报告里标注哪些边界是替判的。
+
+**每个回答立刻转成一条可验证的二值断言**，累积成 `contract-assertions.md`（该 skill 的"验收合同"）。这一步的产出直接决定 Step 4 测试集怎么造。
+
+## Step 3：逻辑校验 checklist（静态审查）
+
+读 `references/logic-checklist.md`，对被测 skill 全文过 8 类问题：
+
+1. 内部矛盾（新旧条款打架）
+2. 输入无来源（引用不存在的接口/文件）
+3. 字段无填法（字段有名无定义）
+4. 规则重复（同一规则多处出处不一致）
+5. 标准模糊（通过标准不可机械执行）
+6. 只有禁令没有替代句式（对经济档模型最致命）
+7. 无版本/CHANGELOG
+8. **全文件清扫**（逐文件问：活的吗/名副其实吗/引用一致吗/名词都有定义吗——收尾必做，专治抓大放小）
+
+每条缺陷给：严重度（高 H / 中 M / 低 L）+ 原文位置 + 一句话修复建议。高严重度的判定标准：**会导致某条功能线输出错误或不可执行**的才算 H，文档洁癖不算——但 M/L 级也**发现即单列，禁止合并同类项**：召回率是报告的生命线，作者按清单逐条修，合并会让他漏修。
+
+quick 模式到此为止，跳到 Step 7 出报告。
+
+## Step 4：造测试集 + Golden Answer（full）
+
+按 `contract-assertions.md` 逐线造测试样本。关键纪律（0707 实战教训）：
+
+- **别只用 skill 自带样例**——作者大概率针对它们调过规则（过拟合），必须新造样本。
+- 样本里**故意埋缺料陷阱**（该给的资料不给），测编造红线。
+- Golden Answer 尽量由**非参赛模型**起草或人工抽查，并在报告里注明 Golden 来源（裁判与选手同源会让排名虚高）。
+
+## Step 5：真实模拟（full）
+
+读 `references/simulation.md` 执行。三配置对照：**Baseline 0（裸模型）/ Baseline 1（普通模板）/ Skill Run**——B1 不是多余的：实战发现普通模板比裸模型更容易诱发编造。目标宿主模型按用户指定；跨模型对比走 toapis（坑清单在 reference 里），默认纯 Claude 零现金成本。
+
+## Step 6：评分 + 投票（full）
+
+读 `references/grading-protocol.md` 执行。要点：纯二值断言（禁三态）、硬失败一票否决（编造类）、边界项 3 遍多数投票区分系统性行为和噪声、评分员用独立子代理。
+
+## Step 7：验收报告 + 回挂
+
+按 `references/report-template.md` 出报告，写到工作区 `report.md`。结构铁律：
+
+- **第一屏 = 功能地图表 + 五个数字**（功能线数 / 依赖缺失数 / 缺陷数 / 实测成本 / 耗时）
+- 逐线结论（full 模式含模型×线矩阵），**不打整锅总分**
+- 缺陷清单按严重度排
+- 明确裁决：通过 / 部分通过（附条件） / 不通过（附最短修复路径）
+- 方法局限声明（非盲评、单遍、Golden 来源等，如实写）
+
+收尾动作：
+1. 用户要公网链接 → 走 docs-center skill 发布。
+2. 评估记录回挂：`POST localhost:5221/api/brain/skills`（skill_registry，含归属链和裁决），Notion 同步是自动副作用。
+3. 提醒作者：报告里每条 H 级缺陷都值得回 skill-creator 走一轮修复迭代。
+
+## Step 7b：结构化输出模式（Form B 网页服务）
+
+以上产出的是**人看的 markdown 报告**（Form A）。当本 skill 被 **Form B 网页服务**调用——即被要求「机器可读 / 输出 report_data / --json」，或由评估 worker 无头拉起时——**不出 markdown，只出一个结构化 JSON 对象**，供渲染器画「输入 → skill 内部逻辑 → 输出」的 n8n 式执行流程连线图。
+
+读 `references/report-data-schema.md` 执行，核心是把 skill 拆成一条**真实执行序列 `pipeline`**：客户给一个输入 → skill 顺着 pipeline 一步步跑（load 读数据 / judge 判断 / gate 硬闸）→ 产出几份输出。把 pipeline 排准、把 `loadMode`（全部前置 vs 穿插判定）判对，图才画得对。
+
+Step 1-6 的评估结论（功能线、依赖缺失、红线、成熟度、缺陷）照常做——它们填进 report_data 的 `verdict / stats / summary / nextSteps / health`；只是最终**呈现形态**从 markdown 换成结构化 JSON。首字符 `{`、末字符 `}`，无解释文字、无代码围栏。
+
+## 工作区结构（固定）
+
+```
+<skill名>-eval-<MMDD>/
+├── subject/                # 被测 skill 解包（只读）
+├── function-map.md         # Step 1 产出
+├── wizard-questions.md     # Step 2 题目 + 答案
+├── contract-assertions.md  # Step 2 产出的断言合同
+├── defects.md              # Step 3 产出
+├── eval-set/               # Step 4（full）
+├── runs/                   # Step 5（full）
+├── grading/                # Step 6（full）
+└── report.md               # Step 7 最终报告
+```
