@@ -13,6 +13,13 @@
 
 不得读取或写入金诺盛源及其他租户数据。
 
+## 鉴权与降级（2026-09-21 实测补充）
+
+- 鉴权：走 `lark-cli --profile opc-main`（Gateway 主飞书 App bot 身份），执行前先用同一 profile 跑一次 `whoami` 确认 token ready；不得用其他 profile 或临时凭据代替。
+- 已用 `FEISHU_APP_ID`/`FEISHU_APP_SECRET` 换 `tenant_access_token` 直连 Bitable API 实测核实过：Base `BDmIbprBnaN6mjsNi48cOZpznRe` 与三张表均真实存在、可正常读取（`客户CRM` 表已有真实修订记录）。
+- 鉴权失败、token 过期或 Base/Table 不可达时：**不得跳过CRM环节直接产出分析结果当作完成**，也不得凭空编造客户当前状态——按 `status=blocked` 上报，说明具体是鉴权失败还是目标不可达，等重试或人工介入；分析产物本身（聊天内容的结构化洞察）可以先完成，只是不写回CRM、并在结果里明确标注 `crm_write=skipped_unreachable`。
+- 重试：同一次调用内网络类错误最多重试 2 次，仍失败才报 blocked；鉴权类错误（403/401）不重试，直接报告，因为重试不会让过期 token 变新。
+
 ## 输入
 
 每个客户至少需要聊天文本和稳定客户ID。可选输入包括客户名称、微信昵称、沟通时间、原始沟通来源，以及 CRM 中已有的上一有效状态。
