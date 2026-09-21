@@ -20,9 +20,9 @@
       "assert": "必须 blocked/failed 带准确原因，禁止假装 completed（评分红线）"
     },
     {
-      "id": "unmapped-honest",
-      "scenario": "mode=run",
-      "assert": "blocked brain_fleet_stage_not_mapped: stage cleanup"
+      "id": "close-call",
+      "scenario": "mode=run，bridge_run_id有效",
+      "assert": "调用 /attempt-run/close 端点释放并验证 worktree/容器/预览资源，响应进 evidence"
     }
   ]
 }

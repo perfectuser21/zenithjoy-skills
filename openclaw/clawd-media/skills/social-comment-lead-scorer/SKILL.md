@@ -25,12 +25,12 @@ description: "Use Luna to score every collected social comment in bounded batche
 > 本节与 `agentic-workflow-runtime/references/protocol.md` 的「metrics 封闭键集」逐字一致；
 > 冲突时以 protocol.md 为准。适用阶段：scoring。
 
-**metrics 必填**（没发生就填 0，禁止自造键名）：通用 4 键 `external_interactions` `business_reads` `business_writes` `artifact_writes`；本阶段另加 `comments_scored` `strong_intent` `weak_intent` `peer` `irrelevant` `spam`。
+**metrics 必填**（没发生就填 0，禁止自造键名）：通用 4 键 `external_interactions` `business_reads` `business_writes` `artifact_writes`；本阶段另加 `comments_scored` `strong_intent` `weak_intent` `peer` `irrelevant` `spam` `review`。
 
 **真实模式 completed 的最小 evidence**（`evidence` 必须是对象数组，空数组不接受）：
 - completed 至少每批次 1 条：`{"type":"scoring_batch","batch":…,"scored":…,"distribution":{…}}`
 
-- 五类分布键**必须全部出现**（哪怕为 0），且五类之和等于 `comments_scored`。
+- 六类分布键**必须全部出现**（哪怕为 0），且六类之和等于 `comments_scored`。
 - **先扫全批查重再逐条判**：同一文本被不同账号重复发布（≥2 次）一律判 spam 并在 reason 注明「重复文本」。（深度 eval 实测：62 条里两条一字不差的"评论"来自不同账号，两个模型都各自判了 weak_intent——单条视角看不见跨条刷屏。）
 
 # 社媒评论线索评分
@@ -58,7 +58,7 @@ description: "Use Luna to score every collected social comment in bounded batche
 | `spam` | 营销引流、机器重复或异常广告 | 否 |
 | `review` | 证据不足或语义无法可靠判断 | 否 |
 
-每条输出 `category`、`score_0_100`、`confidence`、`reason`、`audience_match`、`candidate_for_delivery`和原始证据引用。不使用单一关键词命中替代语义判断。`score_0_100` 仅供排序参考，下游判定一律以 `category` 为准；二者不一致时以 `category` 为准。
+每条输出 `category`、`score_0_100`、`confidence`、`reason`、`audience_match`、`candidate_for_delivery`和原始证据引用。不使用单一关键词命中替代语义判断。`score_0_100` 仅供排序参考，下游判定一律以 `category` 为准；二者不一致时以 `category` 为准。上表『合格线索候选』列为默认判定；租户 frozen task_request 里的排除规则可在此基础上进一步收紧（如追加黑名单关键词），但不得把 strong_intent/weak_intent 之外的类别放宽为候选。
 
 ## 输出与回写
 

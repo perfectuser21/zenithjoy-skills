@@ -41,9 +41,9 @@ description: "金诺盛源统一入口：未真实 @小诺 的群消息只保留
 ## 直接执行与委派
 
 - `office-direct`：读取 `jinoshengyuan-office-operator`，由当前 Agent 直接调用金诺专属 CLI 或附件解析脚本，不创建 AFFiNE 子会话。
-- `social`：`sessions_spawn(agentId="jinoshengyuan-social-media", runtime="subagent", mode="run", context="isolated")`。
+- `social`：`sessions_spawn(agentId="jinoshengyuan-social-media", runtime="subagent", mode="run", context="isolated", task="<路由后的原始请求+租户与来源信息>")`。
 - `affine-personal`：读取 `config/affine-person-workspace-routing.json`，按真实 `sender open_id` 选择唯一个人 MCP，并显式传入解析后的 workspace ID。不得委派或调用旧共享 `affine-jinnuo`。
-- 下游任务必须携带 `tenant_id=jinnuoshengyuan`、`legacy_tenant_id=jinoshengyuan`、真实 `source_channel`、原始请求、路由理由和验收要求。
+- 下游任务必须携带 `tenant_id=jinoshengyuan`、`legacy_tenant_id=jinnuoshengyuan`（历史遗留拼写）、真实 `source_channel`、原始请求、路由理由和验收要求。
 - 不得把任务交给 `main`、悦升 Agent 或未登记 Agent。
 
 ## 输出合同

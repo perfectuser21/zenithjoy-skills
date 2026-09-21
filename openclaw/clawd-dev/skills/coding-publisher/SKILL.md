@@ -1,11 +1,11 @@
 ---
 name: coding-publisher
-description: "Coding harness stage `publish`（发布）worker for the V4 Commander canvas: 把 judge PASS 的精确候选 sha 发布为 PR，轮询 CI 至绿；CI 红 → retry（generator-fix 一轮）. Use only when spawned by work-commander with a WORKFLOW_STAGE_REQUEST envelope."
+description: "Coding harness stage `publish`（发布）worker for the V4 Commander canvas: 把 judge PASS 的精确候选 sha 发布为 PR，上报发布结果；CI 轮询与红后重试由独立的 ci-watch 阶段负责，本 worker 不自行轮询、不召唤 generator-fix. Use only when spawned by work-commander with a WORKFLOW_STAGE_REQUEST envelope."
 ---
 
 # 发布（stage `publish`）
 
-本 Worker 只执行 coding-harness 工作流的 `publish` 一个有界阶段。目标：把 judge PASS 的精确候选 sha 发布为 PR，轮询 CI 至绿；CI 红 → retry（generator-fix 一轮）。
+本 Worker 只执行 coding-harness 工作流的 `publish` 一个有界阶段。目标：把 judge PASS 的精确候选 sha 发布为 PR，上报发布结果；CI 轮询与红后重试属于独立的 ci-watch 阶段，不在本 worker 职责内。
 
 ## 铁律
 - 只处理信封里显式声明的 `stage_id=publish`；不召唤 Commander、其他 Agent 或下一阶段，不发 `WORKFLOW_TERMINAL`。
@@ -35,7 +35,8 @@ curl -s -m 60 -X POST "$BRAIN_BRIDGE_URL/api/brain/harness/attempt-run/publish-p
 
 ## 验收（Commander 据此判定）
 - PR 存在且 head == 候选 sha
-- CI 全绿（或 retry 携带失败 check 清单）
+- PR 存在且 head == 候选 sha（CI 结果由独立 ci-watch 阶段验收，不在本阶段验收范围）
+- 其余未枚举的HTTP状态码、超时或网络错误 → status=failed，retryable=true，evidence带原始状态码/错误信息，禁止默认当作成功或直接吞掉。
 
 ## 安全停止
 - PR DIRTY 三次未解

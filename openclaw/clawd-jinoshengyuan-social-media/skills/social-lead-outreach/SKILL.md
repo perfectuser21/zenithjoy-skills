@@ -121,17 +121,15 @@ claim 至少保存 `claim_key`、lead record ID、run/execution、话术 ID、�
   "status": "completed",
   "summary": "required",
   "metrics": {
-    "eligible_leads": 0,
-    "claims_created": 0,
-    "messages_sent": 0,
-    "unknown_outcomes": 0,
-    "phone_actions": 0,
+    "external_interactions": 0,
     "business_reads": 0,
     "business_writes": 0,
-    "external_interactions": 0
+    "artifact_writes": 0,
+    "contacts_made": 0,
+    "claims_acquired": 0
   },
   "artifacts": [],
-  "evidence": [],
+  "evidence": [{"type": "outreach", "lead": "<稳定标识>", "channel": "douyin_private_message", "result": "sent"}],
   "write_fences": [],
   "warnings": [],
   "retryable": false,
