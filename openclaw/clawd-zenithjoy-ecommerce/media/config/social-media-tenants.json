@@ -1,0 +1,312 @@
+{
+  "schema": "social-media-tenant-v1",
+  "tenants": {
+    "jinnuoshengyuan": {
+      "tenant_id": "jinnuoshengyuan",
+      "legacy_tenant_ids": ["jinoshengyuan"],
+      "label": "金诺盛源",
+      "manager_role": "social-media-manager",
+      "manager_agent_id": "social-media-manager",
+      "agent_id": "jinoshengyuan-social-media",
+      "enabled": true,
+      "gateway": "current",
+      "workflow": "social-leadgen-workflow",
+      "platform": "douyin",
+      "platform_adapter": "douyin-phone-runtime",
+      "destination_adapter": "lark-base-cli",
+      "node": "XIAN-M4-PHONE",
+      "phone_profile": "jinoshengyuan-work",
+      "phone_serial": "e6c7ef34",
+      "phone_model": "RMX3478",
+      "adb_controller": "/Users/jinnuoshengyuan/.local/bin/douyin-phone-adb",
+      "screen_size": {
+        "width": 1080,
+        "height": 2412
+      },
+      "intake_policy": {
+        "source_of_truth": "frozen_task_request",
+        "tenant_run_policy": "defaults_only",
+        "worker_override": false,
+        "user_selectable_fields": ["sort", "time_layers", "duration", "scope", "location", "comment_mode"]
+      },
+      "run_policy": {
+        "task_request_precedence": true,
+        "policy_role": "intake_defaults_only",
+        "min_keywords_per_run": 2,
+        "keyword_selection": "audience_priority",
+        "discovery": {
+          "mode": "most_commented_layers",
+          "sort": "most_commented",
+          "time_layers": ["one_week", "six_months"],
+          "duration_filter": "unlimited",
+          "search_scope": "unlimited",
+          "same_city": false,
+          "no_new_result_screen_limit": 3,
+          "video_limit": null
+        },
+        "qualification": {
+          "transcript_coverage": "full",
+          "verdict_mode": "single_full_transcript",
+          "low_confidence": "review"
+        },
+        "comments": {
+          "mode": "visible_window_exhaustive",
+          "window_follows_video_layer": true,
+          "batch_size": 30,
+          "scheduler": "round_robin",
+          "per_video_limit": null
+        },
+        "lead_limit": null,
+        "duration_limit_minutes": null
+      },
+      "douyin_account": {
+        "nickname": "7250",
+    "douyin_id": "dy1k1jgakgue5",
+        "role": "search-primary",
+        "ownership": "user-confirmed-id-pending"
+      },
+      "douyin_accounts": {
+        "primary": {
+          "nickname": "7250",
+      "douyin_id": "dy1k1jgakgue5",
+          "role": "search-primary",
+          "task_types": ["search", "audience-research", "leadgen", "benchmark-research"],
+      "status": "selected-and-verified"
+        },
+        "distribution_subaccount_1": {
+          "nickname": "躺赢AI学姐",
+          "douyin_id": "langzi63485",
+          "role": "distribution-subaccount-1",
+          "task_types": ["authorized-outreach", "reply-followup"],
+          "status": "selected-and-verified"
+        },
+        "distribution_subaccount_2": {
+          "nickname": "人工智能小诺考评",
+          "douyin_id": "44997267357",
+          "role": "distribution-subaccount-2",
+          "task_types": ["authorized-outreach", "reply-followup"],
+          "status": "verified"
+        }
+      },
+      "feishu_account": "jinoshengyuan",
+      "feishu_cli_profile": "cli_aa06b03cc0b9dbee",
+      "feishu_base": {
+        "app_token": "GNuwbzY0da8GP0sv6MGcOTu9ntd",
+        "name": "金诺盛源｜Social Media 工作台",
+        "url": "https://p1bce1datcr.feishu.cn/base/GNuwbzY0da8GP0sv6MGcOTu9ntd"
+      },
+      "tables": {
+        "keywords": {
+          "app_token": "GNuwbzY0da8GP0sv6MGcOTu9ntd",
+          "table_id": "tbleP4LgzkcwAhiZ",
+          "name": "金诺盛源｜关键词配置"
+        },
+        "leads": {
+          "app_token": "GNuwbzY0da8GP0sv6MGcOTu9ntd",
+          "table_id": "tblTLFj69CflUqSr",
+          "name": "金诺盛源｜抖音线索"
+        },
+        "raw_comments": {
+          "app_token": "GNuwbzY0da8GP0sv6MGcOTu9ntd",
+          "table_id": "tblmrJTyVgzTj89P",
+          "name": "金诺盛源｜原始评论池"
+        },
+        "account_pool": {
+          "app_token": "GNuwbzY0da8GP0sv6MGcOTu9ntd",
+          "table_id": "tblzgMSK4KfgdE0r",
+          "name": "金诺盛源｜运营账号矩阵"
+        },
+        "benchmark_accounts": {
+          "app_token": "GNuwbzY0da8GP0sv6MGcOTu9ntd",
+          "table_id": "tblJhFWDQvVLdwrd",
+          "name": "金诺盛源｜对标账号"
+        },
+        "script_library": {
+          "app_token": "GNuwbzY0da8GP0sv6MGcOTu9ntd",
+          "table_id": "tblZZWdv0YUNojqI",
+          "name": "金诺盛源｜话术库"
+        }
+      },
+      "direct_binding": {
+        "status": "active",
+        "feishu_bot_app_id": "cli_aa06b03cc0b9dbee"
+      },
+      "missing": [],
+      "readiness": {
+        "status": "ready",
+        "verified_at": "2026-08-25T00:48:00+08:00",
+        "interaction_policy": "read-only-unless-explicitly-authorized"
+      }
+    },
+    "zenithjoy": {
+      "tenant_id": "zenithjoy",
+      "legacy_tenant_ids": ["yueshengyun"],
+      "label": "悦升云端",
+      "manager_role": "social-media-manager",
+      "manager_agent_id": "social-media-manager",
+      "agent_id": "zenithjoy-shared-social-media",
+      "enabled": true,
+      "gateway": "current",
+      "workflow": "social-leadgen-workflow",
+      "platform": "douyin",
+      "platform_adapter": "douyin-phone-runtime",
+      "destination_adapter": "lark-base-cli",
+      "node": "XIAN-M4-PHONE",
+      "phone_profile": "yueshengyun-work",
+      "phone_serial": "ANGYVB4227006983",
+      "phone_model": "MAA-AN00",
+      "adb_controller": "/Users/jinnuoshengyuan/.local/bin/douyin-phone-adb",
+      "screen_size": {
+        "width": 1200,
+        "height": 2664
+      },
+      "intake_policy": {
+        "source_of_truth": "frozen_task_request",
+        "tenant_run_policy": "defaults_only",
+        "worker_override": false,
+        "user_selectable_fields": ["sort", "time_layers", "duration", "scope", "location", "comment_mode"]
+      },
+      "run_policy": {
+        "task_request_precedence": true,
+        "policy_role": "intake_defaults_only",
+        "min_keywords_per_run": 2,
+        "keyword_selection": "audience_priority",
+        "discovery": {
+          "mode": "most_commented_layers",
+          "sort": "most_commented",
+          "time_layers": ["one_week", "six_months"],
+          "duration_filter": "unlimited",
+          "search_scope": "unlimited",
+          "same_city": false,
+          "no_new_result_screen_limit": 3,
+          "video_limit": null
+        },
+        "qualification": {
+          "transcript_coverage": "full",
+          "verdict_mode": "single_full_transcript",
+          "low_confidence": "review"
+        },
+        "comments": {
+          "mode": "visible_window_exhaustive",
+          "window_follows_video_layer": true,
+          "batch_size": 30,
+          "scheduler": "round_robin",
+          "per_video_limit": null
+        },
+        "lead_limit": null,
+        "duration_limit_minutes": null
+      },
+      "audience": {
+        "default": "AI办公/本地办公需求人群",
+        "keyword_groups": [
+          "办公产品与品牌",
+          "办公提效",
+          "具体办公任务",
+          "Agent与OpenClaw",
+          "开发与自动化工具",
+          "AI副业与创业",
+          "企业应用",
+          "本地与私有化"
+        ]
+      },
+      "douyin_account": {
+        "nickname": "AI效率笔记",
+        "douyin_id": "37358506855",
+        "role": "search-primary",
+        "ownership": "verified-on-registered-yuesheng-device"
+      },
+      "feishu_account": "yueshengyun",
+      "feishu_cli_profile": "opc-main",
+      "feishu_base": {
+        "app_token": "H3OrbAH49aLNebs7XvOcpS1enec",
+        "name": "悦升云端 Social Media 工作台",
+        "url": "https://p1bce1datcr.feishu.cn/base/H3OrbAH49aLNebs7XvOcpS1enec"
+      },
+      "tables": {
+        "keywords": {
+          "app_token": "H3OrbAH49aLNebs7XvOcpS1enec",
+          "table_id": "tblyKCp5vc7y2S40",
+          "name": "悦升云端-关键词配置"
+        },
+        "leads": {
+          "app_token": "H3OrbAH49aLNebs7XvOcpS1enec",
+          "table_id": "tblmz52E2GDX0uwu",
+          "name": "悦升云端-抖音线索"
+        },
+        "raw_comments": {
+          "app_token": "H3OrbAH49aLNebs7XvOcpS1enec",
+          "table_id": "tblQzIHcmGSPUAZm",
+          "name": "悦升云端-原始评论池"
+        },
+        "account_pool": {
+          "app_token": "H3OrbAH49aLNebs7XvOcpS1enec",
+          "table_id": "tblg8QCFIIGkCVen",
+          "name": "悦升云端-账号矩阵"
+        },
+        "benchmark_accounts": {
+          "app_token": "H3OrbAH49aLNebs7XvOcpS1enec",
+          "table_id": "tblL5PLoibQ3z5Sz",
+          "name": "悦升云端-对标账号"
+        },
+        "script_library": {
+          "app_token": "H3OrbAH49aLNebs7XvOcpS1enec",
+          "table_id": "tblvf3t8ZWkOCpe1",
+          "name": "悦升云端-话术库"
+        }
+      },
+      "direct_binding": {
+        "status": "active-via-zenithjoy-router",
+        "feishu_bot_app_id": "cli_a9f33da9543adbc7"
+      },
+      "publishing": {
+        "operator_skill": "social-publishing-operator",
+        "bridge_base_url": "https://www.zenithjoyai.com",
+        "credential_ref": "runtime secret SOCIAL_PUBLISH_BRIDGE_KEY",
+        "approval_policy": "approved-content-object-or-verified-preauthorization",
+        "last_verified_at": "2026-09-19T21:28:01+08:00",
+        "facebook": {
+          "page_id": "1377853155400886",
+          "delivery_modes": [
+            "public_text",
+            "public_photo"
+          ],
+          "status": "live-tested-2026-09-19",
+          "readback": "bridge-authenticated-gate-off",
+          "default_gate": "off"
+        },
+        "instagram": {
+          "business_account_id": "17841431871959485",
+          "delivery_modes": [
+            "public_image"
+          ],
+          "status": "live-tested-2026-09-19",
+          "readback": "bridge-authenticated-gate-off",
+          "default_gate": "off"
+        },
+        "tiktok": {
+          "delivery_modes": [
+            "draft",
+            "private_self_only"
+          ],
+          "public_direct_post": "blocked-pending-app-review-and-live-capability",
+          "readback": "bridge-reachable-platform-token-invalid",
+          "requires": "oauth-reauthorization",
+          "default_public_gate": "off"
+        }
+      },
+      "device_status": {
+        "adb_state": "device",
+        "call_state": "idle",
+        "last_verified_at": "2026-08-25T22:50:00+08:00",
+        "account_preflight": "verified-after-notification-shade-recovery",
+        "recovery_policy": "unlock-once-then-back-evidence"
+      },
+      "missing": [],
+      "readiness": {
+        "status": "ready",
+        "verified_at": "2026-08-25T22:50:00+08:00",
+        "interaction_policy": "read-only-unless-explicitly-authorized"
+      }
+    }
+  }
+}
