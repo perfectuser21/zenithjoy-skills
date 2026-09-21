@@ -3,14 +3,45 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
-const JSZip = require("/usr/local/lib/node_modules/openclaw/node_modules/jszip/lib/index.js");
+
+// 脚本固定躺在 <workspace>/skills/<skill名>/scripts/ 下，往上跳3层就是 workspace 根——
+// 用这个反推部署根目录，不写死具体机器/客户的绝对路径，跨环境可移植。
+const WORKSPACE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+
+// jszip 是 openclaw 自己的依赖，不是本技能的依赖，本机装在哪个前缀（/opt/homebrew、
+// /usr/local、/usr 等）因操作系统/安装方式而异，不能写死一个。优先允许环境变量直接指定
+// （客户环境路径特殊时无需改代码），否则按常见 npm 全局前缀逐个尝试，找到第一个真实存在的。
+function resolveJSZip() {
+  if (process.env.OPENCLAW_JSZIP_PATH) {
+    return require(process.env.OPENCLAW_JSZIP_PATH);
+  }
+  try {
+    return require("jszip");
+  } catch {
+    // 走不到全局解析路径时，退回常见 npm 全局安装前缀逐个探测
+  }
+  const candidatePrefixes = [
+    "/opt/homebrew/lib/node_modules",
+    "/usr/local/lib/node_modules",
+    "/usr/lib/node_modules",
+  ];
+  for (const prefix of candidatePrefixes) {
+    const candidate = path.join(prefix, "openclaw/node_modules/jszip/lib/index.js");
+    if (fs.existsSync(candidate)) return require(candidate);
+  }
+  throw new Error(
+    "jszip not found: 设置环境变量 OPENCLAW_JSZIP_PATH 指向 jszip 的 lib/index.js，或确认 openclaw 全局安装路径",
+  );
+}
+const JSZip = resolveJSZip();
 const input = process.argv[2];
 const maxInputMb = 200;
 const maxInputBytes = maxInputMb * 1024 * 1024;
 const maxOutputChars = 120_000;
-const defaultRoot = "/root/clawd-zenithjoy-router/media/inbound";
+const defaultRoot = path.join(WORKSPACE_ROOT, "media/inbound");
 const allowedRoots = (process.env.OFFICE_READER_ALLOWED_ROOTS || defaultRoot)
   .split(path.delimiter)
   .map((item) => path.resolve(item))

@@ -2,6 +2,11 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+// 脚本固定躺在 <workspace>/skills/<skill名>/scripts/ 下，往上跳3层就是 workspace 根——
+// 用这个反推部署根目录，不写死具体机器/客户的绝对路径，跨环境可移植。
+const WORKSPACE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
 function argsOf(argv) {
   const out = {};
@@ -29,8 +34,8 @@ function requiredMissing(company, products, segments) {
 }
 
 const args = argsOf(process.argv);
-const root = args.root || process.env.OPENCLAW_COMPANY_DATA_ROOT || "/root/clawd/company-data";
-const registryPath = args.registry || process.env.OPENCLAW_TENANT_REGISTRY || "/root/clawd/config/enterprise-context/tenant-registry.json";
+const root = args.root || process.env.OPENCLAW_COMPANY_DATA_ROOT || path.join(WORKSPACE_ROOT, "company-data");
+const registryPath = args.registry || process.env.OPENCLAW_TENANT_REGISTRY || path.join(WORKSPACE_ROOT, "config/enterprise-context/tenant-registry.json");
 const tenant = args.tenant;
 const task = args.task || "general";
 if (!tenant || !/^[a-z0-9][a-z0-9_-]{1,63}$/.test(tenant)) {
