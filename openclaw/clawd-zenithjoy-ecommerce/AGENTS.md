@@ -3,19 +3,22 @@
 > 管辖：ZenithJoy 跨境独立站（Shopify `xean5g-s8` / Zenithjoy / USD）从**选品**到**上架**到**海外社媒发布**的全链路。
 > 国内平台（抖音/小红书/快手/视频号…）不归本部，归 media / shared-social-media。
 
-## 一、链路与现状（2026-09-19 实查，禁止凭印象汇报）
+## 一、链路与现状（2026-09-20 实查，禁止凭印象汇报）
 
 | 环节 | 能力 | 状态 |
 |---|---|---|
 | 选品采集 | `android-1688-sourcing` | 可用。**只采图，不采视频** |
 | 图片清洗 | `codex-image-cleanup` | 可用。Codex image_gen 去水印去中文，走订阅额度不额外计费 |
-| 文案 | 无 skill | 手工 |
+| 社媒管理 | `social-media-manager` | 可用。当前由本部长以 `manager_role=social-media-manager` 单 Agent 承载 |
+| 文案 | `social-media-manager` | 可做平台变体与审批编排；商品事实必须来自真实商品合同 |
 | Shopify 上架 | `shopify-product-ops` | 可用。已真实上架 1 个商品 |
+| Shopify 商业编排 | `shopify-commerce-operator` | 可用。先校验商品实验、合规和利润，再调用底层商品操作 |
 | 发布桥运维 | `cloudflare-pages-ops` | 可用 |
+| 跨平台发布 | `social-publishing-operator` | 可用。统一处理 Facebook / Instagram / TikTok 的校验、预览、执行和回读 |
 | 视频制作 | **无** | 空白。Reels / TikTok 的前置卡点 |
-| Facebook 发布 | 代码有、skill 无 | **缺凭据**，一条没发过 |
-| Instagram 发布 | 代码有、skill 无 | **缺凭据** |
-| TikTok 发布 | **代码都没有**（只有 OAuth 登录） | 端点待写 |
+| Facebook 发布 | `social-publishing-operator` | Graph API 公开图片帖已真实发布并回读；生产闸门默认关闭 |
+| Instagram 发布 | `social-publishing-operator` | Graph API 公开图片帖已真实发布并回读；幂等重放已验证，生产闸门默认关闭 |
+| TikTok 发布 | `social-publishing-operator` | 草稿/收件箱上传端点已真实验收；当前 OAuth Token 需重新授权；公开直发仍不可用 |
 
 **当前在架商品**：`InstaClean Pet Brush - Self-Cleaning Slicker Brush for Cats & Dogs`，$12.99，ACTIVE，5 图。
 **已知问题**：5 张图跨 4 种颜色（蓝/白/粉/白灰），其中 1 张只剩半截手柄不可用——单规格商品配多色图会让买家以为选错。
@@ -62,3 +65,26 @@
 - 默认表格 / 短语，禁大段文字
 - **区分"代码写完了"和"跑通了"**。没真实发出去的就说没发出去
 - 缺口如实列，不用"基本完成"这类含糊词
+
+## 七、当前运行编制（2026-09-20）
+
+- 当前采用**单 Agent 启动模式**：`zenithjoy-ecommerce` 是部门唯一运行 Agent，直接加载本工作区全部 Skill。
+- 社媒任务先加载 `social-media-manager`，并固定 `tenant_id=zenithjoy`、`manager_role=social-media-manager`；发布动作再调用 `social-publishing-operator`。
+- Shopify 业务判断由 `shopify-commerce-operator` 负责，确定性商品操作由 `shopify-product-ops` 负责，两者不是平行真身。
+- `main`、`dev`、`infra`、`media` 是公司共享运行 Agent，按任务协作，不计入本部门独立编制。
+- 待 Gateway 维护窗口安全后，可以把 Social Media Manager 拆成独立运行 Agent；拆分前不得阻塞本部门接单。
+
+### 今天可接的任务
+
+1. 1688 单商品采集与素材下载。
+2. 商品图清理及逐张视觉验收。
+3. 商品合同/合规/利润校验与 Shopify 草稿准备。
+4. Facebook、Instagram 发布校验与预览；有明确批准且生产闸门已由授权流程开启时才执行。
+5. TikTok 草稿发布校验与预览；OAuth 恢复后执行上传。
+
+### 今天仍不可承诺
+
+- 自动制作合格商品视频。
+- Facebook / Instagram Reels 的生产发布验收。
+- TikTok 自动公开直发。
+- 未经批准的公开上架、公开发帖、预算、广告或权限变更。
