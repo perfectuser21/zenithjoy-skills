@@ -54,6 +54,40 @@ function assertHttps(value, key) {
   return value;
 }
 
+// SOCIAL_PUBLISH_BRIDGE_KEY 是真实凭据，只能发往已知的桥接主机——不能让 --base-url
+// 或环境变量把它重定向到任意地址（否则等于把凭据外泄给该地址）。默认只信任生产桥接
+// 域名；确需切换环境时用 SOCIAL_PUBLISH_BRIDGE_ALLOWED_HOSTS（逗号分隔）显式加白名单，
+// 而不是让调用方随手传一个 --base-url 就能改变凭据流向。
+const DEFAULT_ALLOWED_BRIDGE_HOSTS = ['www.zenithjoyai.com'];
+// 回环地址（本地集成测试常用）不出网，凭据泄露风险不成立，允许走 http；
+// 其余任何主机一律要求 https，且必须在白名单里，白名单可用
+// SOCIAL_PUBLISH_BRIDGE_ALLOWED_HOSTS（逗号分隔）扩展。
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '::1']);
+function assertAllowedBridgeHost(rawUrl) {
+  let url;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    throw new Error('base_url_invalid');
+  }
+  const isLoopback = LOOPBACK_HOSTS.has(url.hostname);
+  if (url.protocol !== 'https:' && !(isLoopback && url.protocol === 'http:')) {
+    throw new Error('base_url_must_be_https');
+  }
+  if (isLoopback) return rawUrl;
+  const allowed = new Set([
+    ...DEFAULT_ALLOWED_BRIDGE_HOSTS,
+    ...(process.env.SOCIAL_PUBLISH_BRIDGE_ALLOWED_HOSTS || '')
+      .split(',')
+      .map((h) => h.trim())
+      .filter(Boolean),
+  ]);
+  if (!allowed.has(url.hostname)) {
+    throw new Error(`base_url_host_not_allowed:${url.hostname}`);
+  }
+  return rawUrl;
+}
+
 function buildOperation(input) {
   if (input.tenant_id !== 'zenithjoy') throw new Error('unsupported_tenant');
   const contentObjectId = requiredText(input, 'content_object_id');
@@ -203,7 +237,13 @@ async function main() {
 
   const key = process.env.SOCIAL_PUBLISH_BRIDGE_KEY;
   if (!key) return fail('SOCIAL_PUBLISH_BRIDGE_KEY_required');
-  const baseUrl = (args['base-url'] || process.env.SOCIAL_PUBLISH_BRIDGE_URL || 'https://www.zenithjoyai.com').replace(/\/$/, '');
+  const requestedBaseUrl = args['base-url'] || process.env.SOCIAL_PUBLISH_BRIDGE_URL || 'https://www.zenithjoyai.com';
+  let baseUrl;
+  try {
+    baseUrl = assertAllowedBridgeHost(requestedBaseUrl).replace(/\/$/, '');
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : 'base_url_rejected');
+  }
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30_000);
   let response;
@@ -227,7 +267,22 @@ async function main() {
   }
   clearTimeout(timeout);
 
-  const ok = response.ok && remote?.ok !== false;
+  // HTTP 2xx 只代表请求被接受，不等于真的发布成功——execute 必须在响应里
+  // 找到真实的平台内容标识（publish_id/permalink 等），拿不到就不能当作确定发布，
+  // 只降级为 evidenceIncomplete，交给上游按 completed_with_concerns 处理，不静默吞掉。
+  const httpOk = response.ok && remote?.ok !== false;
+  let evidenceIncomplete = false;
+  if (httpOk && operation.action === 'execute') {
+    const candidateIdFields = ['publish_id', 'publishId', 'post_id', 'postId', 'permalink', 'id'];
+    const hasStringField = (obj) => candidateIdFields.some((field) => {
+      const value = obj?.[field];
+      return typeof value === 'string' && value.trim().length > 0;
+    });
+    // 真实标识可能在顶层，也可能包在 result/data 这类外壳字段里。
+    const hasEvidence = hasStringField(remote) || hasStringField(remote?.result) || hasStringField(remote?.data);
+    if (!hasEvidence) evidenceIncomplete = true;
+  }
+  const ok = httpOk && !evidenceIncomplete;
   return output({
     ok,
     contentObjectId: operation.contentObjectId,
@@ -238,6 +293,7 @@ async function main() {
     idempotencyKey: operation.idempotencyKey || null,
     httpStatus: response.status,
     remote,
+    ...(evidenceIncomplete ? { evidenceIncomplete: true, note: 'http_2xx_but_no_platform_content_id_in_response' } : {}),
     nextCheckAt: ok && operation.action === 'execute' ? new Date(Date.now() + 60_000).toISOString() : null,
   }, ok ? 0 : 2);
 }
