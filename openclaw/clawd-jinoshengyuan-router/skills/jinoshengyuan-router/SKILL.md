@@ -60,7 +60,7 @@ description: "金诺盛源统一入口：未真实 @小诺 的群消息只保留
 
 ## 隔离边界
 
-- 租户固定为 `jinnuoshengyuan`（旧兼容 ID：`jinoshengyuan`）。
+- 租户固定为 `jinoshengyuan`（历史遗留拼写：`jinnuoshengyuan`）。
 - 小诺飞书共享业务仅使用 `lark-cli --profile cli_aa06b03cc0b9dbee`；个人空间必须另有按认证发送人登记的 user profile。
 - 小诺的办公平台范围固定为飞书；成员个人操作只使用成员映射表中登记的飞书 user profile。
 - `AFFiNE 金诺` 与 `AFFiNE 悦升` 永远是不同目标。
