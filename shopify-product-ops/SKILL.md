@@ -104,6 +104,42 @@ query { product(id: "gid://shopify/Product/<id>") {
 
 再 `productDeleteMedia(productId, mediaIds)`。用错 ID 会报 `Media ids ... do not exist`。
 
+## 4.5 上线到销售渠道（❗ACTIVE 不等于能卖）
+
+建完的商品即使 `status` 是 `ACTIVE`，客人也可能看不到——
+**「商品状态正常」和「已上架到店面」是两回事。**
+
+判据是 `onlineStoreUrl`：
+
+```bash
+{ products(first:20){ nodes { title status onlineStoreUrl } } }
+```
+
+`onlineStoreUrl` 为 null = 没上线。2026-09-24 实测：5 个商品全部 ACTIVE，
+前台可见数 1/6，差的就是这一步。
+
+发布方法（需 `read_publications` + `write_publications`）：
+
+```graphql
+# ① 取 Online Store 渠道 id
+{ publications(first:10){ nodes { id name } } }
+#   → Online Store / Shop / Point of Sale / Facebook & Instagram
+
+# ② 发布
+mutation {
+  publishablePublish(id:"gid://shopify/Product/…",
+                     input:{publicationId:"gid://shopify/Publication/…"}) {
+    userErrors { field message }
+  }
+}
+```
+
+回读 `onlineStoreUrl` 非 null 才算成，**并且真去抓一次前台页面**——
+mutation 无错不等于客人打得开。
+
+> 权限不够、开新国家市场、配语言币种 → 见 `shopify-store-setup`。
+> 上架前的成品验收（图文语言/数量/价格一致性）→ 见 `ecommerce-listing-qa`。
+
 ## 5. 验收查询
 
 ```bash
