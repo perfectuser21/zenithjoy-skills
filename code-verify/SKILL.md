@@ -117,8 +117,9 @@ changelog:
 
 | 考题 | 已知坏例 | 必须指出 |
 |---|---|---|
-| 01 | zenithjoy-workspace PR#1937（09-22）：把 preflight、cleanup 的判定写成常量，同时含一条真的读回的对照判据 | 阅卷用 `exam/01-pr1937/answer-key.md` |
+| 01 | zenithjoy-workspace PR#1937（09-22）：把 preflight、cleanup 的判定写成常量，同时含一条真的读回的对照判据 | `exam/01-pr1937/answer-key.md` |
+| 02 | 09-28 补审的真实缺口：自报（只看写入接口成功码）与读回（重新读界面）的分界；缺失（代码里根本没有对应检查） | `exam/02-outreach-ack-vs-readback/answer-key.md` |
 
-考生只拿 `exam/01-pr1937/materials.md`（判据清单 + 冻结的代码节选 + 交付要求）。阅卷方对照 `answer-key.md`。
+考生只拿各题目录下的 `materials.md`（判据清单 + 冻结的代码节选 + 交付要求）。阅卷方对照 `answer-key.md`。历次考试结果与规则变更见 `exam/EXAM-LOG.md`。
 
-通过标准：`answer-key.md` 的「必抓」三条**全部**满足——常量不得判成读回；对照题（真读回的判据）不得被判成缺陷（误报）；输出通过上面的一致性规则。任一项不满足 → 该核验员本次不上岗，把差距写回本 skill 的判定细则后重考。核验员**不得**在考试时看到 `answer-key.md`。
+通过标准：每道题 `answer-key.md` 的「必抓」**全部**满足——类型判对（常量不得判成读回，自报不得判成读回或常量，缺失必须 `code_ref` 为 null）；对照题（真读回的判据）不得被判成缺陷（误报）；输出通过上面的一致性规则。任一项不满足 → 该核验员本次不上岗，把差距写回本 skill 的判定细则后**所有考题重考**。核验员**不得**在考试时看到 `answer-key.md`。
