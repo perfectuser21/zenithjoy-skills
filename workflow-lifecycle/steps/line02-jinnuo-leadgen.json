@@ -1,0 +1,461 @@
+{
+  "workflow": "line02-金诺获客(social-keyword-leadgen)",
+  "notion_workflow_row": "3d9c40c2-ba63-8105-a986-ca333064eb3d",
+  "notion_step_db": "3d9c40c2ba638195a41bf529056a4aa8",
+  "lifecycle_stage": "S2-沉淀",
+  "version": "v0.1",
+  "updated": "2026-09-12",
+  "steps_note": "本地SSOT:改本文件→跑 scripts/sync-to-notion.mjs 推送",
+  "steps": [
+    {
+      "order": 1,
+      "stage": "1-preflight",
+      "name": "拿设备锁(TTL 30min)",
+      "impl_now": "代码(adb脚本)",
+      "target": "固化",
+      "deterministic": "有",
+      "status": "稳定",
+      "signal": "lock=acquired + acquired_at 时间戳",
+      "history": [
+        "0909-0911: 裸mkdir锁,孤儿锁反复卡死(至少4轮损失)",
+        "0911: --help被当run_id占锁→首字符必须字母数字",
+        "0911: 锁标识四种写法互不相认→归一化到run根",
+        "0912: 加TTL(30min)+stale自动回收+release整目录清除,8场景变异测试全过"
+      ],
+      "evidence": "孤儿锁反复卡死→0912加TTL+stale回收,8场景变异测试全过",
+      "notion_page_id": "3d9c40c2-ba63-819e-8f08-cd1277896b31"
+    },
+    {
+      "order": 2,
+      "stage": "1-preflight",
+      "name": "验设备身份",
+      "impl_now": "代码(adb脚本)",
+      "target": "固化",
+      "deterministic": "有",
+      "status": "稳定",
+      "signal": "serial/model 与租户上下文一致",
+      "history": [
+        "0912: 建档(来自0911-0912通宵实战),此前无结构化记录"
+      ],
+      "evidence": "—",
+      "notion_page_id": "3d9c40c2-ba63-8107-bb2d-c7111b2bffc9"
+    },
+    {
+      "order": 3,
+      "stage": "1-preflight",
+      "name": "验通话空闲",
+      "impl_now": "代码(adb脚本)",
+      "target": "固化",
+      "deterministic": "有",
+      "status": "稳定",
+      "signal": "call_state=idle",
+      "history": [
+        "0912: 建档(来自0911-0912通宵实战),此前无结构化记录"
+      ],
+      "evidence": "—",
+      "notion_page_id": "3d9c40c2-ba63-811f-9eac-d6104a6161ef"
+    },
+    {
+      "order": 4,
+      "stage": "1-preflight",
+      "name": "读账号标记(我页)",
+      "impl_now": "AI(大模型)",
+      "target": "固化+AI兜底",
+      "deterministic": "有",
+      "status": "已修待验证",
+      "signal": "nickname+抖音号与租户一致",
+      "history": [
+        "0912: 1029轮3次失败第4次过(页面加载时序);1857轮网关取截图超时",
+        "0912: 结论=偶发型,需耐受重试,不可写死",
+        "0913 根因：dump 成功≠树完整——底部导航是 Lynx 渲染、挂进无障碍树有延迟(半成品 9214 字节 vs 正常 40KB)；且搜索结果页是全屏页根本没有底部导航。旧实现单抓一次 grep 不到就 die。",
+        "0913 修法：①已在主页就直读身份 ②有界重抓 4 次 ③仍无则逐步返回且每步复验。实测 LAUNCHER intent 与 feed/main/home/profile/mine 等 deeplink 全都到不了自己主页，别再试。",
+        "0913 变异测试：搜索页死局 3 步返回自愈，77 秒读出 躺赢AI学姐/langzi63485；冷启动 8s；已在主页 3s。",
+        "0913 生产验证：worker 回传写着「首次账号读取未定位到我页，返回后复核成功」——修复在真实轮次里生效。"
+      ],
+      "evidence": "偶发读不到:1029轮3次失败第4次过。页面加载时序问题,需耐受重试",
+      "notion_page_id": "3d9c40c2-ba63-8176-987e-f4d76290e27b"
+    },
+    {
+      "order": 5,
+      "stage": "2-discovery",
+      "name": "open-search 打开搜索",
+      "impl_now": "代码(adb脚本)",
+      "target": "固化",
+      "deterministic": "有",
+      "status": "稳定",
+      "signal": "搜索结果页tab栏出现",
+      "history": [
+        "0912: 建档(来自0911-0912通宵实战),此前无结构化记录"
+      ],
+      "evidence": "关键词必须URL编码",
+      "notion_page_id": "3d9c40c2-ba63-810e-a0ad-fd7312da9161"
+    },
+    {
+      "order": 6,
+      "stage": "2-discovery",
+      "name": "切视频tab",
+      "impl_now": "代码(adb脚本)",
+      "target": "固化",
+      "deterministic": "有",
+      "status": "已修待验证",
+      "signal": "树里读到视频tab,点击后dump出内容",
+      "history": [
+        "0912: 建档(来自0911-0912通宵实战),此前无结构化记录",
+        "0912 根因：读 UI 树加了三波重试(最坏~180s)，但 skill 的\"慢命令名单\"没列这条 → 调用方用默认超时，正确重试被拦腰斩断，误报 \"timed out with UI hierarchy unavailable\"。",
+        "0912 修法：白名单改通条规则——对控制器的每一次 exec 调用一律 timeout 300000ms，不按命令名挑。"
+      ],
+      "evidence": "综合tab树永不idle读不了,必须切;树优先取坐标,读不到降视觉",
+      "notion_page_id": "3d9c40c2-ba63-8137-9cda-e73145e6f486"
+    },
+    {
+      "order": 7,
+      "stage": "2-discovery",
+      "name": "点筛选按钮开面板",
+      "impl_now": "混合(代码+AI)",
+      "target": "固化+AI兜底",
+      "deterministic": "有",
+      "status": "已修待验证",
+      "signal": "截图出现面板(红按钮特征)",
+      "history": [
+        "0911: 「加载中」toast吞点击→单次点击+900ms必失败",
+        "0912: 先截图后点顺序反了(验证的是点之前的图)→改先点后验",
+        "0912: 缓存坐标点歪4轮全废→每轮重定位不吃缓存,连5次过"
+      ],
+      "evidence": "缓存坐标会漂+加载中toast吞点击→0912改先点后验+每轮重定位,连5次过",
+      "notion_page_id": "3d9c40c2-ba63-81b9-b3d9-df0261314f34"
+    },
+    {
+      "order": 8,
+      "stage": "2-discovery",
+      "name": "选筛选项(最新/一天内/同城)",
+      "impl_now": "代码(adb脚本)",
+      "target": "固化+AI兜底",
+      "deterministic": "有",
+      "status": "已修待验证",
+      "signal": "各选项变红(结构检测)",
+      "history": [
+        "0911: 抖音排序5项2行砍成3项1行→写死行号整体错位永远失败",
+        "0911: 定位侧结构检测(对)验证侧写死千分比(错)→两套合一",
+        "0912: 行索引改底部锚定"
+      ],
+      "evidence": "抖音排序2行改1行→写死行号全错位→改底部锚定。面板不进无障碍树只能视觉",
+      "notion_page_id": "3d9c40c2-ba63-8139-b75c-ece14f6feeef"
+    },
+    {
+      "order": 9,
+      "stage": "2-discovery",
+      "name": "点查看结果",
+      "impl_now": "代码(adb脚本)",
+      "target": "固化+AI兜底",
+      "deterministic": "有",
+      "status": "已修待验证",
+      "signal": "面板消失回结果页",
+      "history": [
+        "0911: 红按钮写死0.68-0.76区间,实际0.619-0.658不重叠→永远找不到",
+        "0912: 改下半屏红块聚类扫描"
+      ],
+      "evidence": "红按钮纵向位置漂→改红块聚类扫描",
+      "notion_page_id": "3d9c40c2-ba63-81e4-88af-c40be8ea219d"
+    },
+    {
+      "order": 10,
+      "stage": "2-discovery",
+      "name": "抽视频卡片",
+      "impl_now": "代码(adb脚本)",
+      "target": "固化",
+      "deterministic": "有",
+      "status": "已修待验证",
+      "signal": "树里N张卡片(业务断言,非结构断言)",
+      "history": [
+        "0911: 空壳树9KB通过结构校验被当成功→加业务断言",
+        "0912: 加\"搜索结果为空\"合法空态+业务级3轮重试",
+        "0912 同上：因不在\"慢命令名单\"被默认超时斩断；已随通条超时规则一并修复。",
+        "0913 钉死根因：综合 tab 是内嵌自动播放 feed，uiautomator 确定性永不 idle(同屏连抓 5 次全 could not get idle state，每次 11.7s)——不是偶发，重试无效。",
+        "0913 修法：读不到树即视为\"还在综合 tab\"的确定性信号 → 视觉兜底切视频 tab 再读；先单波快探再切，避免白烧三波。",
+        "0913 变异测试：183s→55s，返回 4 张真实卡片。"
+      ],
+      "evidence": "空壳树9KB也\"结构合法\"→必须查内容;页面明示搜索结果为空=合法空态",
+      "notion_page_id": "3d9c40c2-ba63-8111-8936-f9cdfca2cd2a"
+    },
+    {
+      "order": 11,
+      "stage": "2-discovery",
+      "name": "取视频链接",
+      "impl_now": "混合(代码+AI)",
+      "target": "固化+AI兜底",
+      "deterministic": "有",
+      "status": "已修待验证",
+      "signal": "video_id+短链+重开URI三者互验",
+      "history": [
+        "0912: 取链时抖音前台被ROM抢走(偶发);手工单跑必成",
+        "0912 现场定性：证据里三次尝试只有 -share.xml、无 -panel.xml → 死在\"找不到分享按钮\"，不是点击偏移。t1 树含 et_search_kw = 当时还在搜索结果页，详情页从未打开。",
+        "0912 根因：缺\"是否在详情页\"的前置校验 + 失败后盲按两次返回（注释写\"回退到详情页\"，实则把设备推到用户主页→退出抖音）。",
+        "0912 修法：新增 _on_video_detail 确定性判据(分享按钮存在)；前置不满足直接 NOT_ON_VIDEO_DETAIL 硬失败、零重试零按键；每次恢复后复验落点，落点不对立即中止。",
+        "0912 变异测试：桌面态调用 → 2 秒硬失败、前台仍是桌面(零漂移)。对比修前：5 次重试 + 10 次返回键 + 退出抖音。",
+        "0913 三态守卫落地：0=在详情页 1=不在(硬失败零按键) 2=树读不到(瞬态可重试)。两分支都变异测试过(2s / 101s)。",
+        "0913 抓到自伤：set -euo pipefail 下裸调用返回非零会静默终止脚本、一个字不打；改用 || 捕获退出码。变异测试当场抓到。",
+        "0913 生产进展：discovery 已走到取链接最深处(分享面板开→链接复制→剪贴板验证)。"
+      ],
+      "evidence": "偶发前台被ROM抢走;手工单跑必成,worker轮次里偶挂",
+      "notion_page_id": "3d9c40c2-ba63-81ee-9c5a-c65a9552af77"
+    },
+    {
+      "order": 12,
+      "stage": "2-discovery",
+      "name": "写发现工件+回读",
+      "impl_now": "AI(大模型)",
+      "target": "固化",
+      "deterministic": "有",
+      "status": "稳定",
+      "signal": "写盘+SHA256回读一致",
+      "history": [
+        "0912: skill写死/root/网关路径,M4上不存在→read-only报错",
+        "0912: 收进rpa-audit F8;0838轮worker第3次自纠首次accepted",
+        "0912 根因一：写工件用 exec → 跑在 M4 节点，节点上不存在 /root/clawd-work-commander → ENOENT。修法：skill 写死\"必须用网关侧文件写工具，严禁 exec\"。",
+        "0912 根因二：证据包回读要求在网关 localPath 上跑 sha256sum/tar，但 exec 在节点执行，该路径在节点不存在 → 这条恒为 unresolved，把整轮拖成 retry。修法：按执行体分工——节点侧算 SHA/列成员，file_fetch 负责送达网关，Commander 自行读网关路径核对。",
+        "0913 生产验证：discovery 阶段 accepted，守卫工件独立写出并回读成功，artifact_writes=1、candidates=1。"
+      ],
+      "evidence": "skill写死/root/网关路径,M4上不存在(F8跨机绝对路径)。0912靠worker重试绕过一次",
+      "notion_page_id": "3d9c40c2-ba63-8153-97bd-f3fae088e46e"
+    },
+    {
+      "order": 13,
+      "stage": "3-qualification",
+      "name": "3倍速录屏",
+      "impl_now": "代码(adb脚本)",
+      "target": "固化",
+      "deterministic": "有",
+      "status": "稳定",
+      "signal": "mkv含视频流+音频流",
+      "history": [
+        "0831: 带窗口连录整机失联1小时+→必须--no-window",
+        "0903: 5分钟封顶铁律",
+        "0913 生产验证：录制成功，14.633s 有音轨。"
+      ],
+      "evidence": "必须--no-window,带窗口连录会整机失联",
+      "notion_page_id": "3d9c40c2-ba63-8157-a23e-e66570898721"
+    },
+    {
+      "order": 14,
+      "stage": "3-qualification",
+      "name": "录前取消静音",
+      "impl_now": "代码(adb脚本)",
+      "target": "固化",
+      "deterministic": "有",
+      "status": "稳定",
+      "signal": "录出音量>-40dB",
+      "history": [
+        "0912: 判定4次全败根因=外链视频默认静音录到-91dB,通义正确报HAVE_NO_WORDS",
+        "0912: 按2次VOLUME_UP确定性unmute(-91→-37dB)连3次稳;端到端ASR逐字转写成功",
+        "0912: 已写进record_start",
+        "0913 生产验证：判定阶段实测录到 14.633 秒带音轨的视频。"
+      ],
+      "evidence": "外链打开默认静音→录到-91dB死寂→0912加按2次VOLUME_UP,端到端验过",
+      "notion_page_id": "3d9c40c2-ba63-811d-83e9-ece127be5095"
+    },
+    {
+      "order": 15,
+      "stage": "3-qualification",
+      "name": "提取16k音频",
+      "impl_now": "代码(adb脚本)",
+      "target": "固化",
+      "deterministic": "有",
+      "status": "稳定",
+      "signal": "wav时长与录制匹配",
+      "history": [
+        "0912: 建档(来自0911-0912通宵实战),此前无结构化记录"
+      ],
+      "evidence": "—",
+      "notion_page_id": "3d9c40c2-ba63-81af-91c2-e873cfcb7268"
+    },
+    {
+      "order": 16,
+      "stage": "3-qualification",
+      "name": "通义ASR转写",
+      "impl_now": "代码(adb脚本)",
+      "target": "固化",
+      "deterministic": "有",
+      "status": "翻车中",
+      "signal": "transcript非空+逐词时间戳",
+      "history": [
+        "0911: TTS横评3倍速Gemini 70.7%会改写题材,通义100%→切qwen-audio-3.0-asr-flash",
+        "0912: worker偶找不到脚本路径,ASR命令委托在capture skill判定阶段够不到,待固化",
+        "0913 卡点：transcribe-gemini.mjs 在执行节点上不存在(MODULE_NOT_FOUND 指向入口文件本身)，worker 用的是 /root/... 网关路径而 exec 跑在 M4。",
+        "0913 网关同时报 file-transfer policy denied node-side script discovery/staging，无法现场分发。",
+        "0913 待办：把脚本装到 M4 的 ~/.local/bin/(与 douyin-phone-adb 同待遇) 或放开传输策略。"
+      ],
+      "evidence": "qwen-audio-3.0-asr-flash,3倍速直发不分片。worker偶找不到脚本路径(待固化到skill)",
+      "notion_page_id": "3d9c40c2-ba63-8181-bab4-ead9c79c236c"
+    },
+    {
+      "order": 17,
+      "stage": "3-qualification",
+      "name": "意向判定(qualified?)",
+      "impl_now": "AI(大模型)",
+      "target": "留AI",
+      "deterministic": "部分",
+      "status": "稳定",
+      "signal": "qualified/rejected+理由落盘",
+      "history": [
+        "0912: 建档(来自0911-0912通宵实战),此前无结构化记录"
+      ],
+      "evidence": "大模型独有能力,永不固化",
+      "notion_page_id": "3d9c40c2-ba63-81e1-b870-ebbf48973c44"
+    },
+    {
+      "order": 18,
+      "stage": "4-collection",
+      "name": "开评论区",
+      "impl_now": "混合(代码+AI)",
+      "target": "固化+AI兜底",
+      "deterministic": "有",
+      "status": "稳定",
+      "signal": "面板真开;零评论则拦截不点",
+      "history": [
+        "0909: 实证评论按钮树里有真实bounds→树优先,推翻视觉猜",
+        "0909: 零评论拦截(点开是发布框,风控高危)"
+      ],
+      "evidence": "评论按钮树里有真实bounds(0909实证);零评论点开是发布框=风控高危",
+      "notion_page_id": "3d9c40c2-ba63-81f4-9aaf-cc341659b22f"
+    },
+    {
+      "order": 19,
+      "stage": "4-collection",
+      "name": "采集评论",
+      "impl_now": "混合(代码+AI)",
+      "target": "固化+AI兜底",
+      "deterministic": "有",
+      "status": "已修待验证",
+      "signal": "条数>0或明确空态,去重",
+      "history": [
+        "0912: 建档(来自0911-0912通宵实战),此前无结构化记录",
+        "0913 下午：collect-comments 每行附 tap=<头像中心坐标>+b64=<昵称>，worker 逐字复制即可(自算坐标/自转base64三次全错)。真机身份闭环 3/3。",
+        "0913 拍板：批内逐条结算——验证成功照写、失败标 identity_unverified 连评论文本写入，绝不整批作废(实证:2条到手客资被1个企业号连坐丢弃)。"
+      ],
+      "evidence": "—",
+      "notion_page_id": "3d9c40c2-ba63-8121-9096-e4e380ce9662"
+    },
+    {
+      "order": 20,
+      "stage": "5-scoring",
+      "name": "意向评分",
+      "impl_now": "AI(大模型)",
+      "target": "留AI",
+      "deterministic": "部分",
+      "status": "稳定",
+      "signal": "strong/weak/review分类落盘",
+      "history": [
+        "0912: 建档(来自0911-0912通宵实战),此前无结构化记录",
+        "0913 生产验证：零输入检查点路径 accepted。"
+      ],
+      "evidence": "大模型判断",
+      "notion_page_id": "3d9c40c2-ba63-8192-892c-f72d4e94f270"
+    },
+    {
+      "order": 21,
+      "stage": "6-delivery",
+      "name": "写飞书线索表",
+      "impl_now": "代码(adb脚本)",
+      "target": "固化",
+      "deterministic": "有",
+      "status": "翻车中",
+      "signal": "表行数增加(回读),非命令返回0",
+      "history": [
+        "0912: 建档(来自0911-0912通宵实战),此前无结构化记录",
+        "0913：从未到达有货状态。零线索时 delivery 按合同 blocked(语义是否改 completed_zero 待主理人拍板)。"
+      ],
+      "evidence": "判据必须是产物。0912至今整轮未走到此步",
+      "notion_page_id": "3d9c40c2-ba63-8151-a65a-d053513c9488"
+    },
+    {
+      "order": 22,
+      "stage": "7-outreach",
+      "name": "私信触达(当前合同禁用)",
+      "impl_now": "AI(大模型)",
+      "target": "固化+AI兜底",
+      "deterministic": "有",
+      "status": "稳定",
+      "signal": "claim后发送+回读",
+      "history": [
+        "0912: 建档(来自0911-0912通宵实战),此前无结构化记录"
+      ],
+      "evidence": "claim_then_send防重复;合同max_per_run=0",
+      "notion_page_id": "3d9c40c2-ba63-811b-98dc-d91d3ad69d56"
+    },
+    {
+      "order": 23,
+      "stage": "8-cleanup",
+      "name": "关App",
+      "impl_now": "代码(adb脚本)",
+      "target": "固化",
+      "deterministic": "有",
+      "status": "稳定",
+      "signal": "前台包名≠抖音+桌面截图",
+      "history": [
+        "0912: Commander索要协议外工件把全成的轮判blocked→写明证据型阶段验收边界",
+        "0913 生产验证：cleanup accepted，抖音关闭到桌面已验证。"
+      ],
+      "evidence": "cleanup是空证据重灾区,必须回读",
+      "notion_page_id": "3d9c40c2-ba63-81ac-a73b-c506aea25265"
+    },
+    {
+      "order": 24,
+      "stage": "8-cleanup",
+      "name": "放锁",
+      "impl_now": "代码(adb脚本)",
+      "target": "固化",
+      "deterministic": "有",
+      "status": "稳定",
+      "signal": "lock=free回读",
+      "history": [
+        "0912: cron旁路抢锁后被网关重启杀死留孤儿锁80分钟→TTL根治",
+        "0913 生产验证：cleanup 阶段 accepted，lock 释放并回读 free、桌面可见——0911 卡死的那一格已通。"
+      ],
+      "evidence": "只有cleanup阶段可放锁;Commander曾索要协议外的工件卡死此步(0912已修验收边界)",
+      "notion_page_id": "3d9c40c2-ba63-8106-8247-e32aade387a4"
+    },
+    {
+      "order": 25,
+      "name": "开详情读评论数(前置闸)",
+      "status": "稳定",
+      "runs_as": "代码",
+      "history": [
+        "0913 主理人拍板并实装：open-video 输出 comment_count(树上零成本)，=0 不录屏不ASR直接跳过。双向真机验证(2/0 精确命中)。"
+      ]
+    },
+    {
+      "order": 26,
+      "name": "分享名片取主页链接(通杀企业号)",
+      "status": "待实装",
+      "runs_as": "代码",
+      "history": [
+        "0913 主理人给的方案：主页右上···→分享名片→复制链接→剪贴板回读→主页短链(sec_uid)。个人号/企业蓝V通杀，与取视频链接同款机械。明天第一件事。"
+      ]
+    }
+  ],
+  "run_log": [
+    {
+      "date": "2026-09-13",
+      "best_run": "social-keyword-leadgen-20260912202607-jino-week",
+      "accepted_stages": [
+        "preflight",
+        "discovery",
+        "cleanup"
+      ],
+      "metrics": {
+        "candidates": 1,
+        "artifact_writes": 1,
+        "qualified": 0,
+        "business_writes": 0
+      },
+      "blocked_at": "qualification (ASR 脚本不在执行节点上)",
+      "root_cause_fixed": "Commander 读不到 worker 回传→编造 completion truncated→丢弃成功结果"
+    },
+    {
+      "date": "2026-09-13-evening",
+      "best": "6/8 连续绿(零输入路径)；collection 采到3条评论/验出2身份",
+      "assets": "4条真实客资身份手工闭环：81804871058/m09280102/QQ691824418/666622m",
+      "stop_reason": "us-vps 2核网关拥堵丢自己账本连杀三轮；根治=M4下放(等主理人OAuth)"
+    }
+  ]
+}
