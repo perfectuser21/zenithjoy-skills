@@ -5,6 +5,7 @@
 #   grep -v '^#' $S/skills.manifest | while read n; do [ -n "$n" ] && rsync -a --delete $n/ $D/skills/$n/; done
 skill-explore
 run-verify
+code-verify
 skill-distill
 contract-reviewer
 skill-evaluator
