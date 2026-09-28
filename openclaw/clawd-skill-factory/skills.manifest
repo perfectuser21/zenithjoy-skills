@@ -1,0 +1,12 @@
+# 技能工厂工位要部署的 skill（真身都在 zenithjoy-skills 根目录）
+# 部署（单向：技能库 → 线上工位），在 zenithjoy-skills 根目录执行：
+#   D=~/openclaw-root/workspaces-root/clawd-skill-factory; S=openclaw/clawd-skill-factory
+#   mkdir -p $D/skills && rsync -a --exclude skills.manifest $S/ $D/
+#   grep -v '^#' $S/skills.manifest | while read n; do [ -n "$n" ] && rsync -a --delete $n/ $D/skills/$n/; done
+skill-explore
+run-verify
+skill-distill
+contract-reviewer
+skill-evaluator
+android-publish
+android-leadgen-buildout-standard
