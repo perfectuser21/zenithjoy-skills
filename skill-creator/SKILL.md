@@ -49,6 +49,12 @@ Cool? Cool.
 
 所有输出使用简体中文。
 
+### 从一次跑通的运行沉淀 skill（技能工厂，决策 bf7d8753 / da75bdf6）
+
+「写什么」一律按 `skill-distill` 规范：先查重合并 → 归层（底座 / 平台 / 业务）与拆分三条件 →
+一步 = 一次页面状态变化 → 每步 DoD 五字段 → 必写成功判定 → 契约四项 → 熟化状态块。
+本 skill 只负责其后的评测与发布五步。上架前必须过 `contract-reviewer`（[致命] 级漏洞未修不得合并）。
+
 ---
 
 ## Communicating with the user

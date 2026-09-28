@@ -11,7 +11,8 @@ description: |
 version: 1.0.0
 created: 2026-09-05
 changelog:
-  - 1.0.0: 首版（Crystal 第3件，task 5e43ebd9；kernel run e138c364 因 impact_anchor_missing
+  - |
+    1.0.0: 首版（Crystal 第3件，task 5e43ebd9；kernel run e138c364 因 impact_anchor_missing
     判死后改人工交付）。提示词为 2026-09-05 真机实测原版：对 search_account 契约一枪 8 洞，
     第一条即当日 B 臂真实死因（缺"抖音在前台"precondition）。决策链 ca9f3d7b / 28ca1f69 / d95275f2。
 ---
