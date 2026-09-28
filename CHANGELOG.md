@@ -1,3 +1,8 @@
+## [2026-09-28] workflow-lifecycle 1.1.0 — 入库 + 统一四套口径 + Commander 进退场
+**症状**: 讨论"新活怎么从跑通走到代码化、Commander 何时进何时退"时，仓库里并存四套口径（技能工厂七阶段、workflow-lifecycle S1-S5、COMMANDER.md 熟化四态、获客搭建标准 脚本→ADB→Kotlin），互不引用；且 workflow-lifecycle 自 0912 起只在本机、从未入库；四套里没有一套定义 Commander 何时退场。
+**根因**: 各框架在不同颗粒度（动作/workflow/判例/步骤）上各自长出来，没有对照表；Commander 只定义了"进场"（救火 S2、审计 S4）。
+**修改**: 原样入库后升 1.1.0：新增四套口径对照表与实现阶梯 L0-L4；Commander 扩为五档在场（不在场→陪跑救火→审计→抽样→异常召唤），给出按步骤退场（L3 + code-verify 通过 + 连续 K 轮零新判例 + 能报"判不了"）、整条降档、自动重进判据，异常召唤档永久保留；附行业对照（workflow-use / Skyvern / Stagehand、分级自治）。阈值 K/M 为草案待拍板。Brain 任务 592910f5。
+
 ## [2026-08-02] harness-contract-proposer 9.19.1 — local_api 模板与硬规则对齐
 **症状**: 9.19.0 正文要求 Fleet `DB_URL`、真实 migration 和 signup/login 自举，但同一 Skill 的 local_api 示例仍使用 `$DB`、直接 INSERT 业务数据且没有会话自举；同步时还会再次删除 Cecelia 已补的 `android_realmachine` 枚举。
 **根因**: 新规则只加在领域约束和 Reviewer 条款，没有同步改写 Proposer 最常复制的 E2E 模板；SSOT 落后于 Cecelia 的 9.17.1 本地枚举补丁。
