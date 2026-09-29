@@ -1,3 +1,8 @@
+## [2026-09-29] openclaw douyin-phone-runtime（三份副本）— 截图只回传 JPEG + 节点断连核实后重试一次
+**症状**: 0929 实证：agent 用 `file_fetch` 回传原图 PNG（荣耀 1200x2664 约 3MB，base64 约 4MB），与指令同走节点 ws 通道，西安上行约 315KB/s → 30s 超时 → 后续指令排队 15s 超时 → 网关判 node disconnected；节点约 1 秒即重连，但 agent 按技能规则直接收尾判失败。
+**根因**: 技能只要求"回传控制器返回的路径"，控制器此前只产原图 PNG；技能对 DISCONNECTED / gateway request timeout 没有"先核实重连再重试"的分支，"连续截图失败立即停止"被当成断连的处置。
+**修改**: 新增「截图回传与节点断连」节：回传一律 `file_fetch` 控制器输出的 `jpg=` / `*_jpg=` 路径（控制器侧由 zenithjoy-workspace 配套 PR 生成宽 720/质量 70 的 JPEG 副本），禁止回传原图 PNG（正文明确要原图时须放宽超时 ≥60000ms）；无 jpg 行按 screenshot inaccessible 重截；断连时先 `nodes status` 确认已重连，只读步骤直接重试一次，写操作（私信/发布/切号/锁/录制）先只读核对上次是否已生效再决定，仍失败才收尾。clawd-media / clawd-jinoshengyuan-social-media / clawd-zenithjoy-shared-social-media 三份同步改。Brain 任务 aaa6163d。
+
 ## [2026-09-28] workflow-lifecycle 1.1.0 — 入库 + 统一四套口径 + Commander 进退场
 **症状**: 讨论"新活怎么从跑通走到代码化、Commander 何时进何时退"时，仓库里并存四套口径（技能工厂七阶段、workflow-lifecycle S1-S5、COMMANDER.md 熟化四态、获客搭建标准 脚本→ADB→Kotlin），互不引用；且 workflow-lifecycle 自 0912 起只在本机、从未入库；四套里没有一套定义 Commander 何时退场。
 **根因**: 各框架在不同颗粒度（动作/workflow/判例/步骤）上各自长出来，没有对照表；Commander 只定义了"进场"（救火 S2、审计 S4）。

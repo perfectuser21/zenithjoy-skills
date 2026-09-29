@@ -21,6 +21,15 @@ description: "Adapt generic social-video workflow actions to a tenant-selected l
 
 - preflight / cleanup 的 `artifacts` **必须为 `[]`**：截图、快照属只读 evidence（实测 21% 混放，一律判 retry）。
 
+## 截图回传与节点断连（必读）
+
+- **回传截图一律 `file_fetch` 控制器输出里的 `.jpg`**：截图类命令（`snapshot`、`tap-snapshot`、`swipe-snapshot`、`back-snapshot`、`open-app`、`close-app`、`pull`、`snapshot-evidence`、`tap-evidence`、`swipe-evidence`、`back-evidence`）首行仍是原图 PNG 路径，下一行是 `jpg=<路径>`；复合命令对应 `evidence_jpg=`、`panel_evidence_jpg=`、`selected_evidence_jpg=`、`results_evidence_jpg=`、`before_send_evidence_jpg=`、`sent_evidence_jpg=`。逐字复制 jpg 行给出的路径回传，不得自行把 `.png` 改写成 `.jpg`。
+- **禁止 `file_fetch` 原图 PNG**：原图约 3MB（base64 约 4MB），与指令同走一条节点通道，西安上行约 315KB/s → 30 秒超时 → 后续指令排队超时 → 网关判节点 disconnected（0929 实证）。只有任务正文明确要求原图时才可回传 PNG，且该次 `file_fetch` 必须显式放宽超时（不少于 `60000` 毫秒）。
+- 输出里没有 jpg 行（转换失败）→ 记录 screenshot inaccessible，按阶段恢复规则重截一次；不得退回去回传 PNG。
+- **节点断连先核实、再重试一次**：任一节点调用报 `DISCONNECTED`、`node disconnected` 或 `gateway request timeout` 时，不得直接收尾判失败。先用 `nodes` 工具的 `status`（`nodes status`）确认该节点是否已重连（0929 实测断开约 1 秒即重连）：
+  - 已重连 → 把失败的那一步重试**一次**。只读步骤（截图类、`ui-evidence`、`status`、`preflight`、`foreground`、`lock-status`、`account-current`、`evidence-bundle` 等）可直接重试；写操作（`private-message-send` 发私信、发布、`account-switch` 切号、`lock-acquire`/`lock-release`、录制启停等会改变状态的命令）**不得盲目重试**，必须先用只读命令核对上一次是否已生效（私信先截图/读 UI 看气泡是否已发出，锁先 `lock-status` 看 owner），确认未生效才可重做一次，已生效则直接采用该结果。
+  - 未重连，或重试一次仍失败 → 按阶段恢复规则收尾，结果里写明断连时间、`nodes status` 回读与重试证据。
+
 # 抖音手机运行适配器
 
 这是平台/设备适配层，不包含关键词、目标人群、视频判定、评论意向或飞书业务逻辑。
@@ -39,7 +48,7 @@ description: "Adapt generic social-video workflow actions to a tenant-selected l
 
 1. 调用一次 `<adb_controller> --profile <phone_profile> preflight`，从短输出同时验收 profile、serial、model、ADB state、call state 和前台窗口；`call_state` 不是 `idle` 时立即安全停止。
 2. 调用 `<adb_controller> --profile <phone_profile> lock-acquire <run_id>`，保存 owner 证据；拿不到锁就返回 blocked，不抢占。
-3. 调用 `open-app` 后进入“我”页。一次性检查可优先使用 `snapshot`；循环发现必须为每屏生成安全的唯一 `evidence_id` 并调用 `snapshot-evidence`，不得让后一屏覆盖前一屏。每次截图或复合动作返回 Node 路径后，必须逐字复制控制器本次返回的完整路径并立即用 `file_fetch` 回传；禁止自行拼接、补写、删除扩展名、归一化或猜测任何目录，尤其不得重复添加 `evidence/`。某张截图的 `file_fetch` 一旦成功，必须直接消费该返回内容并继续，禁止对同一截图二次 `file_fetch`，也禁止改成无 `.png` / `.xml` 扩展名的路径重试。不要再调用 `pull`，控制器已经把图拉到 Mac。Node 的本地路径不是合法 `image_url`，严禁把 `/private/tmp/...`、`/Users/...` 或其他文件路径直接传给视觉输入；只能使用 `file_fetch` 返回的真实 image content/media 对象。若回传内容缺失或格式不受支持，记录 screenshot inaccessible 并按阶段恢复规则处理，不得构造、猜测或重用旧 `image_url`。
+3. 调用 `open-app` 后进入“我”页。一次性检查可优先使用 `snapshot`；循环发现必须为每屏生成安全的唯一 `evidence_id` 并调用 `snapshot-evidence`，不得让后一屏覆盖前一屏。每次截图或复合动作返回 Node 路径后，必须逐字复制控制器本次返回的 jpg 完整路径（`jpg=` 或 `*_jpg=` 行，见「截图回传与节点断连」，禁止回传原图 PNG）并立即用 `file_fetch` 回传；禁止自行拼接、补写、删除扩展名、归一化或猜测任何目录，尤其不得重复添加 `evidence/`。某张截图的 `file_fetch` 一旦成功，必须直接消费该返回内容并继续，禁止对同一截图二次 `file_fetch`，也禁止改成无 `.jpg` / `.png` / `.xml` 扩展名的路径重试。不要再调用 `pull`，控制器已经把图拉到 Mac。Node 的本地路径不是合法 `image_url`，严禁把 `/private/tmp/...`、`/Users/...` 或其他文件路径直接传给视觉输入；只能使用 `file_fetch` 返回的真实 image content/media 对象。若回传内容缺失或格式不受支持，记录 screenshot inaccessible 并按阶段恢复规则处理，不得构造、猜测或重用旧 `image_url`。
 4. 搜索结果、评论列表等重复页面可优先调用 `ui-evidence <evidence_id>` 获取不可覆盖的 UI hierarchy XML，并通过 `file_fetch` 读取结构化文本和节点边界；同一屏的 UI XML 和 PNG 共用同一基础 evidence ID，并缓存屏幕指纹。`uiautomator` 在动态视频页可能无法达到 idle state，此时控制器会明确失败且不会返回旧 XML；继续使用同一时刻的新鲜 PNG、前台包证据和视觉模型完成闭环，不得把 XML 失败解释成 App 退回桌面，也不得复用上一次 hierarchy。
 5. 先只读取当前主页。主页身份匹配目标 marker 或登记的完整抖音号时，立即视为账号通过，禁止打开账号切换列表。只有主页明确显示为另一个账号时，且 tenant context 明确授权切换，才打开一次切换列表并精确点击目标 marker；切换后必须回到主页复核。视觉不确定时重截一次主页，不得靠打开列表试探，也不得点击其他账号试错。
 6. 预检阶段不得搜索关键词、读取评论或写飞书。账号、设备、通话、锁四项全部有证据后立即返回 `WORKER_RESULT`。预检截图属于只读 `evidence`，必须返回 `artifacts: []` 与 `write_fences: []`；不得把截图路径放进 `artifacts`，也不得为只读截图申请 `artifact_write`。
@@ -83,6 +92,6 @@ description: "Adapt generic social-video workflow actions to a tenant-selected l
 
 ## 禁止动作
 
-默认禁止点赞、关注、评论、回复、私信、对外分享、推荐、发布、修改账号、绕过验证码/人脸/风控或清除 App 数据。唯一例外是控制器封装的 `current-video-link` 只读取链动作；它必须在语义节点和回读链接全部验证后才成功，不能扩展为任意分享动作。来电、通话、账号/设备不匹配、登录挑战、连续截图失败立即停止。
+默认禁止点赞、关注、评论、回复、私信、对外分享、推荐、发布、修改账号、绕过验证码/人脸/风控或清除 App 数据。唯一例外是控制器封装的 `current-video-link` 只读取链动作；它必须在语义节点和回读链接全部验证后才成功，不能扩展为任意分享动作。来电、通话、账号/设备不匹配、登录挑战、连续截图失败立即停止（节点断连不属于截图失败，先按「截图回传与节点断连」核实并重试一次）。
 
 当前控制器实现由部署蓝图中的兼容入口维护；运行时始终逐字使用租户登记的安装路径，Skill 内不保存、推导或补写真实路径及文件后缀。
