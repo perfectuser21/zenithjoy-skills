@@ -47,7 +47,7 @@ description: "Adapt generic social-video workflow actions to a tenant-selected l
 预检必须走短输出路径，禁止先调用 `help`、`diagnose`、`telecom` 或 `window`，也禁止为了打开 App 而先做一次假关键词搜索：
 
 1. 调用一次 `<adb_controller> --profile <phone_profile> preflight`，从短输出同时验收 profile、serial、model、ADB state、call state 和前台窗口；`call_state` 不是 `idle` 时立即安全停止。
-2. 调用 `<adb_controller> --profile <phone_profile> lock-acquire <run_id>`，保存 owner 证据；拿不到锁就返回 blocked，不抢占。
+2. 调用 `<adb_controller> --profile <phone_profile> lock-acquire <run_id>`，保存 owner 证据；拿不到锁按下方「手机锁被占（DEVICE_BUSY 约定）」处理，不抢占。
 3. 调用 `open-app` 后进入“我”页。一次性检查可优先使用 `snapshot`；循环发现必须为每屏生成安全的唯一 `evidence_id` 并调用 `snapshot-evidence`，不得让后一屏覆盖前一屏。每次截图或复合动作返回 Node 路径后，必须逐字复制控制器本次返回的 jpg 完整路径（`jpg=` 或 `*_jpg=` 行，见「截图回传与节点断连」，禁止回传原图 PNG）并立即用 `file_fetch` 回传；禁止自行拼接、补写、删除扩展名、归一化或猜测任何目录，尤其不得重复添加 `evidence/`。某张截图的 `file_fetch` 一旦成功，必须直接消费该返回内容并继续，禁止对同一截图二次 `file_fetch`，也禁止改成无 `.jpg` / `.png` / `.xml` 扩展名的路径重试。不要再调用 `pull`，控制器已经把图拉到 Mac。Node 的本地路径不是合法 `image_url`，严禁把 `/private/tmp/...`、`/Users/...` 或其他文件路径直接传给视觉输入；只能使用 `file_fetch` 返回的真实 image content/media 对象。若回传内容缺失或格式不受支持，记录 screenshot inaccessible 并按阶段恢复规则处理，不得构造、猜测或重用旧 `image_url`。
 4. 搜索结果、评论列表等重复页面可优先调用 `ui-evidence <evidence_id>` 获取不可覆盖的 UI hierarchy XML，并通过 `file_fetch` 读取结构化文本和节点边界；同一屏的 UI XML 和 PNG 共用同一基础 evidence ID，并缓存屏幕指纹。`uiautomator` 在动态视频页可能无法达到 idle state，此时控制器会明确失败且不会返回旧 XML；继续使用同一时刻的新鲜 PNG、前台包证据和视觉模型完成闭环，不得把 XML 失败解释成 App 退回桌面，也不得复用上一次 hierarchy。
 5. 先只读取当前主页。主页身份匹配目标 marker 或登记的完整抖音号时，立即视为账号通过，禁止打开账号切换列表。只有主页明确显示为另一个账号时，且 tenant context 明确授权切换，才打开一次切换列表并精确点击目标 marker；切换后必须回到主页复核。视觉不确定时重截一次主页，不得靠打开列表试探，也不得点击其他账号试错。
@@ -80,7 +80,19 @@ description: "Adapt generic social-video workflow actions to a tenant-selected l
 
 ## 手机锁与清理
 
-同一 Node/设备一次只允许一个前台任务。发现、判定和评论阶段共享同一租户设备锁；拿不到锁就等待或保留 pending，不抢占。
+同一 Node/设备一次只允许一个前台任务。发现、判定和评论阶段共享同一租户设备锁；拿不到锁不抢占，按下面的 DEVICE_BUSY 约定结束，由 Brain 排队重试。
+
+### 手机锁被占（DEVICE_BUSY 约定）
+
+`lock-acquire` 失败（锁被其他运行、采收/触达 cron 或别的任务持有）时：
+
+1. 只读回读一次 `<adb_controller> --profile <phone_profile> lock-status`，确认当前持有者（owner）；
+2. 不重试抢锁、不 `sleep` 等待、不做任何其他手机操作（不 open-app、不截图、不 close-app、不 lock-release）；
+3. 最后一行只输出一行标记，然后结束：
+
+   `DEVICE_BUSY owner=<持有者> serial=<序列号>`
+
+Brain 收割器见到这一行会把任务改回排队、5 分钟后自动重试（累计等待有上限，超时才判失败）。不要把它写成「受阻/blocked」的自然语言收尾——那会被当成已完成。由 `agentic-workflow-runtime`/n8n 编排、必须返回 `WORKER_RESULT` 时，照协议返回 `blocked`，并把同一行 `DEVICE_BUSY owner=<持有者> serial=<序列号>` 作为原因原样放进结果。
 
 在多阶段 Workflow 中，成功的预检、发现、判定和评论 Worker 不得各自退出 App 或释放锁；它们把同一 `run_id` 的锁留给下一阶段。只有安全停止、阶段终止，或可信编排器已进入 manifest 的最终 cleanup 时，才执行 `close-app`，验证前台包不再是 `com.ss.android.ugc.aweme` 并检查桌面截图。失败只重试一次。
 
