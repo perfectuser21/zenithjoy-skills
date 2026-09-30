@@ -1,10 +1,11 @@
 ---
 name: dev
-version: 21.10.0
-updated: 2026-07-29
-description: Phase0 --task-id立即claim防tick抢跑→Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→Phase2.5 GitHub撞车检查→比对已有Steps展示Golden Path草稿→确认前置工作全部到位（含GP锚点检查）→用户确认PrepPRD→路由执行（建worktree时经GP_ANCHOR env把锚机械写进.dev-mode）
+version: 21.11.0
+updated: 2026-10-01
+description: Phase-1没带--task-id先归位（POST /projects/locate判attach/create，一步建单拿task-id）→Phase0 --task-id立即claim防tick抢跑→Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→Phase2.5 GitHub撞车检查→比对已有Steps展示Golden Path草稿→确认前置工作全部到位（含GP锚点检查）→用户确认PrepPRD→路由执行（建worktree时经GP_ANCHOR env把锚机械写进.dev-mode）
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
+  - 21.11.0: 新增 Phase -1「归位」（链 2afa6d69 棒3，任务 8a40825a）——没带 --task-id 时（用户在有头会话里随口说"去做 X"）先 POST /api/brain/projects/locate 判断该挂哪个现存 project（attach）还是该新建一个（create），拍板后用 POST /projects/:id/tasks 一步建单拿 task-id，再走 Phase 0 claim；带 --task-id 的（Brain headless 派发，project_id 已接好）跳过本节
   - 21.10.0: GP锚定闭环刀6b——锚从口头声明变机械传递：worktree-manage.sh 建 .dev-mode 时写入 gp_anchor 行（调用方经 GP_ANCHOR env 传入 PrepPRD 拍板的锚）；branch-protect v31（cecelia#4450）起 .dev-mode 无合法 gp_anchor 会在首次 Write/Edit 被硬拦，headed 会话与 Brain 派发三变体（headless/headed-relay/kernel-v1，刀4 executor 闸）拦截口径对齐
   - 21.9.0: GP锚定闭环刀3——步骤2核对前置工作表新增「GP 锚点」行（file-existence gated：product-map/generated/product-map.json 存在则查id存在性，不存在则跳过不阻塞第三方仓库如cecelia）；大功能PrepPRD模板加「GP-Anchor声明」段，与刀2 lint-gp-anchor.sh的三形态声明规范一致。让孤儿任务在PrepPRD阶段就死掉，不必烧完整个pipeline才死在CI
   - 21.8.0: 判定点显性化进 /dev（九要素 T5 — decisions e035dad8）— 步骤 1 综合呈现从两流改三流（新增【判定点】流：逐条登记候选/所选/依据/误判后果，误判后果严重的升拍板点主动请教用户）；大功能 PrepPRD 模板加「判定点登记表」段；用户确认后路径 A/B 立即写 decisions category=judgment（保鲜守卫「判定点活性」指标数据源），路径 C 由 harness reviewer Step 5 从合同统一写库不重复；用户纠正的判定方法按 e035dad8 第④条走 Invariant Gate 升铁律
@@ -20,6 +21,47 @@ changelog:
 ---
 
 > **CRITICAL LANGUAGE RULE**: 所有输出简体中文。
+
+---
+
+## 第零步 Phase -1：归位（没带 --task-id 时，先判断该挂哪个 project）
+
+如果本次调用**没带** `--task-id`（用户在有头会话里随口说"去做 X"，不是 Brain 派发、也不是已经
+注册过 Brain task 再来调本 skill 的场景）：
+
+**这是本 skill 真正的第一个动作，必须在 Phase 0 之前执行。带 `--task-id` 时直接跳过本节**
+（Brain headless 派发的任务本来就已经挂在 project 上，不需要再归位一次）。
+
+1. 归位查询——把用户这句话原文丢给 locate：
+
+```bash
+curl -s -X POST localhost:5221/api/brain/projects/locate \
+  -H "Content-Type: application/json" \
+  -d "{\"text\": \"<用户这句话原文>\"}"
+```
+
+2. 返回 `suggestion=="attach"` → 挂到 `candidates[0].project_id`，一步建单：
+
+```bash
+curl -s -X POST "localhost:5221/api/brain/projects/<candidates[0].project_id>/tasks" \
+  -H "Content-Type: application/json" \
+  -d "{\"title\": \"<一句话标题>\", \"description\": \"<用户原话>\"}"
+```
+
+响应体的 `id` 就是本次任务的 task-id。
+
+3. 返回 `suggestion=="create"` → 先建一个新 project（挂一个 KR），再建第 1 棒：
+   - 从 `curl localhost:5221/api/brain/okr/current` 里语义挑一个最贴近的 KR；挑不出就用
+     locate 返回的建议，或留空并在最终汇报里说明"未挂 KR，待主理人补"。
+   ```bash
+   curl -s -X POST localhost:5221/api/brain/projects \
+     -H "Content-Type: application/json" \
+     -d "{\"name\": \"<project 名>\", \"description\": \"<用户原话>\", \"kr_id\": \"<挑到的 kr_id，没有则省略>\"}"
+   ```
+   - 用新建 project 的 `id`，照第 2 步同样调 `POST /projects/<id>/tasks` 一步建单，响应体
+     的 `id` 就是本次任务的 task-id。
+
+4. 拿到 task-id 后**立即**进入 Phase 0（`POST /tasks/:id/claim`），正常往下走，不再停下问用户。
 
 ---
 
