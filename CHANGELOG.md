@@ -1,3 +1,8 @@
+## [2026-09-30] openclaw douyin-phone-runtime（三份副本）— 手机锁被占改为 DEVICE_BUSY 约定，Brain 排队重试
+**症状**: 0930 09:15 实证：苏彦卿任务 160d1a2a（小彩）派出时，小彩正被另一张秋米测试任务 8ecb8384 持锁；agent 预检通过、`lock-acquire` 失败后按技能"拿不到锁就返回 blocked"直接收尾报「受阻」，Brain 收割器判 completed_no_pr——活没干账却销了。主理人：手机有活时，任务接了之后应该等待，而不是说受阻。
+**根因**: 技能对"锁被占"只有自然语言的 blocked 收尾，没有机器可读的回报约定；Brain 看不到西安 Mac 本机文件锁（采收/触达 cron 也会持锁），收割器只能按退出码判完成。
+**修改**: 快速预检第 2 步与「手机锁与清理」节改为 DEVICE_BUSY 约定：`lock-acquire` 失败 → 只读回读一次 `lock-status` 确认持有者，不重试抢锁、不 sleep 等待、不做任何手机操作，最后一行只输出 `DEVICE_BUSY owner=<持有者> serial=<序列号>` 后结束；WORKER_RESULT 协议下照返 blocked 并原样带这一行。Brain 侧配套 cecelia PR（收割器见标记回队 5 分钟后重试、派单前同机串行）。三份副本同步改。Brain 任务 5ad81457。
+
 ## [2026-09-29] openclaw douyin-phone-runtime（三份副本）— 截图只回传 JPEG + 节点断连核实后重试一次
 **症状**: 0929 实证：agent 用 `file_fetch` 回传原图 PNG（荣耀 1200x2664 约 3MB，base64 约 4MB），与指令同走节点 ws 通道，西安上行约 315KB/s → 30s 超时 → 后续指令排队 15s 超时 → 网关判 node disconnected；节点约 1 秒即重连，但 agent 按技能规则直接收尾判失败。
 **根因**: 技能只要求"回传控制器返回的路径"，控制器此前只产原图 PNG；技能对 DISCONNECTED / gateway request timeout 没有"先核实重连再重试"的分支，"连续截图失败立即停止"被当成断连的处置。
