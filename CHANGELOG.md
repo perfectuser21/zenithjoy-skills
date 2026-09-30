@@ -1,3 +1,18 @@
+## [2026-10-01] dev 21.11.0 / capability 1.3.1 — 新增 Phase -1「归位」，建单统一走 /projects/:id/tasks
+**症状**: 有头会话里主理人随口说"去做 X"，/dev 只能人工先判断这句话该挂哪个现存 project（还是要
+新建一个），再手动拼 payload 建单；GTD Project 模型（决策 ee4842a6/3feeae3e）上线后，裸建
+`POST /tasks` 也拿不到自动的 `project_id`/`sequence_no`/`depends_on`。
+**根因**: `/dev` 只有"带 --task-id"（Brain 已派发）一条入口，没有"没有 task-id、人随口一句话"
+时自动归位的一步；`/capability`"下一步（拍板后）"只写了"点火 capability-controller"，没讲清
+该怎么建单。
+**修改**: cecelia 侧新增 `POST /api/brain/projects/locate`（embedding 优先、800ms 超时/无 key 回退
+中文 bigram 关键词打分，判 attach/create）+ `POST /api/brain/projects/:id/tasks`（project 下一步
+建单，自动填 project_id/sequence_no/depends_on，链 2afa6d69 棒3，任务 8a40825a）。`dev` 21.11.0：
+Phase 0 之前新增 Phase -1，没带 --task-id 先 locate → attach 时一步建单、create 时先建 project
+（挂 KR）再建第 1 棒，拿到 task-id 再进 Phase 0 claim；带 --task-id 跳过本节。`capability` 1.3.1：
+"下一步（拍板后）"补一句——点火产生的 task 走 locate 归位 + `/projects/:id/tasks` 一步建单，
+不裸建 `POST /tasks`。
+
 ## [2026-09-30] openclaw douyin-phone-runtime（三份副本）— 手机锁被占改为 DEVICE_BUSY 约定，Brain 排队重试
 **症状**: 0930 09:15 实证：苏彦卿任务 160d1a2a（小彩）派出时，小彩正被另一张秋米测试任务 8ecb8384 持锁；agent 预检通过、`lock-acquire` 失败后按技能"拿不到锁就返回 blocked"直接收尾报「受阻」，Brain 收割器判 completed_no_pr——活没干账却销了。主理人：手机有活时，任务接了之后应该等待，而不是说受阻。
 **根因**: 技能对"锁被占"只有自然语言的 blocked 收尾，没有机器可读的回报约定；Brain 看不到西安 Mac 本机文件锁（采收/触达 cron 也会持锁），收割器只能按退出码判完成。

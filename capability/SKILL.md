@@ -17,9 +17,12 @@ description: |
   判定第一动作=装载 journeys 地图，结论必须落格子坐标。
   定义层工作，不读实现代码不做现状标注、不写提案文档、不开 PR——拍板后下游：写库走 db-update，
   完整提案（现状探索+对抗+demo）点火 capability-controller 流水线。
-version: 1.3.0
+version: 1.3.1
 created: 2026-07-24
 changelog:
+  - 1.3.1: 「下一步（拍板后）」补一句建单路由说明——点火 capability-controller 产生的 Brain
+    task 走 POST /projects/locate 归位 + POST /projects/<id>/tasks 一步建单，不裸建 POST
+    /tasks（链 2afa6d69 棒3，任务 8a40825a，决策 ee4842a6/3feeae3e GTD Project 模型）
   - 1.3.0: 步的判定操作化（主理人 08-15 拍板，决策 c84bef20/26793221）——新增
     references/step-cutting.md（一定义+四测试+扫刀流程+切刀记录表+关键词获客样例）；A3 必须扫刀
     产出记录表、A4 tech 镜头逐行攻击记录表、A5 呈报增「切刀记录表」段；doctrine §5 补条引用。
@@ -139,7 +142,10 @@ curl -s "$BRAIN/api/brain/golden-paths"  # 已登记的路/提案
 ## 待拍板问题（拿不准的不硬填，列这里）
 ## 下一步（拍板后）
 - 落账：Skill(db-update) 写 golden_paths（status=candidate）
-- 深化：点火 capability-controller 走完整提案（现状探索+读代码标注+demo）
+- 深化：点火 capability-controller 走完整提案（现状探索+读代码标注+demo）——建单先
+  `POST /api/brain/projects/locate` 归位挂到对应 project（没有就先 `POST /api/brain/projects`
+  建一个），再 `POST /api/brain/projects/<id>/tasks` 一步建单拿 task_id，不要裸建 `POST /tasks`
+  （GTD Project 模型，决策 ee4842a6/3feeae3e）
 ```
 
 拍板后主理人说"落账/继续"→ 按下一步执行；说"改"→ 回 A3。
