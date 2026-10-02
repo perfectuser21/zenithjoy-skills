@@ -1,3 +1,7 @@
+## [2026-10-02] workflow-authoring 1.0.0 — OpenClaw 创建与更新工作流
+
+用户在对话中发起创建／更新 workflow，按 Brain 六阶段回执自动接力；复用现有目录与开发流程，整链验证后事务登记。包含可重试调用器和本流程六活动定义生成器，来源真身在本仓库，Cecelia 保留验收快照。
+
 ## [2026-10-01] dev 21.11.0 / capability 1.3.1 — 新增 Phase -1「归位」，建单统一走 /projects/:id/tasks
 **症状**: 有头会话里主理人随口说"去做 X"，/dev 只能人工先判断这句话该挂哪个现存 project（还是要
 新建一个），再手动拼 payload 建单；GTD Project 模型（决策 ee4842a6/3feeae3e）上线后，裸建
