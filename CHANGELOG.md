@@ -1,3 +1,15 @@
+## [2026-10-07] capability 2.0.0 / mapper 2.0.0 / proposer 1.6.0 / reviewer 1.6.0 / controller 1.3.0 — 判层标准升级为六层
+**症状**: /capability 是全系统判定"一个东西属于哪一层"的唯一标准，但规则文件还停在旧词（Golden Path、
+line、骨干 3–5 步、挂片、工序词黑名单），与 Brain 现行六层真表（部门 → 价值流 → 能力 → 流程 →
+Activity → Step）对不上；Step 0 还在读已下线的 `/journeys`、`/golden-paths`；mapper 附录另抄了一份旧 doctrine。
+**根因**: 树和表已经按六层重建（迁移 520~529），判层标准没有跟着改，进门判定和巡逻缺一把共同的尺子。
+**修改**（主理人 10-07 拍板，决策 0cee5452，任务 f2fe13ae）: doctrine.md 主体改写——总原则"按做成了
+什么判，不按谁做、怎么做判"、六层一句话定义、Activity 三测试（交接/结果/重试，依据 APQC PCF/BPMN/
+Temporal）、异步规则、一次运行算法、agent 换代码、智能获客正反样板、巡逻模式、旧词→新词对照表；
+step-cutting.md 改为 Activity 边界扫刀（关键词获客 8 个 Activity 样例）；SKILL.md Step 0 改读六层真表、
+新增 Mode D 巡逻（五个规则筛子 SQL）、触发词加判层/巡逻；mapper 删除附录副本改引用 doctrine，
+proposer/reviewer/controller 中与新标准冲突的旧判据改为引用 doctrine。
+
 ## [2026-10-02] workflow-authoring 1.0.0 — OpenClaw 创建与更新工作流
 
 用户在对话中发起创建／更新 workflow，按 Brain 六阶段回执自动接力；复用现有目录与开发流程，整链验证后事务登记。包含可重试调用器和本流程六活动定义生成器，来源真身在本仓库，Cecelia 保留验收快照。

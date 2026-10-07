@@ -10,9 +10,12 @@ description: |
   （那是批准后 harness 实现阶段的事）。复用 harness-controller v2.1.0 横切纪律（append-only 台账 /
   phase-event 自报 / 文件接力 / 四态出口协议 / Step 0 装载恢复）。
   触发：Brain 派发 golden_path_proposal 任务；人工说「跑 Capability 提案」「对这条 capability 候选做对抗收敛」。
-version: 1.2.0
+version: 1.3.0
 created: 2026-07-12
 changelog:
+  - 1.3.0: 对齐六层标准（主理人 10-07 拍板，决策 0cee5452）——硬约束 8：判层标准一律引用
+    capability/references/doctrine.md，golden_paths/golden_path_proposal 仅为提案管线机器名；
+    Step 2 验收清单从「每个 Golden Path 步骤」改为「每个 Activity + 切刀记录表」
   - 1.2.0: skill 改名 golden-path-controller→capability-controller（决策 a340f100 追加拍板），
     触发词/description 同步换新词；Brain task_type=golden_path_proposal 字符串本体不动
     （代码层渐进，见 [[待办] Brain task-router.js/harness-skill-relay.js 需配套 /dev 改）
@@ -54,6 +57,9 @@ Step 0 装载/恢复 → 1 探索+判级 → 2 提案+合同(capability-proposer
 7. **零人为交互**（无头模式）：不确定 → 派 Research subagent 查（代码/decisions/learnings）代答。
    人的参与点在批审桌（晨报军师节 v2），不在本 skill 内；本流程只创建签字待办并退出，
    绝不替 Owner 批准
+8. **判层标准不在本 skill**：价值流 / 能力 / 流程 / Activity / Step 怎么判，一律以
+   `capability/references/doctrine.md`（六层，决策 0cee5452）为准；`golden_paths` /
+   `golden_path_proposal` 只是能力提案管线的机器名（doctrine §2），不代表层级
 
 ## 横切纪律（每个阶段都适用；取自 harness-controller 2.1.0，语义不变）
 
@@ -185,7 +191,8 @@ prompt: 调用 Skill(capability-proposer)。上下文：
   报告：四态 + 两个产物路径 + 判定点条数 + 验收断言条数 + NFR 分类计数
 ```
 
-**验收清单（任一缺 = 打回重跑）**：①每个 Golden Path 步骤带现状标注（已有/半成/缺失+证据引用）
+**验收清单（任一缺 = 打回重跑）**：①每个 Activity 带现状标注（已有/半成/缺失+证据引用），且附切刀记录表
+（三测试，见 capability/references/step-cutting.md）
 ②「## 验收断言」段 ≥3 条 ③「## 判定点登记表」段存在（无接缝判定点显式写 N/A）④碰真实客户/真机的
 提案含 Gate 前置段 ⑤ `gp-contract-v1.json` 可被 `jq -e` 解析，顶层恰好 7 项且版本与提案一致。
 完成 → 台账 append → Step 3。
