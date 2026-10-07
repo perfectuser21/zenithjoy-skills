@@ -17,9 +17,14 @@ description: |
   判定第一动作=装载六层全树，结论必须落格子坐标。
   定义层工作，不读实现代码不做现状标注、不写提案文档、不开 PR、不自动挪树——拍板后下游：写库走
   db-update，完整提案（现状探索+对抗+demo）点火 capability-controller 流水线。
-version: 2.0.0
+version: 2.0.1
 created: 2026-07-24
 changelog:
+  - 2.0.1: 获客样板按真实脚本更正（10-07 层级审计读 xian-m4 / MMV 脚本，任务 f2fe13ae）——判定 / 评分
+    是采收脚本同步调用的 AI，不是捞池子的独立 agent，只有触达（crontab 每 30 分钟捞线索池）真正异步；
+    顺序改为 采集 → 配送（落池）→ 评分 → 触达；归位按测试②降为运行收尾 Step，样板 7 个 Activity；
+    判定是 Activity 的依据改为 换执行者 + judgment_status 写回 + 可单独重判；错误画法加「把同步调用的
+    AI 当成独立 agent 流程」；step-cutting.md 切刀记录表同步更正
   - 2.0.0: 六层标准（主理人 10-07 拍板，决策 0cee5452，任务 f2fe13ae）——doctrine 主体改写为
     部门 → 价值流 → 能力 → 流程 → Activity → Step：总原则「按做成了什么判，不按谁做怎么做判」、
     每层一句话定义、Activity 三测试（交接/结果/重试，依据 APQC PCF/BPMN/Temporal）、异步规则、
@@ -272,7 +277,7 @@ WHERE c.status <> 'deprecated'
 ## Mode C：答疑
 
 按 doctrine §0 / §1 / §2 讲：总原则（按做成了什么判）、六层每层一句话、旧词怎么对新词；
-举获客样板（§11）讲 Activity 三测试和「4 个执行体 ≠ 4 个流程」。讲完给一个「要不要顺手判层 /
+举获客样板（§11）讲 Activity 三测试、「多个执行体 ≠ 多个流程」和「同步调用的 AI ≠ 独立 agent 流程」。讲完给一个「要不要顺手判层 /
 提炼你手头的东西」的钩子，不硬推。
 
 ## 禁止事项
