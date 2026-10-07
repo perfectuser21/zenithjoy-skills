@@ -1,3 +1,13 @@
+## [2026-10-07] capability 2.0.1 — 获客样板按真实脚本更正
+**症状**: 2.0.0 的 doctrine §11 获客样板与 step-cutting.md 切刀记录表把判定 / 评分写成「独立 agent 捞池子」、
+顺序写成「评分 → 触达 → 配送」、归位当 Activity，依据的是未核实的说法。
+**根因**: 样板没对照 xian-m4 / MMV 上的真实脚本。实际是 harvest-keyword.sh 逐个视频同步调用判定 AI，
+batch2.sh 落池后立即调用评分 AI，只有 outreach-tick.sh（crontab 每 30 分钟捞线索池）真正异步。
+**修改**: 样板改为一个流程、三类执行者，7 个 Activity（预检 → 发现 → 判定 → 采集 → 配送（落池）→ 评分 → 触达），
+逐个标「怎么启动」；归位按测试②降为运行收尾 Step；判定是 Activity 的依据改为 换执行者 + judgment_status
+写回 + 可单独重判；错误画法与反模式加「把同步调用的 AI 当成独立 agent 流程」；切刀记录表同步更正；
+注明生产库「评分 → 配送」登记顺序是反的。
+
 ## [2026-10-07] capability 2.0.0 / mapper 2.0.0 / proposer 1.6.0 / reviewer 1.6.0 / controller 1.3.0 — 判层标准升级为六层
 **症状**: /capability 是全系统判定"一个东西属于哪一层"的唯一标准，但规则文件还停在旧词（Golden Path、
 line、骨干 3–5 步、挂片、工序词黑名单），与 Brain 现行六层真表（部门 → 价值流 → 能力 → 流程 →
