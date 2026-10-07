@@ -8,9 +8,11 @@ description: |
   PR、不写测试。样例见 examples/moments-golden-path-v2.md（朋友圈试点 v2.1，三镜头对抗收敛实证，
   历史文档保留旧词原样）。
   触发：Capability 提案首稿、Capability 提案修订、写 capability 提案文档。
-version: 1.6.0
+version: 1.7.0
 created: 2026-07-12
 changelog:
+  - 1.7.0: 铁律 7 改用 doctrine v3.0 两个问题（决策 c63688cf）——问题一定流程边界、问题二定 Activity，
+    附问题一表 / 问题二表；删除「三测试」「按执行体拆流程即打回」旧判据
   - 1.6.0: 铁律 7 与补充列对齐六层标准（主理人 10-07 拍板，决策 0cee5452）——提案主体改为
     流程 → Activity → Step，Activity 按 step-cutting.md 三测试（交接/结果/重试）扫出，【挂片】栏改【Step】栏，
     旧「3–5 步 + 工序词黑名单 + 四测试」退役；判层标准一律引用 capability/references/doctrine.md
@@ -59,7 +61,7 @@ FEEDBACK（修订轮才有）      — .harness/feedback-r<N>.md（reviewer 合�
    （技术可行性探索 Gate / 授权文书 Gate），任一不过整条 GP 停止或改道
 5. **产物契约外一字不加**：不写实现代码、不开 PR、不写测试文件
 6. **接缝步骤必须承诺 L3 验证等级**：碰真机（UIA/adb）/生产 env（线上 DB/MQ/第三方 API Key）/真实第三方（不 mock 的 API 调用）的步骤，验证等级承诺必须是 L3（真机真验）；三镜头对抗审查「凭什么这步只需 L1/L2 替身」，无充分证据不得降级
-7. **六层与 Activity 承诺**（判层标准唯一来源 `capability/references/doctrine.md`，决策 0cee5452，2026-10-07）：提案主体是「流程 → Activity → Step」，层级按「做成了什么」判，不按执行体 / 异步切（doctrine §0、§6）。每个 Activity 必须有一句承诺（做完后业务上多了什么）+ 可执行读回锚点；Activity 下列【Step】【分支/判定点】两栏，机械动作只许出现在 Step 栏。**Activity 数量与边界按 capability/references/step-cutting.md 扫出**（三测试：① 交接 / ② 结果 / ③ 重试），Activity 表必须附「切刀记录表」（每个相邻边界×①②③×结论×一句话理由）；无记录表、或某刀测试②不过仍成 Activity、或按执行体拆了流程 = reviewer 打回。旧「3–5 步 + 工序词黑名单 + 四测试 T1–T4」已退役（doctrine §2）
+7. **六层与 Activity 承诺**（判层标准唯一来源 `capability/references/doctrine.md`，决策 0cee5452，2026-10-07）：提案主体是「流程 → Activity → Step」，只看业务事实，不看脚本还是 agent、是不是被一个脚本连着跑（doctrine §0；决策 c63688cf）。**流程边界按问题一**（做完能不能把结果放进表里停几个小时、不用返工），**Activity 按问题二**（有没有能验收的结果、下一段失败能从这里重来），按 capability/references/step-cutting.md 扫出并附「问题一表」「问题二表」。每个 Activity 必须有一句承诺（做完后业务上多了什么）+ 可执行读回锚点；Activity 下列【Step】【分支/判定点】两栏，机械动作只许出现在 Step 栏。缺两张表、能放下的接缝没断开、或问题二不过仍成 Activity = reviewer 打回。旧「3–5 步 + 工序词黑名单 + 四测试 / 三测试」已退役（doctrine §2）
 8. **合同恰好 7 项**：合同 JSON 顶层只能有
    `fr_summary / lifelines_and_nfr / yield_order / external_commitment_changes /
    release_and_blast_radius / success_and_close / budget_guard`。禁止增加第 8 个业务键；

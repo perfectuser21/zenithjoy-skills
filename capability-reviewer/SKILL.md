@@ -8,9 +8,11 @@ description: |
   收敛轮兼裁 proposer 的 REFUTE 反驳是否成立。审查对象是提案文档质量（现状标注真实性/
   路径完整性/断言可验证性/判定点完备/风险与门），不是代码、不是合同测试。
   触发：Capability 提案审查、镜头审查 capability、裁决 REFUTE。
-version: 1.6.0
+version: 1.7.0
 created: 2026-07-12
 changelog:
+  - 1.7.0: rubric 6 改用 doctrine v3.0 两个问题（决策 c63688cf）——判据换成问题一表 / 问题二表；
+    「按执行体 / 异步拆流程即打回」作废，改为「能放下的接缝没断开 / 放不下的被拆开」
   - 1.6.0: rubric 6 commitment_purity 对齐六层标准（主理人 10-07 拍板，决策 0cee5452）——判据从
     「工序词黑名单 + T1–T4 + 3–5 步」改为 doctrine §7 Activity 三测试 + §12 反模式（执行体/异步拆流程、
     看护挂流程、Step 抬成 Activity）；判层标准一律引用 capability/references/doctrine.md
@@ -71,7 +73,7 @@ verdict 输出路径 — .harness/verdicts/gp-r<ROUND>-<LENS>.json
 | 3 | assertion_verifiability | 每条验收断言可转 exit-code 验证或可观察证据（psql/UIA 读回/截图/API），证据方式与路线条件自洽 | 断言是「功能正常」类空话，或证据方式在该路线下不可得 |
 | 4 | judgment_completeness | 所有「系统推断外部真实状态」的接缝逐条登记（候选/所选/依据/误判后果）；误判后果严重的标 ⚠️；无接缝显式 N/A | 有明显接缝判定点未登记，或登记表整体缺失 |
 | 5 | risk_gates | 不可逆动作全部有前置 Gate；校验路径 fail-closed；有熔断/灰度（碰真实客户时） | 碰真实客户号/对外发布无 Gate 无授权，或校验失败静默放行 |
-| 6 | commitment_purity（层级与承诺纯度，2026-10-07 按六层改写） | 判层标准以 `capability/references/doctrine.md` 为准：每个 Activity 有一句承诺 + 可执行读回；机械动作都在【Step】栏；切刀记录表每一刀三测试（① 交接 / ② 结果 / ③ 重试）站得住；没有按执行体 / 异步拆流程，没有把看护作业挂进流程 | 缺「切刀记录表」、或某刀测试②为 ✘ 却仍成 Activity、或机械动作被抬成 Activity、或按执行体 / 异步拆成多个流程、或监工/巡检/日报挂成流程 Activity（发现即 P1 finding，引用 doctrine §7/§12 与 step-cutting.md 要求重扫） |
+| 6 | commitment_purity（层级与承诺纯度，2026-10-07 按六层改写） | 判层标准以 `capability/references/doctrine.md` 为准：问题一表每个接缝判定站得住（能放下的都断开、放不下的确实要返工或占着手机/锁）；问题二表每个 Activity 都有能验收的结果且下一段失败能从这里重来；每个 Activity 有一句承诺 + 可执行读回；机械动作都在【Step】栏；没有把看护作业挂进流程 | 缺问题一表 / 问题二表、或能放下的接缝没断开（含「因为一个脚本连着跑就画成一个流程」）、或放不下的接缝被拆开、或问题二不过却仍成 Activity、或监工/巡检/日报挂成流程 Activity（发现即 P1 finding，引用 doctrine §6/§7/§12 与 step-cutting.md 要求重扫） |
 | 7 | multi_platform_completeness（多端完整性，2026-07-18 新增） | 提案涉及 ≥2 种 os_type/device_platform（如安卓 vs Windows）时，逐一确认对应展示层（列表/筛选/图标/状态）已区分，且提案文档里明确写出区分方式；单一设备类型场景本维直接 N/A 记满分 | 涉及多设备类型但展示层混为一谈（同一张表/同一组件无区分字段），或提案对此只字未提 |
 
 **收敛纪律（B50 同精神）**：阻塞问题必须逐轮减少；新增 finding 只能是「路径真实漏洞」，
