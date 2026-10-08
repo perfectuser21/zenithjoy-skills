@@ -1,10 +1,11 @@
 ---
 name: dev
-version: 21.11.0
-updated: 2026-10-01
+version: 21.12.0
+updated: 2026-10-08
 description: Phase-1没带--task-id先归位（POST /projects/locate判attach/create，一步建单拿task-id）→Phase0 --task-id立即claim防tick抢跑→Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→Phase2.5 GitHub撞车检查→比对已有Steps展示Golden Path草稿→确认前置工作全部到位（含GP锚点检查）→用户确认PrepPRD→路由执行（建worktree时经GP_ANCHOR env把锚机械写进.dev-mode）
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
+  - 21.12.0: 路径 B 新增「B0 分档」（决策 896fb590 / 0dc6b84f，cecelia #6054~#6075）——cecelia 仓的小改动、能写出命令可验证的验收、不需要真机/外部账号 → Commander 不在会话里写代码，用 new-task.mjs 建开关任务交 MMV 上的 coding workflow runner（七步链 intent→spec→build→verify→chain_check→publish→report，CI 红自动修复，CI 绿自动合并）；大改拆成带 depends_on 的有序批次（挂 project）；不满足的照走原接力链
   - 21.11.0: 新增 Phase -1「归位」（链 2afa6d69 棒3，任务 8a40825a）——没带 --task-id 时（用户在有头会话里随口说"去做 X"）先 POST /api/brain/projects/locate 判断该挂哪个现存 project（attach）还是该新建一个（create），拍板后用 POST /projects/:id/tasks 一步建单拿 task-id，再走 Phase 0 claim；带 --task-id 的（Brain headless 派发，project_id 已接好）跳过本节
   - 21.10.0: GP锚定闭环刀6b——锚从口头声明变机械传递：worktree-manage.sh 建 .dev-mode 时写入 gp_anchor 行（调用方经 GP_ANCHOR env 传入 PrepPRD 拍板的锚）；branch-protect v31（cecelia#4450）起 .dev-mode 无合法 gp_anchor 会在首次 Write/Edit 被硬拦，headed 会话与 Brain 派发三变体（headless/headed-relay/kernel-v1，刀4 executor 闸）拦截口径对齐
   - 21.9.0: GP锚定闭环刀3——步骤2核对前置工作表新增「GP 锚点」行（file-existence gated：product-map/generated/product-map.json 存在则查id存在性，不存在则跳过不阻塞第三方仓库如cecelia）；大功能PrepPRD模板加「GP-Anchor声明」段，与刀2 lint-gp-anchor.sh的三形态声明规范一致。让孤儿任务在PrepPRD阶段就死掉，不必烧完整个pipeline才死在CI
@@ -568,6 +569,37 @@ systematic-debugging → engine-worktree → Superpowers autonomous 接力链 �
 ---
 
 ### 路径 B：小改动
+
+#### B0 分档（先判；cecelia 仓默认走 coding workflow）
+
+**三条全满足 → 走 coding workflow**（MMV 上的 runner 每 5 分钟认领，跑七步链：01-intent → 02-spec → build → 04 独立验收 → 链校验 → 开 PR → 回写 Brain；CI 红自动修复最多 2 次，CI 绿自动合并），Commander 不在会话里写代码：
+
+1. 仓库是 cecelia
+2. 能写出 1–5 条**用命令可验证**的验收（测试命令 / 脚本输出 / curl / psql + 期望结果）——PrepPRD 的「验收标准」原样改写成这几条
+3. 不需要真机、外部账号登录或人工操作
+
+做法（下面的 decision 照写，然后用这一步**代替** engine-worktree 接力链）：
+
+```bash
+cat > /tmp/cw-plan.json <<'EOF'
+{"title":"<一句话需求>","description":"<改哪里、为什么、相关文件路径>","acceptance":["<命令> 期望 <结果>","..."]}
+EOF
+# runner 专用 clone 每轮自更新到 origin/main，用它的脚本（主仓 checkout 可能落后）
+node ~/perfect21/cecelia-cw-runner/packages/brain/scripts/coding-workflow/new-task.mjs /tmp/cw-plan.json
+```
+
+**大改（多个有序步骤）**：拆成批次，每步一条、各自带验收，后一步用 `depends_on` 引用前一步的 key（runner 等前置 PR 合并才认领）；有依赖的批次必须挂 project（Brain 多刀工作闸）：
+
+```json
+{"batch":"<批次名>","project":{"name":"<项目名>","description":"<目标与范围>"},
+ "tasks":[{"key":"a","title":"…","acceptance":["…"]},{"key":"b","title":"…","acceptance":["…"],"depends_on":["a"]}]}
+```
+
+建完把 task id 告诉用户即结束本路径。进度：Brain 任务状态 / `~/Library/Logs/coding-workflow-runner.log`；失败原因：任务 `result.coding_workflow_runner`（failed_activity / reason_code），现场保留 7 天在 `~/worktrees/cecelia-cw/`。
+
+**任一条不满足 → 照走下面原流程。**
+
+---
 
 PrepPRD 落地后，**立即执行**这条 bash 命令写 decision：
 
