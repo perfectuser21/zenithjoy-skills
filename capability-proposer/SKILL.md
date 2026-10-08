@@ -8,9 +8,10 @@ description: |
   PR、不写测试。样例见 examples/moments-golden-path-v2.md（朋友圈试点 v2.1，三镜头对抗收敛实证，
   历史文档保留旧词原样）。
   触发：Capability 提案首稿、Capability 提案修订、写 capability 提案文档。
-version: 1.8.0
+version: 1.8.1
 created: 2026-07-12
 changelog:
+  - 1.8.1: 铁律 7 补「改共享 Activity 合同必须附影响表」（doctrine §19）
   - 1.8.0: 铁律 7 对齐 doctrine v3.1（决策 eb9f8f77）——流程边界改两条件、平台默认是走法、附流程边界表
   - 1.7.0: 铁律 7 改用 doctrine v3.0 两个问题（决策 c63688cf）——问题一定流程边界、问题二定 Activity，
     附问题一表 / 问题二表；删除「三测试」「按执行体拆流程即打回」旧判据
@@ -62,7 +63,7 @@ FEEDBACK（修订轮才有）      — .harness/feedback-r<N>.md（reviewer 合�
    （技术可行性探索 Gate / 授权文书 Gate），任一不过整条 GP 停止或改道
 5. **产物契约外一字不加**：不写实现代码、不开 PR、不写测试文件
 6. **接缝步骤必须承诺 L3 验证等级**：碰真机（UIA/adb）/生产 env（线上 DB/MQ/第三方 API Key）/真实第三方（不 mock 的 API 调用）的步骤，验证等级承诺必须是 L3（真机真验）；三镜头对抗审查「凭什么这步只需 L1/L2 替身」，无充分证据不得降级
-7. **六层与 Activity 承诺**（判层标准唯一来源 `capability/references/doctrine.md`，决策 0cee5452，2026-10-07）：提案主体是「流程 → Activity → Step」；Activity 和能力只看业务事实，流程边界看约束加运行理由，不看脚本还是 agent、是不是被一个脚本连着跑（doctrine §0；决策 eb9f8f77）。**流程边界按两条件**（默认同一流程；① 中间结果进表、停几个小时不用返工 且 ② 有分开跑的理由：节奏 / 资源 / 一对多·多对一 / 等人，才断开），**Activity 按问题二**（有明确输入、交出能验收的结果、后面失败能从起点重来），**平台默认只是走法**（用带平台前缀的流程区分，不单列能力），按 capability/references/step-cutting.md 扫出并附「流程边界表」「问题二表」。每个 Activity 必须有一句承诺（做完后业务上多了什么）+ 可执行读回锚点；Activity 下列【Step】【分支/判定点】两栏，机械动作只许出现在 Step 栏。缺两张表、两条件都满足的接缝没断开、只满足①没有②却拆开、放不下的接缝被拆开、或问题二不过（含口号式 Activity）仍成 Activity = reviewer 打回。旧「3–5 步 + 工序词黑名单 + 四测试 / 三测试」已退役（doctrine §2）
+7. **六层与 Activity 承诺**（判层标准唯一来源 `capability/references/doctrine.md`，决策 0cee5452，2026-10-07）：提案主体是「流程 → Activity → Step」；Activity 和能力只看业务事实，流程边界看约束加运行理由，不看脚本还是 agent、是不是被一个脚本连着跑（doctrine §0；决策 eb9f8f77）。**流程边界按两条件**（默认同一流程；① 中间结果进表、停几个小时不用返工 且 ② 有分开跑的理由：节奏 / 资源 / 一对多·多对一 / 等人，才断开），**Activity 按问题二**（有明确输入、交出能验收的结果、后面失败能从起点重来），**平台默认只是走法**（用带平台前缀的流程区分，不单列能力），按 capability/references/step-cutting.md 扫出并附「流程边界表」「问题二表」。每个 Activity 必须有一句承诺（做完后业务上多了什么）+ 可执行读回锚点；Activity 下列【Step】【分支/判定点】两栏，机械动作只许出现在 Step 栏。缺两张表、两条件都满足的接缝没断开、只满足①没有②却拆开、放不下的接缝被拆开、或问题二不过（含口号式 Activity）仍成 Activity = reviewer 打回。提案若要改被 ≥2 个流程引用的 Activity 的合同（承诺 / 输入 / 输出 / 读回），必须附影响表并按 doctrine §19 定兼容 / 不兼容（大版本 + 逐个切 + 旧版退役条件）/ 分叉，没有影响表 = reviewer 打回。旧「3–5 步 + 工序词黑名单 + 四测试 / 三测试」已退役（doctrine §2）
 8. **合同恰好 7 项**：合同 JSON 顶层只能有
    `fr_summary / lifelines_and_nfr / yield_order / external_commitment_changes /
    release_and_blast_radius / success_and_close / budget_guard`。禁止增加第 8 个业务键；
