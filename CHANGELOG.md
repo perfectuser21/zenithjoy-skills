@@ -1,3 +1,8 @@
+## [2026-10-08] skill-factory 工位 / skill-explore / run-verify / skill-distill — 对齐五阶段沉淀循环
+**症状**: 决策 5826ddd7 把技能工厂改成五阶段（试跑→探索→验证→沉淀→固化），但 skill 仍按旧七阶段写：skill-distill「第一次沉淀默认不拆」、只交一个 skill，与「先证明整流程稳定再拆成 activity 链」相反；skill-explore 名为探路，与第②步「探索」撞名，且没人负责写整流程 skill v1；run-verify 交付物缺版本与输入，K=10 连续计数无法核对；AGENTS.md 的 K 值仍是 3～5 / 20～30。
+**根因**: 决策更新后只改了 AGENTS.md 的部分段落，各阶段 skill 与运行环境（OpenClaw Codex 运行时，跑场机上 localhost:5221 不通）没有同步。
+**修改**（决策 6ec463c3 / 1b469079 / 9b3b027b，Brain project bdec465d 第①棒 139107c4）: AGENTS.md 写入「一条流程的一生」总表（入口、五阶段、退役，每阶段 Commander / 谁干 / skill / 输入 / 产出 / 出口），K 值改 10 / 30，补连续计数、回流、摸边界规则、故障处置表（三层、四分类、取法、表外兜底与转正、通用层初始值）与运行环境；skill-explore 改为「试跑协议」，加载处置表、表外故障登记候选行，收尾写整流程 skill v1；run-verify 交付物加 skill / input / slice_digest / external_cause；skill-distill 改为把冻结 vN 拆成 activity 链（Activity 认定只用 /tree 标准）并产出给 Commander 的 wf-<能力>，故障处置按四分类拆进 Activity / Step，声明拆完重跑 K=30。摸边界、skill-publish、固化判定、清理四个 skill 标「未就绪」，由后续棒补。
+
 ## [2026-10-08] douyin-phone-runtime 1.0.0 — 当前账号只读与真实证据
 
 ## 2026-10-08 抖音只读 1.0.1

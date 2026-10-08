@@ -1,7 +1,7 @@
 ---
 name: run-verify
 description: |
-  核验：独立判定一次运行是否真的干成了——只看验收标准和证据，不看执行过程，不信执行者自述。技能工厂七阶段的第②步，也用于每一次照 skill 执行后的复核。
+  核验：独立判定一次运行是否真的干成了——只看验收标准和证据，不看执行过程，不信执行者自述。技能工厂五阶段（试跑→探索→验证→沉淀→固化）里每一次运行的独立判定都用它：试跑成功判定、验证阶段连续 K 次的每一次、沉淀后重跑的每一次；也用于每一次照 skill 执行后的复核。
   触发：任务里写「阶段：核验」「使用 skill：run-verify」、核验这次运行、复核是否完成、质检。
   不适用：验收一个 skill 写得好不好（用 contract-reviewer / skill-evaluator）；修复问题（你只判不修）。
 ---
@@ -62,9 +62,15 @@ description: |
   "overreach": "反向检查结论：无 / 具体问题",
   "missing": ["判定所缺的材料，没有则为空"],
   "claimed_result": "执行者声称的结果",
-  "agrees_with_claim": true
+  "agrees_with_claim": true,
+  "skill": "被核验运行所用的 skill 名@版本（取自任务执行参数，不取执行者自报）；没有则写 null",
+  "input": "本次运行的输入（取自任务执行参数）；没有则写 null",
+  "slice_digest": "本次运行加载的故障处置表片指纹（取自任务执行参数）；没有则写 null",
+  "external_cause": "失败且证据显示是外部原因（手机掉线、平台故障、网络中断）时写明原因与证据ID；否则 null"
 }
 ```
+
+**连续计数用的四个字段**：`skill`、`input`、`slice_digest` 让验证阶段能核对"同一版本、不同输入、处置表没变"；`external_cause` 非空的失败按规则**作废**（不计数也不清零）。四个字段都从任务执行参数和证据取，**不采信执行者自报**；取不到就写 null，不要猜。`external_cause` 只在证据能直接看出外部原因时填，拿不准写 null（按普通失败处理）。
 
 一致性规则（可机器校验）：`verdict=pass` 当且仅当所有 `assertions.result` 都是 `pass` 且 `overreach` 为「无」；`agrees_with_claim` 必须等于（`verdict=pass`）是否等于（`claimed_result=success`）。
 
