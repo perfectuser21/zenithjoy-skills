@@ -25,7 +25,7 @@
 | ① 试跑 | 不用 | 本工位 | `skill-explore`（试跑协议） | 任务目标与 DOD；平台底座、该平台已有 skill、仓库物件（只读）；故障处置表通用层与平台层 | 成功一次的证据 + **整流程 skill v1** | 另开会话 `run-verify` 判 pass |
 | ② 探索 | 不用 | 本工位 | 整流程 skill + **`skill-boundary`（摸边界）** | 整流程 skill v1 | 边界清单（每项有结论）+ **整流程 skill vN** + 处置表候选行 + 平台发现 + 手册素材 + 验证用输入池 | 清单每项有结论，且最终版连续 3 次成功 |
 | ③ 验证 | 不用 | 本工位跑；另开会话判 | 跑：**只加载冻结的 vN**；判：`run-verify` | 冻结 vN + 10 个不同输入 | 连续通过记录 | 同一版本、不同输入、连续 **10** 次通过 |
-| ④ 沉淀 | 拆的时候不用；拆完重跑时用 | 拆：本工位；陪跑：work-commander | 拆：`skill-distill` → 验收 `contract-reviewer` → `skill-evaluator`（quick）→ 上架 **`skill-publish`（未就绪）**；Commander：`workflow-commander` + `wf-<能力>` | vN、边界清单、处置表、验证记录 | **activity 链**（说明书 + 步骤 skill，登记进树与仓库）+ **`wf-<能力>`** | 拆完后连续 **30** 次通过 |
+| ④ 沉淀 | 拆的时候不用；拆完重跑时用 | 拆：本工位；陪跑：work-commander | 拆：`skill-distill` → 验收 `contract-reviewer` → `skill-evaluator`（quick）→ 上架 **`skill-publish`**；Commander：`workflow-commander` + `wf-<能力>` | vN、边界清单、处置表、验证记录 | **activity 链**（说明书 + 步骤 skill，登记进树与仓库）+ **`wf-<能力>`** | 拆完后连续 **30** 次通过 |
 | ⑤ 固化 | 用，按步骤退场 | 判定：本工位；写代码：Claude Code `/dev`；核验：本工位另开会话 | **固化判定 skill（未就绪）** → `/dev` → `code-verify` | 30 次运行记录 + activity 链 | 每步「写代码 / 留 AI」标签 + 代码与探针 | 每步代码过 `code-verify`，说明书与判据不变 |
 | ⑥ 退役 | — | 本工位 | 清理 skill（未就绪） | 连续 30 天未跑，或被新流程取代 | 树上标 deprecated；skill 移归档目录，只移不删；仓库共用物件仍有流程在用则保留 | — |
 
@@ -40,7 +40,7 @@
 | 核验（试跑、验证、重跑的每一次） | run-verify | 验收标准 + 证据（不看过程）。交付物必须写明 skill 版本、本次输入、处置表片指纹，供连续计数 |
 | 沉淀 | skill-distill | 冻结 vN + 验证记录 + 探索交付物 + 试跑交付物 + 工坊提案 |
 | 验收 | contract-reviewer，再 skill-evaluator（quick） | 只看 skill 草稿（不看沉淀过程） |
-| 上架 | skill-publish（未就绪） | 已过验收的草稿 |
+| 上架 | skill-publish | 沉淀交付 JSON + 验收结论（另开会话产出）；只用 Brain 现成接口写：`/skill-settlement/register` 登记候选、`/activity_uses`、`/enablers` |
 | 固化判定 | 固化判定 skill（未就绪） | 30 次运行记录 + activity 链 |
 | 转码核验 | code-verify | 判据清单 + 代码（不看写代码的会话，不采信注释与变量名）。判据固化成代码之后、上线之前必须过；也用于补审已在跑的代码 |
 | 退役 | 清理 skill（未就绪） | —— |

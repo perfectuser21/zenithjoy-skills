@@ -1,3 +1,9 @@
+## [2026-10-09] skill-publish — created（上架登记）+ wf-<能力> 模板 + skill-distill 产出对齐登记接口
+**症状**: 沉淀之后没人负责登记，AGENTS.md 上架阶段标「未就绪」；skill-distill 的产出（kebab-case key、步骤只在 Markdown 里、needs_human 是数组）对不上 Brain 已有的沉淀登记接口。
+**根因**: 树 + 仓库 v3.0 第 4 刀（路 B）已在 Brain 做了 `POST /skill-settlement/register`（登记候选 Activity + Steps + 8 灰格 + 待拍板三问），但技能工厂这边没接上。
+**修改**（Brain project bdec465d 第④棒 d79d00e4）: 新建 skill-publish：核对验收独立 → 技能库 PR → 按表组装草稿调 `/skill-settlement/register` 登记候选（journey_id 实为能力 id，由 `/workflows` 的 capability_code 查）→ `/activity_uses` 登记依赖 → 到转正门槛的处置表行经 `/enablers` 新建或合并写回并读回核对 → wf-<能力> 提 PR 到 zenithjoy-workspace commander 真身、白名单交有头会话；新增 `templates/wf-capability.md`（链路 / 诊断与计数 / 三档权限 / 流程手册 / 回流）。skill-distill：activity_key 改 snake_case，activity_spec 加 name、inputs/outputs 改数组、needs_human 改 `{cases, alert}`，新增结构化 `steps`（key/order/name/action/inputs/outputs/readback/on_fail），无 steps 不得交稿。AGENTS.md 上架阶段改为就绪；manifest 加 skill-publish。原计划的「树补 Activity.uses 列」取消：`activity_uses` 表与写接口早已存在。
+**未验证**: 登记接口未在生产实调（会生成真实候选与待拍板），留待第⑦棒样板实跑。
+
 ## [2026-10-09] skill-boundary — created（摸边界，技能工厂五阶段第②步「探索」）
 **症状**: 决策 5826ddd7 / 1b469079 定了探索阶段怎么摸边界（三类、每轮混几项、稳定 3 次、上限 20 轮、摸到的写回去），但没有 skill，AGENTS.md 标「未就绪」，探索任务只能报 blocked；处置表的取法还指向不返回 failure_semantics 的旧接口。
 **修改**（Brain project bdec465d 第③棒 dca8ebda）: 新建 skill-boundary：第 0 轮按「每一步 × 每个依赖对象 × 三种出错」逐格列清单、每项先写预期、每种造法先证实能造能恢复；造法只用控制器已有命令（抖音控制器现有 close-app / return-safe-desktop，断网、锁屏、切输入法、掉线、抢前台均未就绪，记 not_probed 不卡出口）；轮次规则与五种结论；写回去向；稳定轮与出口（含给验证的 10 个输入）；每轮交付 JSON。AGENTS.md：探索阶段改用 skill-boundary，处置表取法改为 `GET /enablers?keys=`（Brain ≥ 1.389.0）与 `GET /activity_uses`；manifest 加 skill-boundary；skill-explore 不适用项指向 skill-boundary。补第②棒交接镜像。
