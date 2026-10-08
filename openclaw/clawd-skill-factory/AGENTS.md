@@ -23,7 +23,7 @@
 |---|---|---|---|---|---|---|
 | ⓪ 入口 | — | 主理人 + 有头会话 | `/tree` | 一个新想法 | 树上的坐标（能力 · 流程）+ Brain project + 试跑任务 | 任务里带树上坐标才开工 |
 | ① 试跑 | 不用 | 本工位 | `skill-explore`（试跑协议） | 任务目标与 DOD；平台底座、该平台已有 skill、仓库物件（只读）；故障处置表通用层与平台层 | 成功一次的证据 + **整流程 skill v1** | 另开会话 `run-verify` 判 pass |
-| ② 探索 | 不用 | 本工位 | 整流程 skill + **摸边界 skill（未就绪）** | 整流程 skill v1 | 边界清单（每项有结论）+ **整流程 skill vN** + 处置表候选行 + 平台发现 + 手册素材 + 验证用输入池 | 清单每项有结论，且最终版连续 3 次成功 |
+| ② 探索 | 不用 | 本工位 | 整流程 skill + **`skill-boundary`（摸边界）** | 整流程 skill v1 | 边界清单（每项有结论）+ **整流程 skill vN** + 处置表候选行 + 平台发现 + 手册素材 + 验证用输入池 | 清单每项有结论，且最终版连续 3 次成功 |
 | ③ 验证 | 不用 | 本工位跑；另开会话判 | 跑：**只加载冻结的 vN**；判：`run-verify` | 冻结 vN + 10 个不同输入 | 连续通过记录 | 同一版本、不同输入、连续 **10** 次通过 |
 | ④ 沉淀 | 拆的时候不用；拆完重跑时用 | 拆：本工位；陪跑：work-commander | 拆：`skill-distill` → 验收 `contract-reviewer` → `skill-evaluator`（quick）→ 上架 **`skill-publish`（未就绪）**；Commander：`workflow-commander` + `wf-<能力>` | vN、边界清单、处置表、验证记录 | **activity 链**（说明书 + 步骤 skill，登记进树与仓库）+ **`wf-<能力>`** | 拆完后连续 **30** 次通过 |
 | ⑤ 固化 | 用，按步骤退场 | 判定：本工位；写代码：Claude Code `/dev`；核验：本工位另开会话 | **固化判定 skill（未就绪）** → `/dev` → `code-verify` | 30 次运行记录 + activity 链 | 每步「写代码 / 留 AI」标签 + 代码与探针 | 每步代码过 `code-verify`，说明书与判据不变 |
@@ -36,7 +36,7 @@
 | 阶段 | skill | 只看这些材料 |
 |---|---|---|
 | 试跑 | skill-explore | 任务正文 + 执行参数 + 背景资料（见总表） |
-| 探索 | 摸边界 skill（未就绪） | 整流程 skill 当前版 + 边界清单 + 故障处置表 |
+| 探索 | skill-boundary | 整流程 skill 当前版 + 边界清单 + 故障处置表（第 0 轮只有试跑交付物；之后每轮只看上一轮交付物） |
 | 核验（试跑、验证、重跑的每一次） | run-verify | 验收标准 + 证据（不看过程）。交付物必须写明 skill 版本、本次输入、处置表片指纹，供连续计数 |
 | 沉淀 | skill-distill | 冻结 vN + 验证记录 + 探索交付物 + 试跑交付物 + 工坊提案 |
 | 验收 | contract-reviewer，再 skill-evaluator（quick） | 只看 skill 草稿（不看沉淀过程） |
@@ -92,7 +92,7 @@
 
 - **三层**：通用层（网络、设备锁、adb、模型接口、飞书、网关）→ 仓库对应物件的 `failure_semantics`；平台层（某平台的搜索、评论区…）→ 仓库平台动作物件的 `failure_semantics`；流程层 → 整流程 skill 的「故障处置」一节，沉淀后拆进树上 Activity 的 `failure` 与 Step 的 `on_fail`。
 - **四分类**沿用树上 Activity `failure` 已有的：`empty_ok`（本来就没有，正常结束）/ `retryable`（可重试，带参数）/ `fatal`（立即停）/ `needs_human`（要人介入）。
-- **怎么取**：按整流程 skill（或 activity）的「依赖对象」清单，只取相关的那几行，并算出片指纹记进运行记录。仓库接口 `GET $BRAIN/api/brain/warehouse-items` 目前还不返回 `failure_semantics`（Brain 任务 dca8ebda 补齐）；补齐前，通用层用下面的初始值。
+- **怎么取**：按整流程 skill（或 activity）的「依赖对象」清单，只取相关的那几行，并算出片指纹记进运行记录。取法：`curl -s "$BRAIN/api/brain/enablers?keys=<对象1>,<对象2>"`（Brain ≥ 1.389.0，`/warehouse-items` 为同一接口），读各对象的 `failure_semantics.rows`；某个 Activity 依赖哪些对象：`GET $BRAIN/api/brain/activity_uses?activity_id=<id>`。对象在仓库里还没有处置行的，用下面的通用层初始值。
 - **表外故障兜底**：停下、截图、上报，写进交付物候选行（对象、现象、证据、建议的分类与参数），**不临场瞎重试**。同一对象同一故障：第 1 次记录，第 2 次标候选，第 3 次必须转正（写成正式行或写成代码）；转正由本工位另开会话走 PR / 上架。运行中的会话不直接改正式表。
 
 通用层初始值（第③棒迁入仓库后以仓库为准）：

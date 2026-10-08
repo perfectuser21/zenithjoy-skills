@@ -1,3 +1,7 @@
+## [2026-10-09] skill-boundary — created（摸边界，技能工厂五阶段第②步「探索」）
+**症状**: 决策 5826ddd7 / 1b469079 定了探索阶段怎么摸边界（三类、每轮混几项、稳定 3 次、上限 20 轮、摸到的写回去），但没有 skill，AGENTS.md 标「未就绪」，探索任务只能报 blocked；处置表的取法还指向不返回 failure_semantics 的旧接口。
+**修改**（Brain project bdec465d 第③棒 dca8ebda）: 新建 skill-boundary：第 0 轮按「每一步 × 每个依赖对象 × 三种出错」逐格列清单、每项先写预期、每种造法先证实能造能恢复；造法只用控制器已有命令（抖音控制器现有 close-app / return-safe-desktop，断网、锁屏、切输入法、掉线、抢前台均未就绪，记 not_probed 不卡出口）；轮次规则与五种结论；写回去向；稳定轮与出口（含给验证的 10 个输入）；每轮交付 JSON。AGENTS.md：探索阶段改用 skill-boundary，处置表取法改为 `GET /enablers?keys=`（Brain ≥ 1.389.0）与 `GET /activity_uses`；manifest 加 skill-boundary；skill-explore 不适用项指向 skill-boundary。补第②棒交接镜像。
+
 ## [2026-10-08] skill-factory 工位 — count_streak 改走 chain + 并行逐张取，修跑场机上超时
 **症状**: OpenClaw 实测 skill-factory 在 xian-m1 上跑 count_streak，卡在拉审计单列表，会话超时无输出。
 **根因**: xian-m1 到 Brain 链路约 14 KB/s，全量拉 500 条审计单 1.25 MB 要 88 秒、秋米任务 2 MB 要 123 秒；单张 GET 只要 0.5～1 秒，chain 0.4 秒。旧版默认全量扫描。
