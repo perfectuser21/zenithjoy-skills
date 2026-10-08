@@ -1,3 +1,9 @@
+## [2026-10-08] skill-factory 工位 — count_streak 改走 chain + 并行逐张取，修跑场机上超时
+**症状**: OpenClaw 实测 skill-factory 在 xian-m1 上跑 count_streak，卡在拉审计单列表，会话超时无输出。
+**根因**: xian-m1 到 Brain 链路约 14 KB/s，全量拉 500 条审计单 1.25 MB 要 88 秒、秋米任务 2 MB 要 123 秒；单张 GET 只要 0.5～1 秒，chain 0.4 秒。旧版默认全量扫描。
+**修改**: 执行单与审计单建单都带 parent_task_id=阶段任务；默认只走 /tasks/<阶段任务>/chain + 8 路并行逐张 GET，全量扫描移到 --scan；读不到 Brain 输出 error 并以 2 退出，不当作 0 次。AGENTS.md 同步约定。
+**验证**: 15 例全过（新增 3 例：经 chain 配对、默认不全量扫描、无审计单为待核验）；变异「总是全量扫描」被抓红；真接口 xian-m1 由数分钟降到约 2 秒。注：变异测试须 `python3 -B` 或清 __pycache__，同长度替换在同一秒还原会命中旧字节码缓存，本次因此误判过一次。
+
 ## [2026-10-08] skill-factory 工位 — 运行记录约定 + 连续通过计数脚本 count_streak.py
 **症状**: 验证阶段要「同一版本、不同输入、连续 10 次」，沉淀后重跑要连续 30 次，但没有任何地方记录每次运行用的版本与输入，也没人数；Brain 任务查询接口忽略 project_id / parent_task_id / search 筛选，只能按 task_type 拉取。
 **修改**（决策 5826ddd7 / 6ec463c3 / 1b469079，Brain project bdec465d 第②棒 abb80d73）: AGENTS.md 加「运行记录与怎么数」：阶段任务写 K，执行单【执行参数】写阶段 / 计数阶段任务 / Skill@版本 / 输入 / 处置表片指纹，审计单 source_task_id 指回执行单；片指纹算法（第③棒前取「故障处置表」一节）；阶段收尾必须跑计数且 reached=false 不得进下一阶段。新增工位 `bin/count_streak.py`（只读，标准库，Python 3.9 可跑）：经 /tasks/<id>/chain 与正文「计数阶段任务」找执行单，按 source_task_id 配审计单，从新往旧数（版本 / 片指纹变即停、作废跳过、失败即停、重复输入不计、缺字段不计）。运行环境补 gateway_exec 5211 代理与工位同步延迟说明。补第①棒交接镜像 docs/handoffs/202610082240-139107c4.md。
