@@ -9,11 +9,15 @@
   - 失败且核验写明外部原因：作废，不计数也不清零；
   - 其他失败：到此为止（清零）。
 
-一次运行 = 一张执行单（正文【执行参数】里写「计数阶段任务：<阶段任务 id>」，或挂在阶段任务下）；
-一次判定 = 一张 audit 任务（payload.source_task_id 指回执行单，result.verification 是 run-verify 的 JSON）。
+一次运行 = 一张执行单，一次判定 = 一张 audit 任务（payload.source_task_id 指回执行单，
+result.verification 是 run-verify 的 JSON）。两张都必须挂在阶段任务下（建单时带 parent_task_id）。
 skill 版本、输入、处置表片指纹以执行单【执行参数】为准，缺了才用核验 JSON 里的同名字段。
 
-用法：python3 count_streak.py --stage-task <阶段任务 id> [--k 10] [--brain http://100.79.41.61:5221]
+为什么不全量扫描：跑场机到 Brain 的链路很慢（实测 xian-m1 拉 500 条审计单 1.25 MB 要 88 秒），
+所以默认只走 /tasks/<阶段任务>/chain 拿子任务列表，再并行逐张 GET（单张约 0.5～1 秒）。
+--scan 额外按 task_type 全量拉取，补找正文写了「计数阶段任务：<id>」但没挂父任务的老记录，很慢，只在必要时用。
+
+用法：python3 count_streak.py --stage-task <阶段任务 id> [--k 10] [--scan] [--brain http://100.79.41.61:5221]
 只读：只发 GET，不改任何东西。输出一行 JSON。
 """
 import argparse
@@ -22,6 +26,7 @@ import os
 import re
 import sys
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 
 PARAM_BLOCK = re.compile(r"【执行参数】(.*?)(?:【执行参数结束】|\Z)", re.S)
 PARAM_LINE = re.compile(r"^\s*([^:：\n]+?)\s*[:：]\s*(.*?)\s*$")
@@ -110,22 +115,34 @@ def _body(task):
     return src.get("body") or task.get("description") or ""
 
 
-def collect_runs(brain, stage_id):
-    """找执行单：先看挂在阶段任务下的子任务，再补正文里写了「计数阶段任务：<id>」的秋米任务。"""
-    runs = {}
-    try:
-        chain = _get(brain, "/tasks/%s/chain" % stage_id) or {}
-        for t in chain.get("children") or chain.get("tasks") or []:
-            if t.get("task_type") != "audit" and t.get("id") != stage_id:
-                runs[t["id"]] = t
-    except Exception:
-        pass
-    for t in _task_list(_get(brain, "/tasks?task_type=qiumi_task&limit=500")):
-        if parse_params(_body(t)).get("计数阶段任务") == stage_id:
+def collect_runs(get, stage_id, scan=False):
+    """get(path) 返回 Brain /api/brain 下某路径的 JSON。
+
+    默认：chain 拿阶段任务的子任务 → 并行逐张取全量 → 非 audit 为执行单，audit 按 source_task_id 配对。
+    scan=True：再全量拉取秋米任务与审计单，补找没挂父任务、但正文写了「计数阶段任务」的老记录。
+    chain 读不到时抛异常，不当作「零次」。
+    """
+    chain = get("/tasks/%s/chain" % stage_id) or {}
+    child_ids = [c["id"] for c in (chain.get("children") or []) if c.get("id") and c.get("id") != stage_id]
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        children = list(pool.map(lambda tid: get("/tasks/%s" % tid), child_ids))
+
+    runs, audit_list = {}, []
+    for t in children:
+        if not t:
+            continue
+        if t.get("task_type") == "audit":
+            audit_list.append(t)
+        else:
             runs[t["id"]] = t
+    if scan:
+        for t in _task_list(get("/tasks?task_type=qiumi_task&limit=500")):
+            if parse_params(_body(t)).get("计数阶段任务") == stage_id:
+                runs.setdefault(t["id"], t)
+        audit_list += _task_list(get("/tasks?task_type=audit&limit=500"))
 
     audits = {}
-    for a in _task_list(_get(brain, "/tasks?task_type=audit&limit=500")):
+    for a in audit_list:
         src = (a.get("payload") or {}).get("source_task_id")
         if src in runs and (src not in audits or a.get("created_at", "") > audits[src].get("created_at", "")):
             audits[src] = a
@@ -151,17 +168,25 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="连续通过计数（只读）")
     ap.add_argument("--stage-task", required=True, help="阶段任务 id（验证 / 沉淀后重跑）")
     ap.add_argument("--k", type=int, default=None, help="达标次数；不给则读阶段任务【执行参数】的 K，再不行默认 10")
+    ap.add_argument("--scan", action="store_true", help="额外全量扫描补找没挂父任务的老记录（跑场机上很慢）")
     ap.add_argument("--brain", default=os.environ.get("BRAIN_URL", "http://100.79.41.61:5221"))
     args = ap.parse_args(argv)
+
+    def get(path):
+        return _get(args.brain, path)
 
     k = args.k
     if k is None:
         try:
-            stage = _get(args.brain, "/tasks/%s" % args.stage_task) or {}
+            stage = get("/tasks/%s" % args.stage_task) or {}
             k = int(parse_params(_body(stage)).get("K") or 10)
         except Exception:
             k = 10
-    runs = collect_runs(args.brain, args.stage_task)
+    try:
+        runs = collect_runs(get, args.stage_task, scan=args.scan)
+    except Exception as e:
+        print(json.dumps({"stage_task": args.stage_task, "error": "读不到 Brain：%s" % e}, ensure_ascii=False))
+        return 2
     res = count_streak(runs, k)
     res["stage_task"] = args.stage_task
     res["runs_seen"] = len(runs)

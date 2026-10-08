@@ -69,10 +69,11 @@
 | 记录 | 是什么 | 必须带 |
 |---|---|---|
 | 阶段任务 | 「验证 <流程>」或「重跑 <流程>」这一张 | 【执行参数】里写 `K：10`（或 30） |
-| 执行单 | 每跑一次一张秋米任务 | 【执行参数】里写 `阶段：`、`计数阶段任务：<阶段任务 id>`、`Skill：<名>@<版本>`、`输入：`、`处置表片指纹：`，以及设备与验收 |
-| 审计单 | 每次运行另开会话用 run-verify 判一次，一张 audit 任务 | `payload.source_task_id` 指回执行单；`result.verification` 是 run-verify 的 JSON（含 `external_cause`） |
+| 执行单 | 每跑一次一张秋米任务 | **建单带 `parent_task_id`=阶段任务**；【执行参数】里写 `阶段：`、`计数阶段任务：<阶段任务 id>`、`Skill：<名>@<版本>`、`输入：`、`处置表片指纹：`，以及设备与验收 |
+| 审计单 | 每次运行另开会话用 run-verify 判一次，一张 audit 任务 | **建单带 `parent_task_id`=阶段任务**；`payload.source_task_id` 指回执行单；`result.verification` 是 run-verify 的 JSON（含 `external_cause`） |
 
-- 数：`python3 bin/count_streak.py --stage-task <阶段任务 id>`，只读，输出 `streak`（已连续通过几次）、`reached`（是否达标）、`reset_by`（上次从哪一单清零、为什么）、`voided`（作废的单）。
+- 数：`python3 bin/count_streak.py --stage-task <阶段任务 id>`，只读，输出 `streak`（已连续通过几次）、`reached`（是否达标）、`reset_by`（上次从哪一单清零、为什么）、`voided`（作废的单）；读不到 Brain 时输出 `error` 并以 2 退出，**不当作 0 次**。
+- 它只认挂在阶段任务下的执行单与审计单（经 `chain` 找，跑场机上约 2 秒）。没挂父任务的老记录要加 `--scan` 全量扫描，跑场机上要两三分钟，只在补数时用。
 - skill 版本、输入、片指纹以执行单【执行参数】为准，**不采信执行者自报**；缺了这几项的运行算「无法核对」，不计数。
 - 阶段收尾前必须跑一次，把输出 JSON 原样写进交接；`reached=false` 不得进下一阶段。
 - **处置表片指纹**：按依赖对象取到的那几行，整理成文本后取 `shasum -a 256` 前 12 位。第③棒仓库接口补齐前，用本文件「故障处置表」一节全文：`awk '/^## 故障处置表/{f=1;next} /^## /{f=0} f' AGENTS.md | shasum -a 256 | cut -c1-12`。
