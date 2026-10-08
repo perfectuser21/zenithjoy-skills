@@ -25,6 +25,11 @@ class StreakRules(unittest.TestCase):
         self.assertEqual(r["streak"], 10)
         self.assertTrue(r["reached"])
 
+    def test_below_k_not_reached(self):
+        r = cs.count_streak([run(i, "pass") for i in range(1, 4)], k=10)
+        self.assertEqual(r["streak"], 3)
+        self.assertFalse(r["reached"])
+
     def test_fail_resets(self):
         runs = [run(1, "pass"), run(2, "pass"), run(3, "fail"), run(4, "pass")]
         r = cs.count_streak(runs, k=10)
