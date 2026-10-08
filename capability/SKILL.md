@@ -15,15 +15,20 @@ description: |
   触发：/capability、帮我定义一个能力、把这个想法变成能力、这是流程还是 Activity、这是不是 Step、
   帮我判层级、这个该挂哪一层、这算不算一个能力、这是一个流程还是两个、这是价值流还是能力、
   这里该切几个 Activity、帮我拆流程、设计这个功能的结构、这个脚本该拆成几个流程、这两段要不要拆开、
-  换个平台算不算新能力、帮我划一下、
+  换个平台算不算新能力、改共享 Activity 的输入输出会不会影响别的流程、帮我出影响表、帮我划一下、
   帮我归位、巡逻一下能力树、审查一下树挂得对不对、什么是 Capability（旧触发词 /golden-path、
   golden path 兼容识别，输出一律用新词）。
   判定第一动作=装载六层全树，结论必须落格子坐标。
   定义层工作，不做现状标注、不写提案文档、不开 PR、不自动挪树（设计模式可读输入的那份现有脚本来列段）
   ——拍板后下游：写库走 db-update，完整提案（现状探索+对抗+demo）点火 capability-controller 流水线。
-version: 2.2.0
+version: 2.3.0
 created: 2026-07-24
 changelog:
+  - 2.3.0: 共享 Activity 的合同变更（决策 eb9f8f77 补充，任务 c74d6f26）——doctrine 新增 §19：合同四项（承诺 /
+    输入字段+来源 / 输出字段+去向 / 读回）+ semver；兼容升小版本、不兼容发大版本逐个切并新旧并存、只一个流程要
+    就分叉；改被 ≥2 个流程引用的 Activity 合同前必须出影响表；获客样板补「判定」输入来源变更实例；巡逻新增
+    筛子⑩（版本不一致 SQL + 影响表 / semver / 过渡期人工核对项）；设计模式第 5 步加合同核对；Mode B 接
+    「改共享 Activity 合同」输入并产出影响表；evals 加「改共享 Activity 输入时怎么办」；reviewer 加打回项
   - 2.2.0: 流程边界两条件 + 定义定稿（主理人 10-08 拍板，决策 eb9f8f77 取代 c63688cf，任务 19732857）——
     doctrine v3.1：§1 写入 Activity / 流程定稿原文；流程边界改为「① 能放下 且 ② 有分开跑的理由（节奏 /
     资源 / 一对多·多对一 / 等人）」，默认同一流程，流程边界是运行设计（约束 + 选择），画错重新打包、
@@ -132,6 +137,7 @@ curl -s "$BRAIN/api/brain/steps"                         # Step（activity_id / 
 |---|---|---|
 | 一个想法 / 一版粗流程（「我觉得分七步」），要正式定义并对抗 | **A 提炼** | 对抗收敛后的合格能力 / 流程定义，呈拍板 |
 | 一坨功能 / 一个系统 / 单个东西「这是流程还是 Activity / 是不是 Step / 挂哪」 | **B 划分 / 判层** | 每项的层级 + 格子坐标 + 理由 |
+| 「要改某个 Activity 的输入 / 输出 / 读回」 | **B 判层（合同变更）** | 变更类型（兼容 / 不兼容 / 分叉）+ 影响表（doctrine §19） |
 | 「帮我拆流程」「设计这个功能的结构」/ 丢来一份现有脚本 | **E 设计** | 能力 → 段 → 流程边界表（两条件）→ 问题二表 → 共用 → 每个流程的运行面 |
 | 「巡逻一下」「审查一下树」/ 定期派发 | **D 巡逻** | 全树「对 / 疑似层级不对 + 建议挪到哪 + 理由」清单 |
 | 概念问题（六层 / 流程边界 / happy path / 贯穿是啥） | **C 答疑** | 按 doctrine 讲清楚，不启动流程 |
@@ -238,6 +244,11 @@ Step。主理人给了七步 → 有的可能只是 Step、有的接缝其实能
 ```
 
 单个东西判层（「这是流程还是 Activity」「是不是 Step」）走同样步骤，输出压成一行坐标 + 理由。
+
+**合同变更**（「要改某个 Activity 的输入 / 输出 / 读回」）按 doctrine §19：先查引用方
+（`curl -s "$BRAIN/api/brain/activities/<id>/consumers"` 或查 `workflow_activity_refs`）→ 判变更类型（兼容 /
+不兼容 / 只一个流程要就分叉）→ 被 ≥2 个流程引用的，产出影响表（每个引用流程 × 兼容与否 × 怎么切 × 谁验收）；
+不兼容的写明新大版本、逐个切换顺序、过渡期与旧版退役条件。没有影响表不进下一步，拍板前不写库。
 划分结果有争议或能力数 ≥3 时，主动建议对切法跑一轮三镜头对抗（同 A4，攻击面换成
 触发器完备性 / 边界归属 / 横切与看护识别遗漏）。
 
@@ -255,7 +266,9 @@ Step。主理人给了七步 → 有的可能只是 Step、有的接缝其实能
    ⇒ 流程清单（流程名带平台前缀，如「抖音·视频发现」）
 ## 4. 问题二表（每个流程内每段：输入 + 能验收的结果 + 能否从这里重来 → Activity / Step / 改成承诺）
    ⇒ 每个流程的 Activity 序列（逐个做的循环标出来）
-## 5. 可共用的 Activity（先查 Step 0 装载的树：已有的预检 / 收尾等，注明 activity 名与在用的流程）
+## 5. 可共用的 Activity（先查 Step 0 装载的树：已有的预检 / 收尾等，注明 activity 名与在用的流程；
+   复用前核对合同——输入来源、输出去向是否一致；不一致按 doctrine §19 判兼容 / 不兼容 / 分叉，
+   涉及改共享 Activity 合同的附影响表）
 ## 6. 每个流程的运行面
 | 流程 | 触发（定时 / 事件 / 从表里取待处理） | 一次运行时长预算 | 从哪张表取 | 写到哪张表 | 失败策略 |
 ## 现状对照（如输入是现有脚本：哪个执行者现在顺序跑了哪几个流程，实现以后再拆）
@@ -339,7 +352,25 @@ WHERE a.status <> 'deprecated'
   AND a.inputs IS NULL AND a.outputs IS NULL
   AND NOT EXISTS (SELECT 1 FROM steps s WHERE s.activity_id = a.id AND s.active)
   AND a.name ~ '(有人|不骗|不烂|不丢|立刻|随叫随到|被证明|被记住|越用越|得到|自己好|有回执|有一张图|常态化|可查|就有|能看到|看得见)';
+
+-- ⑩ 共享 Activity 版本不一致（被 ≥2 个流程引用，各引用绑的合同版本不同，或有引用没绑版本）
+SELECT '⑩共享Activity版本' AS 筛子, a.name AS activity,
+       count(DISTINCT r.workflow_id) AS 引用流程数,
+       count(DISTINCT r.activity_definition_version_id) AS 版本数,
+       count(*) FILTER (WHERE r.activity_definition_version_id IS NULL) AS 未绑版本的引用,
+       string_agg(DISTINCT w.name, ' | ') AS 流程
+FROM workflow_activity_refs r
+JOIN activities a ON a.id = r.activity_id
+JOIN workflows w ON w.id = r.workflow_id AND w.status = 'active'
+WHERE r.active
+GROUP BY a.id, a.name
+HAVING count(DISTINCT r.workflow_id) >= 2
+   AND (count(DISTINCT r.activity_definition_version_id) > 1
+        OR count(*) FILTER (WHERE r.activity_definition_version_id IS NULL) > 0);
 ```
+
+⑩ 的人工核对项（库里暂无字段，doctrine §17 列了需要的字段）：被 ≥2 个流程引用的 Activity 最近有没有合同变更
+（看 `activity_definition_versions` 新增行）→ 有没有对应影响表、semver 版本号；版本不一致的是否已超过过渡期。
 
 **第二遍：逐项判定**（doctrine §17）：
 - 流程边界按**两条件**：① 能放下 且 ② 有分开跑的理由（节奏 / 资源 / 一对多·多对一 / 等人）才断开，默认同一流程；
@@ -347,7 +378,8 @@ WHERE a.status <> 'deprecated'
 - 能力按 §5：平台默认只是走法；
 - ⑥⑦ 只是提醒，按两条件看是否该合并 / 断开，不满足就判「对」；
 - ⑧ 定时作业桶 → 建议拆成各自的流程，看护类挂到「系统看护」；
-- ⑨ 口号式 Activity → 判为「应改成承诺」，建议挂到哪个 Activity 或能力的承诺列。
+- ⑨ 口号式 Activity → 判为「应改成承诺」，建议挂到哪个 Activity 或能力的承诺列；
+- ⑩ 共享 Activity 合同变更失控 → 按 doctrine §19：缺影响表 / 版本号的补齐；版本不一致且超过过渡期的，建议催切到新版或分叉。
 
 筛中不等于错，判对的写「对」并给一句理由（如平台前缀造成的同名）。
 
