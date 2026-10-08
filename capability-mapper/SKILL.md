@@ -3,7 +3,7 @@ name: capability-mapper
 description: |
   Capability Mapper（原 Golden Path Mapper）— 领域切分师。管上游「一条价值流该切几个能力、
   每个能力几个流程、每个流程几个 Activity」，是 capability-proposer/reviewer/controller（管「一个已命名
-  能力的提案+对抗」）的上游输入源。判层标准一律引用 capability/references/doctrine.md（六层：部门 →
+  能力的提案+对抗」）的上游输入源。判层标准一律引用 tree/references/doctrine.md（六层：部门 →
   价值流 → 能力 → 流程 → Activity → Step，决策 0cee5452），本 skill 不另写一份。
   有头交互：主理人说一个领域（例如「私域获客」「客服」），产出该领域的六层地图——触发器计数法切出的
   能力清单、边界声明、横切件池、共享前置、每个能力的流程与 Activity（流程两条件 + 问题二扫出），派 3 个镜头对抗
@@ -13,9 +13,10 @@ description: |
   Mode 2（归位模式）：已有树下，判定一个新东西该挂到哪一层哪个位置——不切新领域，
   走 doctrine §15 归位判定链五关，裁决单拍板后才落账。
   Mode 2 触发：归位、这个加到哪、放哪个capability、XX算什么、帮我看看XX属于哪。
-version: 2.2.1
+version: 2.2.2
 created: 2026-07-17
 changelog:
+  - 2.2.2: 门面 skill capability 改名 tree，对 doctrine 路径的引用同步为 tree/references/（决策 14512222，任务 8a84cc31），无规则变化
   - 2.2.1: 对抗镜头「共用识别」补共享 Activity 合同核对与影响表（doctrine §19）
   - 2.2.0: 对齐 doctrine v3.1（决策 eb9f8f77）——流程按两条件（能放下 且 有分开跑的理由）列，默认同一流程；
     删除「平台不同是不同能力」，平台默认是走法、用带平台前缀的流程区分；对抗镜头加口号 Activity / 定时作业桶
@@ -24,7 +25,7 @@ changelog:
     流程按问题一、Activity 按问题二扫出
   - 2.0.0: 对齐六层标准（主理人 10-07 拍板，决策 0cee5452，任务 f2fe13ae）——产出从「GP 清单 + 3-5 步
     承诺式骨干 + 挂片」改为「能力清单 + 每个能力的流程 + Activity（三测试扫出）」；删除附录 doctrine
-    原文副本（三问法/挂片三规则/七动作/场景牌组/频率判据等），一律引用 capability/references/doctrine.md，
+    原文副本（三问法/挂片三规则/七动作/场景牌组/频率判据等），一律引用 tree/references/doctrine.md，
     只保留 mapper 独有的工厂域裁决；Step 1 改读六层真表；GP 合同唯一引用纪律原样保留
   - 1.3.0: skill 改名 golden-path-mapper→capability-mapper（决策 a340f100 追加拍板，Golden Path
     skill 层全面退役），触发词/description 同步换新词
@@ -43,9 +44,9 @@ changelog:
 
 # /capability-mapper — 领域切分师
 
-**判层标准唯一来源**：`capability/references/doctrine.md`（六层定义、三问法、两把尺子、Activity
+**判层标准唯一来源**：`tree/references/doctrine.md`（六层定义、三问法、两把尺子、Activity
 流程边界两条件 / 问题二定 Activity、反模式、场景牌组、归位判定链、七动作、设计模式、铁律）；扫刀步骤在
-`capability/references/step-cutting.md`。开工前先读这两份，本文件只写 mapper 的流程，不重复标准。
+`tree/references/step-cutting.md`。开工前先读这两份，本文件只写 mapper 的流程，不重复标准。
 
 ## 模式总览
 
@@ -85,7 +86,7 @@ DOMAIN        — 领域名（例：私域获客、微信客服、内容发布�
 
 ### Step 1：探索现状
 
-先按 `Skill(capability)` 的 **Step 0** 装载六层全树（生产只读 psql 查 value_streams / capabilities /
+先按 `Skill(tree)` 的 **Step 0** 装载六层全树（生产只读 psql 查 value_streams / capabilities /
 workflows / workflow_activity_refs / activities / steps，不可达走 `/api/brain/value-streams`、
 `/api/brain/workflows`），筛出该领域已有的价值流 / 能力 / 流程 / Activity；再读相关代码目录，
 逐项标 已有 / 半成 / 缺失，附证据（文件+行号或运行证据），禁凭记忆猜测。

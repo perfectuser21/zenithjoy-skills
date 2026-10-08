@@ -134,6 +134,6 @@ ground truth）0920晚测了三轮：
 
 ## 对应立项
 
-无正式 golden_path 记录（0920 走的是"先用现有能力真机验证"的探索路线，未经过 /capability
+无正式 golden_path 记录（0920 走的是"先用现有能力真机验证"的探索路线，未经过 /tree
 提案流程）。跟 `android-kuaishou-leadgen`/`android-xiaohongshu-leadgen`/`android-shipinhao-leadgen`
 是同一晚的姊妹产出，但成熟度完全不同——那三份是纯 EXPLORE 文档，这份是"探索+真机代码验证"。
