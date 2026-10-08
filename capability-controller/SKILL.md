@@ -10,9 +10,10 @@ description: |
   （那是批准后 harness 实现阶段的事）。复用 harness-controller v2.1.0 横切纪律（append-only 台账 /
   phase-event 自报 / 文件接力 / 四态出口协议 / Step 0 装载恢复）。
   触发：Brain 派发 golden_path_proposal 任务；人工说「跑 Capability 提案」「对这条 capability 候选做对抗收敛」。
-version: 1.3.1
+version: 1.3.2
 created: 2026-07-12
 changelog:
+  - 1.3.2: Step 2 验收清单「问题一表」改为「流程边界表（两条件）」（doctrine v3.1，决策 eb9f8f77）
   - 1.3.1: Step 2 验收清单的切刀依据从「三测试」改为 doctrine v3.0 问题一表 + 问题二表（决策 c63688cf）
   - 1.3.0: 对齐六层标准（主理人 10-07 拍板，决策 0cee5452）——硬约束 8：判层标准一律引用
     capability/references/doctrine.md，golden_paths/golden_path_proposal 仅为提案管线机器名；
@@ -193,7 +194,7 @@ prompt: 调用 Skill(capability-proposer)。上下文：
 ```
 
 **验收清单（任一缺 = 打回重跑）**：①每个 Activity 带现状标注（已有/半成/缺失+证据引用），且附
-问题一表 + 问题二表（见 capability/references/step-cutting.md）
+流程边界表（两条件）+ 问题二表（见 capability/references/step-cutting.md）
 ②「## 验收断言」段 ≥3 条 ③「## 判定点登记表」段存在（无接缝判定点显式写 N/A）④碰真实客户/真机的
 提案含 Gate 前置段 ⑤ `gp-contract-v1.json` 可被 `jq -e` 解析，顶层恰好 7 项且版本与提案一致。
 完成 → 台账 append → Step 3。
