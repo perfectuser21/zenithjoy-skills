@@ -1,3 +1,8 @@
+## [2026-10-08] skill-factory 工位 — 运行记录约定 + 连续通过计数脚本 count_streak.py
+**症状**: 验证阶段要「同一版本、不同输入、连续 10 次」，沉淀后重跑要连续 30 次，但没有任何地方记录每次运行用的版本与输入，也没人数；Brain 任务查询接口忽略 project_id / parent_task_id / search 筛选，只能按 task_type 拉取。
+**修改**（决策 5826ddd7 / 6ec463c3 / 1b469079，Brain project bdec465d 第②棒 abb80d73）: AGENTS.md 加「运行记录与怎么数」：阶段任务写 K，执行单【执行参数】写阶段 / 计数阶段任务 / Skill@版本 / 输入 / 处置表片指纹，审计单 source_task_id 指回执行单；片指纹算法（第③棒前取「故障处置表」一节）；阶段收尾必须跑计数且 reached=false 不得进下一阶段。新增工位 `bin/count_streak.py`（只读，标准库，Python 3.9 可跑）：经 /tasks/<id>/chain 与正文「计数阶段任务」找执行单，按 source_task_id 配审计单，从新往旧数（版本 / 片指纹变即停、作废跳过、失败即停、重复输入不计、缺字段不计）。运行环境补 gateway_exec 5211 代理与工位同步延迟说明。补第①棒交接镜像 docs/handoffs/202610082240-139107c4.md。
+**验证**: test_count_streak.py 12 例全过（MMV 与 xian-m1 Python 3.9）；5 个变异（外部原因不作废 / 片指纹变不清零 / 重复输入照计 / 版本变不清零 / 达标写死）全部被测试抓红；真接口冒烟 MMV 与 xian-m1 均返回正确空结果。
+
 ## [2026-10-08] skill-factory 工位 / skill-explore / run-verify / skill-distill — 对齐五阶段沉淀循环
 **症状**: 决策 5826ddd7 把技能工厂改成五阶段（试跑→探索→验证→沉淀→固化），但 skill 仍按旧七阶段写：skill-distill「第一次沉淀默认不拆」、只交一个 skill，与「先证明整流程稳定再拆成 activity 链」相反；skill-explore 名为探路，与第②步「探索」撞名，且没人负责写整流程 skill v1；run-verify 交付物缺版本与输入，K=10 连续计数无法核对；AGENTS.md 的 K 值仍是 3～5 / 20～30。
 **根因**: 决策更新后只改了 AGENTS.md 的部分段落，各阶段 skill 与运行环境（OpenClaw Codex 运行时，跑场机上 localhost:5221 不通）没有同步。
