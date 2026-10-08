@@ -128,7 +128,7 @@ description: |
 
 ## 第 8 步：写给 Commander 的 wf-<能力>
 
-`<能力>` 用树上该能力的 key。内容只服务陪跑，不重复步骤细节：
+`<能力>` 用树上该能力的 key。照 `skill-publish/templates/wf-capability.md` 的结构写，内容只服务陪跑，不重复步骤细节：
 
 | 节 | 写什么 |
 |---|---|
@@ -172,16 +172,22 @@ activity 链拆开后，视为一个新版本，**必须重新连续通过 K 次
   "chain": ["activity_key，按流程顺序"],
   "activities": [
     {
-      "activity_key": "kebab-case，链内唯一",
+      "activity_key": "snake_case，链内唯一（Brain 登记接口要求小写字母开头的 snake_case）",
       "activity_spec": {
+        "name": "activity 的中文名",
         "promise": "一句话承诺",
-        "inputs": "明确的输入",
-        "outputs": "交出的、能验收的结果",
+        "inputs": ["明确的输入"],
+        "outputs": ["交出的、能验收的结果"],
         "preconditions": "开始前必须成立的环境态",
-        "failure": {"empty_ok": [], "retryable": [], "fatal": [], "needs_human": []},
+        "failure": {"empty_ok": [], "retryable": [], "fatal": [], "needs_human": {"cases": [], "alert": null}},
         "readback": "怎么读回验收（与草稿「成功判定」一致）",
         "uses": ["依赖的仓库对象 key"]
       },
+      "steps": [
+        {"key": "snake_case", "order": 1, "name": "这一步的名字", "action": "找哪个控件做什么（不写坐标）",
+         "inputs": [], "outputs": [], "readback": {"type": "state", "expect": "完成判据（可观察的状态）"},
+         "on_fail": "引用处置表的行（如 android_ui:目标暂时没出来），或 abort"}
+      ],
       "split_basis": "按交接 / 结果 / 重试哪几条认定为 activity；拿不准时问题二的答案",
       "action": "new | update",
       "skill_name": "kebab-case 名，与已有 skill 不重名",
@@ -201,7 +207,7 @@ activity 链拆开后，视为一个新版本，**必须重新连续通过 K 次
 }
 ```
 
-任一 activity 的 `success_criteria` 为空、`end_to_end_success_criteria` 为空，或 `wf_skill.draft_markdown` 为空 → 不得交稿（`status=rejected`）。判例计数由上架阶段写入、熟化阶段按计数开任务；本 skill 只负责把 findings 如实登记为 ×1 或在原计数上 +1。
+任一 activity 的 `success_criteria` 或 `steps` 为空、`end_to_end_success_criteria` 为空，或 `wf_skill.draft_markdown` 为空 → 不得交稿（`status=rejected`）。`activity_spec` 与 `steps` 的字段形状要和上架阶段调用的 Brain 登记接口（`POST /skill-settlement/register`）一致，见 skill-publish 第 2 步。判例计数由上架阶段写入、熟化阶段按计数开任务；本 skill 只负责把 findings 如实登记为 ×1 或在原计数上 +1。
 
 ## 本 skill 自身的失败模式
 
