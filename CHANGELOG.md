@@ -3,6 +3,16 @@
 **修改**：合并已有共享runtime，新增当前账号读取子流程，明确Brain原任务/运行身份、同屏JPG/XML、本人主页标记、设备锁和独立核验；多阶段任务继续由cleanup收尾。根目录链接到唯一共享真身，技能工厂manifest加载同一份。
 **验证**：真实小蓝抖音探路与独立run-verify通过；contract-reviewer独立验收无问题。其他平台、账号切换或对外动作未计入本次验收。
 
+## [2026-10-08] capability→tree 2.4.0 / controller 1.3.3 / mapper 2.2.2 / proposer 1.8.2 / reviewer 1.9.1 — 门面改名 + 部门定义规则
+**症状**: 门面 skill 叫 capability，但它管的是整棵树六层（部门→价值流→能力→流程→Activity→Step），名字只覆盖能力一层；
+且 doctrine 对部门只有一句话，部门按产品线切（10 个部门 8 个只管一条同名价值流），没有新增 / 合并 / 退出的规则。
+**修改**（主理人 10-08 拍板，决策 14512222，任务 8a84cc31）: 门面目录与 name 由 capability 改 tree（旧名 /capability
+兼容识别）；流水线 capability-controller / mapper / proposer / reviewer 不改名（只管提案一个能力），仅同步对
+tree/references/ 的路径引用；plan / decomp / android-*-leadgen 里的 /capability 同步为 /tree。doctrine v3.3 新增
+§4A 部门判定：部门回答「谁负责」、价值流回答「卖什么」，按职能切；两个区域（Cecelia 内驱 / ZenithJoy 对外）；
+成立条件、「服务谁」判据（管家部 / 经营管理部）、新增 / 合并 / 退出顺序（Notion 旧页勾 Archive 不删页）；当前名册
+只放 Brain areas 表不写进 skill；巡逻新增筛子⑪（部门按产品线切，提醒级）；evals 加三条部门用例（eval 22/26=85%）。
+
 ## [2026-10-08] capability 2.3.0 / reviewer 1.9.0 / mapper 2.2.1 / proposer 1.8.1 — 共享 Activity 的合同变更
 **症状**: Activity 是共享的，改了它的输入输出会把引用它的其他流程搞坏，doctrine 没有规矩。
 **修改**（决策 eb9f8f77 补充，任务 c74d6f26）: doctrine 新增 §19——合同四项（承诺 / 输入字段+来源 / 输出字段+去向 /

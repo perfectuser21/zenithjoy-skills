@@ -2,7 +2,7 @@
 name: decomp
 description: |
   【已弃用对话入口——决策 2b3f7b14，路由目标随 a340f100 改名】用户在对话中描述任务/想拆解目标时
-  不要触发本 skill，统一走 /capability（原 /golden-path，判定归位→GAN对抗→拍板→
+  不要触发本 skill，统一走 /tree（原 /golden-path，判定归位→GAN对抗→拍板→
   capability-controller 流水线）。
   本 skill 仅保留给 Brain headless 派发的 initiative_plan / scope_plan / project_plan /
   okr_initiative_plan / okr_scope_plan / okr_project_plan 任务（Phase 2-4 飞轮）使用，
@@ -30,7 +30,7 @@ changelog:
 
 # /decomp — 全链路 Project Management 拆解引擎
 
-> ⛔ **对话入口已弃用（2026-08-04，决策 2b3f7b14）**：用户在对话里要拆解/立项 → 走 `/capability`
+> ⛔ **对话入口已弃用（2026-08-04，决策 2b3f7b14）**：用户在对话里要拆解/立项 → 走 `/tree`
 > （原 `/golden-path`，08-06 决策 a340f100 改名），不走本 skill。
 > 本 skill 仅剩 Brain headless 派发的 Phase 2-4 飞轮任务（initiative_plan/scope_plan/project_plan/okr_*_plan）一个合法用途。
 

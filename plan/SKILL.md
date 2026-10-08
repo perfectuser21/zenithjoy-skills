@@ -16,13 +16,13 @@ changelog:
   - 1.0.0: 初始版本
 description: |
   【已弃用对话入口——决策 2b3f7b14，路由目标随 a340f100 改名】用户描述任务/新想法时不要触发本
-  skill，统一走 /capability（原 /golden-path，判定归位→GAN对抗→拍板→capability-controller）。
+  skill，统一走 /tree（原 /golden-path，判定归位→GAN对抗→拍板→capability-controller）。
   本 skill 仅保留给 Brain headless 派发的 suggestion_plan 任务（[SUGGESTION_MODE]）使用。
 ---
 
 # /plan - 意图识别 + 层级引导
 
-> ⛔ **对话入口已弃用（2026-08-04，决策 2b3f7b14）**：用户描述任务 → 走 `/capability`（原
+> ⛔ **对话入口已弃用（2026-08-04，决策 2b3f7b14）**：用户描述任务 → 走 `/tree`（原
 > `/golden-path`，08-06 决策 a340f100 改名），不走本 skill。
 > 本 skill 仅剩一个合法用途：Brain 派发的 `suggestion_plan` 任务（见文末「无头 Suggestion 模式」）。
 

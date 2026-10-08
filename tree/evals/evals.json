@@ -1,5 +1,5 @@
 {
-  "skill_name": "capability",
+  "skill_name": "tree",
   "evals": [
     {
       "id": 0,
@@ -83,6 +83,27 @@
       "name": "change-shared-activity-input",
       "prompt": "「判定」这个 Activity 我想把输入从「刚打开的视频」改成「视频表里待判定的视频」，直接改就行吧？",
       "expected_output": "不能直接改：先查引用方（/api/brain/activities/<id>/consumers 或 workflow_activity_refs），判定被两个以上流程引用；换输入来源属于不兼容变更，必须先出影响表（每个引用流程 × 不兼容 × 怎么切 × 谁验收），发新的大版本，逐个流程切换并验证读回通过，过渡期新旧两版并存，最后一个切完旧版才退役；运行记录绑定当时的版本；若只有一个流程需要这个口径，应分叉成新 Activity 而不是改共享的；拍板前不写库",
+      "files": []
+    },
+    {
+      "id": 12,
+      "name": "department-by-function-not-product",
+      "prompt": "我想给智能客服单开一个「智能客服部」，下面挂智能客服这条价值流，行不行？",
+      "expected_output": "不行：部门回答「谁负责」、价值流回答「卖什么」，按职能切不按产品线切，「智能客服部」就是价值流名，换一个产品就不成立；先问这个职能是否已有部门——客户服务职能并入销售部（销售部含客户服务），智能客服作为价值流挂在销售部下；先装六层全树核对现有 areas；落格子坐标；呈拍板不写库",
+      "files": []
+    },
+    {
+      "id": 13,
+      "name": "department-shared-reports-placement",
+      "prompt": "各部门都要日报、周报、月报，这套经营播报该放管家部还是别的部门？",
+      "expected_output": "按「服务谁」判：只服务主理人个人的（指挥舱、收件、记忆、任务流转）归 Cecelia 管家部；服务全公司各部门的日报周报月报、经营例会、KR 跟踪归 ZenithJoy 经营管理部（价值流经营节奏）；经营播报因服务各部门，应挂经营管理部不是管家部；先读 Brain areas 核对现有名册",
+      "files": []
+    },
+    {
+      "id": 14,
+      "name": "department-merge-or-retire",
+      "prompt": "技能工厂部下面只剩一条价值流还要退役，这个部门能直接删掉吗？",
+      "expected_output": "不能直接删页：按合并 / 退出顺序——① 先把价值流（及其能力、流程）改挂到研发部（职能相邻）② 看护 / 定时项改挂 ③ Notion 旧部门页勾 Archive 不删页（删页会让整库同步报错）④ 写 decisions 留痕；改真身 Brain areas 不改投影 Notion；拍板前不写库",
       "files": []
     }
   ]

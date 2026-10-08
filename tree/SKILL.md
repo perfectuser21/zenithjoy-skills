@@ -1,8 +1,8 @@
 ---
-name: capability
+name: tree
 description: |
-  Capability 门面 — 全系统判定「一个东西属于哪一层」的唯一标准（六层：部门 → 价值流 → 能力 →
-  流程 → Activity → Step；流程边界按两条件「能放下 且 有分开跑的理由」，默认同一流程；Activity 按
+  Tree 门面（原 capability，2026-10-08 改名）— 全系统判定「一个东西属于哪一层」的唯一标准（六层：部门 → 价值流 → 能力 →
+  流程 → Activity → Step；也管部门本身怎么定、新增、合并、退出；流程边界按两条件「能放下 且 有分开跑的理由」，默认同一流程；Activity 按
   「有输入、交出能验收的结果、后面失败能从起点重来」；能力 = 客户买的结果，平台默认只是走法，决策
   eb9f8f77）。进门判定、设计时预先拆结构、巡逻用同一把尺子。
   主理人的参谋（有头交互）：丢来一个粗糙想法/一版土流程/一份现有脚本 → 定能力 → 列段 → 两条件定流程、
@@ -12,7 +12,7 @@ description: |
   Activity 还是 Step，一个还是几个，该挂到哪（3）要先设计一个新功能/现有脚本的结构（4）要审查
   现有树挂得对不对（5）问六层/流程边界/happy path/walking skeleton/贯穿/加厚这些概念，哪怕没说
   "Capability" 原词（含旧词 "golden path"/"line"/"骨干"/"挂片"），都必须触发本 skill。
-  触发：/capability、帮我定义一个能力、把这个想法变成能力、这是流程还是 Activity、这是不是 Step、
+  触发：/tree（旧名 /capability 兼容识别）、新增/合并/撤销一个部门、这个部门该不该存在、帮我定义一个能力、把这个想法变成能力、这是流程还是 Activity、这是不是 Step、
   帮我判层级、这个该挂哪一层、这算不算一个能力、这是一个流程还是两个、这是价值流还是能力、
   这里该切几个 Activity、帮我拆流程、设计这个功能的结构、这个脚本该拆成几个流程、这两段要不要拆开、
   换个平台算不算新能力、改共享 Activity 的输入输出会不会影响别的流程、帮我出影响表、帮我划一下、
@@ -21,9 +21,16 @@ description: |
   判定第一动作=装载六层全树，结论必须落格子坐标。
   定义层工作，不做现状标注、不写提案文档、不开 PR、不自动挪树（设计模式可读输入的那份现有脚本来列段）
   ——拍板后下游：写库走 db-update，完整提案（现状探索+对抗+demo）点火 capability-controller 流水线。
-version: 2.3.0
+version: 2.4.0
 created: 2026-07-24
 changelog:
+  - 2.4.0: 门面改名 capability→tree + 部门定义规则（主理人 10-08 拍板，决策 14512222，任务 8a84cc31）——
+    skill 目录/name 由 capability 改 tree（它管整棵树六层，不只管能力）；流水线 capability-controller /
+    mapper / proposer / reviewer 不改名（它们只管提案一个能力），其对 doctrine 路径的引用同步为
+    tree/references/；doctrine 新增 §4A 部门：部门回答「谁负责」、价值流回答「卖什么」，按职能切不按产品线
+    切，两个区域（Cecelia 内驱 / ZenithJoy 对外）、成立条件、「服务谁」判据、新增/合并/退出顺序、当前
+    名册 8 部门只写在 Brain areas 表不写进本 skill；巡逻新增筛子⑪（部门与价值流重名 / 单价值流部门）；
+    evals 加部门相关 3 条
   - 2.3.0: 共享 Activity 的合同变更（决策 eb9f8f77 补充，任务 c74d6f26）——doctrine 新增 §19：合同四项（承诺 /
     输入字段+来源 / 输出字段+去向 / 读回）+ semver；兼容升小版本、不兼容发大版本逐个切并新旧并存、只一个流程要
     就分叉；改被 ≥2 个流程引用的 Activity 合同前必须出影响表；获客样板补「判定」输入来源变更实例；巡逻新增
@@ -79,7 +86,7 @@ changelog:
 > **角色**: 主理人的判层参谋。主理人给的是土见解，你的职责是把它打磨成合格定义——
 > 但**定义的主人始终是主理人**：对抗收敛后呈报拍板，拍板前绝不写库、绝不挪树。
 
-# /capability — 六层判定门面
+# /tree — 六层判定门面
 
 判定标准全集（六层定义 / 判定链 / 三问法 / 两把尺子 / 流程边界两条件 / 问题二定 Activity / 一次运行 /
 agent 换代码 / 获客样板 / 场景牌组 / 归位判定链 / 七动作 / 巡逻 / 设计）在 `references/doctrine.md`——
@@ -367,6 +374,17 @@ GROUP BY a.id, a.name
 HAVING count(DISTINCT r.workflow_id) >= 2
    AND (count(DISTINCT r.activity_definition_version_id) > 1
         OR count(*) FILTER (WHERE r.activity_definition_version_id IS NULL) > 0);
+
+-- ⑪ 部门被按产品线切了（部门与名下价值流重名 / 部门只有一条价值流）——提醒，不是错误
+SELECT '⑪部门按产品线切(提醒)' AS 筛子, ar.name AS 部门, count(vs.id) AS 价值流数,
+       string_agg(vs.name, ' | ') AS 价值流
+FROM areas ar
+JOIN value_streams vs ON vs.area_id = ar.id AND vs.status = 'active'
+WHERE ar.parent_area_id IS NOT NULL
+GROUP BY ar.id, ar.name
+HAVING count(vs.id) = 1
+    OR bool_or(vs.name LIKE '%' || regexp_replace(ar.name, '部$', '') || '%'
+               OR ar.name LIKE '%' || vs.name || '%');
 ```
 
 ⑩ 的人工核对项（库里暂无字段，doctrine §17 列了需要的字段）：被 ≥2 个流程引用的 Activity 最近有没有合同变更
@@ -380,6 +398,7 @@ HAVING count(DISTINCT r.workflow_id) >= 2
 - ⑧ 定时作业桶 → 建议拆成各自的流程，看护类挂到「系统看护」；
 - ⑨ 口号式 Activity → 判为「应改成承诺」，建议挂到哪个 Activity 或能力的承诺列；
 - ⑩ 共享 Activity 合同变更失控 → 按 doctrine §19：缺影响表 / 版本号的补齐；版本不一致且超过过渡期的，建议催切到新版或分叉。
+- ⑪ 部门按产品线切 → 仅提醒，按 doctrine §4A：这个职能是不是持续存在、有没有负责人；确是产品线就建议按职能重切或并入相邻部门，只有一条价值流但职能独立（有自己的负责人）的判「对」。
 
 筛中不等于错，判对的写「对」并给一句理由（如平台前缀造成的同名）。
 
