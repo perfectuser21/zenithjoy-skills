@@ -97,5 +97,52 @@ class ParseParams(unittest.TestCase):
         self.assertEqual(p["skill"], "flow@2.0.0")
 
 
+def _run_task(tid, created, inp):
+    body = "【执行参数】\n阶段：验证\nSkill：flow@1.2.0\n输入：%s\n处置表片指纹：abc\n【执行参数结束】" % inp
+    return {"id": tid, "task_type": "qiumi_task", "created_at": created, "payload": {"qiumi_source": {"body": body}}}
+
+
+def _audit_task(tid, src, created, verdict, external=None):
+    return {"id": tid, "task_type": "audit", "created_at": created, "payload": {"source_task_id": src},
+            "result": {"verification": {"verdict": verdict, "external_cause": external}}}
+
+
+class CollectRuns(unittest.TestCase):
+    """跑场机到 Brain 链路很慢（全量拉取 1～2 MB 要一两分钟），只许走 chain + 逐张取。"""
+
+    def setUp(self):
+        self.tasks = {
+            "r1": _run_task("r1", "2026-10-08T01:00:00Z", "词1"),
+            "r2": _run_task("r2", "2026-10-08T02:00:00Z", "词2"),
+            "a1": _audit_task("a1", "r1", "2026-10-08T01:30:00Z", "pass"),
+            "a2": _audit_task("a2", "r2", "2026-10-08T02:30:00Z", "fail", external="手机掉线"),
+        }
+        self.calls = []
+
+    def get(self, path):
+        self.calls.append(path)
+        if path == "/tasks/S/chain":
+            return {"children": [{"id": k, "task_type": v["task_type"]} for k, v in self.tasks.items()]}
+        if path.startswith("/tasks/") and path[len("/tasks/"):] in self.tasks:
+            return self.tasks[path[len("/tasks/"):]]
+        raise AssertionError("不该请求: " + path)
+
+    def test_pairs_runs_with_audits_via_chain(self):
+        runs = cs.collect_runs(self.get, "S")
+        self.assertEqual([r["id"] for r in runs], ["r1", "r2"])
+        self.assertEqual(runs[0]["verdict"], "pass")
+        self.assertEqual(runs[1]["external_cause"], "手机掉线")
+        self.assertEqual(runs[0]["input"], "词1")
+
+    def test_no_full_scan_by_default(self):
+        cs.collect_runs(self.get, "S")
+        self.assertFalse([c for c in self.calls if "task_type=" in c], "默认不得全量扫描")
+
+    def test_run_without_audit_is_pending(self):
+        del self.tasks["a2"]
+        runs = cs.collect_runs(self.get, "S")
+        self.assertIsNone(runs[1]["verdict"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)
