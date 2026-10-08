@@ -4,6 +4,7 @@
 #   mkdir -p $D/skills && rsync -a --exclude skills.manifest $S/ $D/
 #   grep -v '^#' $S/skills.manifest | while read n; do [ -n "$n" ] && rsync -a --delete $n/ $D/skills/$n/; done
 skill-explore
+skill-boundary
 run-verify
 code-verify
 skill-distill
