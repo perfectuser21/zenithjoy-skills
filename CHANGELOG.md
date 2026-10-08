@@ -1,3 +1,7 @@
+## [2026-10-09] skill-solidify / skill-retire — created（固化判定、退役）
+**症状**: 五阶段第⑤步固化只有 code-verify（核验代码），缺「哪步写代码、哪步留 AI」的判定；第⑥步退役（决策 9b3b027b）没有 skill。AGENTS.md 两处标「未就绪」。
+**修改**（Brain project bdec465d 第⑤棒 182ef650）: skill-solidify：核对计数 reached（固化前 K=30）→ 逐步统计频率 / 失败率 / 形状数 / 近 10 次新分支 / 判据能否机械观测 / 是否不可逆写入 → 贴 code / code_required / ai / ai_for_now / blocked（三条同时满足才写代码、不可逆写入永远走代码、判定层不写死、代码不写坐标，决策 ca9f3d7b / 28ca1f69）→ 频率 × 失败率排优先级 → 每步给探针、反向退化、AI 兜底、开发任务草稿；只判不写代码。skill-retire：两段式，先出建议清单（30 天未跑 / 被取代、要归档的 skill、仓库物件还有谁在用、调度依赖），主理人逐条确认后只移不删地执行。AGENTS.md 两阶段改为就绪，manifest 加入。
+
 ## [2026-10-09] skill-publish — created（上架登记）+ wf-<能力> 模板 + skill-distill 产出对齐登记接口
 **症状**: 沉淀之后没人负责登记，AGENTS.md 上架阶段标「未就绪」；skill-distill 的产出（kebab-case key、步骤只在 Markdown 里、needs_human 是数组）对不上 Brain 已有的沉淀登记接口。
 **根因**: 树 + 仓库 v3.0 第 4 刀（路 B）已在 Brain 做了 `POST /skill-settlement/register`（登记候选 Activity + Steps + 8 灰格 + 待拍板三问），但技能工厂这边没接上。

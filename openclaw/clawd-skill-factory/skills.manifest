@@ -9,6 +9,8 @@ run-verify
 code-verify
 skill-distill
 skill-publish
+skill-solidify
+skill-retire
 contract-reviewer
 skill-evaluator
 android-publish
