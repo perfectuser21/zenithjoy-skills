@@ -3,7 +3,7 @@
 > v3.1（主理人 2026-10-08 拍板定稿，决策 eb9f8f77，取代 c63688cf）：流程边界从 v3.0 的单条件「能不能放下」
 > 改为**两条件**（① 能放下 且 ② 有分开跑的理由），默认同一流程；问题二（定 Activity / Step）不变。
 > 「数量不许拍脑袋，必须沿时间线扫出来」「两张表随稿呈报」两条纪律保留。本文件是 doctrine §6 / §7 / §18
-> 的操作化补条，/capability A3 / Mode E、capability-proposer、capability-reviewer 统一引用。
+> 的操作化补条，/tree A3 / Mode E、capability-proposer、capability-reviewer 统一引用。
 
 ## 0. 判据
 
