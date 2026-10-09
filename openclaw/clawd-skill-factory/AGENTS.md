@@ -92,10 +92,11 @@
 
 - **三层**：通用层（网络、设备锁、adb、模型接口、飞书、网关）→ 仓库对应物件的 `failure_semantics`；平台层（某平台的搜索、评论区…）→ 仓库平台动作物件的 `failure_semantics`；流程层 → 整流程 skill 的「故障处置」一节，沉淀后拆进树上 Activity 的 `failure` 与 Step 的 `on_fail`。
 - **四分类**沿用树上 Activity `failure` 已有的：`empty_ok`（本来就没有，正常结束）/ `retryable`（可重试，带参数）/ `fatal`（立即停）/ `needs_human`（要人介入）。
-- **怎么取**：按整流程 skill（或 activity）的「依赖对象」清单，只取相关的那几行，并算出片指纹记进运行记录。取法：`curl -s "$BRAIN/api/brain/enablers?keys=<对象1>,<对象2>"`（Brain ≥ 1.389.0，`/warehouse-items` 为同一接口），读各对象的 `failure_semantics.rows`；某个 Activity 依赖哪些对象：`GET $BRAIN/api/brain/activity_uses?activity_id=<id>`。对象在仓库里还没有处置行的，用下面的通用层初始值。
+- **怎么取**：按整流程 skill（或 activity）的「依赖对象」清单，只取相关的那几行，并算出片指纹记进运行记录。取法：`curl -s "$BRAIN/api/brain/enablers?keys=<对象1>,<对象2>"`（`/warehouse-items` 为同一接口），读各对象的 `failure_semantics.rows`；某个 Activity 依赖哪些对象：`GET $BRAIN/api/brain/activity_uses?activity_id=<id>`。
+- **通用层已在仓库**（1009 灌入，12 个对象 20 行）：`android_ui`（页面与控件：暂时没出来 / 真的没有 / 卡住 / 闪退 / 弹窗）、`network`、`adb_channel`、`input_method`、`device_lock`（含时间窗）、`account_selfcheck`（账号不对）、`model_api`、`feishu_table`、`openclaw_gateway`、`host_disk`、`platform_risk_control`（验证码 / 风控 / 限号）、`outward_action`（对外动作失败 / 已做过）。整流程 skill 的「依赖对象」就从这些 key 里选；平台层（如某平台的搜索、评论区）以后按平台物件补。仓库读不到时才用下面的初始值兜底。
 - **表外故障兜底**：停下、截图、上报，写进交付物候选行（对象、现象、证据、建议的分类与参数），**不临场瞎重试**。同一对象同一故障：第 1 次记录，第 2 次标候选，第 3 次必须转正（写成正式行或写成代码）；转正由本工位另开会话走 PR / 上架。运行中的会话不直接改正式表。
 
-通用层初始值（第③棒迁入仓库后以仓库为准）：
+通用层初始值（已灌入仓库，以仓库为准；仅在仓库读不到时兜底）：
 
 | 故障 | 怎么认出来 | 分类 | 等多久 | 重试 | 重试前做什么 | 还不行 |
 |---|---|---|---|---|---|---|

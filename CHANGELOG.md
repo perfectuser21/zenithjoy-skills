@@ -1,3 +1,6 @@
+## [2026-10-09] skill-factory 工位 — 通用层故障处置已入仓库，AGENTS.md 列出对象 key
+**修改**（Brain project bdec465d 第③棒 dca8ebda）: cecelia PR #6093 合并部署后，经 `POST/PATCH /enablers` 把通用层初始值灌进仓库：新建 android_ui / network / adb_channel / input_method / model_api / feishu_table / openclaw_gateway / host_disk / platform_risk_control / outward_action，合并写 device_lock / account_selfcheck，共 12 对象 20 行，逐个读回核对 0 异常；xian-m4 实测可读。AGENTS.md 列出对象 key 供「依赖对象」选用，初始值表改为仓库读不到时兜底。
+
 ## [2026-10-09] skill-solidify / skill-retire — created（固化判定、退役）
 **症状**: 五阶段第⑤步固化只有 code-verify（核验代码），缺「哪步写代码、哪步留 AI」的判定；第⑥步退役（决策 9b3b027b）没有 skill。AGENTS.md 两处标「未就绪」。
 **修改**（Brain project bdec465d 第⑤棒 182ef650）: skill-solidify：核对计数 reached（固化前 K=30）→ 逐步统计频率 / 失败率 / 形状数 / 近 10 次新分支 / 判据能否机械观测 / 是否不可逆写入 → 贴 code / code_required / ai / ai_for_now / blocked（三条同时满足才写代码、不可逆写入永远走代码、判定层不写死、代码不写坐标，决策 ca9f3d7b / 28ca1f69）→ 频率 × 失败率排优先级 → 每步给探针、反向退化、AI 兜底、开发任务草稿；只判不写代码。skill-retire：两段式，先出建议清单（30 天未跑 / 被取代、要归档的 skill、仓库物件还有谁在用、调度依赖），主理人逐条确认后只移不删地执行。AGENTS.md 两阶段改为就绪，manifest 加入。
