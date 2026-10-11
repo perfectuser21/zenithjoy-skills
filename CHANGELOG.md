@@ -1,3 +1,6 @@
+## [2026-10-11] engine-pr-watchdog 3.5.0 / engine-ship / hooks/session-start — updated（handoff 下一步四类 + 有头续接）
+**修改**（Brain 任务 db556cfa，主理人 2026-10-11 决策）: Step 5.5 的 next_steps 改为带 kind 的对象，四类 resume_headed（有头续接，不派发，进待续列表）/ dispatch_headless（无头派发，自动建子任务，≡旧 task）/ decision / note；handoff 写入从 psql 直写本地库改为 PATCH Brain API（触发接棒 + 回 handoff_next_steps 反馈，unrecognized 即报错重写）。engine-ship 终态说明同步。hooks/session-start.sh 加「你有 N 条待续交接」注入（读 GET /api/brain/handoffs/pending-resume）。
+
 ## [2026-10-09] skill-factory 工位 — 通用层故障处置已入仓库，AGENTS.md 列出对象 key
 **修改**（Brain project bdec465d 第③棒 dca8ebda）: cecelia PR #6093 合并部署后，经 `POST/PATCH /enablers` 把通用层初始值灌进仓库：新建 android_ui / network / adb_channel / input_method / model_api / feishu_table / openclaw_gateway / host_disk / platform_risk_control / outward_action，合并写 device_lock / account_selfcheck，共 12 对象 20 行，逐个读回核对 0 异常；xian-m4 实测可读。AGENTS.md 列出对象 key 供「依赖对象」选用，初始值表改为仓库读不到时兜底。
 

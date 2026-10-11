@@ -108,5 +108,6 @@ engine-pr-watchdog 3.2.0 起，merge 确认后**自动写 handoff**，路径 A/B
 - **镜像**：`docs/handoffs/<timestamp>-<taskId>.md`（仓库内，可 grep 查历史）
 - **格式协议**：`packages/brain/src/handoff.js`（saveHandoff 函数）
 - **无下一步时**：next_steps 字段显式写「完成，无下一步」，禁止留空
+- **next_steps 每条带 kind**（2026-10-11 决策）：`resume_headed`（有头续接，不派发，进待续列表）/ `dispatch_headless`（无头派发，自动建子任务）/ `decision`（待拍板）/ `note`（备注）。详见 engine-pr-watchdog Step 5.5
 
 engine-ship 本身不写 handoff，只负责 Learning + fire-event + done-marker；handoff 是 engine-pr-watchdog 在 merge 后的收尾职责。

@@ -65,6 +65,22 @@ CONTEXT="## Brain 当前状态（自动注入）
 **进行中任务**：
 ${TASK_LINES}"
 
+# 有头续接「待续」（2026-10-11 决策）：上一棒 handoff 标 resume_headed 的条目不派发，挂在这里等有头会话接
+RESUME_LINE=$(curl -s --max-time 2 "${BRAIN_URL}/api/brain/handoffs/pending-resume?limit=20" 2>/dev/null | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+p = d.get('pending', [])
+if p:
+    first = p[0]
+    items = first.get('items') or [{}]
+    print(f\"你有 {len(p)} 条待续交接（最近：{first.get('title','?')[:40]} → {items[0].get('title','?')[:40]}）。查看：curl 'localhost:5221/api/brain/handoffs/pending-resume'；接上后 POST .../pending-resume/<task_id>/ack\")
+" 2>/dev/null || echo "")
+if [[ -n "$RESUME_LINE" ]]; then
+    CONTEXT="${CONTEXT}
+
+**有头待续**：${RESUME_LINE}"
+fi
+
 if [[ -n "$QUEUED_LINES" && "$QUEUED_LINES" != "  " ]]; then
     CONTEXT="${CONTEXT}
 
