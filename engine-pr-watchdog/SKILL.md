@@ -214,7 +214,7 @@ h = {
   "not_done": [...],                 # 显式声明范围外/遗留（没有写 []）
   "next_steps": [                    # 每条带 kind；没有下一步 → [{"kind":"note","title":"完成，无下一步"}]
     {"kind": "resume_headed", "title": "...", "detail": "有头会话接手要知道的上下文"},
-    {"kind": "dispatch_headless", "title": "...", "detail": "...", "task_type": "dev", "change_kind": "bug_fix"},  # 改代码才带 change_kind
+    {"kind": "dispatch_headless", "title": "...", "detail": "...", "task_type": "dev", "change_kind": "bugfix"},  # 改代码才带 change_kind（new_capability|capability_change|bugfix|parameter_only）
     {"kind": "decision", "title": "要主理人拍板的问题", "detail": "选项与影响"},
     {"kind": "note", "title": "..."},
   ],
