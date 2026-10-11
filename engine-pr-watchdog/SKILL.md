@@ -1,6 +1,6 @@
 ---
 name: engine-pr-watchdog
-version: 3.4.0
+version: 3.5.0
 updated: 2026-07-13
 description: PR 合并守卫。任何 PR 开完后立刻调用，监控所有 repo 的 open PR，阻塞轮询 CI + 合并状态，CI 失败自动修复，直到全部 PR 合并才退出。不使用 ScheduleWakeup，不提前 exit。
 trigger: 任何 PR 开完之后（gh pr create 之后），立刻调用本 skill。engine-ship 完成后也调用。
@@ -186,7 +186,19 @@ echo "✅ PR #$PR_NUMBER 合并清理完成"
 > **规矩（Alex 2026-07-06 拍板）**：/dev 三条路径（A Bug / B 小改动 / C Harness）的落尾都必须是
 > handoff。路径 C 由 harness reportNode 自动产；路径 A/B 的公共尾巴就是本 skill——merge 确认后
 > 在这里产。**没有下一步就在 next_steps 写「完成，无下一步」，不要在对话里催用户"现在就改吗"。**
-> 协议 = packages/brain/src/handoff.js saveHandoff：tasks.result.handoff（SSOT）+ docs/handoffs/ 镜像。
+> 协议 = packages/brain/src/handoff.js + lib/relay-baton.js：tasks.result.handoff（SSOT）+ docs/handoffs/ 镜像。
+>
+> **next_steps 每条必须是带 kind 的对象（主理人 2026-10-11 决策，四类）**：
+>
+> | kind | 含义 | Brain 怎么处理 |
+> |---|---|---|
+> | `resume_headed` | 有头续接：要人在场/有头会话接着做 | **不派发**；原任务 `result.pending_resume` 挂「待续」，新有头会话开场 `GET /api/brain/handoffs/pending-resume` 能拉到，接上后 `POST /api/brain/handoffs/pending-resume/<task_id>/ack` 销账 |
+> | `dispatch_headless` | 无头派发：机器可以自己做完 | 自动建 queued 子任务挂同一条链（旧值 `task` 等同） |
+> | `decision` | 待主理人拍板 | 写 decisions 表 status=pending，链停在这里 |
+> | `note` | 备注/留痕 | 只留痕（旧值 `done` 等同；「完成，无下一步」恒为 note） |
+>
+> 不标 kind 的后果：有头任务（/dev 有头会话都是）默认当 `resume_headed`，无头任务默认当 `note`。
+> 写入 API 会在响应 `handoff_next_steps.coerced` 里列出每条被当成了什么，**看到 unrecognized 要改正重写**。
 
 用 python3 按协议双写（TASK_ID 从 .dev-mode 拿；内容由你根据本次 PR 实际情况填写，禁止套空话）：
 
@@ -200,15 +212,26 @@ h = {
   "title": PR_TITLE, "verdict": "PASS",   # 未合并被关/放弃 → FAIL，同样必须写
   "done": [...],                     # 本次真正交付了什么（面向下一个大脑，不是给人客套）
   "not_done": [...],                 # 显式声明范围外/遗留（没有写 []）
-  "next_steps": [...],               # 没有下一步 → ["完成，无下一步"]
+  "next_steps": [                    # 每条带 kind；没有下一步 → [{"kind":"note","title":"完成，无下一步"}]
+    {"kind": "resume_headed", "title": "...", "detail": "有头会话接手要知道的上下文"},
+    {"kind": "dispatch_headless", "title": "...", "detail": "...", "task_type": "dev", "change_kind": "bug_fix"},  # 改代码才带 change_kind
+    {"kind": "decision", "title": "要主理人拍板的问题", "detail": "选项与影响"},
+    {"kind": "note", "title": "..."},
+  ],
   "data_sources": [...],             # 下一个大脑要加载的文件/表/键
   "decision_refs": [...], 
   "artifacts": {"pr_urls": [PR_URL], "sprint_dir": None, "branch": BRANCH, "docs": []},
   "created_at": datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.000Z'),
 }
-payload = json.dumps(h, ensure_ascii=False).replace("'", "''")
-subprocess.run(['psql','-h','localhost','-p','5432','-U','postgres','-d','cecelia','-c',
-  f"UPDATE tasks SET result = COALESCE(result,'{{}}'::jsonb) || jsonb_build_object('handoff', '{payload}'::jsonb), updated_at=NOW() WHERE id='{h['task_id']}'::uuid"], check=True)
+# 走 Brain API（生产 Brain 在 us-vps，本机 5221 直达）：PATCH 补写 result.handoff 会触发接棒
+# （dispatch_headless 建子任务 / decision 建待拍板 / resume_headed 挂待续）。不要再 psql 直写本地库。
+import urllib.request
+req = urllib.request.Request(f"http://localhost:5221/api/brain/tasks/{h['task_id']}", method='PATCH',
+  data=json.dumps({"result": {"handoff": h}}, ensure_ascii=False).encode(), headers={'Content-Type': 'application/json'})
+resp = json.load(urllib.request.urlopen(req, timeout=15))
+fb = resp.get('handoff_next_steps') or {}
+print('handoff 已写；各条 kind =', fb.get('kinds'), '；被改判 =', fb.get('coerced'), '；接棒 =', resp.get('relay'))
+if fb.get('unrecognized'): raise SystemExit(f"next_steps 有认不出的 kind，改正后重写: {fb['unrecognized']}")
 # 镜像 markdown：格式照 handoff.js renderHandoffMarkdown（# Handoff：标题 + 完成/没完成/下一步/数据源/决策引用/产物指针）
 # 文件名 docs/handoffs/<YYYYMMDDHHmm>-<task_id前8>.md
 EOF
