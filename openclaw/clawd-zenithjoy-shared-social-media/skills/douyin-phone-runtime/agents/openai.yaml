@@ -1,4 +1,4 @@
 interface:
   display_name: "抖音手机运行适配器"
-  short_description: "Adapt generic social workflows to registered Douyin phones"
-  default_prompt: "Use $douyin-phone-runtime to operate the tenant-selected Douyin phone safely."
+  short_description: "通过登记的控制器，安全执行租户指定抖音手机的预检、只读取证与清理。"
+  default_prompt: "使用 $douyin-phone-runtime 安全操作租户指定的抖音手机；先核对实际安装版本及运行授权，再按证据判据执行。"

@@ -1,18 +1,21 @@
 ---
 name: skill-explore
 description: |
-  探路：第一次把一件新活在真机/真实系统上做成，并留下足够沉淀成 skill 的证据。技能工厂七阶段的第①步。
+  试跑协议：第一次把一件新活在真机/真实系统上做成一次，留下证据，并在收尾时写出整流程 skill v1。技能工厂五阶段（试跑→探索→验证→沉淀→固化）的第①步「试跑」，决策 5826ddd7 / 1b469079。
+  它不是某条流程的 skill，而是"第一次在真机上怎么安全地跑、怎么留证据"的通用做法；这条流程的专属 skill 正是本阶段要产出的东西。
   适用于还没有现成 skill、或现成 skill 覆盖不到的新动作（例：朋友圈点赞、快手搜索、1688 选品）。
-  触发：任务里写「使用 skill：skill-explore」、探路、蹚路、第一次跑、还没有 skill 的活。
-  不适用：已有 skill 且处于熟化中的活（照该 skill 执行）；纯写作/分析类活（直接干，不需要探路协议）。
+  触发：任务里写「阶段：试跑」「使用 skill：skill-explore」、试跑、探路、蹚路、第一次跑、还没有 skill 的活。
+  不适用：第②步探索（摸边界，用 skill-boundary）；已有 skill 且处于熟化中的活（照该 skill 执行）；纯写作/分析类活。
 ---
 
 > **语言规则：所有输出简体中文。**
 
-# 探路 skill-explore
+# 试跑协议 skill-explore
 
-目标只有一个：**把这件事真的做成，并把"怎么做成的"完整留下来**，交给下一步沉淀（skill-distill）。
-做成 ≠ 你说做成了——是否成功由下一步独立核验（run-verify）判定，你只负责交证据。
+目标：**把这件事真的做成一次，把"怎么做成的"完整留下来，并写成整流程 skill v1**，交给第②步探索去摸边界。
+做成 ≠ 你说做成了——是否成功由另开会话的 run-verify 独立判定，你只负责交证据。
+
+Brain 地址统一用 `BRAIN=${BRAIN_URL:-http://100.79.41.61:5221}`（MMV / xian-m4 / xian-m1 都能访问；跑场机上 `localhost:5221` 不通）。
 
 ## 第 1 步：读执行参数
 
@@ -33,6 +36,8 @@ description: |
 3. 手机控制器现成命令：`<controller> --profile <profile> --help` 与平台专用命令（如抖音的 open-search / open-comments）
 4. 已知按钮锚点（控件文字 / content-desc），有锚点表就先查表
 5. 新平台建设标准：`android-leadgen-buildout-standard` 的「预防清单」
+6. 仓库里该平台已有的物件（只读参考）：`curl -s "$BRAIN/api/brain/warehouse-items"`
+7. 故障处置表的通用层与平台层：取法见工位 AGENTS.md「故障处置表」一节。碰到表里有的故障照表处理；**表里没有的故障：停下、截图、上报，记进交付物 `unknown_failures`，不临场瞎重试**
 
 ## 第 3 步：预检与占用
 
@@ -56,7 +61,7 @@ description: |
 
 拟人纪律照底座执行：步骤间随机 2–6 秒、点击坐标 ±5px 抖动、不秒点、启动 App 后先停 3–5 秒。
 
-## 第 5 步：留证据（下一步沉淀全靠它）
+## 第 5 步：留证据（写 skill v1、后面的验证与沉淀全靠它）
 
 - **每一次页面状态变化**都截图；关键页面同时保存控件树 XML。
 - 证据 ID 格式：`<run_id>-<两位步号>-<一句英文短名>`，例 `likeprobe-03-wechat-home`。**禁止复用文件名覆盖旧证据**。
@@ -80,11 +85,42 @@ description: |
 - **每次对外动作之前**再核对一次当前账号（截图里的昵称 / 头像），与第 3 步记下的一致才动手；不一致立即停止。
 - 对外动作后截图里看不出明确变化 → 记为「结果不确定」，按上表停止，不得记为成功。
 
-## 第 7 步：交付物（最后只输出这一个 JSON）
+## 第 7 步：收尾——写整流程 skill v1
+
+只有 `claimed_result=success` 才写；失败或 blocked 不写，只交证据和坑。
+
+把这次的成功路径写成**整条流程的一份 skill**，版本 v1，先不拆。它是第②步探索要加载、要不断改的那份东西，格式：
+
+```
+---
+name: <流程名，kebab-case>
+version: 1.0.0
+layer: business
+description: |
+  <做什么；触发场景；不适用场景>
+---
+# <流程名>
+
+## 说明书
+承诺 / 输入 / 输出 / 读回（怎么证明做成了）
+## 依赖对象
+用到的通用与平台对象（网络、设备锁、adb、<平台>搜索 …），运行时按这张清单加载故障处置表的相关行
+## 步骤
+| # | 前置 | 动作（写控件文字，禁止坐标） | 完成判据（写状态，可观察） | 证据 | 失败处理（引用故障处置表的行） |
+## 故障处置（本流程特有的，四分类：empty_ok / retryable / fatal / needs_human）
+## 成功判定
+一到三条可观察断言，由 run-verify 独立判
+## 坑
+```
+
+- 只写成功路径：`trajectory` 里 `detour: true` 的删掉，绕路的教训进「坑」。
+- 次数、秒数不写死在步骤里，写进「故障处置」或引用处置表。
+
+## 第 8 步：交付物（最后只输出这一个 JSON）
 
 ```json
 {
-  "stage": "explore",
+  "stage": "trial",
   "run_id": "本次运行 ID（与锁、证据 ID 一致）",
   "claimed_result": "success | failed | blocked",
   "goal": "一句话目标",
@@ -96,6 +132,8 @@ description: |
   "final_evidence": ["证明结果的证据ID"],
   "side_effects": [{"action": "实际对外做了什么（例：给 某某 的动态点赞）", "evidence": "证据ID", "reversible": false}],
   "findings": ["这次发现的坑，一条一句，写清现象和怎么绕过的"],
+  "unknown_failures": [{"object": "依赖对象 key", "symptom": "现象", "evidence": "证据ID", "suggested_row": "建议的处置表候选行（四分类 + 参数）"}],
+  "flow_skill_v1": "claimed_result=success 时：第 7 步写出的整流程 skill 全文；否则留空",
   "lock_released": true,
   "fail_reason": null
 }

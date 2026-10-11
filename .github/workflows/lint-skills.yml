@@ -43,6 +43,9 @@ jobs:
       - name: GP 合同层 Skill 守卫
         run: python3 .github/workflows/scripts/lint-gp-contract-layer.py
 
+      - name: 抖音只读图片回传与放锁顺序契约回归
+        run: python3 .github/workflows/scripts/test/test_douyin_read_cleanup_order.py
+
       - name: Lint 全部 skill
         run: python3 .github/workflows/scripts/lint-skills.py
 

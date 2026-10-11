@@ -1,3 +1,45 @@
+## [2026-10-09] skill-factory 工位 — 通用层故障处置已入仓库，AGENTS.md 列出对象 key
+**修改**（Brain project bdec465d 第③棒 dca8ebda）: cecelia PR #6093 合并部署后，经 `POST/PATCH /enablers` 把通用层初始值灌进仓库：新建 android_ui / network / adb_channel / input_method / model_api / feishu_table / openclaw_gateway / host_disk / platform_risk_control / outward_action，合并写 device_lock / account_selfcheck，共 12 对象 20 行，逐个读回核对 0 异常；xian-m4 实测可读。AGENTS.md 列出对象 key 供「依赖对象」选用，初始值表改为仓库读不到时兜底。
+
+## [2026-10-09] skill-solidify / skill-retire — created（固化判定、退役）
+**症状**: 五阶段第⑤步固化只有 code-verify（核验代码），缺「哪步写代码、哪步留 AI」的判定；第⑥步退役（决策 9b3b027b）没有 skill。AGENTS.md 两处标「未就绪」。
+**修改**（Brain project bdec465d 第⑤棒 182ef650）: skill-solidify：核对计数 reached（固化前 K=30）→ 逐步统计频率 / 失败率 / 形状数 / 近 10 次新分支 / 判据能否机械观测 / 是否不可逆写入 → 贴 code / code_required / ai / ai_for_now / blocked（三条同时满足才写代码、不可逆写入永远走代码、判定层不写死、代码不写坐标，决策 ca9f3d7b / 28ca1f69）→ 频率 × 失败率排优先级 → 每步给探针、反向退化、AI 兜底、开发任务草稿；只判不写代码。skill-retire：两段式，先出建议清单（30 天未跑 / 被取代、要归档的 skill、仓库物件还有谁在用、调度依赖），主理人逐条确认后只移不删地执行。AGENTS.md 两阶段改为就绪，manifest 加入。
+
+## [2026-10-09] skill-publish — created（上架登记）+ wf-<能力> 模板 + skill-distill 产出对齐登记接口
+**症状**: 沉淀之后没人负责登记，AGENTS.md 上架阶段标「未就绪」；skill-distill 的产出（kebab-case key、步骤只在 Markdown 里、needs_human 是数组）对不上 Brain 已有的沉淀登记接口。
+**根因**: 树 + 仓库 v3.0 第 4 刀（路 B）已在 Brain 做了 `POST /skill-settlement/register`（登记候选 Activity + Steps + 8 灰格 + 待拍板三问），但技能工厂这边没接上。
+**修改**（Brain project bdec465d 第④棒 d79d00e4）: 新建 skill-publish：核对验收独立 → 技能库 PR → 按表组装草稿调 `/skill-settlement/register` 登记候选（journey_id 实为能力 id，由 `/workflows` 的 capability_code 查）→ `/activity_uses` 登记依赖 → 到转正门槛的处置表行经 `/enablers` 新建或合并写回并读回核对 → wf-<能力> 提 PR 到 zenithjoy-workspace commander 真身、白名单交有头会话；新增 `templates/wf-capability.md`（链路 / 诊断与计数 / 三档权限 / 流程手册 / 回流）。skill-distill：activity_key 改 snake_case，activity_spec 加 name、inputs/outputs 改数组、needs_human 改 `{cases, alert}`，新增结构化 `steps`（key/order/name/action/inputs/outputs/readback/on_fail），无 steps 不得交稿。AGENTS.md 上架阶段改为就绪；manifest 加 skill-publish。原计划的「树补 Activity.uses 列」取消：`activity_uses` 表与写接口早已存在。
+**未验证**: 登记接口未在生产实调（会生成真实候选与待拍板），留待第⑦棒样板实跑。
+
+## [2026-10-09] skill-boundary — created（摸边界，技能工厂五阶段第②步「探索」）
+**症状**: 决策 5826ddd7 / 1b469079 定了探索阶段怎么摸边界（三类、每轮混几项、稳定 3 次、上限 20 轮、摸到的写回去），但没有 skill，AGENTS.md 标「未就绪」，探索任务只能报 blocked；处置表的取法还指向不返回 failure_semantics 的旧接口。
+**修改**（Brain project bdec465d 第③棒 dca8ebda）: 新建 skill-boundary：第 0 轮按「每一步 × 每个依赖对象 × 三种出错」逐格列清单、每项先写预期、每种造法先证实能造能恢复；造法只用控制器已有命令（抖音控制器现有 close-app / return-safe-desktop，断网、锁屏、切输入法、掉线、抢前台均未就绪，记 not_probed 不卡出口）；轮次规则与五种结论；写回去向；稳定轮与出口（含给验证的 10 个输入）；每轮交付 JSON。AGENTS.md：探索阶段改用 skill-boundary，处置表取法改为 `GET /enablers?keys=`（Brain ≥ 1.389.0）与 `GET /activity_uses`；manifest 加 skill-boundary；skill-explore 不适用项指向 skill-boundary。补第②棒交接镜像。
+
+## [2026-10-08] skill-factory 工位 — count_streak 改走 chain + 并行逐张取，修跑场机上超时
+**症状**: OpenClaw 实测 skill-factory 在 xian-m1 上跑 count_streak，卡在拉审计单列表，会话超时无输出。
+**根因**: xian-m1 到 Brain 链路约 14 KB/s，全量拉 500 条审计单 1.25 MB 要 88 秒、秋米任务 2 MB 要 123 秒；单张 GET 只要 0.5～1 秒，chain 0.4 秒。旧版默认全量扫描。
+**修改**: 执行单与审计单建单都带 parent_task_id=阶段任务；默认只走 /tasks/<阶段任务>/chain + 8 路并行逐张 GET，全量扫描移到 --scan；读不到 Brain 输出 error 并以 2 退出，不当作 0 次。AGENTS.md 同步约定。
+**验证**: 15 例全过（新增 3 例：经 chain 配对、默认不全量扫描、无审计单为待核验）；变异「总是全量扫描」被抓红；真接口 xian-m1 由数分钟降到约 2 秒。注：变异测试须 `python3 -B` 或清 __pycache__，同长度替换在同一秒还原会命中旧字节码缓存，本次因此误判过一次。
+
+## [2026-10-08] skill-factory 工位 — 运行记录约定 + 连续通过计数脚本 count_streak.py
+**症状**: 验证阶段要「同一版本、不同输入、连续 10 次」，沉淀后重跑要连续 30 次，但没有任何地方记录每次运行用的版本与输入，也没人数；Brain 任务查询接口忽略 project_id / parent_task_id / search 筛选，只能按 task_type 拉取。
+**修改**（决策 5826ddd7 / 6ec463c3 / 1b469079，Brain project bdec465d 第②棒 abb80d73）: AGENTS.md 加「运行记录与怎么数」：阶段任务写 K，执行单【执行参数】写阶段 / 计数阶段任务 / Skill@版本 / 输入 / 处置表片指纹，审计单 source_task_id 指回执行单；片指纹算法（第③棒前取「故障处置表」一节）；阶段收尾必须跑计数且 reached=false 不得进下一阶段。新增工位 `bin/count_streak.py`（只读，标准库，Python 3.9 可跑）：经 /tasks/<id>/chain 与正文「计数阶段任务」找执行单，按 source_task_id 配审计单，从新往旧数（版本 / 片指纹变即停、作废跳过、失败即停、重复输入不计、缺字段不计）。运行环境补 gateway_exec 5211 代理与工位同步延迟说明。补第①棒交接镜像 docs/handoffs/202610082240-139107c4.md。
+**验证**: test_count_streak.py 12 例全过（MMV 与 xian-m1 Python 3.9）；5 个变异（外部原因不作废 / 片指纹变不清零 / 重复输入照计 / 版本变不清零 / 达标写死）全部被测试抓红；真接口冒烟 MMV 与 xian-m1 均返回正确空结果。
+
+## [2026-10-08] skill-factory 工位 / skill-explore / run-verify / skill-distill — 对齐五阶段沉淀循环
+**症状**: 决策 5826ddd7 把技能工厂改成五阶段（试跑→探索→验证→沉淀→固化），但 skill 仍按旧七阶段写：skill-distill「第一次沉淀默认不拆」、只交一个 skill，与「先证明整流程稳定再拆成 activity 链」相反；skill-explore 名为探路，与第②步「探索」撞名，且没人负责写整流程 skill v1；run-verify 交付物缺版本与输入，K=10 连续计数无法核对；AGENTS.md 的 K 值仍是 3～5 / 20～30。
+**根因**: 决策更新后只改了 AGENTS.md 的部分段落，各阶段 skill 与运行环境（OpenClaw Codex 运行时，跑场机上 localhost:5221 不通）没有同步。
+**修改**（决策 6ec463c3 / 1b469079 / 9b3b027b，Brain project bdec465d 第①棒 139107c4）: AGENTS.md 写入「一条流程的一生」总表（入口、五阶段、退役，每阶段 Commander / 谁干 / skill / 输入 / 产出 / 出口），K 值改 10 / 30，补连续计数、回流、摸边界规则、故障处置表（三层、四分类、取法、表外兜底与转正、通用层初始值）与运行环境；skill-explore 改为「试跑协议」，加载处置表、表外故障登记候选行，收尾写整流程 skill v1；run-verify 交付物加 skill / input / slice_digest / external_cause；skill-distill 改为把冻结 vN 拆成 activity 链（Activity 认定只用 /tree 标准）并产出给 Commander 的 wf-<能力>，故障处置按四分类拆进 Activity / Step，声明拆完重跑 K=30。摸边界、skill-publish、固化判定、清理四个 skill 标「未就绪」，由后续棒补。
+
+## [2026-10-08] douyin-phone-runtime 1.0.0 — 当前账号只读与真实证据
+
+## 2026-10-08 抖音只读 1.0.1
+
+- 修复图片回传占锁超时：桌面XML与前台核对后先原owner精确释放，再回传JPG；保留读取失败与独立审计判据。
+**症状**：员工Notion任务能读取账号，但缺少可复用的独立任务收尾与账号证据合同。
+**修改**：合并已有共享runtime，新增当前账号读取子流程，明确Brain原任务/运行身份、同屏JPG/XML、本人主页标记、设备锁和独立核验；多阶段任务继续由cleanup收尾。根目录链接到唯一共享真身，技能工厂manifest加载同一份。
+**验证**：真实小蓝抖音探路与独立run-verify通过；contract-reviewer独立验收无问题。其他平台、账号切换或对外动作未计入本次验收。
+
 ## [2026-10-08] capability→tree 2.4.0 / controller 1.3.3 / mapper 2.2.2 / proposer 1.8.2 / reviewer 1.9.1 — 门面改名 + 部门定义规则
 **症状**: 门面 skill 叫 capability，但它管的是整棵树六层（部门→价值流→能力→流程→Activity→Step），名字只覆盖能力一层；
 且 doctrine 对部门只有一句话，部门按产品线切（10 个部门 8 个只管一条同名价值流），没有新增 / 合并 / 退出的规则。
