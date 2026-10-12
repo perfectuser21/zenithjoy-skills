@@ -8,7 +8,8 @@ description: >
   触发场景:Brain 派发 task_type=strategist_decision 的任务;用户说"军师"、"这条线下一步做什么"、
   "帮 Line XX 决定下一个任务"、"line-strategist"、"替我判断这条线该修 bug 还是继续推进"。
   只针对单条 line 决策,不做全局分配,不做产能仲裁,不写代码。
-version: 1.2.0
+version: 1.3.0
+updated: 2026-10-12
 ---
 
 > **语言规则:所有输出必须使用简体中文。**
@@ -119,19 +120,24 @@ confidence: <0-1>
 curl -s -X POST localhost:5221/api/brain/tasks -H "Content-Type: application/json" -d '{
   "title": "fix: <bug 摘要>",
   "task_type": "dev",
+  "mutation_intent": "write",
+  "change_kind": "bugfix",
+  "repo_hint": "cecelia",
+  "map_scope_hint": ["F1"],
+  "trigger_source": "manual",
   "priority": "<继承 issue 的 P 级>",
   "payload": {"journey_id": "<LINE_ID>", "issue_id": "<issue uuid>", "harness_mode": false,
                "dispatched_by": "line-strategist", "strategist_decision_id": "<留痕 note id>"}
 }'
 ```
 
-**路径B(小改动)**:同上,title 前缀去掉 fix、payload 不带 issue_id,description 里写清单 PR scope。
+**路径B(小改动)**:同上,title 前缀去掉 fix、payload 不带 issue_id,description 里写清单 PR scope；change_kind 按实际改动选择，不固定 bugfix。所有建单示例的 repo_hint/map_scope_hint 必须替换为本 line 的真实仓库及地图节点（F1 仅为 Cecelia 示例）；A/B 的执行分档仍按 /dev。
 
 **路径C(推进项建 coding_workflow 单)**:
 > 2026-10-12 起旧 `harness_initiative`(orchestrator=skill-relay)无头 kernel 已退役:派发关闭,建单入口拒无头 harness_initiative(422 `no_executor_for_task_type`)。
 > 推进项改建 **coding_workflow** 单,由 MMV 上的 coding-workflow-runner 认领跑 spec→GAN→实现→QA→裁判→报告；QA 方式与自动/人工合并按目标仓库 repos.json 配置。字段口径照 runner(`packages/brain/scripts/coding-workflow/new-task.mjs`)。
-> runner 只认领 repos.json 里 enabled 的仓库(以当前配置为准);本 line 仓库不支持时不建无头单,登记留痕「需有头 /dev」浮给主理人。
-> 下例 repo 必须替换为本 line 对应仓库 key，gp_anchor 填本次真实 Line/GP 锚点；`none(infra)` 仅为获准的基础设施豁免示例。
+> runner 只认领 repos.json 里 enabled 的仓库(以当前配置为准);未登记或未启用仓库的无头建单会被 Brain 拒绝，不会继续留在 queued；本 line 仓库不支持时不建无头单,登记留痕「需有头 /dev」浮给主理人。
+> 下例 repo/repo_hint/map_scope_hint 必须替换为本 line 对应仓库与真实地图节点（F1 仅为 Cecelia 示例）；change_kind 按实际任务选择，bug 用 bugfix，新增能力用 new_capability，能力改动用 capability_change，纯参数用 parameter_only。若用 new-task.mjs，计划也必须有 change_kind 和非空 map_scope_hint 数组，可从批次顶层继承。gp_anchor 填本次真实 Line/GP 锚点；`none(infra)` 仅为获准的基础设施豁免示例。
 ```bash
 # 1. 认领推进项 todo→doing
 curl -s -X PATCH "localhost:5221/api/brain/abilities/<ability_id>/advancements/<item_id>" \
@@ -140,6 +146,10 @@ curl -s -X PATCH "localhost:5221/api/brain/abilities/<ability_id>/advancements/<
 curl -s -X POST localhost:5221/api/brain/tasks -H "Content-Type: application/json" -d '{
   "title": "<推进项标题>",
   "task_type": "coding_workflow",
+  "mutation_intent": "write",
+  "change_kind": "capability_change",
+  "repo_hint": "cecelia",
+  "map_scope_hint": ["F1"],
   "priority": "P1",
   "trigger_source": "manual",
   "description": "<从推进项+ability 上下文写 3-5 句>",
