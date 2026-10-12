@@ -15,13 +15,13 @@ FAIL=0
 err() { echo "❌ $1"; FAIL=1; }
 ok()  { echo "✅ $1"; }
 
-# ── 契约 1：/dev 路径C 点火 payload 必须带 orchestrator=skill-relay ──
-# 来源：cecelia #3554（2026-07-05）executor.js _driveHarnessInitiative 硬校验，
-# payload.orchestrator !== 'skill-relay' → terminal failed (missing_orchestrator_flag)
-if grep -q 'orchestrator.*skill-relay' dev/SKILL.md; then
-  ok "dev/SKILL.md 点火模板含 orchestrator=skill-relay"
+# ── 契约 1：编码入口改投 coding_workflow，旧无头 harness 已退役 ──
+# 来源：cecelia #6356（2026-10-12）。检查当前路径 C 的命令块，
+# 不允许历史 changelog 中的字符串充当点火模板已更新的证据。
+if python3 .github/workflows/scripts/check-coding-workflow-entry.py; then
+  ok "编码入口与旧 harness 废弃标注一致"
 else
-  err "dev/SKILL.md 点火模板缺 orchestrator=skill-relay（Brain 会秒拒任务，见 cecelia #3554）"
+  err "编码入口仍引用旧无头 harness，或缺少 runner 必填字段/废弃标注"
 fi
 
 # ── 契约 2：LangGraph 图编排已废弃，不得再被描述为现行路径 ──
@@ -31,18 +31,12 @@ STALE=$(grep -rn "LangGraph" --include="SKILL.md" . 2>/dev/null \
 if [ -z "$STALE" ]; then
   ok "无 skill 将 LangGraph 图描述为现行编排路径"
 else
-  err "以下行仍把 LangGraph 当现行路径描述（须补废弃标注或改写为 skill-relay 语义）："
+  err "以下行仍把 LangGraph 当现行路径描述（须补废弃标注或改写为 coding_workflow 语义）："
   echo "$STALE"
 fi
 
-# ── 契约 3：harness 编排相关 skill 必须自洽声明 skill-relay ──
-for f in harness-controller/SKILL.md harness-planner/SKILL.md; do
-  if grep -q "skill-relay" "$f"; then
-    ok "$f 已声明 skill-relay 语义"
-  else
-    err "$f 未提及 skill-relay——编排语义可能还停留在图时代"
-  fi
-done
+# 契约 3（旧 skill-relay 声明）已被上方七个技能的废弃标注检查替代。
+# 下方 exact-run 安全约束继续保护历史回溯，不删除在用的有头 hooks。
 
 # ── 契约 4：Controller 的 Run 写入必须只按 canonical run_id 精确命中 ──
 # 来源：cecelia convergence repair PR2。initiative_id 只用于聚合/创建，不能再作为

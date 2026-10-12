@@ -1,10 +1,11 @@
 ---
 name: dev
-version: 21.12.0
-updated: 2026-10-08
+version: 21.13.0
+updated: 2026-10-12
 description: Phase-1没带--task-id先归位（POST /projects/locate判attach/create，一步建单拿task-id）→Phase0 --task-id立即claim防tick抢跑→Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→Phase2.5 GitHub撞车检查→比对已有Steps展示Golden Path草稿→确认前置工作全部到位（含GP锚点检查）→用户确认PrepPRD→路由执行（建worktree时经GP_ANCHOR env把锚机械写进.dev-mode）
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
+  - 21.13.0: 对齐 Cecelia #6356，路径 C 改建 coding_workflow，保留有头 /dev 账本及 claim；旧 Harness Pipeline 只供历史回溯
   - 21.12.0: 路径 B 新增「B0 分档」（决策 896fb590 / 0dc6b84f，cecelia #6054~#6075）——cecelia 仓的小改动、能写出命令可验证的验收、不需要真机/外部账号 → Commander 不在会话里写代码，用 new-task.mjs 建开关任务交 MMV 上的 coding workflow runner（七步链 intent→spec→build→verify→chain_check→publish→report，CI 红自动修复，CI 绿自动合并）；大改拆成带 depends_on 的有序批次（挂 project）；不满足的照走原接力链
   - 21.11.0: 新增 Phase -1「归位」（链 2afa6d69 棒3，任务 8a40825a）——没带 --task-id 时（用户在有头会话里随口说"去做 X"）先 POST /api/brain/projects/locate 判断该挂哪个现存 project（attach）还是该新建一个（create），拍板后用 POST /projects/:id/tasks 一步建单拿 task-id，再走 Phase 0 claim；带 --task-id 的（Brain headless 派发，project_id 已接好）跳过本节
   - 21.10.0: GP锚定闭环刀6b——锚从口头声明变机械传递：worktree-manage.sh 建 .dev-mode 时写入 gp_anchor 行（调用方经 GP_ANCHOR env 传入 PrepPRD 拍板的锚）；branch-protect v31（cecelia#4450）起 .dev-mode 无合法 gp_anchor 会在首次 Write/Edit 被硬拦，headed 会话与 Brain 派发三变体（headless/headed-relay/kernel-v1，刀4 executor 闸）拦截口径对齐
@@ -93,7 +94,7 @@ curl -s -X POST "localhost:5221/api/brain/tasks/<task-id>/claim" \
 用户描述
   ├── 有 bug / 出问题了 / 不对 / 报错 / 崩了    → 【路径 A：Bug】
   ├── 改一下 / 小改动 / 加个字段 / 调一下配置   → 【路径 B：小改动】
-  └── 想做 X / 新功能 / 立项 / 做一个 / 贯穿    → 【路径 C：大功能/Harness】
+  └── 想做 X / 新功能 / 立项 / 做一个 / 贯穿    → 【路径 C：大功能/coding_workflow】
 ```
 
 **模糊时（无法区分路径）：只问 1 个问题，不多问。**
@@ -133,8 +134,8 @@ curl -s "localhost:5221/api/brain/journey_features?limit=50"
 # 2: 进行中任务
 curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
 
-# 3: Harness 历史 Run
-curl -s "localhost:5221/api/brain/harness/runs?limit=20"
+# 3: 当前 coding_workflow 任务；旧 Harness Run 仅在回溯历史任务时另查
+curl -s "localhost:5221/api/brain/tasks?task_type=coding_workflow&limit=20"
 
 # 4: 历史决策匹配
 curl -s -X POST "localhost:5221/api/brain/decisions/match" \
@@ -301,7 +302,7 @@ curl -s -X POST localhost:5221/api/brain/strategic-decisions \
   -d "{\"topic\":\"判定点: <判定点名>\",\"decision\":\"所选方法: <所选>｜候选: <候选>\",\"reason\":\"依据: <依据>｜误判后果: <后果>｜来源: /dev PrepPRD\",\"made_by\":\"user\",\"author\":\"dev-skill\",\"category\":\"judgment\"}"
 ```
 
-> 用户被 ⚠️ 判定点请教后给出了不同于 AI 所选的方法 → 写库时所选方法用用户的，reason 加 `用户纠正`；被用户明确❌过的判定方法按 e035dad8 第④条走 Invariant Gate 升铁律（另一条 category=invariant，不在此处写）。Brain API 不可用时跳过，不阻塞。**路径 C 不在此处写**（判定点会进 PrepPRD 登记表 → 合同 → reviewer Step 5 APPROVED 后统一写库，此处写会重复）；路径 A/B 没有合同阶段，是此处写库的唯一出口。
+> 用户被 ⚠️ 判定点请教后给出了不同于 AI 所选的方法 → 写库时所选方法用用户的，reason 加 `用户纠正`；被用户明确❌过的判定方法按 e035dad8 第④条走 Invariant Gate 升铁律（另一条 category=invariant，不在此处写）。Brain API 不可用时跳过，不阻塞。路径 A/B/C 均在此处写入已确认的判定点，并把记录 ID 放进 PrepPRD；路径 C 已不调用旧 harness reviewer，不再等待旧 Step 5 回填，后续评审引用记录 ID 避免重复。
 
 > 🔁 **闭环**：生产里新发现的坑（用户吐槽 / 事故）→ 提炼成一条铁律写回登记表（`POST /decisions category=invariant`）→ 下次 Phase 1 喂料时自动覆盖。这是让系统越跑越聪明、同类坑不再踩第二次的机制。
 
@@ -486,7 +487,7 @@ GP-Anchor: none(infra|docs|config|backlog) ← 显式豁免
    ```
 3. 输出确认：`已保存 PrepPRD 到 $SPRINT_DIR/prep-prd.md`
 
-路径 C 点火时，`sprint_dir` 写入 Brain task payload（见下方路径 C 执行部分）。
+路径 C 点火时，将 PrepPRD 要点及可验证验收项写入 coding_workflow 的 description / acceptance（见下方路径 C 执行部分）；此处 sprint_dir 仅用于保存需求草稿。
 
 ---
 
@@ -644,7 +645,7 @@ Tier 1 固定默认：
 
 ---
 
-### 路径 C：大功能（Harness）
+### 路径 C：大功能（coding_workflow）
 
 PrepPRD 落地后，**立即执行**这条 bash 命令写 decision：
 
@@ -679,44 +680,61 @@ node ~/.claude/skills/dev/scripts/add-feature.js \
 
 > **推荐用 `add-feature.js`**：执行前自动语义查重（避免重复建 Ability）、默认 thin、默认 kind=ability，少踩坑。只有脚本不可用时才回退裸 Brain API（此时必须手动带 `kind`）。
 
-点火：
+点火 = 建 **coding_workflow** 单（2026-10-12 起；旧 `harness_initiative` 无头 kernel 已退役：派发关闭、建单入口拒无头 harness_initiative，返回 422 `no_executor_for_task_type`）。
+MMV 上的 coding-workflow-runner 认领后执行 intent → spec → spec-review GAN → 实现 → CI 自修 → QA → 独立裁判 → 发布报告。QA 方式与是否自动合并按目标仓库 repos.json 的 preview / automerge 配置执行；automerge=false 时留待人工合并。
+
+推荐在 Cecelia 仓库根目录运行建单脚本（字段口径与 runner 一致，先整体校验再逐条建；目标仓库与开闸状态先查 `packages/brain/scripts/coding-workflow/repos.json`）：
+
+```bash
+cat > /tmp/cw-plan.json <<'EOF'
+{
+  "title": "<feature_name>",
+  "description": "<thin_prd + PrepPRD 要点>",
+  "acceptance": ["<可验证断言 1：查库/接口/页面上能看到什么>", "<可验证断言 2>"],
+  "priority": "P1",
+  "gp_anchor": "none(infra)"
+}
+EOF
+node packages/brain/scripts/coding-workflow/new-task.mjs /tmp/cw-plan.json --repo <目标仓库 key> --dry-run   # 先看请求体
+node packages/brain/scripts/coding-workflow/new-task.mjs /tmp/cw-plan.json --repo <目标仓库 key>             # 输出 [{key,id,title}]
+```
+
+大改拆成有序小任务：`{"project": {"name": "<功能名>"}, "tasks": [{"key": "a", "title": "...", "acceptance": [...]}, {"key": "b", "title": "...", "acceptance": [...], "depends_on": ["a"]}]}`（有 depends_on 必须给 project 或 project_id）。
+
+下例 repo / repo_hint / map_scope_hint 必须替换成实际目标；gp_anchor 使用已确认的真实 Line/GP 锚点，仅基础设施等获准豁免才用 `none(infra)`，不得为业务功能默认豁免。
+
+等价的 curl（不用脚本时，字段照 runner 口径）：
 ```bash
 curl -s -X POST localhost:5221/api/brain/tasks \
   -H "Content-Type: application/json" \
   -d "{
-    \"task_type\": \"harness_initiative\",
+    \"task_type\": \"coding_workflow\",
     \"title\": \"<feature_name>\",
     \"description\": \"<thin_prd>\",
     \"priority\": \"P1\",
+    \"trigger_source\": \"manual\",
     \"payload\": {
-      \"orchestrator\": \"skill-relay\",
-      \"sprint_dir\": \"<sprint_dir>\",
-      \"thin_prd\": \"<thin_prd>\",
-      \"prep_prd_body\": \"<PrepPRD全文Markdown>\",
-      \"journey_id\": \"<notion_journey_id>\",
-      \"feature_id\": \"<notion_feature_id>\",
-      \"base_repo\": \"<见下方规则>\",
-      \"target_environment\": \"<mac_web|windows_cloud|windows_wechat|linux_server|local_api|playground>\"
+      \"coding_workflow\": true,
+      \"repo\": \"cecelia\",
+      \"acceptance\": [\"<可验证断言>\"],
+      \"gp_anchor\": \"none(infra)\"
     }
   }"
 ```
 
-> **target_environment 枚举（6 种，与 planner/proposer/evaluator 全链一致）**：`mac_web`（Cecelia Dashboard，本机 Playwright）/ `windows_cloud`（GHA windows-latest）/ `windows_wechat`（xian-rog self-hosted 真机微信）/ `linux_server`（SSH hk-vps/us-vps）/ `local_api`（本地 Brain curl+psql）/ `playground`（playground 训练 sprint）。
+> 旧借壳形状 `task_type=data` + `payload.coding_workflow=true` + `payload.headed_manual="true"`（**字符串**）runner 仍认、Brain 建单时归一成 coding_workflow；新建一律直接用 `coding_workflow`。
 
-**`base_repo` 规则：**
+**仓库限制**：runner 只认领 `packages/brain/scripts/coding-workflow/repos.json` 里 `enabled=true` 的仓库（以当前配置为准，不从本技能推断仓库是否开闸）。不支持的仓库无头建单会被拒（`runner_repo_unsupported`），改在本 /dev 会话里有头做，账本行必须带字符串 `headed_manual` 并立刻认领：
 
-| target_environment | base_repo 格式 |
-|---|---|
-| `windows_cloud` / `windows_wechat` / `mac_web` | **必须 GitHub URL**（Actions runner / 远端真机访问不到本地路径）|
-| `linux_server` | **必须 GitHub URL**（远端机器 SSH 后 clone）|
-| `local_api` / `playground` | 本地路径或 GitHub URL 均可 |
+```bash
+curl -s -X POST localhost:5221/api/brain/tasks -H "Content-Type: application/json" \
+  -d "{\"title\": \"<PR 标题>\", \"task_type\": \"dev\", \"priority\": \"P1\", \"change_kind\": \"capability_change\",
+       \"repo_hint\": \"https://github.com/perfectuser21/zenithjoy-workspace\", \"map_scope_hint\": [\"<格子>\"],
+       \"trigger_source\": \"manual\", \"payload\": {\"headed_manual\": \"true\"}}"
+curl -s -X POST localhost:5221/api/brain/tasks/<id>/claim -H "Content-Type: application/json" -d '{"claimer":"interactive-dev-skill"}'
+```
 
-> ❌ 错误：`windows_cloud` + `base_repo=/Users/administrator/...` → Harness 入队失败
-> ✅ 正确：`windows_cloud` + `base_repo=https://github.com/perfectuser21/zenithjoy-workspace.git`
-
-> ⚠️ **`orchestrator: "skill-relay"` 是硬性字段，禁止省略**（2026-07-05 cecelia #3554 起）：Brain 对 `harness_initiative` 做硬校验，`payload.orchestrator !== 'skill-relay'` 的任务立即 terminal failed（`missing_orchestrator_flag`）。这不是可选配置——旧 LangGraph 图编排已废弃（实测 relay 3/3~4/4 merged vs 旧图 30 天基线 21.7% 成功率），不存在隐式兜底。
-
-Brain tick 自动 pick up 后 spawn 单 session skill-relay（harness-controller 接力跑完 planner → GAN → generator → evaluator → report），`curl localhost:5221/api/brain/tasks/<task_id>` 查任务状态，`curl localhost:5221/api/brain/orchestrator/relay-runs/summary` 查 relay 各 phase 汇总。
+进度：`curl localhost:5221/api/brain/tasks/<task_id>`（`result.coding_workflow` 有 runner 写回），MMV 上 `~/Library/Logs/coding-workflow-runner.log`。
 
 ---
 
@@ -797,6 +815,8 @@ node ~/.claude/skills/dev/scripts/status.js --area "ZenithJoy"
 ---
 
 ## Harness Pipeline 定义
+
+> **已废弃（2026-10-12）**：下述旧 harness 编排（planner → GAN → generator → evaluator → report，task_type=harness_initiative）已不再无头派发，仅留作历史参考；路径 C 改建 coding_workflow 单，由 coding-workflow-runner 执行。有头 /dev 的记账与收尾链保持有效。
 
 ### Run 固定结构
 
