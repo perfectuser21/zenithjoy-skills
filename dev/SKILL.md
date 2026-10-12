@@ -1,10 +1,11 @@
 ---
 name: dev
-version: 21.13.0
+version: 21.14.0
 updated: 2026-10-12
 description: Phase-1没带--task-id先归位（POST /projects/locate判attach/create，一步建单拿task-id）→Phase0 --task-id立即claim防tick抢跑→Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→Phase2.5 GitHub撞车检查→比对已有Steps展示Golden Path草稿→确认前置工作全部到位（含GP锚点检查）→用户确认PrepPRD→路由执行（建worktree时经GP_ANCHOR env把锚机械写进.dev-mode）
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
+  - 21.14.0: 建单计划显式提供 change_kind/map_scope_hint，curl 对齐 mutation_intent/repo_hint；未启用仓库无头建单会被 Brain 拒绝
   - 21.13.0: 对齐 Cecelia #6356，路径 C 改建 coding_workflow，保留有头 /dev 账本及 claim；旧 Harness Pipeline 只供历史回溯
   - 21.12.0: 路径 B 新增「B0 分档」（决策 896fb590 / 0dc6b84f，cecelia #6054~#6075）——cecelia 仓的小改动、能写出命令可验证的验收、不需要真机/外部账号 → Commander 不在会话里写代码，用 new-task.mjs 建开关任务交 MMV 上的 coding workflow runner（七步链 intent→spec→build→verify→chain_check→publish→report，CI 红自动修复，CI 绿自动合并）；大改拆成带 depends_on 的有序批次（挂 project）；不满足的照走原接力链
   - 21.11.0: 新增 Phase -1「归位」（链 2afa6d69 棒3，任务 8a40825a）——没带 --task-id 时（用户在有头会话里随口说"去做 X"）先 POST /api/brain/projects/locate 判断该挂哪个现存 project（attach）还是该新建一个（create），拍板后用 POST /projects/:id/tasks 一步建单拿 task-id，再走 Phase 0 claim；带 --task-id 的（Brain headless 派发，project_id 已接好）跳过本节
@@ -583,18 +584,20 @@ systematic-debugging → engine-worktree → Superpowers autonomous 接力链 �
 
 ```bash
 cat > /tmp/cw-plan.json <<'EOF'
-{"title":"<一句话需求>","description":"<改哪里、为什么、相关文件路径>","acceptance":["<命令> 期望 <结果>","..."]}
+{"title":"<修复 Cecelia F1 内的问题>","change_kind":"bugfix","map_scope_hint":["F1"],"description":"<改哪里、为什么、相关文件路径>","acceptance":["<命令> 期望 <结果>","..."]}
 EOF
 # runner 专用 clone 每轮自更新到 origin/main，用它的脚本（主仓 checkout 可能落后）
-node ~/perfect21/cecelia-cw-runner/packages/brain/scripts/coding-workflow/new-task.mjs /tmp/cw-plan.json
+node ~/perfect21/cecelia-cw-runner/packages/brain/scripts/coding-workflow/new-task.mjs /tmp/cw-plan.json --repo cecelia
 ```
 
 **大改（多个有序步骤）**：拆成批次，每步一条、各自带验收，后一步用 `depends_on` 引用前一步的 key（runner 等前置 PR 合并才认领）；有依赖的批次必须挂 project（Brain 多刀工作闸）：
 
 ```json
-{"batch":"<批次名>","project":{"name":"<项目名>","description":"<目标与范围>"},
+{"batch":"<批次名>","change_kind":"capability_change","map_scope_hint":["F1"],"project":{"name":"<项目名>","description":"<目标与范围>"},
  "tasks":[{"key":"a","title":"…","acceptance":["…"]},{"key":"b","title":"…","acceptance":["…"],"depends_on":["a"]}]}
 ```
+
+计划必须提供合法 `change_kind` 与非空字符串数组 `map_scope_hint`，可从批次顶层继承；每条可按真实范围覆盖。`F1` 是 Cecelia 节点示例，先查目标仓地图后替换，不能当所有任务的默认值。bug 用 `bugfix`，新能力/能力改动/纯参数分别按事实选 `new_capability`/`capability_change`/`parameter_only`。
 
 建完把 task id 告诉用户即结束本路径。进度：Brain 任务状态 / `~/Library/Logs/coding-workflow-runner.log`；失败原因：任务 `result.coding_workflow_runner`（failed_activity / reason_code），现场保留 7 天在 `~/worktrees/cecelia-cw/`。
 
@@ -689,19 +692,21 @@ MMV 上的 coding-workflow-runner 认领后执行 intent → spec → spec-revie
 cat > /tmp/cw-plan.json <<'EOF'
 {
   "title": "<feature_name>",
+  "change_kind": "capability_change",
+  "map_scope_hint": ["F1"],
   "description": "<thin_prd + PrepPRD 要点>",
   "acceptance": ["<可验证断言 1：查库/接口/页面上能看到什么>", "<可验证断言 2>"],
   "priority": "P1",
   "gp_anchor": "none(infra)"
 }
 EOF
-node packages/brain/scripts/coding-workflow/new-task.mjs /tmp/cw-plan.json --repo <目标仓库 key> --dry-run   # 先看请求体
-node packages/brain/scripts/coding-workflow/new-task.mjs /tmp/cw-plan.json --repo <目标仓库 key>             # 输出 [{key,id,title}]
+node packages/brain/scripts/coding-workflow/new-task.mjs /tmp/cw-plan.json --repo cecelia --dry-run   # 先校验计划及目标仓库
+node packages/brain/scripts/coding-workflow/new-task.mjs /tmp/cw-plan.json --repo cecelia             # 输出 [{key,id,title}]
 ```
 
-大改拆成有序小任务：`{"project": {"name": "<功能名>"}, "tasks": [{"key": "a", "title": "...", "acceptance": [...]}, {"key": "b", "title": "...", "acceptance": [...], "depends_on": ["a"]}]}`（有 depends_on 必须给 project 或 project_id）。
+大改拆成有序小任务：`{"change_kind": "capability_change", "map_scope_hint": ["F1"], "project": {"name": "<功能名>"}, "tasks": [{"key": "a", "title": "...", "acceptance": [...]}, {"key": "b", "title": "...", "acceptance": [...], "depends_on": ["a"]}]}`（有 depends_on 必须给 project 或 project_id；change_kind/map_scope_hint 可从批次顶层继承，或逐条覆盖）。
 
-下例 repo / repo_hint / map_scope_hint 必须替换成实际目标；gp_anchor 使用已确认的真实 Line/GP 锚点，仅基础设施等获准豁免才用 `none(infra)`，不得为业务功能默认豁免。
+下例 `F1` 是 Cecelia 地图节点示例；repo / repo_hint / map_scope_hint 必须查真实目标后替换，不能固定为默认。`change_kind` 按实际改动选择，bug 用 `bugfix`；脚本会在请求体显式写 `mutation_intent:"write"`、`repo_hint`，裸 curl 也必须带；gp_anchor 使用已确认的真实 Line/GP 锚点，仅基础设施等获准豁免才用 `none(infra)`，不得为业务功能默认豁免。
 
 等价的 curl（不用脚本时，字段照 runner 口径）：
 ```bash
@@ -709,6 +714,10 @@ curl -s -X POST localhost:5221/api/brain/tasks \
   -H "Content-Type: application/json" \
   -d "{
     \"task_type\": \"coding_workflow\",
+    \"mutation_intent\": \"write\",
+    \"change_kind\": \"capability_change\",
+    \"repo_hint\": \"cecelia\",
+    \"map_scope_hint\": [\"F1\"],
     \"title\": \"<feature_name>\",
     \"description\": \"<thin_prd>\",
     \"priority\": \"P1\",
@@ -724,11 +733,11 @@ curl -s -X POST localhost:5221/api/brain/tasks \
 
 > 旧借壳形状 `task_type=data` + `payload.coding_workflow=true` + `payload.headed_manual="true"`（**字符串**）runner 仍认、Brain 建单时归一成 coding_workflow；新建一律直接用 `coding_workflow`。
 
-**仓库限制**：runner 只认领 `packages/brain/scripts/coding-workflow/repos.json` 里 `enabled=true` 的仓库（以当前配置为准，不从本技能推断仓库是否开闸）。不支持的仓库无头建单会被拒（`runner_repo_unsupported`），改在本 /dev 会话里有头做，账本行必须带字符串 `headed_manual` 并立刻认领：
+**仓库限制**：runner 只认领 `packages/brain/scripts/coding-workflow/repos.json` 里 `enabled=true` 的仓库（以当前配置为准，不从本技能推断仓库是否开闸）。未登记或未启用的仓库无头建单会被 Brain 拒绝（`runner_repo_unsupported`，不会继续留在 queued），改在本 /dev 会话里有头做，账本行必须带字符串 `headed_manual` 并立刻认领：
 
 ```bash
 curl -s -X POST localhost:5221/api/brain/tasks -H "Content-Type: application/json" \
-  -d "{\"title\": \"<PR 标题>\", \"task_type\": \"dev\", \"priority\": \"P1\", \"change_kind\": \"capability_change\",
+  -d "{\"title\": \"<PR 标题>\", \"task_type\": \"dev\", \"mutation_intent\": \"write\", \"priority\": \"P1\", \"change_kind\": \"capability_change\",
        \"repo_hint\": \"https://github.com/perfectuser21/zenithjoy-workspace\", \"map_scope_hint\": [\"<格子>\"],
        \"trigger_source\": \"manual\", \"payload\": {\"headed_manual\": \"true\"}}"
 curl -s -X POST localhost:5221/api/brain/tasks/<id>/claim -H "Content-Type: application/json" -d '{"claimer":"interactive-dev-skill"}'

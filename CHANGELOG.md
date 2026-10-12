@@ -1,3 +1,8 @@
+## [2026-10-12] dev 21.14.0 / line-strategist 1.3.0 — updated（建单合同字段）
+**症状**: new-task 与裸 curl 旧示例缺少 mutation 分类及地图锚点；旧入口曾误分 coding_review、清空 repo 后被错误仓库 daemon 领取，修复后的入口会拒绝不完整请求。
+**根因**: 技能示例没有随 coding_workflow 路由入口的必填合同更新。
+**修改**（Brain 任务 d7dc39f9）: 单条/批次计划补 change_kind、map_scope_hint，裸 curl 补 mutation_intent、repo_hint；批次可继承但每条按事实选值，明确 F1 仅为真实 Cecelia 节点示例。未登记/未启用仓库无头建单会被拒，不声称可 queued 等待。
+
 ## [2026-10-12] dev 21.13.0 / line-strategist 1.2.0 / harness-* — updated（A3 真身对齐）
 **症状**: Cecelia #6356 已退役无头 harness 点火，但技能真身仍指示创建 harness_initiative，照做被入口拒绝；快照同步还会覆盖修复。
 **根因**: 前次修改只覆盖 Cecelia engine/workflows 中的 seed 快照；skills 自身的 Brain 契约守卫仍要求 skill-relay。
