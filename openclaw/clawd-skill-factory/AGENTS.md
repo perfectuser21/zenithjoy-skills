@@ -15,17 +15,24 @@
 ## 范围
 
 把一条新流程从第一次跑通，变成稳定的整流程 skill，再拆成可调度的 activity 链，最后把能写成代码的写成代码；并维护技能库的健康。
-不管：日常业务交付（各业务 agent 的活）；上架后的陪跑与待命（work-commander 的活）。
+不管：日常业务交付（各业务 agent 的活）；每次运行的起跑、陪跑与待命（work-commander 的活，从第一阶段起就在）。
+
+## 第一阶段起就是 workflow（决策 2186700a / 26df670a，覆盖下表此前「①～③ Commander 不用」的写法）
+
+- **先定大流程，再补业务 skill**：新流程第一步不是试跑，而是把「共享外壳-准备（领 Brain 手机锁 + 查手机 + 查账号）→【业务空位】→ 共享外壳-收尾（关 App + 放锁 + 交回结果）」写成合同（`product-map/contracts/<流程>.yaml`，`execution_profile: codex_agent`，外壳活动 `ref` 共享正本，`commander_skill` 第一阶段可为 null）、登记进树、在 Brain 有派发入口（`config/factory-workflows.json` 的 `commander` 调度单 + `dispatch_via: commander`）。之后本工位只补中间的业务 skill。
+- **每次运行都走 Brain → Commander → 外壳 → 业务 skill → 外壳**：推进器建 `workflow_dispatch` 单，work-commander 照调度单起跑，`wf-agent-run.sh` 强制执行外壳，业务块才派给本工位（Codex 运行时）。技能工厂派发器不再光着起会话跑执行单。
+- **经外壳派来的执行单**：手机控制器锁由外壳拿放（开工 `lock-status` 核对 owner，不要 `lock-acquire` / `lock-release`）；每个业务活动做成后留 `ui-evidence <run_id>-<活动>-original` 读回证据；交付写成最后一行 `WF_DELIVERY {单行 JSON}`，不 PATCH Brain 任务——外壳汇总 `delivery.json`，Brain 收割并按合同读回裁判，Commander 不判成败（决策 7465d08f）。
+- **两条线并行熟化**：业务 skill 线（整流程 skill → 拆细成活动 → 逐个换脚本）；陪跑 skill 线（`wf-<能力>`：空 → 从运行中攒判例变厚 → 重复的写成代码变薄，由合同 `commander_skill` 名+版本指定）。外壳全公司共享，不随单条流程改。
 
 ## 一条流程的一生（总表）
 
 | 阶段 | Commander | 谁干 | 加载的 skill | 输入 | 产出 | 出口 |
 |---|---|---|---|---|---|---|
-| ⓪ 入口 | — | 主理人 + 有头会话 | `/tree` | 一个新想法 | 树上的坐标（能力 · 流程）+ Brain project + 试跑任务 | 任务里带树上坐标才开工 |
-| ① 试跑 | 不用 | 本工位 | `skill-explore`（试跑协议） | 任务目标与 DOD；平台底座、该平台已有 skill、仓库物件（只读）；故障处置表通用层与平台层 | 成功一次的证据 + **整流程 skill v1** | 另开会话 `run-verify` 判 pass |
-| ② 探索 | 不用 | 本工位 | 整流程 skill + **`skill-boundary`（摸边界）** | 整流程 skill v1 | 边界清单（每项有结论）+ **整流程 skill vN** + 处置表候选行 + 平台发现 + 手册素材 + 验证用输入池 | 清单每项有结论，且最终版连续 3 次成功 |
-| ③ 验证 | 不用 | 本工位跑；另开会话判 | 跑：**只加载冻结的 vN**；判：`run-verify` | 冻结 vN + 10 个不同输入 | 连续通过记录 | 同一版本、不同输入、连续 **10** 次通过 |
-| ④ 沉淀 | 拆的时候不用；拆完重跑时用 | 拆：本工位；陪跑：work-commander | 拆：`skill-distill` → 验收 `contract-reviewer` → `skill-evaluator`（quick）→ 上架 **`skill-publish`**；Commander：`workflow-commander` + `wf-<能力>` | vN、边界清单、处置表、验证记录 | **activity 链**（说明书 + 步骤 skill，登记进树与仓库）+ **`wf-<能力>`** | 拆完后连续 **30** 次通过 |
+| ⓪ 入口 | — | 主理人 + 有头会话 | `/tree` → `/dev` | 一个新想法 | 树上的坐标（能力 · 流程）+ **大流程合同（共享外壳 + 业务空位）+ Brain 派发入口** + Brain project + 试跑任务 | 合同组装闸过、Brain 能派 `workflow_dispatch` 才开工 |
+| ① 试跑 | 在（`workflow-commander`；陪跑 skill 可空） | 本工位 | `skill-explore`（试跑协议） | 任务目标与 DOD；平台底座、该平台已有 skill、仓库物件（只读）；故障处置表通用层与平台层 | 成功一次的证据 + **整流程 skill v1** | 另开会话 `run-verify` 判 pass |
+| ② 探索 | 在（同上，陪跑 skill 开始攒判例） | 本工位 | 整流程 skill + **`skill-boundary`（摸边界）** | 整流程 skill v1 | 边界清单（每项有结论）+ **整流程 skill vN** + 处置表候选行 + 平台发现 + 手册素材 + 验证用输入池 | 清单每项有结论，且最终版连续 3 次成功 |
+| ③ 验证 | 在（同上） | 本工位跑；另开会话判 | 跑：**只加载冻结的 vN**；判：`run-verify` | 冻结 vN + 10 个不同输入 | 连续通过记录 | 同一版本、不同输入、连续 **10** 次通过 |
+| ④ 沉淀 | 在（拆的时候本工位离线拆；重跑全程陪跑） | 拆：本工位；陪跑：work-commander | 拆：`skill-distill` → 验收 `contract-reviewer` → `skill-evaluator`（quick）→ 上架 **`skill-publish`**；Commander：`workflow-commander` + `wf-<能力>` | vN、边界清单、处置表、验证记录 | **activity 链**（说明书 + 步骤 skill，登记进树与仓库）+ **`wf-<能力>`** | 拆完后连续 **30** 次通过 |
 | ⑤ 固化 | 用，按步骤退场 | 判定：本工位；写代码：Claude Code `/dev`；核验：本工位另开会话 | **`skill-solidify`（固化判定）** → `/dev` → `code-verify` | 30 次运行记录 + activity 链 | 每步「写代码 / 留 AI」标签 + 代码与探针 | 每步代码过 `code-verify`，说明书与判据不变 |
 | ⑥ 退役 | — | 本工位 | `skill-retire` | 连续 30 天未跑，或被新流程取代 | 树上标 deprecated；skill 移归档目录，只移不删；仓库共用物件仍有流程在用则保留 | — |
 

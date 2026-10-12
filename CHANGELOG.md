@@ -1,3 +1,8 @@
+## [2026-10-12] workflow-lifecycle 1.2.0 / skill-factory 工位 / skill-publish — updated（第一阶段起就是 workflow + 陪跑 skill 线）
+**症状**: 熟化规定写「①～③ Commander 不用」「S1 不在场」，工厂线光着起 Codex 跑 skill，没有外壳与 Commander；陪跑 skill 只能靠猜名字 `wf-<能力>`，白名单要人手改。
+**根因**: 主理人决策 2186700a / 26df670a 修正熟化模型：任何 skill 从第一阶段起就以 workflow 雏形运行（共享外壳准备 → 业务 skill → 共享外壳收尾），Commander 第一天就在；陪跑 skill 由合同 `commander_skill` 指定。
+**修改**（Brain 任务 c0fe7e30）: workflow-lifecycle 加「第一阶段起就是 workflow」与「两条熟化线」节，S1 改为先立大流程（合同 + 登记树 + Brain 派发入口）再补业务 skill、Commander 陪跑；clawd-skill-factory AGENTS.md 总表 ⓪ 入口产出大流程合同与派发入口、①～④ Commander 在场，新增经外壳派来的执行单规矩（锁由外壳拿放、`ui-evidence <run_id>-<活动>-original` 读回、最后一行 `WF_DELIVERY`、不 PATCH Brain）；skill-publish 上架 wf-<能力> 时同 PR 设合同 `commander_skill`，白名单由 deploy.sh 自动放开。配套代码：zenithjoy-workspace #2127、cecelia #6350。
+
 ## [2026-10-11] engine-pr-watchdog 3.5.0 / engine-ship / hooks/session-start — updated（handoff 下一步四类 + 有头续接）
 **修改**（Brain 任务 db556cfa，主理人 2026-10-11 决策）: Step 5.5 的 next_steps 改为带 kind 的对象，四类 resume_headed（有头续接，不派发，进待续列表）/ dispatch_headless（无头派发，自动建子任务，≡旧 task）/ decision / note；handoff 写入从 psql 直写本地库改为 PATCH Brain API（触发接棒 + 回 handoff_next_steps 反馈，unrecognized 即报错重写）。engine-ship 终态说明同步。hooks/session-start.sh 加「你有 N 条待续交接」注入（读 GET /api/brain/handoffs/pending-resume）。
 

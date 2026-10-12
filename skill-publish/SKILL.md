@@ -78,7 +78,7 @@ curl -s -X POST "$BRAIN/api/brain/activity_uses" -H 'Content-Type: application/j
 `wf-<能力>` 的真身在 zenithjoy-workspace `services/phone-adb-controller/commander/skills/wf-<能力>/SKILL.md`（由 deploy.sh 同步到 work-commander 工位）。
 
 - 按本 skill 目录 `templates/wf-capability.md` 的结构核对 `wf_skill.draft_markdown`，缺节就补成「未知」并写进 `open_questions`，不编造；
-- 在 zenithjoy-workspace 提 PR 加入该文件；**不改 work-commander 的 agent 配置**（skills 白名单由有头会话改），在回执里写明「需把 wf-<能力> 加进 work-commander skills 白名单」。
+- 在 zenithjoy-workspace 提 PR 加入该文件（`services/phone-adb-controller/commander/skills/wf-<能力>/SKILL.md`），**同一 PR 把该 workflow 合同的 `commander_skill` 设为 `{name: wf-<能力>, version: <frontmatter version>}`**（组装闸校验二者一致；决策 26df670a）。合并后 deploy.sh 自动下发到 work-commander 工作区并只增不删地放开 skills 白名单，不需要再手改 agent 配置。
 
 ## 第 5 步：判例计数入账
 
@@ -100,7 +100,7 @@ curl -s -X POST "$BRAIN/api/brain/activity_uses" -H 'Content-Type: application/j
   ],
   "warehouse_writes": [{"key": "", "action": "created | merged", "rows_after": 0, "readback_ok": true}],
   "commander_pr": "zenithjoy-workspace PR 链接（wf-<能力>）",
-  "handover": ["需要有头会话做的事，如：把 wf-<能力> 加进 work-commander skills 白名单"],
+  "handover": ["需要有头会话做的事，如：合并 wf-<能力> 的 zenithjoy-workspace PR 并确认部署"],
   "open_questions": [],
   "fail_reason": null
 }
