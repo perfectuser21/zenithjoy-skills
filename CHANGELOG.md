@@ -1,3 +1,8 @@
+## [2026-10-12] dev 21.13.0 / line-strategist 1.2.0 / harness-* — updated（A3 真身对齐）
+**症状**: Cecelia #6356 已退役无头 harness 点火，但技能真身仍指示创建 harness_initiative，照做被入口拒绝；快照同步还会覆盖修复。
+**根因**: 前次修改只覆盖 Cecelia engine/workflows 中的 seed 快照；skills 自身的 Brain 契约守卫仍要求 skill-relay。
+**修改**（Brain 任务 7d5a5660）: dev、line-strategist 路径 C 改为 coding_workflow + repo + acceptance；先查 runner 仓库配置，不支持则有头 /dev 记账并立即 claim。七个 harness 技能在 description 及正文首段标注只供历史回溯；有头 hooks 不改。更新入口合同守卫并保留 exact-run 安全断言；静态合同对照旧版 0/9、新版 9/9，仓库全部 CI 本地检查通过（lint 两个既有缺 SKILL.md 警告）。
+
 ## [2026-10-12] workflow-lifecycle 1.2.0 / skill-factory 工位 / skill-publish — updated（第一阶段起就是 workflow + 陪跑 skill 线）
 **症状**: 熟化规定写「①～③ Commander 不用」「S1 不在场」，工厂线光着起 Codex 跑 skill，没有外壳与 Commander；陪跑 skill 只能靠猜名字 `wf-<能力>`，白名单要人手改。
 **根因**: 主理人决策 2186700a / 26df670a 修正熟化模型：任何 skill 从第一阶段起就以 workflow 雏形运行（共享外壳准备 → 业务 skill → 共享外壳收尾），Commander 第一天就在；陪跑 skill 由合同 `commander_skill` 指定。
