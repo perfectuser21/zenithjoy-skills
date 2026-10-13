@@ -1,9 +1,6 @@
 ---
 name: shopify-product-ops
-description: Shopify 商品操作实战手册（✅ 2026-09-11 全链路实测：建草稿→传图→改文案→删图）。
-  覆盖 OAuth client_credentials 取 token、GraphQL productSet 建草稿商品、stagedUploadsCreate 三步传图、
-  productUpdate 改标题描述、productDeleteMedia 删图。
-  触发场景：Shopify 上架 / 建商品 / 传商品图 / 改商品文案 / 调 Shopify Admin API / 独立站商品管理。
+description: "在 Shopify 创建或更新商品草稿、上传或删除图片、修改文案；处理 OAuth、GraphQL 和商品 API。用于商品上架与管理；店铺市场、语言和币种配置查 shopify-store-setup。"
 ---
 
 # Shopify 商品操作
@@ -160,3 +157,7 @@ curl -s "https://${DOMAIN}/admin/api/2026-01/shop.json"          -H "X-Shopify-A
 - 能确定该字段本次不需要写入（如仅改标题）→ 不带这个字段。
 - 该字段是本次操作必须的、但调用方没提供 → 不发起 mutation，报告"缺少 <字段名>，需要调用方提供"，等待补充。
 - 绝不用同类商品的历史价格、行业均价或任意数字替代真实值——草稿即使标了 DRAFT，编造的价格一旦被后台人工放行发布，就是真实的错误定价。
+
+## 触发范围与原运行约束
+
+Shopify 商品操作实战手册（✅ 2026-09-11 全链路实测：建草稿→传图→改文案→删图）。 覆盖 OAuth client_credentials 取 token、GraphQL productSet 建草稿商品、stagedUploadsCreate 三步传图、 productUpdate 改标题描述、productDeleteMedia 删图。 触发场景：Shopify 上架 / 建商品 / 传商品图 / 改商品文案 / 调 Shopify Admin API / 独立站商品管理。

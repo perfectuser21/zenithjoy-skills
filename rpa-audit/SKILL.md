@@ -1,12 +1,6 @@
 ---
 name: rpa-audit
-description: >
-  Android RPA skill 与控制器脚本的 反模式规则审计器（30+ 条，持续吸收实战案例）。只报不改：输出带 file:line 的审计报告
-  （规则编号 / 严重级 / 证据 / 建议修法），绝不自动修改被审计对象。
-  触发场景：新建或修改了任何 android-*-publish / douyin-* / *-phone-runtime 类 RPA skill 之后；
-  用户说「审计这个 skill」「rpa audit」「检查这个 RPA」「这个 skill 有没有写死坐标」
-  「按清单查一遍」；golden path 上真机 RPA 相关 PR 合并前。
-  只要对象涉及 adb / uiautomator / 无障碍树 / 真机点击，都应该用本 skill 查一遍再上线。
+description: "只读审计 Android RPA Skill 和控制器，输出规则编号、严重度、文件行号与建议。用于明确审计、新建或修改真机 RPA，以及相关 PR 上线前；涉及 ADB、UIA 或真机点击，不自动修复。"
 ---
 
 # rpa-audit — Android RPA 反模式审计器
@@ -71,3 +65,7 @@ description: >
 ## 参考文件
 
 - `references/checklist.md` — 规则全文、grep 探针、真实案例出处。**审计前必读。**
+
+## 触发范围与原运行约束
+
+Android RPA skill 与控制器脚本的 反模式规则审计器（30+ 条，持续吸收实战案例）。只报不改：输出带 file:line 的审计报告 （规则编号 / 严重级 / 证据 / 建议修法），绝不自动修改被审计对象。 触发场景：新建或修改了任何 android-*-publish / douyin-* / *-phone-runtime 类 RPA skill 之后； 用户说「审计这个 skill」「rpa audit」「检查这个 RPA」「这个 skill 有没有写死坐标」 「按清单查一遍」；golden path 上真机 RPA 相关 PR 合并前。 只要对象涉及 adb / uiautomator / 无障碍树 / 真机点击，都应该用本 skill 查一遍再上线。

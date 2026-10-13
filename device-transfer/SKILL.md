@@ -1,12 +1,6 @@
 ---
 name: device-transfer
-description: |
-  设备之间的数据传输决策。涉及以下任何场景时必须先读这个 skill：
-  触发词：传文件、下载、上传、SCP、GitHub 拉代码、插件分发、COS、怎么把X传到Y、
-  设备之间传、速度慢、exit node、NAS 挂载、跨国传输、
-  下载失败、拉不下来、下载超慢、下载不了、timeout、Connection refused、timed out、
-  apt 慢、pip 慢、npm 慢、curl 失败、wget 失败、安装超时、网络超时、连不上、
-  GitHub releases 下载、从外网拿、国内访问不了。
+description: "选择设备间传文件、跨国传输、GitHub 拉取、插件分发、COS 或 NAS 的通道，排查传输慢和网络超时。涉及跨设备传输或依赖下载故障时使用。"
 ---
 
 # 数据传输决策 Skill
@@ -278,3 +272,12 @@ us-mac → 西安          → COS（唯一可用快速路径）
 hk-vps → Windows 机器  → hk-vps 上传 COS（不加 -e），xian-pc/rog 用 curl 下载
 COS 凭据为空/不存在    → 从 1Password "Tencent Cloud (腾讯云)" notesPlain 拿 VPS key
 ```
+
+## 触发范围与原运行约束
+
+设备之间的数据传输决策。涉及以下任何场景时必须先读这个 skill：
+触发词：传文件、下载、上传、SCP、GitHub 拉代码、插件分发、COS、怎么把X传到Y、
+设备之间传、速度慢、exit node、NAS 挂载、跨国传输、
+下载失败、拉不下来、下载超慢、下载不了、timeout、Connection refused、timed out、
+apt 慢、pip 慢、npm 慢、curl 失败、wget 失败、安装超时、网络超时、连不上、
+GitHub releases 下载、从外网拿、国内访问不了。

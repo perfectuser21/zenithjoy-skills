@@ -1,14 +1,6 @@
 ---
 name: cloudflared
-description: >
-  配置和使用 mac-mini-m4-us（美国 Mac mini M4，公网 38.23.47.81）的 SSH 快速连接（走 Cloudflare Tunnel，绕开中国电信 202.97 拥塞）。
-  无论用户是否明说 "cloudflared"，只要涉及以下任一场景都要用本 skill：
-  设置一台新电脑（Mac 或 Windows）连这台美国 Mac、SSH 连那台美国机很卡/连不上/timeout、
-  配置或排查 slot / tslot / us-mac 这些 ssh host、cloudflared 装不上或报错、
-  Cloudflare Tunnel 与 Tailscale 怎么选/有什么区别、SSH tunnel 报 503 或 websocket bad handshake、
-  连接器（connector）down、轮换服务令牌（service token）、
-  或用户问 "怎么连美国机器 / 为什么 SSH 卡 / 新机器怎么配"。
-  涵盖：客户端配置（Mac/Windows）、服务端搭建与重建、Tailscale 兜底、国内下载绕行（COS）、故障排查。
+description: "配置或排障连接美国 Mac M4 的 Cloudflare SSH 隧道，包括新客户端、slot/tslot/us-mac、连接器、503、服务令牌与 Tailscale 兜底。涉及这台美国机的 SSH 连接时使用。"
 ---
 
 # Cloudflared SSH 快路（mac-mini-m4-us）
@@ -183,3 +175,7 @@ slot / tslot / us-mac **全是纯 SSH**。tmux 是 SSH 连上后靠 `RemoteComma
 - memory：`project_mac_mini_m4_us_ssh_fastpath`、`project_mac_mini_m4_us_security`、`reference_1password_ssh_agent_gui_key`
 - skill：`device-transfer`（国内传文件）、`credentials`（取凭据）
 - 详细服务端命令：`references/server-rebuild.md`
+
+## 触发范围与原运行约束
+
+配置和使用 mac-mini-m4-us（美国 Mac mini M4，公网 38.23.47.81）的 SSH 快速连接（走 Cloudflare Tunnel，绕开中国电信 202.97 拥塞）。 无论用户是否明说 "cloudflared"，只要涉及以下任一场景都要用本 skill： 设置一台新电脑（Mac 或 Windows）连这台美国 Mac、SSH 连那台美国机很卡/连不上/timeout、 配置或排查 slot / tslot / us-mac 这些 ssh host、cloudflared 装不上或报错、 Cloudflare Tunnel 与 Tailscale 怎么选/有什么区别、SSH tunnel 报 503 或 websocket bad handshake、 连接器（connector）down、轮换服务令牌（service token）、 或用户问 "怎么连美国机器 / 为什么 SSH 卡 / 新机器怎么配"。 涵盖：客户端配置（Mac/Windows）、服务端搭建与重建、Tailscale 兜底、国内下载绕行（COS）、故障排查。

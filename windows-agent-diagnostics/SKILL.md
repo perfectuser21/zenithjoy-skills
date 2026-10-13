@@ -1,13 +1,7 @@
 ---
 name: windows-agent-diagnostics
-description: |
-  Windows 真机（xian-rog / xian-pc / 客户机）上诊断 zenithjoy-agent / RPA / UIA 的通用通道与铁律，
-  跨业务线共用（第一个全局操作 skill，2026-07-10 skill 分层 P0 从 wechat-cs-troubleshooting 抽出）。
-  触发场景：SSH 连 Windows 够不到 GUI 窗口 / UIA 读不到 / 要在 session 1 跑诊断脚本 /
-  schtasks 交互令牌 / Windows 日志中文乱码 / GBK UTF-8 编码截断 / 真机截图取证 /
-  windows 真机诊断 / session 0 隔离。
-  业务线专属判据不在本 skill（Line04 微信客服见 wechat-cs-troubleshooting）。
-version: 1.0.0
+description: "诊断 Windows 真机 agent、GUI/UIA、Session 0 隔离、Session 1 任务、日志编码与截图取证。涉及 xian-rog、xian-pc 或客户机通道问题时使用；微信业务故障另查专用手册。"
+version: 1.0.1
 ---
 
 # Windows 真机诊断通道（跨线通用）
@@ -37,3 +31,12 @@ UIA 树的"点击是否生效/当前在哪个界面"结论**必须配真实截�
 ## 6. 注意
 - pywinauto 0.6.9 import 时会把进程 DPI awareness 0→2（per-monitor aware），诊断脚本与常驻 listener 坐标系一致，dpi=144 无错位——坐标"点不中"先怀疑没拉前台，不是 DPI。
 - 对自绘 UI（如微信 mmui）：`InvokePattern` 无效；PostMessage 合成点击对按钮类控件**不抢前台时无效**；真实点击 = `AttachThreadInput+SetForegroundWindow+BringWindowToTop` 拉前台 → `click_input()`。
+
+## 触发范围与原运行约束
+
+Windows 真机（xian-rog / xian-pc / 客户机）上诊断 zenithjoy-agent / RPA / UIA 的通用通道与铁律，
+跨业务线共用（第一个全局操作 skill，2026-07-10 skill 分层 P0 从 wechat-cs-troubleshooting 抽出）。
+触发场景：SSH 连 Windows 够不到 GUI 窗口 / UIA 读不到 / 要在 session 1 跑诊断脚本 /
+schtasks 交互令牌 / Windows 日志中文乱码 / GBK UTF-8 编码截断 / 真机截图取证 /
+windows 真机诊断 / session 0 隔离。
+业务线专属判据不在本 skill（Line04 微信客服见 wechat-cs-troubleshooting）。

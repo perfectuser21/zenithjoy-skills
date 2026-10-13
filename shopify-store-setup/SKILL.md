@@ -1,11 +1,6 @@
 ---
 name: shopify-store-setup
-description: |
-  Shopify 店铺级配置：扩 API 权限、开新国家市场、配语言与币种、验前台真显示
-  （✅ 2026-09-24 实测：xean5g-s8 从纯美国单市场 → 捷克市场 CZK/cs 上线）。
-  与 shopify-product-ops 的分界：那个改商品，这个改整店——爆炸半径差一个量级。
-  触发场景：Shopify 权限不够 / access denied scope / 开新国家 / 加语言 / 改币种 /
-  商品上架了但前台看不到 / 标价币种和客人看到的对不上。
+description: "配置 Shopify 店铺的 API 权限、国家市场、语言和币种，核验前台实际显示。用于扩权限、开市场、价格币种或语言不一致；单个商品编辑查 shopify-product-ops。"
 ---
 
 # Shopify 店铺配置
@@ -196,3 +191,11 @@ grep -oiE 'Přidat do košíku|Add to cart' /tmp/a.html   # 界面语言
 - 别只在后台点一次就认为配好了——**没抓前台等于没验**
 - 别把店铺配置和商品操作混在一起做：改错一个商品影响一个商品，改错市场影响全店
 - 别自动化扩权步骤
+
+## 触发范围与原运行约束
+
+Shopify 店铺级配置：扩 API 权限、开新国家市场、配语言与币种、验前台真显示
+（✅ 2026-09-24 实测：xean5g-s8 从纯美国单市场 → 捷克市场 CZK/cs 上线）。
+与 shopify-product-ops 的分界：那个改商品，这个改整店——爆炸半径差一个量级。
+触发场景：Shopify 权限不够 / access denied scope / 开新国家 / 加语言 / 改币种 /
+商品上架了但前台看不到 / 标价币种和客人看到的对不上。

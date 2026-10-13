@@ -23,9 +23,24 @@ fi
 # 标记本次 session（无论 Brain 是否在线，防止重复注入）
 touch "$SESSION_MARKER"
 
-# 查询活跃任务（Brain 离线则静默退出）
-TASKS_JSON=$(curl -s --max-time 2 "${BRAIN_URL}/api/brain/tasks?status=in_progress&limit=5" 2>/dev/null || echo "[]")
-QUEUED_JSON=$(curl -s --max-time 2 "${BRAIN_URL}/api/brain/tasks?status=queued&task_type=dev&limit=3" 2>/dev/null || echo "[]")
+# 三个独立只读查询共享一个等待窗口；Brain 离线时不串行等待多个超时。
+# 临时目录仅本进程可读，退出时删除，避免留下任务摘要。
+QUERY_DIR=$(mktemp -d "${TMPDIR:-/tmp}/cecelia-session-context.XXXXXX")
+trap 'rm -rf "$QUERY_DIR"' EXIT
+fetch_context() {
+    curl -s --max-time 2 "${BRAIN_URL}$1" > "$QUERY_DIR/$2" 2>/dev/null \
+        || printf '[]' > "$QUERY_DIR/$2"
+}
+fetch_context '/api/brain/tasks?status=in_progress&limit=5' tasks.json &
+TASKS_PID=$!
+fetch_context '/api/brain/tasks?status=queued&task_type=dev&limit=3' queued.json &
+QUEUED_PID=$!
+fetch_context '/api/brain/handoffs/pending-resume?limit=20' resume.json &
+RESUME_PID=$!
+wait "$TASKS_PID" "$QUEUED_PID" "$RESUME_PID"
+TASKS_JSON=$(cat "$QUERY_DIR/tasks.json")
+QUEUED_JSON=$(cat "$QUERY_DIR/queued.json")
+RESUME_JSON=$(cat "$QUERY_DIR/resume.json")
 
 # 检查是否获取到有效数据
 TASK_COUNT=$(echo "$TASKS_JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d))" 2>/dev/null || echo "0")
@@ -66,7 +81,7 @@ CONTEXT="## Brain 当前状态（自动注入）
 ${TASK_LINES}"
 
 # 有头续接「待续」（2026-10-11 决策）：上一棒 handoff 标 resume_headed 的条目不派发，挂在这里等有头会话接
-RESUME_LINE=$(curl -s --max-time 2 "${BRAIN_URL}/api/brain/handoffs/pending-resume?limit=20" 2>/dev/null | python3 -c "
+RESUME_LINE=$(printf '%s' "$RESUME_JSON" | python3 -c "
 import sys, json
 d = json.load(sys.stdin)
 p = d.get('pending', [])
