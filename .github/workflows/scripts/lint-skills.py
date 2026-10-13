@@ -27,6 +27,9 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from archived_skill_source import resolve_skill_source
+
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+([.-][0-9A-Za-z.-]+)?$")
 
 # 顶层目录里这些不是真实 skill，跳过
@@ -131,6 +134,10 @@ def collect_skills(root: Path) -> list[dict]:
     for child in sorted(root.iterdir()):
         if not is_skill_dir(child):
             continue
+        if not (child / "SKILL.md").is_file():
+            archived = resolve_skill_source(root, child.name + "/SKILL.md")
+            if archived.is_relative_to(root.resolve() / "_archive"):
+                continue  # 经退役清单与摘要验证的共用资源目录，不是缺失入口。
         skill_md = child / "SKILL.md"
         entry = {
             "dir": child.name,

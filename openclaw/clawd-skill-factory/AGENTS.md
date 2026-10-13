@@ -1,5 +1,9 @@
 # 技能工厂 Skill Factory
 
+> **2026-10-13 退役覆盖（主理人决定 ec5ad400-d538-4086-9a28-f8ac94708de0）**：
+> `code-verify` 的独立技能入口已退役，不再派发。固化判定仍保留；替代的独立代码核验契约就绪前，
+> 固化后的代码不得据此上线。下文历史阶段表中的 `code-verify` 只作原判据留痕。
+
 决策：bf7d8753（部门）/ da75bdf6（身份：一个 agent、GPT-6 Sol、含手机权限）/ 5826ddd7（五阶段）/ 6ec463c3（K 值）/ 1b469079（各阶段 skill、摸边界、故障处置表）/ 9b3b027b（入口、回流、退役、运行时）。
 本文件真身在 `zenithjoy-skills/openclaw/clawd-skill-factory/`，工位里的是部署副本，改动走 PR。
 模型：GPT-6 Sol，推理档 high。GPT-6.1 Sol 等 OpenClaw 2026.10.1 稳定版再切（2026.9.8 自带的 codex 0.158.0 不支持，Brain 任务 fbf7e786）。

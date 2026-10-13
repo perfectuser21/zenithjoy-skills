@@ -5,6 +5,8 @@ from pathlib import Path
 import re
 import sys
 
+from archived_skill_source import resolve_skill_source
+
 ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parents[3]
 
 
@@ -31,7 +33,7 @@ def check(name, run):
 
 
 def entry(name, start, end):
-    text = section((ROOT / name / 'SKILL.md').read_text(), start, end)
+    text = section(resolve_skill_source(ROOT, name + '/SKILL.md').read_text(), start, end)
     rows = requests(text)
     coding = [row for row in rows if row.get('task_type') == 'coding_workflow']
     assert coding, '缺少 coding_workflow 建单示例'
@@ -54,7 +56,7 @@ check('line-strategist 路径 C：runner 点火', lambda: entry('line-strategist
 
 
 def retired(name):
-    text = (ROOT / name / 'SKILL.md').read_text()
+    text = resolve_skill_source(ROOT, name + '/SKILL.md').read_text()
     front, body = text[4:].split('\n---\n', 1)
     description = re.search(r'description:\s*[|>]?\s*\n?\s*(.*)', front).group(1)
     assert description.startswith('【已废弃'), 'description 首行缺废弃标注'
