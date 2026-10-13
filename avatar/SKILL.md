@@ -1,12 +1,6 @@
 ---
 name: avatar
-description: |
-  AI 数字人口播视频制作 runbook + 全部踩坑结论。做"丢一张脸/一段视频 + 文案 → 出会说话的口播视频"产品时触发。
-  覆盖："AI 数字人 / 数字人 / ai avatar / ai shuziren / 数字人口播 / 数字人视频 / 口播视频 / 对口型 /
-  换脸 / 让照片说话 / talking head / LongCat / 龙猫 / 混元 Avatar / LatentSync / FaceFusion / DFL /
-  DeepFaceLab / OmniHuman / 即梦数字人 / CosyVoice 声音克隆 / 怎么做数字人 / 数字人怎么换脸 / 数字人成本"。
-  本 skill 给：① 路线对比与最终结论（哪条死、哪条活）② 三段式组合拳流水线 ③ 每个工具的可复现命令
-  ④ AutoDL/A800 部署运维坑（含计费教训）⑤ 成本实测。机器映射见 [[machines]]，凭据见 1Password CS。
+description: "制作 AI 数字人口播、对口型、换脸、照片说话或声音克隆视频；比较数字人路线和成本，并处理 LongCat、混元 Avatar、LatentSync、FaceFusion、CosyVoice 与 GPU 部署问题。"
 ---
 
 # AI 数字人口播 Runbook（2026-06 多日实测）
@@ -145,3 +139,12 @@ LongCat 是"生成"不是"编辑"，**换背景它做不了**。换背景用视�
 - ✅ 出动作(端到端生成)：LongCat @ A800
 - ✅ 换背景：RVM 抠像 @ xian-5060(CPU)
 - ✅ 声音克隆：CosyVoice @ 阿里云
+
+## 触发范围与原运行约束
+
+AI 数字人口播视频制作 runbook + 全部踩坑结论。做"丢一张脸/一段视频 + 文案 → 出会说话的口播视频"产品时触发。
+覆盖："AI 数字人 / 数字人 / ai avatar / ai shuziren / 数字人口播 / 数字人视频 / 口播视频 / 对口型 /
+换脸 / 让照片说话 / talking head / LongCat / 龙猫 / 混元 Avatar / LatentSync / FaceFusion / DFL /
+DeepFaceLab / OmniHuman / 即梦数字人 / CosyVoice 声音克隆 / 怎么做数字人 / 数字人怎么换脸 / 数字人成本"。
+本 skill 给：① 路线对比与最终结论（哪条死、哪条活）② 三段式组合拳流水线 ③ 每个工具的可复现命令
+④ AutoDL/A800 部署运维坑（含计费教训）⑤ 成本实测。机器映射见 [[machines]]，凭据见 1Password CS。

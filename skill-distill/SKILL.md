@@ -1,10 +1,6 @@
 ---
 name: skill-distill
-description: |
-  沉淀：把验证阶段连续通过 K 次的冻结整流程 skill vN，按探索摸到的边界拆成 activity 链，并产出给 Commander 的 wf-<能力> 陪跑 skill——先查重引用，再逐个 activity 写说明书和步骤 skill（每步 DoD、故障处置、成功判定、契约），声明拆完须重新连续通过 K 次。技能工厂五阶段（试跑→探索→验证→沉淀→固化）的第④步，决策 5826ddd7 / 1b469079。
-  触发：任务里写「阶段：沉淀」「使用 skill：skill-distill」、把这个跑稳的整流程拆成 activity、写成 skill。
-  与 Claude Code 的 skill-creator 关系：本 skill 是「写什么」的规范（两边通用）；skill-creator 负责 Claude Code 侧的评测与发布流程，其 ZenithJoy 规则引用本规范。
-  不适用：验证没达标的整流程 skill（不沉淀，只记坑）；验收已写好的 skill（用 contract-reviewer / skill-evaluator）。
+description: "把已核验通过的真实运行沉淀为 Skill 草稿：查重、分层、拆分、验收标准和契约。用于技能工厂沉淀阶段或把跑通经验写成 Skill；只交草稿，不发布，不沉淀未通过的运行。"
 ---
 
 > **语言规则：所有输出简体中文。**
@@ -243,3 +239,10 @@ description: |
 ## 契约
 ## 坑
 ```
+
+## 触发范围与原运行约束
+
+沉淀：把验证阶段连续通过 K 次的冻结整流程 skill vN，按探索摸到的边界拆成 activity 链，并产出给 Commander 的 wf-<能力> 陪跑 skill——先查重引用，再逐个 activity 写说明书和步骤 skill（每步 DoD、故障处置、成功判定、契约），声明拆完须重新连续通过 K 次。技能工厂五阶段（试跑→探索→验证→沉淀→固化）的第④步，决策 5826ddd7 / 1b469079。
+触发：任务里写「阶段：沉淀」「使用 skill：skill-distill」、把这个跑稳的整流程拆成 activity、写成 skill。
+与 Claude Code 的 skill-creator 关系：本 skill 是「写什么」的规范（两边通用）；skill-creator 负责 Claude Code 侧的评测与发布流程，其 ZenithJoy 规则引用本规范。
+不适用：验证没达标的整流程 skill（不沉淀，只记坑）；验收已写好的 skill（用 contract-reviewer / skill-evaluator）。

@@ -1,10 +1,6 @@
 ---
 name: android-publish
-description: 安卓真机多平台自动发布——公共底座（设备通道/素材下发/中文输入/内容安全铁律/通用验收法/各平台状态索引）。
-  各平台具体发布序列见独立 skill：android-douyin-publish / android-xiaohongshu-publish /
-  android-kuaishou-publish / android-toutiao-publish / android-weibo-publish / android-bilibili-publish。
-  触发场景：安卓端发布视频 / 手机发布 / android publish / 小龙虾发布任务 / agent-android 发布功能开发。
-  2026-08-30 首轮真机蹚路：抖音/小红书/快手/头条/微博 5 平台全链路验证通过（决策 9f297223，任务 e4fd8c69）。
+description: "安卓真机多平台发布公共底座：设备锁、素材传输、中文输入、内容安全和结果验收。用于手机发布及 agent-android 发布功能开发；平台操作序列查对应 android-平台-publish。"
 ---
 
 # 安卓真机多平台发布 · 公共底座
@@ -238,3 +234,7 @@ curl -s -X POST localhost:5221/api/brain/device-locks/release -H "Content-Type: 
 **辅助**：查占用 `GET localhost:5221/api/brain/device-locks`；新手机/换宿主幂等注册 `POST /api/brain/device-locks/register` body `{"device_name","host","device_type":"phone"}`。
 
 **铁律**：①锁按 serial 键，宿主机只是登记信息——寻机（`adb devices`）之后、动手之前抢锁；②一次只锁自己要用的那台，用几台锁几台；③长任务锁被人抢不走（持有任务 in_progress 期间过期也不可抢），但收工必须释放，别靠 TTL 兜底。
+
+## 触发范围与原运行约束
+
+安卓真机多平台自动发布——公共底座（设备通道/素材下发/中文输入/内容安全铁律/通用验收法/各平台状态索引）。 各平台具体发布序列见独立 skill：android-douyin-publish / android-xiaohongshu-publish / android-kuaishou-publish / android-toutiao-publish / android-weibo-publish / android-bilibili-publish。 触发场景：安卓端发布视频 / 手机发布 / android publish / 小龙虾发布任务 / agent-android 发布功能开发。 2026-08-30 首轮真机蹚路：抖音/小红书/快手/头条/微博 5 平台全链路验证通过（决策 9f297223，任务 e4fd8c69）。

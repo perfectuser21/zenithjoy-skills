@@ -1,6 +1,6 @@
 ---
 name: dashboard-deploy
-description: 部署 ZenithJoy 或 Cecelia 的 Dashboard 前端（含把单个页面/报表/HTML 视图放上 dashboard）。**只要用户提到部署、更新、上线、刷新 dashboard / 中控 / 前台 / 前端，哪怕随口说，都必须触发本 skill**。覆盖说法包括："部署 dashboard / 部署一下 dashboard / 更新一下 dashboard / 把前台部署上线 / 上线前端 / 部署前端 / 更新中控 / 推一下 ZD / 更新 Cecelia 前端 / 把这个改动上线 / deploy dashboard"，以及"dashboard 没更新 / 前端改了怎么上线 / 我改了页面怎么生效 / dashboard 挂了 / 中控打不开 / 网站打不开 / 502 / 页面打开自动回主页（回首页/被打回主页）"，还有"把这个页面/报表放到 dashboard 上 / 放到 perfect21:5211 / autopilot 上 / 做个页面让我能打开"。**用户口中的"dashboard""中控""前台""前端""ZD"在这里都指同一类 dashboard 部署任务，别因为没出现"部署"或"dashboard"原词就不触发。** **特别地：当用户说"dashboard / 设备页 / 某页面 改了 / 加了字段 / 加了内容，更新一下 / 让它生效 / 让它显示出来 / 上线"——这是要把已经改好的东西部署上去生效，必须触发本 skill；只有"新建 / 做一个 / 加一个组件 / 写个新功能 / 修 bug"这种还在写代码、没说要上线的才属于开发(走 /dev)、不触发。** ZenithJoy Dashboard 在 https://autopilot.zenjoymedia.media（HK VPS 公网）；Cecelia Dashboard 有两个实例（本机 perfect21:5211 + HK 生产），**必须走 Brain webhook 部署才能同时更新两个，手动 build 会漏掉 HK 生产实例**。两个都是 PWA，直接丢静态 .html 会被 service worker 打回主页。
+description: "部署或排障 ZenithJoy、Cecelia Dashboard，包括中控更新、已完成前端变更上线、单页挂载、502 和被打回首页。涉及部署、更新或刷新看板时使用；新功能开发走 dev。"
 ---
 
 # Dashboard 部署
@@ -152,3 +152,7 @@ ssh hk-vps 'curl -s localhost:5211/ | grep -oE "index-[A-Za-z0-9]+\.js"'
 ```
 
 更稳：**无头浏览器实际渲染验证**（playwright 在 `cecelia/frontend/node_modules`）——`chromium.launch()` → `goto(目标URL)` → 断言 `document.body.innerText` 含预期文字 + 截图。比口头让用户刷新可靠，能一锤定音区分"服务器问题"还是"用户浏览器 SW 缓存"。
+
+## 触发范围与原运行约束
+
+部署 ZenithJoy 或 Cecelia 的 Dashboard 前端（含把单个页面/报表/HTML 视图放上 dashboard）。**只要用户提到部署、更新、上线、刷新 dashboard / 中控 / 前台 / 前端，哪怕随口说，都必须触发本 skill**。覆盖说法包括："部署 dashboard / 部署一下 dashboard / 更新一下 dashboard / 把前台部署上线 / 上线前端 / 部署前端 / 更新中控 / 推一下 ZD / 更新 Cecelia 前端 / 把这个改动上线 / deploy dashboard"，以及"dashboard 没更新 / 前端改了怎么上线 / 我改了页面怎么生效 / dashboard 挂了 / 中控打不开 / 网站打不开 / 502 / 页面打开自动回主页（回首页/被打回主页）"，还有"把这个页面/报表放到 dashboard 上 / 放到 perfect21:5211 / autopilot 上 / 做个页面让我能打开"。**用户口中的"dashboard""中控""前台""前端""ZD"在这里都指同一类 dashboard 部署任务，别因为没出现"部署"或"dashboard"原词就不触发。** **特别地：当用户说"dashboard / 设备页 / 某页面 改了 / 加了字段 / 加了内容，更新一下 / 让它生效 / 让它显示出来 / 上线"——这是要把已经改好的东西部署上去生效，必须触发本 skill；只有"新建 / 做一个 / 加一个组件 / 写个新功能 / 修 bug"这种还在写代码、没说要上线的才属于开发(走 /dev)、不触发。** ZenithJoy Dashboard 在 https://autopilot.zenjoymedia.media（HK VPS 公网）；Cecelia Dashboard 有两个实例（本机 perfect21:5211 + HK 生产），**必须走 Brain webhook 部署才能同时更新两个，手动 build 会漏掉 HK 生产实例**。两个都是 PWA，直接丢静态 .html 会被 service worker 打回主页。

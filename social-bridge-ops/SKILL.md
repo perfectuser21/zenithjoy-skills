@@ -1,11 +1,6 @@
 ---
 name: social-bridge-ops
-description: |
-  ZenithJoy 社媒发布桥的内部机制与排障（zenithjoyai.com 上的 Pages Functions）：
-  为什么幂等必须 D1 不能 KV、TikTok token 如何自愈、健康探针为何会说谎、闸门语义。
-  与 social-publishing-operator 的分界：那个是"怎么调用桥"，这个是"桥内部怎么回事、坏了怎么修"。
-  触发场景：发布桥报错 / access_token_invalid / idempotency_store_not_configured /
-  重复发帖 / 幂等 / 发布闸 / TikTok token 过期 / 桥部署。
+description: "排查 ZenithJoy 社媒发布桥的幂等、D1/KV、TikTok token、自愈、健康探针和发布闸门问题。用于桥内部机制或故障；普通发布调用查发布操作手册。"
 ---
 
 # 社媒发布桥运维
@@ -130,3 +125,11 @@ POST /api/tiktok/status  { "publish_id": "…" }
 
 拿到平台 content id + permalink 才算 `Published`，否则记
 `Publish submitted / verification pending`。
+
+## 触发范围与原运行约束
+
+ZenithJoy 社媒发布桥的内部机制与排障（zenithjoyai.com 上的 Pages Functions）：
+为什么幂等必须 D1 不能 KV、TikTok token 如何自愈、健康探针为何会说谎、闸门语义。
+与 social-publishing-operator 的分界：那个是"怎么调用桥"，这个是"桥内部怎么回事、坏了怎么修"。
+触发场景：发布桥报错 / access_token_invalid / idempotency_store_not_configured /
+重复发帖 / 幂等 / 发布闸 / TikTok token 过期 / 桥部署。

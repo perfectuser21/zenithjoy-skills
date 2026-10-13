@@ -1,15 +1,7 @@
 ---
 name: wechat-cs-troubleshooting
-description: |
-  Line04 微信客服（个微 RPA）系统的当前状态 + 已知问题 catalog。任何排查"微信客服不回复 /
-  读不到会话 / 客服模块显示未安装 / 客户全是黑名单改不了 / 新装 agent 旧进程没杀 /
-  staging 看不到机器" 等问题时，先读本 skill —— 已解决速查表防重复诊断已知问题、
-  未解决清单防把不同根因的 bug 混在一起。
-  触发场景：微信客服不回复 / 客服 bot 没反应 / line04 / 客服模块未安装 / 读不到会话 /
-  sessions=0 / 全黑名单 / 接管开关改不了 / 客服页空白 / agent 多进程 / preflight 未通过 /
-  rog 微信客服 / Path 4 私域 AI 排障。
-  历史台账已全部迁至 Notion Notes（标题前缀 [Line04][台账]）；新教训写 Notes，不要写回本文件。
-version: 2.0.0
+description: "排查 Line04 微信客服不回复、读不到会话、模块未安装、全黑名单、接管失败、agent 多进程和 preflight 故障。先查已知问题；通用 Windows 真机诊断见 windows-agent-diagnostics。"
+version: 2.0.1
 ---
 
 # Line04 微信客服 — 排障操作手册
@@ -104,3 +96,14 @@ version: 2.0.0
 - skill `windows-agent-diagnostics`（Windows 真机通用诊断通道）｜ skill `wechat-uia-silent-send`（发送机制/禁止死路）
 - 主文档 `docs/line04-master.md`（zenithjoy repo）
 - memory `line04_wechat_uia_tree_collapse_rootcause_0629`（树塌真因最全）｜ `line04_wechat_cs_working_impl_0621`（跑通版 git 74654efd 完整实现）
+
+## 触发范围与原运行约束
+
+Line04 微信客服（个微 RPA）系统的当前状态 + 已知问题 catalog。任何排查"微信客服不回复 /
+读不到会话 / 客服模块显示未安装 / 客户全是黑名单改不了 / 新装 agent 旧进程没杀 /
+staging 看不到机器" 等问题时，先读本 skill —— 已解决速查表防重复诊断已知问题、
+未解决清单防把不同根因的 bug 混在一起。
+触发场景：微信客服不回复 / 客服 bot 没反应 / line04 / 客服模块未安装 / 读不到会话 /
+sessions=0 / 全黑名单 / 接管开关改不了 / 客服页空白 / agent 多进程 / preflight 未通过 /
+rog 微信客服 / Path 4 私域 AI 排障。
+历史台账已全部迁至 Notion Notes（标题前缀 [Line04][台账]）；新教训写 Notes，不要写回本文件。

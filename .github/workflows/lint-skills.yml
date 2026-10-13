@@ -68,6 +68,9 @@ jobs:
       - name: Regression — post-pr-create rewrite/* 豁免
         run: bash hooks/__tests__/post-pr-create-rewrite.test.sh
 
+      - name: Regression — session context 并行查询与每会话一次
+        run: python3 hooks/__tests__/test_session_start.py
+
       # janitor 回归守卫已随脚本迁往 cecelia 仓（决策 c14a3e6f，cecelia#4769/#4774），
       # 现由 cecelia CI 的 ops-tests-shell job 执行。
 

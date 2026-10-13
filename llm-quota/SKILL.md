@@ -1,12 +1,6 @@
 ---
 name: llm-quota
-description: |
-  LLM 账号用量查询 Skill。当用户问 "额度"、"用量"、"账号还有多少"、"查一下账号"、"5小时"、"7天"、"codex 额度"、"claude 额度"、"llm 额度"、"账号余额"、"召唤codex"、"token 状态"、"到期时间" 时自动触发。
-  - 2 个 Claude Code 有效账号：account1/2（account3 未充值，不派任务），credentials 在 ~/.claude-accountX/.credentials.json
-  - 5 个 Codex 账号：team1/2 在美国 Mac M4（本机），team3/4/5 在西安 Mac M4（ssh xian-m4）
-  - Claude Code API：api.anthropic.com/api/oauth/usage（5h / 7d all-models / 7d sonnet）
-  - Codex API：chatgpt.com/backend-api/wham/usage（5h primary / 7d secondary）
-  全局适用，所有项目共享。
+description: "查询 Claude Code、Codex、Grok 账号的额度、用量、余额、到期和登录可用性。用于账号用量检查、5小时或7天额度，以及 token 状态查询。"
 ---
 
 # LLM 账号用量总览
@@ -233,3 +227,12 @@ Claude Code token 由 `~/bin/refresh-claude-tokens.sh` 每 2 小时自动刷新�
 
 **⚠️ 禁止同步**：team1/2 和 team3/4/5 的 auth.json 绝不互相 scp/rsync。
 OpenAI 使用 rotating refresh token，同步会导致两台机器互相消耗 token，造成两边都失效的死循环。
+
+## 触发范围与原运行约束
+
+LLM 账号用量查询 Skill。当用户问 "额度"、"用量"、"账号还有多少"、"查一下账号"、"5小时"、"7天"、"codex 额度"、"claude 额度"、"llm 额度"、"账号余额"、"召唤codex"、"token 状态"、"到期时间" 时自动触发。
+- 2 个 Claude Code 有效账号：account1/2（account3 未充值，不派任务），credentials 在 ~/.claude-accountX/.credentials.json
+- 5 个 Codex 账号：team1/2 在美国 Mac M4（本机），team3/4/5 在西安 Mac M4（ssh xian-m4）
+- Claude Code API：api.anthropic.com/api/oauth/usage（5h / 7d all-models / 7d sonnet）
+- Codex API：chatgpt.com/backend-api/wham/usage（5h primary / 7d secondary）
+全局适用，所有项目共享。

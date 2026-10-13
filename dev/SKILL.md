@@ -1,26 +1,27 @@
 ---
 name: dev
-version: 21.14.0
-updated: 2026-10-12
-description: Phase-1没带--task-id先归位（POST /projects/locate判attach/create，一步建单拿task-id）→Phase0 --task-id立即claim防tick抢跑→Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→Phase2.5 GitHub撞车检查→比对已有Steps展示Golden Path草稿→确认前置工作全部到位（含GP锚点检查）→用户确认PrepPRD→路由执行（建worktree时经GP_ANCHOR env把锚机械写进.dev-mode）
+version: 21.14.1
+updated: 2026-10-13
+description: "执行代码开发、Bug 修复或功能改动，按改动范围选择开发路径，完成任务归位、验收与交接。用于 /dev 或明确开发任务；保留 task-id claim、变更隔离与现行部署验收规则。"
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
-  - 21.14.0: 建单计划显式提供 change_kind/map_scope_hint，curl 对齐 mutation_intent/repo_hint；未启用仓库无头建单会被 Brain 拒绝
-  - 21.13.0: 对齐 Cecelia #6356，路径 C 改建 coding_workflow，保留有头 /dev 账本及 claim；旧 Harness Pipeline 只供历史回溯
-  - 21.12.0: 路径 B 新增「B0 分档」（决策 896fb590 / 0dc6b84f，cecelia #6054~#6075）——cecelia 仓的小改动、能写出命令可验证的验收、不需要真机/外部账号 → Commander 不在会话里写代码，用 new-task.mjs 建开关任务交 MMV 上的 coding workflow runner（七步链 intent→spec→build→verify→chain_check→publish→report，CI 红自动修复，CI 绿自动合并）；大改拆成带 depends_on 的有序批次（挂 project）；不满足的照走原接力链
-  - 21.11.0: 新增 Phase -1「归位」（链 2afa6d69 棒3，任务 8a40825a）——没带 --task-id 时（用户在有头会话里随口说"去做 X"）先 POST /api/brain/projects/locate 判断该挂哪个现存 project（attach）还是该新建一个（create），拍板后用 POST /projects/:id/tasks 一步建单拿 task-id，再走 Phase 0 claim；带 --task-id 的（Brain headless 派发，project_id 已接好）跳过本节
-  - 21.10.0: GP锚定闭环刀6b——锚从口头声明变机械传递：worktree-manage.sh 建 .dev-mode 时写入 gp_anchor 行（调用方经 GP_ANCHOR env 传入 PrepPRD 拍板的锚）；branch-protect v31（cecelia#4450）起 .dev-mode 无合法 gp_anchor 会在首次 Write/Edit 被硬拦，headed 会话与 Brain 派发三变体（headless/headed-relay/kernel-v1，刀4 executor 闸）拦截口径对齐
-  - 21.9.0: GP锚定闭环刀3——步骤2核对前置工作表新增「GP 锚点」行（file-existence gated：product-map/generated/product-map.json 存在则查id存在性，不存在则跳过不阻塞第三方仓库如cecelia）；大功能PrepPRD模板加「GP-Anchor声明」段，与刀2 lint-gp-anchor.sh的三形态声明规范一致。让孤儿任务在PrepPRD阶段就死掉，不必烧完整个pipeline才死在CI
-  - 21.8.0: 判定点显性化进 /dev（九要素 T5 — decisions e035dad8）— 步骤 1 综合呈现从两流改三流（新增【判定点】流：逐条登记候选/所选/依据/误判后果，误判后果严重的升拍板点主动请教用户）；大功能 PrepPRD 模板加「判定点登记表」段；用户确认后路径 A/B 立即写 decisions category=judgment（保鲜守卫「判定点活性」指标数据源），路径 C 由 harness reviewer Step 5 从合同统一写库不重复；用户纠正的判定方法按 e035dad8 第④条走 Invariant Gate 升铁律
-  - 21.7.0: 新增 Phase 0「--task-id 立即 claim」（有头模式第一动作，PrepPRD/Phase1 之前）— 起因 2026-07-09 同一 task（f30dace8）被人工 /dev 流程和 Brain tick 自动派发同时抢跑，各自独立产出 PR #3665/#3663；根因是注册任务默认 queued+claimed_by=NULL，tick 每 2 分钟扫一次无主任务，不 claim 必被抢；这不是查重能防的问题（两边都还没开分支/PR，互相查不到），唯一防线是注册后立刻用现成的 POST /tasks/:id/claim 上锁
-  - 21.6.0: 新增 Phase 2.5「GitHub 撞车检查」（三路径共用，PrepPRD 前必做）— 起因 2026-07-09 同一 PRD 被 4 个并发 session 各自实现产出 4 个重复 PR；新增 gh pr list --search 查重步骤，查到接近可合并的同语义 PR 就认领而非重新实现，查到 stale/冲突/CI真失败的就先关旧 PR 再动手
-  - 21.5.0: 路径A/B 终态 handoff 说明（decisions cf998025）— engine-pr-watchdog 3.2.0 起，路径 A/B merge 后自动写 handoff（SSOT: tasks.result.handoff + 镜像 docs/handoffs/），无下一步写明「完成」；engine-ship 说明同步更新；无行为变更，仅文档对齐
-  - 21.4.0: 路径C点火 payload 补 orchestrator=skill-relay 硬性字段 — cecelia #3554（2026-07-05）起 Brain 硬校验 payload.orchestrator==='skill-relay'，缺失/非法直接 terminal failed（missing_orchestrator_flag），LangGraph 图不再隐式兜底
-  - 21.3.0: 新增「哨兵（回归守卫）死规矩」节（谁写/啥时候/写哪/CI闸门卡 + 失控程度越高守卫越重 + 一份代码两处用）；Bug PrepPRD 加 proven-to-fire 守卫指针与验收项
-  - 21.2.0: decision 写入加内联警告注释（禁止把 category 改成 type；type 被 Brain API 忽略）；清理旧 eval 目录混入
-  - 21.1.0: 步骤编号重排 — 步骤 0.5（对抗深挖）重命名为步骤 1，原步骤 1（前置工作核对）升为步骤 2，对齐逻辑顺序
-  - 21.0.0: 步骤 0.5 升级为 GAN 对抗 + 并行补全 — Phase 1 Proposer/Challenger 串行（最多 5 轮收敛），Phase 2 三路并行（Agent B 正确路径/C 错误路径/D NFR）；路径 A/B 快跑版（Phase 1 仅 1 轮 + Phase 2 仅 Agent C）
-  - 20.1.0: 链路审计修复 4 项 — target_environment 枚举补全为 6 种；PrepPRD Golden Path 改为单线性步骤序列；add-feature 脚本 vs Brain API 参数对照表
+  - "21.14.1: 精简发现描述，原触发细节移入按需读取正文；业务步骤与权限不变"
+  - "21.14.0: 建单计划显式提供 change_kind/map_scope_hint，curl 对齐 mutation_intent/repo_hint；未启用仓库无头建单会被 Brain 拒绝"
+  - "21.13.0: 对齐 Cecelia #6356，路径 C 改建 coding_workflow，保留有头 /dev 账本及 claim；旧 Harness Pipeline 只供历史回溯"
+  - "21.12.0: 路径 B 新增「B0 分档」（决策 896fb590 / 0dc6b84f，cecelia #6054~#6075）——cecelia 仓的小改动、能写出命令可验证的验收、不需要真机/外部账号 → Commander 不在会话里写代码，用 new-task.mjs 建开关任务交 MMV 上的 coding workflow runner（七步链 intent→spec→build→verify→chain_check→publish→report，CI 红自动修复，CI 绿自动合并）；大改拆成带 depends_on 的有序批次（挂 project）；不满足的照走原接力链"
+  - "21.11.0: 新增 Phase -1「归位」（链 2afa6d69 棒3，任务 8a40825a）——没带 --task-id 时（用户在有头会话里随口说\"去做 X\"）先 POST /api/brain/projects/locate 判断该挂哪个现存 project（attach）还是该新建一个（create），拍板后用 POST /projects/:id/tasks 一步建单拿 task-id，再走 Phase 0 claim；带 --task-id 的（Brain headless 派发，project_id 已接好）跳过本节"
+  - "21.10.0: GP锚定闭环刀6b——锚从口头声明变机械传递：worktree-manage.sh 建 .dev-mode 时写入 gp_anchor 行（调用方经 GP_ANCHOR env 传入 PrepPRD 拍板的锚）；branch-protect v31（cecelia#4450）起 .dev-mode 无合法 gp_anchor 会在首次 Write/Edit 被硬拦，headed 会话与 Brain 派发三变体（headless/headed-relay/kernel-v1，刀4 executor 闸）拦截口径对齐"
+  - "21.9.0: GP锚定闭环刀3——步骤2核对前置工作表新增「GP 锚点」行（file-existence gated：product-map/generated/product-map.json 存在则查id存在性，不存在则跳过不阻塞第三方仓库如cecelia）；大功能PrepPRD模板加「GP-Anchor声明」段，与刀2 lint-gp-anchor.sh的三形态声明规范一致。让孤儿任务在PrepPRD阶段就死掉，不必烧完整个pipeline才死在CI"
+  - "21.8.0: 判定点显性化进 /dev（九要素 T5 — decisions e035dad8）— 步骤 1 综合呈现从两流改三流（新增【判定点】流：逐条登记候选/所选/依据/误判后果，误判后果严重的升拍板点主动请教用户）；大功能 PrepPRD 模板加「判定点登记表」段；用户确认后路径 A/B 立即写 decisions category=judgment（保鲜守卫「判定点活性」指标数据源），路径 C 由 harness reviewer Step 5 从合同统一写库不重复；用户纠正的判定方法按 e035dad8 第④条走 Invariant Gate 升铁律"
+  - "21.7.0: 新增 Phase 0「--task-id 立即 claim」（有头模式第一动作，PrepPRD/Phase1 之前）— 起因 2026-07-09 同一 task（f30dace8）被人工 /dev 流程和 Brain tick 自动派发同时抢跑，各自独立产出 PR #3665/#3663；根因是注册任务默认 queued+claimed_by=NULL，tick 每 2 分钟扫一次无主任务，不 claim 必被抢；这不是查重能防的问题（两边都还没开分支/PR，互相查不到），唯一防线是注册后立刻用现成的 POST /tasks/:id/claim 上锁"
+  - "21.6.0: 新增 Phase 2.5「GitHub 撞车检查」（三路径共用，PrepPRD 前必做）— 起因 2026-07-09 同一 PRD 被 4 个并发 session 各自实现产出 4 个重复 PR；新增 gh pr list --search 查重步骤，查到接近可合并的同语义 PR 就认领而非重新实现，查到 stale/冲突/CI真失败的就先关旧 PR 再动手"
+  - "21.5.0: 路径A/B 终态 handoff 说明（decisions cf998025）— engine-pr-watchdog 3.2.0 起，路径 A/B merge 后自动写 handoff（SSOT: tasks.result.handoff + 镜像 docs/handoffs/），无下一步写明「完成」；engine-ship 说明同步更新；无行为变更，仅文档对齐"
+  - "21.4.0: 路径C点火 payload 补 orchestrator=skill-relay 硬性字段 — cecelia #3554（2026-07-05）起 Brain 硬校验 payload.orchestrator==='skill-relay'，缺失/非法直接 terminal failed（missing_orchestrator_flag），LangGraph 图不再隐式兜底"
+  - "21.3.0: 新增「哨兵（回归守卫）死规矩」节（谁写/啥时候/写哪/CI闸门卡 + 失控程度越高守卫越重 + 一份代码两处用）；Bug PrepPRD 加 proven-to-fire 守卫指针与验收项"
+  - "21.2.0: decision 写入加内联警告注释（禁止把 category 改成 type；type 被 Brain API 忽略）；清理旧 eval 目录混入"
+  - "21.1.0: 步骤编号重排 — 步骤 0.5（对抗深挖）重命名为步骤 1，原步骤 1（前置工作核对）升为步骤 2，对齐逻辑顺序"
+  - "21.0.0: 步骤 0.5 升级为 GAN 对抗 + 并行补全 — Phase 1 Proposer/Challenger 串行（最多 5 轮收敛），Phase 2 三路并行（Agent B 正确路径/C 错误路径/D NFR）；路径 A/B 快跑版（Phase 1 仅 1 轮 + Phase 2 仅 Agent C）"
+  - "20.1.0: 链路审计修复 4 项 — target_environment 枚举补全为 6 种；PrepPRD Golden Path 改为单线性步骤序列；add-feature 脚本 vs Brain API 参数对照表"
 ---
 
 > **CRITICAL LANGUAGE RULE**: 所有输出简体中文。
@@ -882,3 +883,7 @@ PRD 里的 Ability/Feature 必须来自 `journey_features` 表，引用 `feature
 | Key Results | `684c40c2-ba63-83a7-b6ba-8161f110a18c` |
 
 凭据：`source ~/.credentials/1password.env && export OP_SERVICE_ACCOUNT_TOKEN && NOTION_KEY=$(op item get "Notion" --vault CS --fields credential --reveal | tr -d '"')`
+
+## 触发范围与原运行约束
+
+Phase-1没带--task-id先归位（POST /projects/locate判attach/create，一步建单拿task-id）→Phase0 --task-id立即claim防tick抢跑→Phase1听懂意图→Phase2按路径按需查（路径A/B:3个curl，路径C:6个上下文源）→Phase2.5 GitHub撞车检查→比对已有Steps展示Golden Path草稿→确认前置工作全部到位（含GP锚点检查）→用户确认PrepPRD→路由执行（建worktree时经GP_ANCHOR env把锚机械写进.dev-mode）
