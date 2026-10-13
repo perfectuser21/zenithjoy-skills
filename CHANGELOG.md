@@ -523,3 +523,10 @@ Phase 0 之前新增 Phase -1，没带 --task-id 先 locate → attach 时一步
 **症状**: skill 改动时有人绕过 skill-creator 直接编辑文件，CHANGELOG 未更新，zenithjoy-skills 同步状态不一致
 **根因**: 缺少强制约束，AI 可以直接修改 skill 文件跳过流程
 **修改**: 加入 ZenithJoy 强制规则（所有改动必须经过 skill-creator）；Post-Creation 步骤新增 zenithjoy-skills 同步 + CHANGELOG 更新
+
+## 2026-10-13 主理人技能退役
+
+- 按 Notion 人工选择退役 79 个唯一技能（43 删除、36 待定）；待定本次明确表示现在不用。
+- 64 份仓库说明书移入 `_archive/2026-10-13/`；共用脚本、引用资源及未选中的 `solo-company-case` 保留。
+- Claude/Codex 安装入口、OpenClaw 启用配置与 Brain 台账同步退役；恢复以档案清单与现场备份为准。
+- 校验器通过路径和摘要校验读取档案，现行开发入口的合同检查继续执行。

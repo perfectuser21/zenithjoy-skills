@@ -41,7 +41,7 @@ fi
 # ── 契约 4：Controller 的 Run 写入必须只按 canonical run_id 精确命中 ──
 # 来源：cecelia convergence repair PR2。initiative_id 只用于聚合/创建，不能再作为
 # 中间进度、verdict、PR URL 或终态的 mutation key。
-CONTROLLER="harness-controller/SKILL.md"
+CONTROLLER=$(python3 .github/workflows/scripts/archived_skill_source.py harness-controller/SKILL.md)
 if grep -q 'HARNESS_RUN_ID' "$CONTROLLER"; then
   ok "$CONTROLLER 保存 canonical HARNESS_RUN_ID"
 else

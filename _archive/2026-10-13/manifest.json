@@ -1,0 +1,1526 @@
+{
+  "date": "2026-10-13",
+  "task_id": "7d4eba03-4d8e-4022-8298-59d34a194bcf",
+  "decision_id": "ec5ad400-d538-4086-9a28-f8ac94708de0",
+  "policy": "删除和待定均退役；只归档技能入口，现有脚本/引用资源及未选子技能保留。",
+  "selected": [
+    {
+      "name": "_smoke-test-skill",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381c780a0ee1b25d13afd",
+        "https://app.notion.com/3f7c40c2ba6380019050c918b1195bc3",
+        "https://app.notion.com/3f7c40c2ba638009b127f8cb86e8295e",
+        "https://app.notion.com/3f7c40c2ba63800c80e0fe5ffa4a2265",
+        "https://app.notion.com/3f7c40c2ba63800db636fe86ee92f2b0",
+        "https://app.notion.com/3f7c40c2ba63800db761f19f43daa6a4",
+        "https://app.notion.com/3f7c40c2ba63800db91feb88ec9761bd",
+        "https://app.notion.com/3f7c40c2ba63800eace7c8c996c8a234",
+        "https://app.notion.com/3f7c40c2ba63801bb4f6d03eecc830e5",
+        "https://app.notion.com/3f7c40c2ba63801d997dd122eab2060a",
+        "https://app.notion.com/3f7c40c2ba63801db7c2e91400ef0f25",
+        "https://app.notion.com/3f7c40c2ba638020a466daae3ae051e6",
+        "https://app.notion.com/3f7c40c2ba6380269604c955c783c0a7",
+        "https://app.notion.com/3f7c40c2ba638027a053ed2608e52639",
+        "https://app.notion.com/3f7c40c2ba638034969cfe26f042fcd0",
+        "https://app.notion.com/3f7c40c2ba638034bc55d798bc25c992",
+        "https://app.notion.com/3f7c40c2ba63803b98c8d59c79868a2b",
+        "https://app.notion.com/3f7c40c2ba63803eaf2af5705e265005",
+        "https://app.notion.com/3f7c40c2ba63803eb49ff5670101a63d",
+        "https://app.notion.com/3f7c40c2ba638045b146f1ef7c9125c8",
+        "https://app.notion.com/3f7c40c2ba63804ca5efe2accae30da9",
+        "https://app.notion.com/3f7c40c2ba63804eb180ca8d99d98457",
+        "https://app.notion.com/3f7c40c2ba6380518af0f6fe89d22a7c",
+        "https://app.notion.com/3f7c40c2ba63805aa1c6df7aa8cbe38a",
+        "https://app.notion.com/3f7c40c2ba63805fbb65d983d2d7d59b",
+        "https://app.notion.com/3f7c40c2ba6380609b46df16b3046deb",
+        "https://app.notion.com/3f7c40c2ba63806380deedfee24cd2a1",
+        "https://app.notion.com/3f7c40c2ba638063a0d0cfdb30718def",
+        "https://app.notion.com/3f7c40c2ba63806a9ed6e216a5a46875",
+        "https://app.notion.com/3f7c40c2ba6380718fe3c7f7cc383740",
+        "https://app.notion.com/3f7c40c2ba638073829fd35af6c84fc8",
+        "https://app.notion.com/3f7c40c2ba638081b93dc5486f5736c9",
+        "https://app.notion.com/3f7c40c2ba6380839cf2cd7a64dbb49f",
+        "https://app.notion.com/3f7c40c2ba638083bc05c1b741ae0241",
+        "https://app.notion.com/3f7c40c2ba6380858dfad7ef6b18e8e4",
+        "https://app.notion.com/3f7c40c2ba6380868f8eecc11f53de15",
+        "https://app.notion.com/3f7c40c2ba638089897ecbbc1e92fcca",
+        "https://app.notion.com/3f7c40c2ba638091b610e70553bb0c12",
+        "https://app.notion.com/3f7c40c2ba63809587a8c4d53e6704d8",
+        "https://app.notion.com/3f7c40c2ba638095b52cfa99880aa62b",
+        "https://app.notion.com/3f7c40c2ba6380a1bb97e99e6299fac6",
+        "https://app.notion.com/3f7c40c2ba6380a2bd3ed64bc5b5aaf4",
+        "https://app.notion.com/3f7c40c2ba6380a390c4d805f3476c07",
+        "https://app.notion.com/3f7c40c2ba6380a7ab12ee42fe1aa4eb",
+        "https://app.notion.com/3f7c40c2ba6380ae9994f86b034983db",
+        "https://app.notion.com/3f7c40c2ba6380aea946ed219d80dfa3",
+        "https://app.notion.com/3f7c40c2ba6380b592c0d0af1c38bca3",
+        "https://app.notion.com/3f7c40c2ba6380b9b60adc53aa28d107",
+        "https://app.notion.com/3f7c40c2ba6380c282d7d6537d7ac5bf",
+        "https://app.notion.com/3f7c40c2ba6380c284dfd00b3c80c7c6",
+        "https://app.notion.com/3f7c40c2ba6380c28ac1d6dda902ed66",
+        "https://app.notion.com/3f7c40c2ba6380c6a420e76127cb5b13",
+        "https://app.notion.com/3f7c40c2ba6380db9a6bdeb7b1e67d47",
+        "https://app.notion.com/3f7c40c2ba6380dba45ced4ea153f587",
+        "https://app.notion.com/3f7c40c2ba6380dca778fbf270cfede1",
+        "https://app.notion.com/3f7c40c2ba6380dcbdb5d7ad2171595a",
+        "https://app.notion.com/3f7c40c2ba6380e09dd0cd2e1287fd00",
+        "https://app.notion.com/3f7c40c2ba6380e0a675fedeec72eab9",
+        "https://app.notion.com/3f7c40c2ba6380e18562d028b0c96305",
+        "https://app.notion.com/3f7c40c2ba6380e38e60d551b8964be7",
+        "https://app.notion.com/3f7c40c2ba6380fb8151e93ea49d8cc5",
+        "https://app.notion.com/3f7c40c2ba6380fbab7cd9ee3af52698",
+        "https://app.notion.com/3f7c40c2ba6380fbb895ead39aade1a6",
+        "https://app.notion.com/3f7c40c2ba6380fcbf7ac96ae6129c72"
+      ],
+      "sourcePaths": [],
+      "agents": []
+    },
+    {
+      "name": "arch-review",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381ac9ae5e24e1a767bb2"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/arch-review/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "architect",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381ad85b7e55187bf5ff8"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/architect/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "assurance",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba638109a6d8eb13bd2dc522"
+      ],
+      "sourcePaths": [],
+      "agents": []
+    },
+    {
+      "name": "audit",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381aa94cdfefe1205de4a"
+      ],
+      "sourcePaths": [],
+      "agents": []
+    },
+    {
+      "name": "autumnrice",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381dcbc94dc58c683a041"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/autumnrice/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "batch-luxury-card-generator",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63817eba2ced58ff5d0cba"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/batch-luxury-card-generator/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "batch-notion-analyzer",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381259d66effa7c96c6d7"
+      ],
+      "sourcePaths": [],
+      "agents": []
+    },
+    {
+      "name": "brainstorming",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba638112af36e9d776b99f13"
+      ],
+      "sourcePaths": [
+        "~/.agents/skills/superpowers/brainstorming/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "canvas-project",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381b7af06f172add7bb23"
+      ],
+      "sourcePaths": [],
+      "agents": []
+    },
+    {
+      "name": "capability-controller",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381d39fc5fec3a1bff69c"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/capability-controller/SKILL.md"
+      ],
+      "agents": [
+        "[\"main\"]"
+      ]
+    },
+    {
+      "name": "capability-mapper",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63816d93a1e76932a88458"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/capability-mapper/SKILL.md"
+      ],
+      "agents": [
+        "[\"main\"]"
+      ]
+    },
+    {
+      "name": "capability-proposer",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63814e89f1e9b88562fd55"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/capability-proposer/SKILL.md"
+      ],
+      "agents": [
+        "[\"main\"]"
+      ]
+    },
+    {
+      "name": "capability-reviewer",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381b685a4e24937d258bf"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/capability-reviewer/SKILL.md"
+      ],
+      "agents": [
+        "[\"main\"]"
+      ]
+    },
+    {
+      "name": "cecelia",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63811091bbf24f4f973d8a"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/cecelia/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "cecelia-brain",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381c18416c2a5ac1f85b2"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/cecelia-brain/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "cecelia-harness-debug",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381408fdfffe9a9dd1bd7"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/cecelia-harness-debug/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "chrome",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381e9a8acfa6bdf5588e5"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/chrome/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "ci-patrol",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba638125938cf6cb7353022c"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/ci-patrol/SKILL.md"
+      ],
+      "agents": [
+        "[\"main\"]"
+      ]
+    },
+    {
+      "name": "code-review",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63817b8481de5131385205"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/code-review/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "code-review-gate",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63816d95f9e01689429dc5"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/code-review-gate/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "code-verify",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3f3c40c2ba63817c9f6bd7710745b568"
+      ],
+      "sourcePaths": [
+        "~/openclaw-root/workspaces-root/clawd/skills/code-verify/SKILL.md"
+      ],
+      "agents": [
+        "[\"main\",\"skill-factory\"]"
+      ]
+    },
+    {
+      "name": "codex-login",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba638164a400feed4cda6282"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/codex-login/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "coding-cleanup",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381e8b9b6feca5df8000f"
+      ],
+      "sourcePaths": [
+        "~/openclaw-root/workspaces-root/clawd-dev/skills/coding-cleanup/SKILL.md"
+      ],
+      "agents": [
+        "[\"dev\"]"
+      ]
+    },
+    {
+      "name": "coding-contract",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381efa62ff75d7f701e2a"
+      ],
+      "sourcePaths": [
+        "~/openclaw-root/workspaces-root/clawd-dev/skills/coding-contract/SKILL.md"
+      ],
+      "agents": [
+        "[\"dev\"]"
+      ]
+    },
+    {
+      "name": "coding-evaluator",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381e9b126d10c05d274de"
+      ],
+      "sourcePaths": [
+        "~/openclaw-root/workspaces-root/clawd-dev/skills/coding-evaluator/SKILL.md"
+      ],
+      "agents": [
+        "[\"dev\"]"
+      ]
+    },
+    {
+      "name": "coding-generator",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63813f8525f8d38bfba057"
+      ],
+      "sourcePaths": [
+        "~/openclaw-root/workspaces-root/clawd-dev/skills/coding-generator/SKILL.md"
+      ],
+      "agents": [
+        "[\"dev\"]"
+      ]
+    },
+    {
+      "name": "coding-judge",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63816399b0ec9dc5d3637c"
+      ],
+      "sourcePaths": [
+        "~/openclaw-root/workspaces-root/clawd-dev/skills/coding-judge/SKILL.md"
+      ],
+      "agents": [
+        "[\"dev\"]"
+      ]
+    },
+    {
+      "name": "coding-merger",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381288b40f915c4348ffc"
+      ],
+      "sourcePaths": [
+        "~/openclaw-root/workspaces-root/clawd-dev/skills/coding-merger/SKILL.md"
+      ],
+      "agents": [
+        "[\"dev\"]"
+      ]
+    },
+    {
+      "name": "coding-planner",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63813eb172f847ccd02121"
+      ],
+      "sourcePaths": [
+        "~/openclaw-root/workspaces-root/clawd-dev/skills/coding-planner/SKILL.md"
+      ],
+      "agents": [
+        "[\"dev\"]"
+      ]
+    },
+    {
+      "name": "coding-publisher",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63812189e8f5d277ffced9"
+      ],
+      "sourcePaths": [
+        "~/openclaw-root/workspaces-root/clawd-dev/skills/coding-publisher/SKILL.md"
+      ],
+      "agents": [
+        "[\"dev\"]"
+      ]
+    },
+    {
+      "name": "coding-seal",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba638151a6faef194426a787"
+      ],
+      "sourcePaths": [
+        "~/openclaw-root/workspaces-root/clawd-dev/skills/coding-seal/SKILL.md"
+      ],
+      "agents": [
+        "[\"dev\"]"
+      ]
+    },
+    {
+      "name": "coding-workflow",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba638187b98ecb55ee3597c3"
+      ],
+      "sourcePaths": [
+        "~/openclaw-root/workspaces-root/clawd-work-commander/skills/_retired-20260930/coding-workflow/SKILL.md"
+      ],
+      "agents": [
+        "[\"work-commander\"]"
+      ]
+    },
+    {
+      "name": "creator",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63813896ded02a47465452"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/creator/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "dashboard-debug",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381488016c13ac9c083f5"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/dashboard-debug/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "decomp",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381daa905cd6634c9c93b"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/decomp/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "decomp-check",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381afaf73cffb487a49bc"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/decomp-check/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "explore",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63818e93e2f969040a02ad"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/explore/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "frontend-design",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba638122a758d8732989f23e"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/frontend-design/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "harness-contract-proposer",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381a8a563f38189cd6fa3"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/harness-contract-proposer/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "harness-contract-reviewer",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381d4b33cc983a1e26737"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/harness-contract-reviewer/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "harness-controller",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba638196be02ffaa69e9891b"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/harness-controller/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "harness-evaluator",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381a2a3def82405d68291"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/harness-evaluator/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "harness-generator",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381e7b284d7ba55bc9bc4"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/harness-generator/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "harness-planner",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381a1a748ea03b44e71a3"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/harness-planner/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "harness-report",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba638147a7cef8f3b7190c76"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/harness-report/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "html-deck",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381d48118cced397c8636"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/html-deck/SKILL.md"
+      ],
+      "agents": [
+        "[\"main\"]"
+      ]
+    },
+    {
+      "name": "knowledge",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381a08026e896ae5913b9"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/knowledge/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "kuaishou-publisher",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381949ccbc22818f7f4dd"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/kuaishou-publisher/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "librarian",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba638152be20c0bf8d416e03"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/librarian/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "line-strategist",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381fba2e0d9180100882c"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/line-strategist/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "llm-benchmark",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63816689f2c64369c3867d"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/llm-benchmark/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "luxury-card-generator",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381dba6f4c147765984b3"
+      ],
+      "sourcePaths": [],
+      "agents": []
+    },
+    {
+      "name": "opc-card-callback-router",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba638167b20ada964e177a0a"
+      ],
+      "sourcePaths": [
+        "~/openclaw-root/workspaces-root/clawd/skills/opc-card-callback-router/SKILL.md"
+      ],
+      "agents": [
+        "[\"main\"]"
+      ]
+    },
+    {
+      "name": "opc-workflow-card",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381a6bcd3edd7476e0dee"
+      ],
+      "sourcePaths": [
+        "~/openclaw-root/workspaces-root/clawd/skills/opc-workflow-card/SKILL.md"
+      ],
+      "agents": [
+        "[\"main\"]"
+      ]
+    },
+    {
+      "name": "pipeline-export",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381dc9298d9bbb1f223f7"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/pipeline-export/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "pipeline-generate",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381988c29d23dca07b4c1"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/pipeline-generate/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "pipeline-persondata",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63815092cfde5196663827"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/pipeline-persondata/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "pipeline-run",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381199d52e9d93c018d30"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/pipeline-run/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "plan",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63815fa13adf0e2dbe56f2"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/plan/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "platform-scraper",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381fea39dfc5ba06aace5"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/platform-scraper/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "quote-card-generator",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381a39d32c3c265fa922f"
+      ],
+      "sourcePaths": [],
+      "agents": []
+    },
+    {
+      "name": "repo-audit",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381c2b8ecf243a0a2fbf5"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/repo-audit/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "repo-visualizer",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381bc9066d3164dbd1a7d"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/repo-visualizer/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "research",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381f8b0f7c774d9b0e124"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/research/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "share-card",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381299d7ccd1628a86dfe"
+      ],
+      "sourcePaths": [],
+      "agents": []
+    },
+    {
+      "name": "subagent-driven-development",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63815fbd68f7fd8bd378c5"
+      ],
+      "sourcePaths": [
+        "~/.agents/skills/superpowers/subagent-driven-development/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "systematic-debugging",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba638106a5a1ec43b00bea6b"
+      ],
+      "sourcePaths": [
+        "~/.agents/skills/superpowers/systematic-debugging/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "talk",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63816fb854f0182196a82b"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/talk/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "task-progress-card",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381e4891aff7274bdf457"
+      ],
+      "sourcePaths": [
+        "~/openclaw-root/workspaces-root/clawd/skills/task-progress-card/SKILL.md"
+      ],
+      "agents": [
+        "[\"main\"]"
+      ]
+    },
+    {
+      "name": "taskflow-bitable",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3eac40c2ba6381f29e75d378470a3d70"
+      ],
+      "sourcePaths": [
+        "~/.openclaw/skills/taskflow-bitable/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "taskflow-router",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba638122b098fa05a75eadb3"
+      ],
+      "sourcePaths": [
+        "~/openclaw-root/workspaces-root/clawd/skills/taskflow-router/SKILL.md"
+      ],
+      "agents": [
+        "[\"main\"]"
+      ]
+    },
+    {
+      "name": "toutiao-publisher",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63815ebbfeec783d296f12"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/toutiao-publisher/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "trading-agent",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba63810d8598c734a6d5985e"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/trading-agent/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "triage-officer",
+      "choices": [
+        "待定"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381efbbd4e62df4dbdbdb"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/triage-officer/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "writing-plans",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba638161b44df7b16a3e33a6"
+      ],
+      "sourcePaths": [
+        "~/.agents/skills/superpowers/writing-plans/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "writing-skills",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381bba177ce89102fb5e6"
+      ],
+      "sourcePaths": [
+        "~/.agents/skills/superpowers/writing-skills/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "xiaohongshu-publisher",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3ddc40c2ba6381219e7dfb6af4c2bb44"
+      ],
+      "sourcePaths": [
+        "~/perfect21/zenithjoy-skills/xiaohongshu-publisher/SKILL.md"
+      ],
+      "agents": []
+    },
+    {
+      "name": "zj-skill-creator",
+      "choices": [
+        "删除"
+      ],
+      "pages": [
+        "https://app.notion.com/3f5c40c2ba63812fa5ccf14a71e84c64"
+      ],
+      "sourcePaths": [
+        "~/.agents/skills/zj-skill-creator/SKILL.md"
+      ],
+      "agents": []
+    }
+  ],
+  "entries": [
+    {
+      "name": "arch-review",
+      "original_path": "arch-review/SKILL.md",
+      "archive_path": "_archive/2026-10-13/arch-review/SKILL.md",
+      "sha256": "255a9c766bd82f3676367ae90783c174f5e94066f06cd3ce5d7963341198b428"
+    },
+    {
+      "name": "architect",
+      "original_path": "architect/SKILL.md",
+      "archive_path": "_archive/2026-10-13/architect/SKILL.md",
+      "sha256": "f6ada34c56565f8c7dc7f5c94160dfefe580090b645bd7ca801f745c00594aa0"
+    },
+    {
+      "name": "autumnrice",
+      "original_path": "autumnrice/SKILL.md",
+      "archive_path": "_archive/2026-10-13/autumnrice/SKILL.md",
+      "sha256": "7a12426bb9bfe2c4a97b8a1c919e314b284d323942a37903845580e51f0b75ee"
+    },
+    {
+      "name": "batch-luxury-card-generator",
+      "original_path": "batch-luxury-card-generator/SKILL.md",
+      "archive_path": "_archive/2026-10-13/batch-luxury-card-generator/SKILL.md",
+      "sha256": "959aa1b49ea23671c6dbc231a37a2fef256d2dab076e5a1be864d8b6420db49e"
+    },
+    {
+      "name": "capability-controller",
+      "original_path": "capability-controller/SKILL.md",
+      "archive_path": "_archive/2026-10-13/capability-controller/SKILL.md",
+      "sha256": "10fb3cc24bc5f4315ea9e9d5c57c9898d7c5a15fd3b3322c67f79a70bbaad350"
+    },
+    {
+      "name": "capability-mapper",
+      "original_path": "capability-mapper/SKILL.md",
+      "archive_path": "_archive/2026-10-13/capability-mapper/SKILL.md",
+      "sha256": "abb116f301750b6e89df796feaf3335dff42c3bcd556e3f12b39ad8a01b6ab0b"
+    },
+    {
+      "name": "capability-proposer",
+      "original_path": "capability-proposer/SKILL.md",
+      "archive_path": "_archive/2026-10-13/capability-proposer/SKILL.md",
+      "sha256": "2a5f02ea0c66ef5b20cd69ab39f2083928c819989bc4b43813fe952c649439af"
+    },
+    {
+      "name": "capability-reviewer",
+      "original_path": "capability-reviewer/SKILL.md",
+      "archive_path": "_archive/2026-10-13/capability-reviewer/SKILL.md",
+      "sha256": "53dc470060cb056b300285a27a1575ecbadc4d8caf2a6b014378b5bbad7cfe48"
+    },
+    {
+      "name": "cecelia-brain",
+      "original_path": "cecelia-brain/SKILL.md",
+      "archive_path": "_archive/2026-10-13/cecelia-brain/SKILL.md",
+      "sha256": "af5d1442c015f0330a4ca286c76cbd062522b409a019ff367d7fe203f84b9fe0"
+    },
+    {
+      "name": "cecelia-harness-debug",
+      "original_path": "cecelia-harness-debug/SKILL.md",
+      "archive_path": "_archive/2026-10-13/cecelia-harness-debug/SKILL.md",
+      "sha256": "481cfeff55557234ed998762a013c25ee3929c82adb2271902db5d060517ea37"
+    },
+    {
+      "name": "cecelia",
+      "original_path": "cecelia/SKILL.md",
+      "archive_path": "_archive/2026-10-13/cecelia/SKILL.md",
+      "sha256": "1377ae95d76ccd42281a1938c3686cba6e411f9ba0d300f75d26db26cdea5b61"
+    },
+    {
+      "name": "chrome",
+      "original_path": "chrome/SKILL.md",
+      "archive_path": "_archive/2026-10-13/chrome/SKILL.md",
+      "sha256": "f18a468086dfe23c82b76db35b1164279534e31cc9a2c8e08c59d77ca013f69a"
+    },
+    {
+      "name": "ci-patrol",
+      "original_path": "ci-patrol/SKILL.md",
+      "archive_path": "_archive/2026-10-13/ci-patrol/SKILL.md",
+      "sha256": "b2987c91cb4b863537da1e12e7ad891f6cb01bf607fb86e7ee7410fa294f17cc"
+    },
+    {
+      "name": "code-review-gate",
+      "original_path": "code-review-gate/SKILL.md",
+      "archive_path": "_archive/2026-10-13/code-review-gate/SKILL.md",
+      "sha256": "e1d13b4dfdff3d9d4201abd9d26cd504b3fae5599395148a8ad6adf875e05c28"
+    },
+    {
+      "name": "code-review",
+      "original_path": "code-review/SKILL.md",
+      "archive_path": "_archive/2026-10-13/code-review/SKILL.md",
+      "sha256": "f058508c490ddca8499d4d831eaa5d5d48a3d28b2cfd3c1b34d2d257c2fcb945"
+    },
+    {
+      "name": "code-verify",
+      "original_path": "code-verify/SKILL.md",
+      "archive_path": "_archive/2026-10-13/code-verify/SKILL.md",
+      "sha256": "71238ca0cee7dc5fd2f159c26e564bd3f5d7f30aa450cdc08ca790f5f9253b6c"
+    },
+    {
+      "name": "codex-login",
+      "original_path": "codex-login/SKILL.md",
+      "archive_path": "_archive/2026-10-13/codex-login/SKILL.md",
+      "sha256": "4728c9305ecd92d5f77a2f5cb67f8ce49e927319cd8db03d8c5b7b9343ee248b"
+    },
+    {
+      "name": "creator",
+      "original_path": "creator/SKILL.md",
+      "archive_path": "_archive/2026-10-13/creator/SKILL.md",
+      "sha256": "e979031163812c02acec6348c4674858e41688b8f3acacf595164dae96bec946"
+    },
+    {
+      "name": "dashboard-debug",
+      "original_path": "dashboard-debug/SKILL.md",
+      "archive_path": "_archive/2026-10-13/dashboard-debug/SKILL.md",
+      "sha256": "fac6d4239cdf389cfaf6bf9d7784cc3bc4dc030be959035cadbff0d98c4a91dd"
+    },
+    {
+      "name": "decomp-check",
+      "original_path": "decomp-check/SKILL.md",
+      "archive_path": "_archive/2026-10-13/decomp-check/SKILL.md",
+      "sha256": "097a0b97ac0c9e17a34af72ea7f1e306b34789d73164fd0e1c846d0b7689819c"
+    },
+    {
+      "name": "decomp",
+      "original_path": "decomp/SKILL.md",
+      "archive_path": "_archive/2026-10-13/decomp/SKILL.md",
+      "sha256": "bdcd4ef8587ce7a8ee8050c80f3f933e575fb6515c8260ac136c1da06b4b8ef7"
+    },
+    {
+      "name": "explore",
+      "original_path": "explore/SKILL.md",
+      "archive_path": "_archive/2026-10-13/explore/SKILL.md",
+      "sha256": "f8f457b2a2c360d8d173bf120c92fa769048a8b56812a1d8d0fa70b0d03c5882"
+    },
+    {
+      "name": "frontend-design",
+      "original_path": "frontend-design/SKILL.md",
+      "archive_path": "_archive/2026-10-13/frontend-design/SKILL.md",
+      "sha256": "05eeb09d47a1475cf9299aa96e9ccfdb98ebe881121cb79a9c41332b3e2121d6"
+    },
+    {
+      "name": "harness-contract-proposer",
+      "original_path": "harness-contract-proposer/SKILL.md",
+      "archive_path": "_archive/2026-10-13/harness-contract-proposer/SKILL.md",
+      "sha256": "7886fbce5ad3ea39ac621654bb9c36eb25a188a3d44fdfd1f105b70e2687d6f4"
+    },
+    {
+      "name": "harness-contract-reviewer",
+      "original_path": "harness-contract-reviewer/SKILL.md",
+      "archive_path": "_archive/2026-10-13/harness-contract-reviewer/SKILL.md",
+      "sha256": "46595aea532b46761d621b5cd7119b2cb8c6efad3464713def0a6773611c5fbd"
+    },
+    {
+      "name": "harness-controller",
+      "original_path": "harness-controller/SKILL.md",
+      "archive_path": "_archive/2026-10-13/harness-controller/SKILL.md",
+      "sha256": "64fbfe4a12e15a6b5260386308e40ff3ea6f0f70da62e0f7ab1e110b6c79e171"
+    },
+    {
+      "name": "harness-evaluator",
+      "original_path": "harness-evaluator/SKILL.md",
+      "archive_path": "_archive/2026-10-13/harness-evaluator/SKILL.md",
+      "sha256": "193e0c69a3443363d6db23bb7a6b0d1cdb66ec8f8aa7dc53a55e969c689b548a"
+    },
+    {
+      "name": "harness-generator",
+      "original_path": "harness-generator/SKILL.md",
+      "archive_path": "_archive/2026-10-13/harness-generator/SKILL.md",
+      "sha256": "eef5ef533ee4445b795160eca4496445acea7e33f28bebf210ad8ce1137833c6"
+    },
+    {
+      "name": "harness-planner",
+      "original_path": "harness-planner/SKILL.md",
+      "archive_path": "_archive/2026-10-13/harness-planner/SKILL.md",
+      "sha256": "bb6cd8f98fbf1e2706d95178290f28d7df9a87f47a7435287595a0c37fe22e3d"
+    },
+    {
+      "name": "harness-report",
+      "original_path": "harness-report/SKILL.md",
+      "archive_path": "_archive/2026-10-13/harness-report/SKILL.md",
+      "sha256": "37c685a2ff18b750bb7c1ab09644d0b95b8e764491811468a23ba5c6f8e4a106"
+    },
+    {
+      "name": "html-deck",
+      "original_path": "html-deck/SKILL.md",
+      "archive_path": "_archive/2026-10-13/html-deck/SKILL.md",
+      "sha256": "13186d52a9ed66eadb3f9130c32c295f154b45da0fcf3625bb9fb6121c659671"
+    },
+    {
+      "name": "knowledge",
+      "original_path": "knowledge/SKILL.md",
+      "archive_path": "_archive/2026-10-13/knowledge/SKILL.md",
+      "sha256": "1c167d813935803762361b9dca9af957c60c18d22b7b156a43d4105d32d8fdf0"
+    },
+    {
+      "name": "kuaishou-publisher",
+      "original_path": "kuaishou-publisher/SKILL.md",
+      "archive_path": "_archive/2026-10-13/kuaishou-publisher/SKILL.md",
+      "sha256": "e9d1da1da477648730e745e622037b4cebed73433dc36a9dc91cfe2525141358"
+    },
+    {
+      "name": "librarian",
+      "original_path": "librarian/SKILL.md",
+      "archive_path": "_archive/2026-10-13/librarian/SKILL.md",
+      "sha256": "69e1b692f4ea346284fbfa1f98f6dd00474e6c83bfb086be177f2a626def4209"
+    },
+    {
+      "name": "line-strategist",
+      "original_path": "line-strategist/SKILL.md",
+      "archive_path": "_archive/2026-10-13/line-strategist/SKILL.md",
+      "sha256": "c5abc4a4ec7299ab6713d361d2f812187f39f988f979255c14a2309449d51a4c"
+    },
+    {
+      "name": "llm-benchmark",
+      "original_path": "llm-benchmark/SKILL.md",
+      "archive_path": "_archive/2026-10-13/llm-benchmark/SKILL.md",
+      "sha256": "b761dc26c7b32c8b495e52dfeeeed8c9adaef2ec5513da09b9858ff49598b691"
+    },
+    {
+      "name": "coding-cleanup",
+      "original_path": "openclaw/clawd-dev/skills/coding-cleanup/SKILL.md",
+      "archive_path": "_archive/2026-10-13/openclaw/clawd-dev/skills/coding-cleanup/SKILL.md",
+      "sha256": "50fe0a42c556f0e5faa48608688778f131075640a08ede5ff9d21f3d2b93521b"
+    },
+    {
+      "name": "coding-contract",
+      "original_path": "openclaw/clawd-dev/skills/coding-contract/SKILL.md",
+      "archive_path": "_archive/2026-10-13/openclaw/clawd-dev/skills/coding-contract/SKILL.md",
+      "sha256": "addee4adf4aa6b6aff9ba98e9181b516a5a0b0d020168c9c166d3c8b446f4fcb"
+    },
+    {
+      "name": "coding-evaluator",
+      "original_path": "openclaw/clawd-dev/skills/coding-evaluator/SKILL.md",
+      "archive_path": "_archive/2026-10-13/openclaw/clawd-dev/skills/coding-evaluator/SKILL.md",
+      "sha256": "245dfa121e94096c5c52dde88d695093147a15050fd07fd44309bc94480d9848"
+    },
+    {
+      "name": "coding-generator",
+      "original_path": "openclaw/clawd-dev/skills/coding-generator/SKILL.md",
+      "archive_path": "_archive/2026-10-13/openclaw/clawd-dev/skills/coding-generator/SKILL.md",
+      "sha256": "3abee913456869589de3f033e1d1bf88f5d0bb39c4932e5ec23fec71475ca44a"
+    },
+    {
+      "name": "coding-judge",
+      "original_path": "openclaw/clawd-dev/skills/coding-judge/SKILL.md",
+      "archive_path": "_archive/2026-10-13/openclaw/clawd-dev/skills/coding-judge/SKILL.md",
+      "sha256": "2c315c373cfab994940d2e32dd1f041936a88695347811da0fd75fe2da2e9b0d"
+    },
+    {
+      "name": "coding-merger",
+      "original_path": "openclaw/clawd-dev/skills/coding-merger/SKILL.md",
+      "archive_path": "_archive/2026-10-13/openclaw/clawd-dev/skills/coding-merger/SKILL.md",
+      "sha256": "cab8cf6ac97ace80c7856013256b4fcfeec93014a94e69a4ccefef0dbbe55981"
+    },
+    {
+      "name": "coding-planner",
+      "original_path": "openclaw/clawd-dev/skills/coding-planner/SKILL.md",
+      "archive_path": "_archive/2026-10-13/openclaw/clawd-dev/skills/coding-planner/SKILL.md",
+      "sha256": "8aea97c7955a4a0fd986c1476161046905189e71e4aa1f11fe8e46f7b7b34d24"
+    },
+    {
+      "name": "coding-publisher",
+      "original_path": "openclaw/clawd-dev/skills/coding-publisher/SKILL.md",
+      "archive_path": "_archive/2026-10-13/openclaw/clawd-dev/skills/coding-publisher/SKILL.md",
+      "sha256": "69b9613174239e2a3f9c89b875d988d78e3c332d3120e7d5d11f463d81b16579"
+    },
+    {
+      "name": "coding-seal",
+      "original_path": "openclaw/clawd-dev/skills/coding-seal/SKILL.md",
+      "archive_path": "_archive/2026-10-13/openclaw/clawd-dev/skills/coding-seal/SKILL.md",
+      "sha256": "42ef9778e94f0d29b1d0d16dfd9817391061d2cf18300ec5dc583ad48f61d85a"
+    },
+    {
+      "name": "coding-workflow",
+      "original_path": "openclaw/clawd-work-commander/skills/coding-workflow/SKILL.md",
+      "archive_path": "_archive/2026-10-13/openclaw/clawd-work-commander/skills/coding-workflow/SKILL.md",
+      "sha256": "abb95127f92e7f20fb0ccd5a7c15827ab1fdd2818240a0f8db651a8803552173"
+    },
+    {
+      "name": "opc-card-callback-router",
+      "original_path": "openclaw/clawd/skills/opc-card-callback-router/SKILL.md",
+      "archive_path": "_archive/2026-10-13/openclaw/clawd/skills/opc-card-callback-router/SKILL.md",
+      "sha256": "a768a444f317012fd1d053454029fd373f13ab915346ba91a1fefd13d2958ddd"
+    },
+    {
+      "name": "opc-workflow-card",
+      "original_path": "openclaw/clawd/skills/opc-workflow-card/SKILL.md",
+      "archive_path": "_archive/2026-10-13/openclaw/clawd/skills/opc-workflow-card/SKILL.md",
+      "sha256": "56bc763108de1294a7f3e64e149794e9743f89b7ce4f3bdb926ae290c2b382e0"
+    },
+    {
+      "name": "task-progress-card",
+      "original_path": "openclaw/clawd/skills/task-progress-card/SKILL.md",
+      "archive_path": "_archive/2026-10-13/openclaw/clawd/skills/task-progress-card/SKILL.md",
+      "sha256": "d2d31dcb3ae5991154143fda8e891aee203dfcd520023d39785cc6c6ce8c0062"
+    },
+    {
+      "name": "taskflow-router",
+      "original_path": "openclaw/clawd/skills/taskflow-router/SKILL.md",
+      "archive_path": "_archive/2026-10-13/openclaw/clawd/skills/taskflow-router/SKILL.md",
+      "sha256": "04e8b216ee38d18547edecfb1ff8f01704e719505ca21cf0228e8dd5166abc21"
+    },
+    {
+      "name": "pipeline-export",
+      "original_path": "pipeline-export/SKILL.md",
+      "archive_path": "_archive/2026-10-13/pipeline-export/SKILL.md",
+      "sha256": "cc02745d9abe813f8fb3b31938c29bd8f928a6a7ffdfe1021ad230f6d2b40bb9"
+    },
+    {
+      "name": "pipeline-generate",
+      "original_path": "pipeline-generate/SKILL.md",
+      "archive_path": "_archive/2026-10-13/pipeline-generate/SKILL.md",
+      "sha256": "aa9c05647d23b0d56ae649fa59952c99f7490394d0a731b03b44c556808dc3f3"
+    },
+    {
+      "name": "pipeline-persondata",
+      "original_path": "pipeline-persondata/SKILL.md",
+      "archive_path": "_archive/2026-10-13/pipeline-persondata/SKILL.md",
+      "sha256": "dbc56af97517851a94df3d703ac655201f44df24d04551e152f16b90bf9b2c1a"
+    },
+    {
+      "name": "pipeline-run",
+      "original_path": "pipeline-run/SKILL.md",
+      "archive_path": "_archive/2026-10-13/pipeline-run/SKILL.md",
+      "sha256": "bc4d05e6917b3d92da901d4f11fe87c071e45f15a895ccff0f303465b0e0f927"
+    },
+    {
+      "name": "plan",
+      "original_path": "plan/SKILL.md",
+      "archive_path": "_archive/2026-10-13/plan/SKILL.md",
+      "sha256": "1c847018c7ec7ac040209409d32e185238b5298dedf0443876b548380d2d0fc0"
+    },
+    {
+      "name": "platform-scraper",
+      "original_path": "platform-scraper/SKILL.md",
+      "archive_path": "_archive/2026-10-13/platform-scraper/SKILL.md",
+      "sha256": "0046f62b54cb15b0e6d3c372a2246fd6e4c4142acf6e5e6738160cfbeaa00928"
+    },
+    {
+      "name": "repo-audit",
+      "original_path": "repo-audit/SKILL.md",
+      "archive_path": "_archive/2026-10-13/repo-audit/SKILL.md",
+      "sha256": "4f0d5b0fd22ff5dbad2c00ed49328e799cc74d5a1f1b7c6863f14f520bc0b2b7"
+    },
+    {
+      "name": "repo-visualizer",
+      "original_path": "repo-visualizer/SKILL.md",
+      "archive_path": "_archive/2026-10-13/repo-visualizer/SKILL.md",
+      "sha256": "a627f9d562809ed7d32319ae880aa8844b5592aac0b555cf55e7aaa5fa09f2cd"
+    },
+    {
+      "name": "research",
+      "original_path": "research/SKILL.md",
+      "archive_path": "_archive/2026-10-13/research/SKILL.md",
+      "sha256": "29374e798cd248a9bd1d8a20194bdf971ee57792a1976ef30aeba1b0393fc037"
+    },
+    {
+      "name": "talk",
+      "original_path": "talk/SKILL.md",
+      "archive_path": "_archive/2026-10-13/talk/SKILL.md",
+      "sha256": "7bd8b6e6ce69cc155a01193052eccde092ff28a997c1905d782f6b07e9ca5283"
+    },
+    {
+      "name": "toutiao-publisher",
+      "original_path": "toutiao-publisher/SKILL.md",
+      "archive_path": "_archive/2026-10-13/toutiao-publisher/SKILL.md",
+      "sha256": "6ebd0658d63517b7e0d2d6a1ce133b5f331da106eafe3ce710ac5b3ed7b0bd22"
+    },
+    {
+      "name": "trading-agent",
+      "original_path": "trading-agent/SKILL.md",
+      "archive_path": "_archive/2026-10-13/trading-agent/SKILL.md",
+      "sha256": "369a32c8f63ef41faf29cce51cf450521090d1d8861aa1d21469698174e3a70c"
+    },
+    {
+      "name": "triage-officer",
+      "original_path": "triage-officer/SKILL.md",
+      "archive_path": "_archive/2026-10-13/triage-officer/SKILL.md",
+      "sha256": "260055b3c91252aab256f5572d897510ef476262552ab52c8acf0e2cbe5dedd6"
+    },
+    {
+      "name": "xiaohongshu-publisher",
+      "original_path": "xiaohongshu-publisher/SKILL.md",
+      "archive_path": "_archive/2026-10-13/xiaohongshu-publisher/SKILL.md",
+      "sha256": "bfb62454e75eb38e426e279ed98154d9ac7681a12b83611c4db77dd2cf551bf4"
+    }
+  ],
+  "local_uncommitted_backup": [
+    "capability-controller/SKILL.md",
+    "capability-mapper/SKILL.md",
+    "capability-proposer/SKILL.md",
+    "capability-reviewer/SKILL.md",
+    "code-verify/SKILL.md",
+    "code-verify/exam/EXAM-LOG.md",
+    "harness-contract-proposer/SKILL.md",
+    "harness-contract-reviewer/SKILL.md",
+    "harness-controller/SKILL.md",
+    "harness-evaluator/SKILL.md",
+    "harness-generator/SKILL.md",
+    "harness-planner/SKILL.md",
+    "harness-report/SKILL.md",
+    "line-strategist/SKILL.md"
+  ]
+}

@@ -6,6 +6,9 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from archived_skill_source import resolve_skill_source
+
 
 RULES = {
     "capability-proposer/SKILL.md": {
@@ -52,7 +55,7 @@ RULES = {
 def lint(root: Path) -> list[str]:
     failures: list[str] = []
     for relative_path, rule_groups in RULES.items():
-        path = root / relative_path
+        path = resolve_skill_source(root, relative_path)
         text = path.read_text(encoding="utf-8") if path.is_file() else ""
         for failure_code, markers in rule_groups.items():
             missing = [marker for marker in markers if marker not in text]
@@ -75,8 +78,8 @@ def main() -> int:
             if failure_code in groups
         )
         text = (
-            (root / relative_path).read_text(encoding="utf-8")
-            if (root / relative_path).is_file()
+            resolve_skill_source(root, relative_path).read_text(encoding="utf-8")
+            if resolve_skill_source(root, relative_path).is_file()
             else ""
         )
         missing = [

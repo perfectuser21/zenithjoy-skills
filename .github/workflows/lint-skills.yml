@@ -40,6 +40,9 @@ jobs:
       - name: Self-test — GP 合同层守卫
         run: python3 .github/workflows/scripts/test/test_lint_gp_contract_layer.py
 
+      - name: Self-test — 退役档案完整性与路径保护
+        run: python3 .github/workflows/scripts/test/test_archived_skill_source.py
+
       - name: GP 合同层 Skill 守卫
         run: python3 .github/workflows/scripts/lint-gp-contract-layer.py
 
