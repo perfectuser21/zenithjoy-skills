@@ -2,35 +2,35 @@
 name: db-update
 description: |
   系统数据写入唯一参考。写任何一张常用表之前，必须先查这个 skill。
-  包含 10 张手动写入表的 Brain API 规范和 Output Template，以及 AI Notes 的 5 种 Type 写法。
+  含 Brain API 规范、研发材料与六去向路由；知识及内容直接维护Notion真身。
   Notion 同步是自动副作用（Brain tick 每5分钟 push），不需要手动操作。
   触发场景：写 Journey / Step / Feature / Sprint / 任何 Note 类型 / Issue / Learning / Decision 时。
-version: 1.1.0
+version: 1.2.0
 created: 2026-06-01
-updated: 2026-07-07
+updated: 2026-10-14
 changelog:
+  - 1.2.0: 按六去向区分Brain任务/决定与Notion知识/内容真身；AI Notes不再承载正式决定或知识。
   - 1.1.0: decisions 写入 judgment category 约定（decisions 27b57469/e035dad8）— 新增「判定点相关决策写法」段：判定点被纠正时经 ❌→Invariant Gate 写 category=invariant；新发现判定假设写 category=judgment；action_receipts 写法示例（migration 315 新表）
 ---
 
-> **核心原则：Brain DB 是唯一真相源。所有写入先走 Brain API，Notion 自动同步，禁止直接写 Notion。**
+> **核心原则：改真身，不改投影。任务、事件、决定和研发登记走 Brain；知识与内容的真身在 Notion。凭据只进1Password。**
 
 # /db-update — 系统数据写入规范
 
 ---
 
-## 架构
+## 六去向路由
 
-```
-任何数据写入
-    ↓
-POST localhost:5221/api/brain/<table>   ← 唯一入口
-    ↓
-Brain DB（notion_synced_at = NULL）
-    ↓ 自动（每5分钟）
-Notion（展示层，只读）
-```
+| 产出 | 真身与写法 |
+|---|---|
+| 要干/干成的、意外事件 | Brain tasks；开工登记，完成回写事实、证据、actor与handoff；总结按session |
+| 用户决定及理由 | `POST /api/brain/strategic-decisions`；字段用category，不写AI Notes或Notion决定投影 |
+| 无时效知识 | Notion `Knowledge_Reference` / `Knowledge_Operational` / `Insights`，更新已有真身 |
+| 给外人的内容 | Notion Ideas → Content_Seed → Content_Core → 发布编排台；程序发布后回写任务事件 |
+| 台账、凭据 | 对应真身；凭据只从1Password读取，设备在线/电量/心跳仅镜子维护 |
+| 每次生效规矩 | 执行现场skill/hook/AGENTS，带窄锚点；Rules花名册只是投影 |
 
----
+Brain拥有的真身通过正式API写入，Notion由同步器投影；知识和内容按Notion技能直接写真身。AI Hub、Events、Ops、决定、Rules等投影禁止直写。
 
 ## 10 张手动写入表
 
@@ -234,12 +234,12 @@ Name 自动生成格式：`{JourneyCode}-S{step_order}`（如 `L01-S4`、`ZjOps-
 
 ---
 
-### 10. notes（所有文档类 — 5 种 Type）
+### 10. notes（研发材料与历史类型）
 
 **API**：`POST /api/brain/notes`
 **Notion**：AI Notes DB
 
-这是最重要的一张表，所有文档走这里，靠 Type 区分：
+这里只保留研发材料与历史类型说明。正式决定写decisions，知识写Notion知识真身；任务交付与session总结回写tasks.result，不把AI Notes当全局内容入口。
 
 #### Type: PrepPRD（Sprint 启动前）
 ```json
@@ -267,7 +267,9 @@ Name 自动生成格式：`{JourneyCode}-S{step_order}`（如 `L01-S4`、`ZjOps-
 - E2E 截图 URL（公网 HTTPS）
 - DB 回填状态
 
-#### Type: Learning（洞察 + 建议，任何人）
+#### 历史 Type: Learning（旧记录只读）
+
+新的可复用洞察写Notion Insights，指回任务的运行事实与证据。以下仅供旧记录回溯。
 ```json
 {
   "title": "headless Chrome QR 扫码需 --disable-gpu",
@@ -277,15 +279,9 @@ Name 自动生成格式：`{JourneyCode}-S{step_order}`（如 `L01-S4`、`ZjOps-
 }
 ```
 
-#### Type: Decision（正式决策）
-```json
-{
-  "title": "所有 headless Chrome 统一加 --disable-gpu",
-  "type": "Decision",
-  "content": "## 决定\n...\n## 原因\n基于 Learning: headless Chrome QR 扫码问题\n## 影响范围\n所有使用 Chromium 的服务",
-  "related_note_id": "learning-uuid（可选）"
-}
-```
+#### 历史 Type: Decision（旧记录只读）
+
+新的正式决定写 `POST /api/brain/strategic-decisions`，包含topic/decision/reason/author/category。不要新增notes.type=Decision，不直写Notion决定投影。
 
 #### Type: Contract（DOD 合同）
 ```json

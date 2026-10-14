@@ -1,4 +1,10 @@
 ## [2026-10-12] dev 21.14.0 / line-strategist 1.3.0 — updated（建单合同字段）
+
+## 2026-10-14 · Commander证据与六去向规则
+
+- Activity按冻结定义、实现和环境归集；保留配套Skill，Code/Skill/救场分类，次数不自动晋级。
+- 退役转码入口由现有run-verify按明确独立代码核验契约接替；开发、部署与业务核验分别留痕。
+- 知识/内容写Notion真身；任务/决定/研发写Brain，禁止直接写Notion投影；新增CI规矩回归。
 **症状**: new-task 与裸 curl 旧示例缺少 mutation 分类及地图锚点；旧入口曾误分 coding_review、清空 repo 后被错误仓库 daemon 领取，修复后的入口会拒绝不完整请求。
 **根因**: 技能示例没有随 coding_workflow 路由入口的必填合同更新。
 **修改**（Brain 任务 d7dc39f9）: 单条/批次计划补 change_kind、map_scope_hint，裸 curl 补 mutation_intent、repo_hint；批次可继承但每条按事实选值，明确 F1 仅为真实 Cecelia 节点示例。未登记/未启用仓库无头建单会被拒，不声称可 queued 等待。
