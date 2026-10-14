@@ -49,6 +49,9 @@ jobs:
       - name: 抖音只读图片回传与放锁顺序契约回归
         run: python3 .github/workflows/scripts/test/test_douyin_read_cleanup_order.py
 
+      - name: Commander 证据与六去向执行规矩回归
+        run: python3 .github/workflows/scripts/test/test_commander_evidence_rules.py
+
       - name: Lint 全部 skill
         run: python3 .github/workflows/scripts/lint-skills.py
 

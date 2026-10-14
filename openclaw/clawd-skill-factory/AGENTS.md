@@ -1,8 +1,8 @@
 # 技能工厂 Skill Factory
 
 > **2026-10-13 退役覆盖（主理人决定 ec5ad400-d538-4086-9a28-f8ac94708de0）**：
-> `code-verify` 的独立技能入口已退役，不再派发。固化判定仍保留；替代的独立代码核验契约就绪前，
-> 固化后的代码不得据此上线。下文历史阶段表中的 `code-verify` 只作原判据留痕。
+> `code-verify` 的独立技能入口已退役，不再派发。固化判定仍保留；独立核验按源码 `skill-solidify/SKILL.md` 的「独立代码核验契约 v1」由另一会话使用 `run-verify`。
+> 固定来源、真实产出、反向红灯、配套Skill与当前环境证据未全部读回前，固化代码不得据此上线；源码合同不代表已部署或已验收。
 
 决策：bf7d8753（部门）/ da75bdf6（身份：一个 agent、GPT-6 Sol、含手机权限）/ 5826ddd7（五阶段）/ 6ec463c3（K 值）/ 1b469079（各阶段 skill、摸边界、故障处置表）/ 9b3b027b（入口、回流、退役、运行时）。
 本文件真身在 `zenithjoy-skills/openclaw/clawd-skill-factory/`，工位里的是部署副本，改动走 PR。
@@ -24,8 +24,8 @@
 ## 第一阶段起就是 workflow（决策 2186700a / 26df670a，覆盖下表此前「①～③ Commander 不用」的写法）
 
 - **先定大流程，再补业务 skill**：新流程第一步不是试跑，而是把「共享外壳-准备（领 Brain 手机锁 + 查手机 + 查账号）→【业务空位】→ 共享外壳-收尾（关 App + 放锁 + 交回结果）」写成合同（`product-map/contracts/<流程>.yaml`，`execution_profile: codex_agent`，外壳活动 `ref` 共享正本，`commander_skill` 第一阶段可为 null）、登记进树、在 Brain 有派发入口（`config/factory-workflows.json` 的 `commander` 调度单 + `dispatch_via: commander`）。之后本工位只补中间的业务 skill。
-- **每次运行都走 Brain → Commander → 外壳 → 业务 skill → 外壳**：推进器建 `workflow_dispatch` 单，work-commander 照调度单起跑，`wf-agent-run.sh` 强制执行外壳，业务块才派给本工位（Codex 运行时）。技能工厂派发器不再光着起会话跑执行单。
-- **经外壳派来的执行单**：手机控制器锁由外壳拿放（开工 `lock-status` 核对 owner，不要 `lock-acquire` / `lock-release`）；每个业务活动做成后留 `ui-evidence <run_id>-<活动>-original` 读回证据；交付写成最后一行 `WF_DELIVERY {单行 JSON}`，不 PATCH Brain 任务——外壳汇总 `delivery.json`，Brain 收割并按合同读回裁判，Commander 不判成败（决策 7465d08f）。
+- **新任务入口按Commander v2冻结合同执行；旧入口仅兼容已在途任务。每次运行都走 Brain → Commander → 外壳 → 业务 skill → 外壳**：推进器建 `workflow_dispatch` 单，work-commander 照调度单起跑，`wf-agent-run.sh` 强制执行外壳，业务块才派给本工位（Codex 运行时）。技能工厂派发器不再光着起会话跑执行单。
+- **经外壳派来的执行单**：手机控制器锁由外壳拿放（开工 `lock-status` 核对 owner，不要 `lock-acquire` / `lock-release`）；每个业务活动做成后留 `ui-evidence <run_id>-<活动>-original` 读回证据；交付写成最后一行 `WF_DELIVERY {单行 JSON}`，不 PATCH Brain 任务——外壳汇总 `delivery.json`，Brain 收割并按合同读回裁判，Commander 不判成败（决策 7465d08f）。冻结Step级span另报符合readback表达式的observed（标量或{value}），图像文件只作独立视觉核验材料，不伪装可比数值；缺观测保持未验证。
 - **两条线并行熟化**：业务 skill 线（整流程 skill → 拆细成活动 → 逐个换脚本）；陪跑 skill 线（`wf-<能力>`：空 → 从运行中攒判例变厚 → 重复的写成代码变薄，由合同 `commander_skill` 名+版本指定）。外壳全公司共享，不随单条流程改。
 
 ## 一条流程的一生（总表）
@@ -37,7 +37,7 @@
 | ② 探索 | 在（同上，陪跑 skill 开始攒判例） | 本工位 | 整流程 skill + **`skill-boundary`（摸边界）** | 整流程 skill v1 | 边界清单（每项有结论）+ **整流程 skill vN** + 处置表候选行 + 平台发现 + 手册素材 + 验证用输入池 | 清单每项有结论，且最终版连续 3 次成功 |
 | ③ 验证 | 在（同上） | 本工位跑；另开会话判 | 跑：**只加载冻结的 vN**；判：`run-verify` | 冻结 vN + 10 个不同输入 | 连续通过记录 | 同一版本、不同输入、连续 **10** 次通过 |
 | ④ 沉淀 | 在（拆的时候本工位离线拆；重跑全程陪跑） | 拆：本工位；陪跑：work-commander | 拆：`skill-distill` → 验收 `contract-reviewer` → `skill-evaluator`（quick）→ 上架 **`skill-publish`**；Commander：`workflow-commander` + `wf-<能力>` | vN、边界清单、处置表、验证记录 | **activity 链**（说明书 + 步骤 skill，登记进树与仓库）+ **`wf-<能力>`** | 拆完后连续 **30** 次通过 |
-| ⑤ 固化 | 用，按步骤退场 | 判定：本工位；写代码：Claude Code `/dev`；核验：本工位另开会话 | **`skill-solidify`（固化判定）** → `/dev` → `code-verify` | 30 次运行记录 + activity 链 | 每步「写代码 / 留 AI」标签 + 代码与探针 | 每步代码过 `code-verify`，说明书与判据不变 |
+| ⑤ 固化 | 用，按步骤退场 | 判定：本工位；写代码：Claude Code `/dev`；核验：本工位另开会话 | **`skill-solidify`（固化判定）** → `/dev` → 独立 `run-verify` | 固定Activity版本、实现与环境的独立证据窗口 + activity 链（K仅统计目标，特定风险阈值须带具体决定） | 每步「写代码 / 留 AI」标签 + 代码与探针 | 每步代码过独立代码核验，说明书与判据不变 |
 | ⑥ 退役 | — | 本工位 | `skill-retire` | 连续 30 天未跑，或被新流程取代 | 树上标 deprecated；skill 移归档目录，只移不删；仓库共用物件仍有流程在用则保留 | — |
 
 标「未就绪」的 skill 上线前，接到对应阶段的任务：写明「该阶段 skill 未就绪」并报 blocked，不临场发挥。
@@ -52,9 +52,15 @@
 | 沉淀 | skill-distill | 冻结 vN + 验证记录 + 探索交付物 + 试跑交付物 + 工坊提案 |
 | 验收 | contract-reviewer，再 skill-evaluator（quick） | 只看 skill 草稿（不看沉淀过程） |
 | 上架 | skill-publish | 沉淀交付 JSON + 验收结论（另开会话产出）；只用 Brain 现成接口写：`/skill-settlement/register` 登记候选、`/activity_uses`、`/enablers` |
-| 固化判定 | skill-solidify | 沉淀后重跑阶段任务（计数须 reached）+ 每次运行的执行单交付与审计单 + activity 链；只判不写代码 |
-| 转码核验 | code-verify | 判据清单 + 代码（不看写代码的会话，不采信注释与变量名）。判据固化成代码之后、上线之前必须过；也用于补审已在跑的代码 |
+| 固化判定 | skill-solidify | 固定Activity的实际风险/合同、正式运行来源、可比较观测与独立核验；次数仅统计证据，按需评估，未达建议窗口不单凭次数拒评；只判不写代码 |
+| 独立代码核验 | run-verify | 判据清单 + 代码（不看写代码的会话，不采信注释与变量名）。判据固化成代码之后、上线之前必须过；也用于补审已在跑的代码 |
 | 退役 | skill-retire | 先出建议清单（只读）→ 主理人逐条确认 → 只移不删地执行 |
+
+## 证据归属与晋级（执行规则 v1）
+
+Activity证据按冻结定义、实现和环境分别归集，使用真实observed；Code独立成功、Skill独立成功、fallback/rescue成功、失败/阻断分别留原件。救场可完成原任务，但不能覆盖Code失败或算作Code晋级证据。次数只作证据；缺观测、混版本、缺正式独立核验不得晋级。局部升级仅改变目标Activity证据窗口，其他Activity有效证据保留。
+
+需求变化先更新并验证配套Skill，再固化Code；已验证的新Skill可先用。固化后Skill与判据保留，C失败仅接当前环境已验收的配套S；S失败不自动换不兼容旧业务版本。运行救场不现场改代码，改进另进/dev任务。开发单完成、PR合并、部署读回和独立业务验收分别记，不能互代。
 
 ## 各阶段的规矩
 
@@ -105,7 +111,7 @@
 - **四分类**沿用树上 Activity `failure` 已有的：`empty_ok`（本来就没有，正常结束）/ `retryable`（可重试，带参数）/ `fatal`（立即停）/ `needs_human`（要人介入）。
 - **怎么取**：按整流程 skill（或 activity）的「依赖对象」清单，只取相关的那几行，并算出片指纹记进运行记录。取法：`curl -s "$BRAIN/api/brain/enablers?keys=<对象1>,<对象2>"`（`/warehouse-items` 为同一接口），读各对象的 `failure_semantics.rows`；某个 Activity 依赖哪些对象：`GET $BRAIN/api/brain/activity_uses?activity_id=<id>`。
 - **通用层已在仓库**（1009 灌入，12 个对象 20 行）：`android_ui`（页面与控件：暂时没出来 / 真的没有 / 卡住 / 闪退 / 弹窗）、`network`、`adb_channel`、`input_method`、`device_lock`（含时间窗）、`account_selfcheck`（账号不对）、`model_api`、`feishu_table`、`openclaw_gateway`、`host_disk`、`platform_risk_control`（验证码 / 风控 / 限号）、`outward_action`（对外动作失败 / 已做过）。整流程 skill 的「依赖对象」就从这些 key 里选；平台层（如某平台的搜索、评论区）以后按平台物件补。仓库读不到时才用下面的初始值兜底。
-- **表外故障兜底**：停下、截图、上报，写进交付物候选行（对象、现象、证据、建议的分类与参数），**不临场瞎重试**。同一对象同一故障：第 1 次记录，第 2 次标候选，第 3 次必须转正（写成正式行或写成代码）；转正由本工位另开会话走 PR / 上架。运行中的会话不直接改正式表。
+- **表外故障兜底**：停下、截图、上报，写进交付物候选行（对象、现象、证据、建议的分类与参数），**不临场瞎重试**。同一对象同一故障：第 1 次记录，第 2 次标候选，次数只作为候选证据；按当前冻结版本、实现、环境和独立核验判据决定正式行或另建开发任务，不能自动升档；转正由本工位另开会话走 PR / 上架。运行中的会话不直接改正式表。
 
 通用层初始值（已灌入仓库，以仓库为准；仅在仓库读不到时兜底）：
 
@@ -146,7 +152,7 @@ RPA 类 skill 经 OpenClaw 节点上的手机控制器操作手机，一次只�
 ## 红线
 
 - 自己沉淀的 skill，不能由同一段会话判验收通过；验收永远在新会话里只看草稿。
-- 判据转成代码后，判据不从 skill 里删除、要进契约；代码上线前由另一段新会话用 code-verify 核验，写代码的会话不得自己核验。
+- 判据转成代码后，判据不从 skill 里删除、要进契约；代码上线前由另一段新会话按skill-solidify独立代码核验契约用run-verify核验，写代码的会话不得自己核验。
 - 技能库只提 PR，不直接改 main；不直接改别的 agent 的工位文件。
 - 核验与验收只判不修；拿不准判 fail 并写清差什么。
 - 修剪 / 淘汰只出建议清单，逐条执行并留 diff，禁止整篇重写。
