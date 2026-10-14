@@ -1,11 +1,11 @@
 ---
 name: skill-solidify
-version: 1.1.0
+version: 1.1.1
 updated: 2026-10-14
 description: |
-  固化判定：沉淀后连续通过 K 次（固化前 K=30）的 activity 链，逐步判定「写成代码」还是「留给 AI」，给出优先级、探针和开发任务草稿。只判不写代码——代码由 Claude Code /dev 写，上线前按独立代码核验契约，由另一会话用 run-verify 核验。技能工厂五阶段第⑤步「固化」的判定段，决策 ca9f3d7b / 28ca1f69 / 5826ddd7 / 6ec463c3。
+  固化判定：按Activity实际风险、合同与独立证据，按需逐步判定「写成代码」还是「留给 AI」，给出优先级、探针和开发任务草稿。只判不写代码——代码由 Claude Code /dev 写，上线前按独立代码核验契约，由另一会话用 run-verify 核验。技能工厂五阶段第⑤步「固化」的判定段，决策 ca9f3d7b / 28ca1f69 / 5826ddd7 / 6ec463c3。
   触发：任务里写「阶段：固化判定」「使用 skill：skill-solidify」、哪些步骤该写成代码、固化判定。
-  不适用：没跑满 K 次的链（先跑满）；写代码本身（/dev）；独立核验代码（另开 run-verify 会话）。
+  不适用：写代码本身（/dev）；独立核验代码（另开 run-verify 会话）。
 ---
 
 > **语言规则：所有输出简体中文。**
@@ -16,12 +16,12 @@ description: |
 
 Brain 地址：`BRAIN=${BRAIN_URL:-http://100.79.41.61:5221}`。本 skill 只读、只输出 JSON。
 
-## 第 0 步：核对输入（不过就停）
+## 第 0 步：核对输入与证据覆盖
 
 | 检查 | 不通过时 |
 |---|---|
-| 沉淀后重跑的阶段任务：`python3 bin/count_streak.py --stage-task <阶段任务 id>` 输出 `reached=true`（固化前 K=30，以任务给的值为准） | `status=rejected`，贴计数输出 |
-| 能逐张读到这些运行的执行单交付（每步的动作、到达页面、证据、成败）和审计单判定 | 读不到的运行列进 `unreadable`；可读的不足 K 条 → `status=rejected` |
+| 正式阶段任务与运行来源：`python3 bin/count_streak.py --stage-task <阶段任务 id>` 输出仅作统计；K是可配置证据窗口建议/统计目标，不是所有Activity的统一准入门槛 | 来源取不回列`unreadable`；窗口未达统计目标标`evidence_insufficient`并继续逐项评估，提出需要补的边界证据 |
+| 能逐张读到这些运行的执行单交付（每步的动作、到达页面、证据、成败）和审计单判定 | 读不到的运行列进`unreadable`；按该Activity实际风险、合同与可比较证据判覆盖，缺正式独立核验或必要观测时拒绝晋级，不单凭次数拒绝评估 |
 | 拿到 activity 链（每个 activity 的步骤 skill 与 Steps 表） | `status=rejected` |
 
 ## 证据归集（执行规则 v1）
@@ -30,13 +30,15 @@ Brain 地址：`BRAIN=${BRAIN_URL:-http://100.79.41.61:5221}`。本 skill 只读
 
 需求变化先更新并验证配套Skill，再固化Code；同业务要求的已验证Skill可先用。原Skill、判据与AI兜底路径保留；代码失败可交当前环境验收过的配套Skill，禁止无依据换不兼容旧业务版本。运行救场只完成本次任务，代码改进另建开发任务。
 
+具体任务或合同若已有针对该风险的明确K阈值，必须携具体决定引用与适用Activity范围；不能把历史默认30推广到所有Activity。窗口未达K只标证据不足，仍按需评估哪些事实已满足、哪些边界缺失；缺可比较观测或正式独立验证仍拒晋级。达到K也不自动green。
+
 ## 第 1 步：逐步统计
 
-对链里每一步，从 K 次运行里数出：
+对每个Activity及步骤，从固定版本、实现和环境的可比较证据窗口统计：
 
 | 指标 | 怎么数 |
 |---|---|
-| 频率 | 这一步在 K 次里出现了几次 |
+| 频率 | 这一步在证据窗口里出现了几次（同时记窗口范围） |
 | 失败率 | 这一步失败（含重试后才过）的次数 ÷ 出现次数 |
 | 形状 | 每次走的「前置页面 → 动作（控件文字）→ 到达页面」是否一致；不一致的列出有几种 |
 | 最近有没有新分支 | 最近 10 次里是否出现前面没出现过的形状 |
@@ -47,10 +49,10 @@ Brain 地址：`BRAIN=${BRAIN_URL:-http://100.79.41.61:5221}`。本 skill 只读
 
 | 标签 | 条件（决策 ca9f3d7b / 28ca1f69） |
 |---|---|
-| `code` | **三条同时满足**：①形状跨多次重复（K 次只有一种形状）；②变体已探明（最近 10 次无新分支）；③坏了能当场发现（完成判据能机械观测，能写成探针） |
+| `code` | **三条同时满足**：①可比较观测支持稳定形状；②合同与真实风险要求的边界已有独立证据，近期无未决新分支；③坏了能当场发现（完成判据能机械观测，能写成探针） |
 | `code_required` | 不可逆写入的动作本身：永远走代码（序列写进代码，定位按 registry 现场取），并且 ①②③ 也要满足；不满足就标 `blocked` 写清差哪条，**不得留给 AI 临场点** |
 | `ai` | 判断「这一步干成没有」而事实观测不到的；需要看图、理解语义的；形状每次不一样的 |
-| `ai_for_now` | 本可写代码但 ①②③ 有一条不满足（写明差哪条，下一轮 K 次后再判） |
+| `ai_for_now` | 本可写代码但 ①②③ 有一条不满足（写明差哪条，按需补足对应边界、观测或独立核验后再判） |
 
 两条硬规矩：
 
@@ -76,14 +78,14 @@ Brain 地址：`BRAIN=${BRAIN_URL:-http://100.79.41.61:5221}`。本 skill 只读
 ```json
 {
   "stage": "solidify",
-  "status": "ok | rejected",
+  "status": "ok | evidence_insufficient | rejected",
   "flow_name": "",
   "capability_key": "",
-  "streak": {"stage_task": "", "k": 30, "reached": true},
-  "runs_read": 30,
+  "streak": {"stage_task": "", "k": null, "reached": false, "purpose": "统计目标，不授予晋级"},
+  "runs_read": 0,
   "unreadable": [],
   "steps": [
-    {"activity_key": "", "step_key": "", "frequency": 30, "failure_rate": 0.0, "shapes": 1, "new_branch_recent10": false,
+    {"activity_key": "", "step_key": "", "frequency": 0, "failure_rate": 0.0, "shapes": 1, "new_branch_recent10": false,
      "mechanically_observable": true, "irreversible_write": false,
      "tag": "code | code_required | ai | ai_for_now | blocked", "reason": "满足 / 不满足 ①②③ 中哪几条，依据",
      "priority_score": 0.0, "probe": "后置条件断言（code / code_required 必填）", "ai_fallback": "退回哪个步骤 skill 哪一步"}

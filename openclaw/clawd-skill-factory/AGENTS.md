@@ -37,7 +37,7 @@
 | ② 探索 | 在（同上，陪跑 skill 开始攒判例） | 本工位 | 整流程 skill + **`skill-boundary`（摸边界）** | 整流程 skill v1 | 边界清单（每项有结论）+ **整流程 skill vN** + 处置表候选行 + 平台发现 + 手册素材 + 验证用输入池 | 清单每项有结论，且最终版连续 3 次成功 |
 | ③ 验证 | 在（同上） | 本工位跑；另开会话判 | 跑：**只加载冻结的 vN**；判：`run-verify` | 冻结 vN + 10 个不同输入 | 连续通过记录 | 同一版本、不同输入、连续 **10** 次通过 |
 | ④ 沉淀 | 在（拆的时候本工位离线拆；重跑全程陪跑） | 拆：本工位；陪跑：work-commander | 拆：`skill-distill` → 验收 `contract-reviewer` → `skill-evaluator`（quick）→ 上架 **`skill-publish`**；Commander：`workflow-commander` + `wf-<能力>` | vN、边界清单、处置表、验证记录 | **activity 链**（说明书 + 步骤 skill，登记进树与仓库）+ **`wf-<能力>`** | 拆完后连续 **30** 次通过 |
-| ⑤ 固化 | 用，按步骤退场 | 判定：本工位；写代码：Claude Code `/dev`；核验：本工位另开会话 | **`skill-solidify`（固化判定）** → `/dev` → 独立 `run-verify` | 30 次运行记录 + activity 链 | 每步「写代码 / 留 AI」标签 + 代码与探针 | 每步代码过独立代码核验，说明书与判据不变 |
+| ⑤ 固化 | 用，按步骤退场 | 判定：本工位；写代码：Claude Code `/dev`；核验：本工位另开会话 | **`skill-solidify`（固化判定）** → `/dev` → 独立 `run-verify` | 固定Activity版本、实现与环境的独立证据窗口 + activity 链（K仅统计目标，特定风险阈值须带具体决定） | 每步「写代码 / 留 AI」标签 + 代码与探针 | 每步代码过独立代码核验，说明书与判据不变 |
 | ⑥ 退役 | — | 本工位 | `skill-retire` | 连续 30 天未跑，或被新流程取代 | 树上标 deprecated；skill 移归档目录，只移不删；仓库共用物件仍有流程在用则保留 | — |
 
 标「未就绪」的 skill 上线前，接到对应阶段的任务：写明「该阶段 skill 未就绪」并报 blocked，不临场发挥。
@@ -52,7 +52,7 @@
 | 沉淀 | skill-distill | 冻结 vN + 验证记录 + 探索交付物 + 试跑交付物 + 工坊提案 |
 | 验收 | contract-reviewer，再 skill-evaluator（quick） | 只看 skill 草稿（不看沉淀过程） |
 | 上架 | skill-publish | 沉淀交付 JSON + 验收结论（另开会话产出）；只用 Brain 现成接口写：`/skill-settlement/register` 登记候选、`/activity_uses`、`/enablers` |
-| 固化判定 | skill-solidify | 沉淀后重跑阶段任务（计数须 reached）+ 每次运行的执行单交付与审计单 + activity 链；只判不写代码 |
+| 固化判定 | skill-solidify | 固定Activity的实际风险/合同、正式运行来源、可比较观测与独立核验；次数仅统计证据，按需评估，未达建议窗口不单凭次数拒评；只判不写代码 |
 | 独立代码核验 | run-verify | 判据清单 + 代码（不看写代码的会话，不采信注释与变量名）。判据固化成代码之后、上线之前必须过；也用于补审已在跑的代码 |
 | 退役 | skill-retire | 先出建议清单（只读）→ 主理人逐条确认 → 只移不删地执行 |
 
