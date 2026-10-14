@@ -19,6 +19,9 @@ class CommanderRules(unittest.TestCase):
         for field in ['implementation', 'environment', 'execution_role', 'verification_ref']:
             self.assertIn(field, text)
         self.assertIn('run-verify', text)
+        self.assertFalse('先跑满' in text, '不得以默认次数作为固化评估前置门槛')
+        self.assertFalse('reached=true' in text, '次数只能做证据统计')
+        self.assertFalse('不足 K 条 → `status=rejected`' in text, '证据不足不得单靠次数拒绝评估')
     def test_brain_is_not_knowledge_body(self):
         text = self.read('db-update/SKILL.md')
         self.assertNotIn('所有写入先走 Brain API', text)
