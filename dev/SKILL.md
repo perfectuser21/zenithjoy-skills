@@ -1,10 +1,11 @@
 ---
 name: dev
-version: 21.14.1
-updated: 2026-10-13
+version: 21.14.2
+updated: 2026-10-15
 description: "执行代码开发、Bug 修复或功能改动，按改动范围选择开发路径，完成任务归位、验收与交接。用于 /dev 或明确开发任务；保留 task-id claim、变更隔离与现行部署验收规则。"
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
+  - "21.14.2: 六层上下文按tree实查；旧Ability/Feature提案不再作为当前业务树依据。"
   - "21.14.1: 精简发现描述，原触发细节移入按需读取正文；业务步骤与权限不变"
   - "21.14.0: 建单计划显式提供 change_kind/map_scope_hint，curl 对齐 mutation_intent/repo_hint；未启用仓库无头建单会被 Brain 拒绝"
   - "21.13.0: 对齐 Cecelia #6356，路径 C 改建 coding_workflow，保留有头 /dev 账本及 claim；旧 Harness Pipeline 只供历史回溯"
@@ -108,19 +109,24 @@ curl -s -X POST "localhost:5221/api/brain/tasks/<task-id>/claim" \
 
 ## 第零步 Phase 2：按路径按需查上下文
 
-### 路径 A（Bug）— 3 个 curl
+涉及组织与业务层级时，先按 `../tree/SKILL.md` Step 0 核实生产连接、实体表和父子关系。
+六层为 areas → value_streams → capabilities → workflows → activities → steps。
+journeys 是兼容视图；journey_features 与 golden_paths 的历史/提案记录不作为当前树。
+本节以下保留的旧机器字段仅用于核对相应开发任务或提案，不得据其推断业务层级。
+
+### 路径 A（Bug）— 六层真树 + 任务上下文
 
 ```bash
-curl -s "localhost:5221/api/brain/journeys"
+# 按 tree Step 0 读取六层真表；接口回退查全分页并按 kind 区分价值流/能力
 curl -s "localhost:5221/api/brain/issues?limit=20"
 curl -s -X POST "localhost:5221/api/brain/decisions/match" \
   -H "Content-Type: application/json" -d "{\"prd\": \"<用户描述关键词>\"}"
 ```
 
-### 路径 B（小改动）— 3 个 curl
+### 路径 B（小改动）— 六层真树 + 任务上下文
 
 ```bash
-curl -s "localhost:5221/api/brain/journeys"
+# 按 tree Step 0 读取六层真表；接口回退查全分页并按 kind 区分价值流/能力
 curl -s -X POST "localhost:5221/api/brain/decisions/match" \
   -H "Content-Type: application/json" -d "{\"prd\": \"<用户描述关键词>\"}"
 curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
@@ -129,8 +135,8 @@ curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
 ### 路径 C（大功能）— 5 个上下文源
 
 ```bash
-# 1: Journey 体系（journey_features 是 Ability/Feature 唯一正表）
-curl -s "localhost:5221/api/brain/journeys"
+# 1: 六层业务树按 tree Step 0；journey_features 仅供历史提案回溯
+# 按 tree Step 0 读取六层真表；接口回退查全分页并按 kind 区分价值流/能力
 curl -s "localhost:5221/api/brain/journey_features?limit=50"
 
 # 2: 进行中任务
@@ -176,11 +182,11 @@ gh pr list --search "<关键词>" --state open --json number,title,url,createdAt
 
 在生成 PrepPRD 之前，必须完成这一步（基于路径 C 已查的 5 个源）：
 
-1. **确定本次 Journey**：从 `journeys` 结果里找用户描述对应的那条 Journey（语义匹配）。
+1. **确定本次坐标**：按 tree Step 0 找到部门 · 价值流 · 能力 · 流程，分别保留实体 ID；不能以混合 journeys 响应替代判层。
 
-2. **过滤已有 Abilities**：在 `journey_features` 结果里，过滤属于该 Journey 且 `status = working/done` 的能力，列出"已完成"清单。
+2. **核对已有能力**：查 capabilities 及其 workflows 的真实状态和交付证据；journey_features 只作历史提案参考，不代表当前能力全集。
 
-3. **从用户描述提炼本次需要的 Ability/Feature**：结合用户意图，从 `journey_features` 结果里找出本次需要新建或推进的项。
+3. **提炼本次改动**：按 tree 判定是在已有能力下加流程、Activity、Step，还是新增能力；再映射开发任务所需的兼容字段。
 
 4. **提炼 Golden Path**，补全用户没说出口的隐含步骤，格式：
 
@@ -662,27 +668,7 @@ curl -s -X POST localhost:5221/api/brain/strategic-decisions \
 
 > Brain API 不可用时跳过。
 
-在 Notion 注册 Ability/Feature（如还没有）：
-```bash
-node ~/.claude/skills/dev/scripts/add-feature.js \
-  --name "<feature_name>" --journey-id "<notion_journey_id>" \
-  --thickness "thin" --area "<area>"
-# 若脚本不存在，直接调 Brain API：
-# curl -s -X POST localhost:5221/api/brain/journey_features -H "Content-Type: application/json" \
-#   -d '{"name":"<name>","journey_id":"<id>","kind":"ability","area":"ZenithJoy"}'
-```
-
-**两种方式参数对照（推荐脚本，自带语义查重 + 默认值）**：
-
-| 概念 | add-feature.js 参数 | Brain API 字段 | 说明 |
-|---|---|---|---|
-| 名称 | `--name "<feature_name>"` | `name` | 必填 |
-| 所属 Journey | `--journey-id "<id>"` | `journey_id` | 必填 |
-| 厚度 | `--thickness "thin"` | （无对应字段，写 `thickness`）| 脚本默认 thin |
-| 类型 | （脚本默认 ability）| `kind: "ability" \| "feature"` | API 必须显式写 kind |
-| 所属 Area | `--area "<area>"` | `area` | 如 ZenithJoy |
-
-> **推荐用 `add-feature.js`**：执行前自动语义查重（避免重复建 Ability）、默认 thin、默认 kind=ability，少踩坑。只有脚本不可用时才回退裸 Brain API（此时必须手动带 `kind`）。
+业务树先按 `tree` 判层，再按 `db-update` 核实现行实体写入路由；已有实体直接复用。旧 `add-feature.js` / `journey_features` 仅用于明确指定的历史 Ability/Feature 对象维护，不属于路径 C 的建单步骤，也不创建六层 capabilities。
 
 点火 = 建 **coding_workflow** 单（2026-10-12 起；旧 `harness_initiative` 无头 kernel 已退役：派发关闭、建单入口拒无头 harness_initiative，返回 422 `no_executor_for_task_type`）。
 MMV 上的 coding-workflow-runner 认领后执行 intent → spec → spec-review GAN → 实现 → CI 自修 → QA → 独立裁判 → 发布报告。QA 方式与是否自动合并按目标仓库 repos.json 的 preview / automerge 配置执行；automerge=false 时留待人工合并。

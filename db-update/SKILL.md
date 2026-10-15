@@ -2,17 +2,19 @@
 name: db-update
 description: |
   系统数据写入唯一参考。写任何一张常用表之前，必须先查这个 skill。
-  包含 10 张手动写入表的 Brain API 规范和 Output Template，以及 AI Notes 的 5 种 Type 写法。
-  Notion 同步是自动副作用（Brain tick 每5分钟 push），不需要手动操作。
+  六层结构按 tree 现行真表核实；提供任务、决策、记录等 Brain API 写入规范。
+  Notion 投影由 Brain 正常每5分钟分批自动推送；不是5分钟完成全量，完成以目标页面读回为准。
   触发场景：写 Journey / Step / Feature / Sprint / 任何 Note 类型 / Issue / Learning / Decision 时。
-version: 1.1.0
+version: 1.2.1
 created: 2026-06-01
-updated: 2026-07-07
+updated: 2026-10-15
 changelog:
+  - "1.2.1: 明确Brain真身与Notion知识/内容例外；移除退役harness建单与直接写库指引。"
+  - "1.2.0: 删除旧五层及 journeys/golden_path/journey_features 作为现行树的写入示例；六层表与接口先实查，兼容名不作层级依据。"
   - 1.1.0: decisions 写入 judgment category 约定（decisions 27b57469/e035dad8）— 新增「判定点相关决策写法」段：判定点被纠正时经 ❌→Invariant Gate 写 category=invariant；新发现判定假设写 category=judgment；action_receipts 写法示例（migration 315 新表）
 ---
 
-> **核心原则：Brain DB 是唯一真相源。所有写入先走 Brain API，Notion 自动同步，禁止直接写 Notion。**
+> **边界：任务、决定、运行和业务树以 Brain 为真身，写入走 Brain API；Notion 投影由 Brain 同步。知识与内容以 Notion 为真身，按 notion skill 写对应库；凭据只进 1Password。禁止直改投影或直接 SQL 写业务表。**
 
 # /db-update — 系统数据写入规范
 
@@ -21,7 +23,7 @@ changelog:
 ## 架构
 
 ```
-任何数据写入
+以 Brain 为真身的数据写入
     ↓
 POST localhost:5221/api/brain/<table>   ← 唯一入口
     ↓
@@ -32,132 +34,40 @@ Notion（展示层，只读）
 
 ---
 
-## 10 张手动写入表
+## 六层结构写入前先核实（现行口径）
 
-### 1. journeys（Journey 路径）
+涉及部门、价值流、能力、流程、Activity、Step 时，先读 `../tree/SKILL.md` 与其
+`references/doctrine.md`，装载目标环境的实体表及父子关系。结构判定只认 tree，不沿用旧五层。
 
-**API**：`POST /api/brain/journeys`
-**Notion**：AI Journey DB
+| 层级 | 实体表 | 归属字段 |
+|---|---|---|
+| Department | areas | parent_area_id → 上级组织 |
+| Value Stream | value_streams | area_id → areas.id |
+| Capability | capabilities | parent_journey_id → value_streams.id |
+| Workflow | workflows | capability_id → capabilities.id |
+| Activity | activities | workflow_activity_refs.workflow_id / activity_id / sequence_no |
+| Step | steps | activity_id → activities.id |
 
-```json
-{
-  "name": "客户首次成功路径",
-  "journey_type": "user_facing",
-  "maturity": "skeleton",
-  "description": "客户从注册到完成第一次AI发布的完整路径",
-  "e2e_test_path": ".github/workflows/scripts/smoke/golden-path-1-smoke.sh"
-}
-```
+2026-10-15 已直接核验 us-vps 的生产 `cecelia`：以上为实体表，`journeys` 为
+`value_streams UNION ALL capabilities` 的兼容视图。字段名 `parent_journey_id` 保留旧名，
+外键实际指向 `value_streams`，不能仅凭字段名推断仍用旧模型。
 
-**journey_type 合法值**：`user_facing` | `autonomous` | `dev_pipeline` | `agent_remote`
-**maturity 合法值**：`not_started` | `skeleton` | `mvp` | `production` | `mature`
+每次操作先核实运行进程的环境与连接目标，再在只读事务中查询 `current_database()`、
+`pg_class.relkind`、实际外键；本机端口号、健康版本和本地 migration 不能单独证明库的身份或现状。
+本次核验的本机 5221 是 socat 转发到 us-vps，不是本机 staging。其他会话仍需重新核实。
 
----
+`/api/brain/journeys`、`/api/brain/value-streams` 当前可能通过兼容实现混回两种 kind；
+查全分页并按 `kind` 区分。`/api/brain/capabilities` 是旧登记接口，不能当六层能力源。
+结构写入前须查运行服务的现行路由和字段校验，确认写入目标实体表；本文件不编造新 CRUD 端点。
 
-### 2. journey_steps（历史遗留 Step 表，已废弃只读）
+旧 `journey_steps`、`journey_step_links`、`journey_features`、`golden_path` 的历史业务与提案用途
+须单独核实，不作为当前六层结构的写入规范；旧五层示例已从执行入口移除。
 
-> ⚠️ 已废弃（2026-06-09）：不再写入，历史数据只读。
-> ⚠️ 命名澄清（能力轴新定义，decision 13013a49）：这张表旧称"Golden Path 步骤"与新五层定义撞车，勿再沿用该叫法。新定义里 L4「step」的载体是 `golden_path`(303) 表（见下文），不是这张遗留表；本表的历史 step 数据仅供只读回溯。
-
-**API**：`POST /api/brain/journey_steps`
-**Notion**：AI Steps DB
-
-```json
-{
-  "journey_id": "uuid",
-  "name": "扫码绑定抖音主号",
-  "step_id": "L01-S4",
-  "maturity": "passing",
-  "smoke_cmd": "curl -sf localhost:5200/api/sessions | grep active",
-  "shared": false
-}
-```
-
-**maturity 合法值**：`not_started` | `in_progress` | `passing` | `done`
-
-**禁止写入**：
-- `smoke_cmd` 为空（没有验收标准不是 Step）
-- `journey_id` 为空的孤立 Step
-- 名称含 "test"、"mock"、"placeholder"
-
----
-
-### 3. journey_step_links（Journey-Step 连接）
-
-**API**：`POST /api/brain/journey_step_links`
-**Notion**：Journey-Step 连接表
-
-```json
-{
-  "journey_id": "uuid",
-  "step_id": "uuid",
-  "step_order": 4,
-  "status": "done"
-}
-```
-
-Name 自动生成格式：`{JourneyCode}-S{step_order}`（如 `L01-S4`、`ZjOps-S3`）
-
-**status 合法值**：`planned` | `in_progress` | `done`
-
----
-
-### 4. journey_features（Ability/Feature 唯一存储）
-
-**journey_features 是当前实际在用的 Ability/Feature 载体。**（能力轴新定义，decision 13013a49）
-- **Ability**（kind=ability）= 客户为之而来的价值 workflow（发抖音视频）= 新定义 L3「Golden Path = Ability = function」
-- **Feature**（kind=feature）= 使能件（登录/下载/cookie/保活）= 新定义 L5，经 step 挂到 L4
-- ⚠️ `abilities`(migration 294) 是**遗留死表**：从未 DROP、仍在库里，但已不写入，待归并/DROP。别再说它"已删"（那是假话），也别往它写。当前 Ability/Feature 一律写 journey_features。
-
-**API**：`POST /api/brain/journey_features`
-**Notion**：AI Feature DB
-
-```json
-{
-  "journey_id": "uuid",
-  "name": "抖音视频发布",
-  "kind": "ability",
-  "status": "done",
-  "thickness": "thin",
-  "workflow_ref": "douyin-publisher",
-  "version": "1.0.0"
-}
-```
-
-**kind 合法值**：`ability` | `feature`
-**status 合法值**：`planned` | `building` | `done` | `deprecated`
-**thickness 合法值**：`thin` | `medium` | `thick` | `mature`
-
-**禁止写入**：
-- 名称含 `[Sprint]`、`KeysTest`、`MyRun`（测试污染）
-- `journey_id` 为空
-
----
-
-### golden_path（Step 表 — 一条 Golden Path 的有序 step，migration 303）
-
-**这是能力轴新定义里的 L4「step」表**（decision 13013a49），不是"FR 台账"、也不是"Ability+Feature 有序组合"那种第三义描述——那些旧叫法已废止。一条 **Golden Path = 一个 Ability = 一个 function**（L3，落 journey_features kind=ability）；这张 `golden_path`(303) 表存的是**这条 Golden Path 的有序 step**，每行一个 step，按 `owner_task_id` 归属到所属 ability、按 `order_no` 排序。每个 step 可经 `feature_id` 指向 L5 使能件。
-
-**API**：`POST /api/brain/golden_path`
-
-```json
-{
-  "owner_task_id": "uuid",
-  "order_no": 1,
-  "feature_id": "uuid",
-  "note": "接收并理解客户消息"
-}
-```
-
-字段：`owner_task_id`（step 所属 ability 的执行 task）| `order_no`（step 顺序）| `feature_id`（该 step 指向的 L5 使能件）| `note`（step 说明）
-
-> step 上的 **NFR 决策**挂在 `decisions`（`category='nfr'`, `level='step'`, `target_type='golden_path'`, `target_id=<step id>`），不新建表。
-
----
+## 通用任务与记录写入
 
 ### 5. initiative_contracts（Sprint 合同）
 
-**API**：`POST /api/brain/notes`（Type: Contract）或直接写 initiative_contracts 表
+**API**：`POST /api/brain/notes`（Type: Contract）；旧 Sprint 合同模板只供历史对象维护，现役开发按 dev skill
 **含义**：PRD 内容 + DOD 合同，同一张表两个字段
 
 ```json
@@ -180,16 +90,17 @@ Name 自动生成格式：`{JourneyCode}-S{step_order}`（如 `L01-S4`、`ZjOps-
 
 ### 7. tasks（工作项）
 
+建单后立即通过 `/tasks/:id/claim` 领取并管理状态。代码任务按 dev skill 的现行 coding_workflow 入口登记，不再以退役 harness_initiative 点火。
+
 **API**：`POST /api/brain/tasks`
 
 ```json
 {
-  "title": "修复小红书 QR 绑定 cookie 名",
-  "task_type": "harness_initiative",
+  "title": "核对生产树与Notion目录",
+  "task_type": "research",
   "priority": "P1",
   "payload": {
-    "sprint_dir": "sprints/line00-xiaohongshu-qr-bind",
-    "journey_id": "uuid"
+    "work_kind": "coding_review"
   }
 }
 ```

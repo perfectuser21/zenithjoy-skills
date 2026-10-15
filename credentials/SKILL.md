@@ -37,7 +37,7 @@ console.log(JSON.stringify(found.map(i=>({id:i.id, title:i.title})), null, 2));
 
 ### Step 2：获取所有字段，找到有值的那个
 
-拿到条目 ID 或 title 后，dump 全部字段，不要猜字段名：
+拿到条目 ID 或 title 后，只列字段名、类型和是否有值，不要猜字段名，也不要输出值的任何部分：
 
 ```javascript
 // 标准字段 dump 模板
@@ -50,10 +50,10 @@ fs.readFileSync(process.env.HOME + '/.credentials/1password.env', 'utf8')
 const item = JSON.parse(execFileSync('op',
   ['item', 'get', 'ITEM_ID_OR_TITLE', '--vault', 'CS', '--format', 'json', '--reveal'],
   {env: {...process.env, ...env}}).toString());
-// 打印所有字段及其值前20字符，找有值的
+// 只打印字段身份与是否有值，不打印秘密的任何前缀
 item.fields.forEach(f => {
   if (f.value && f.value.length > 0 && f.label !== 'notesPlain') {
-    console.log(f.label + ': ' + f.value.substring(0, 30) + (f.value.length > 30 ? '...' : ''));
+    console.log(JSON.stringify({id:f.id, label:f.label, type:f.type, has_value:true}));
   }
 });
 "
@@ -80,8 +80,10 @@ source ~/.credentials/service.env
 | Notion | `Notion` | `notesPlain` 解析 `NOTION_*` | `notion.env` |
 | Anthropic | `Anthropic Claude API` | `credential` | `anthropic.json` |
 | OpenAI | `OpenAI-claudecode2026` | `credential` | `openai.env` |
-| Cecelia PostgreSQL | `Cecelia PostgreSQL` | `password` 或 `credential` | `database.env` |
+| Cecelia 生产 PostgreSQL | `Cecelia Brain Production PostgreSQL (existing deployment owner)` | `DB_USER` / `DB_PASSWORD` / `DB_NAME` | `database.env`（连接目的地另行核实） |
 | Feishu 飞书 | `Feishu 飞书` | `credential` | `feishu.env` |
+
+2026-10-15 已核验现役 Cecelia 生产条目可连接 us-vps 的 `cecelia`；旧名 `Cecelia PostgreSQL` 条目含历史多库资料，不能据旧字典直接当成现役生产密码。连接成功并核实数据库身份后再更新本地缓存。
 
 **GitHub Tokens 特殊说明**：这个条目的 `notesPlain` 字段包含多行 KEY=VALUE 格式，需要解析：
 
@@ -193,4 +195,4 @@ execFileSync('op', [
 3. 新凭据流程：**1P 先写 → 本地缓存** ，绝不反向
 4. 发现本地有但 1P 没有 → 立即补到 1P
 
-**最后更新**: 2026-04-02
+**最后更新**: 2026-10-15

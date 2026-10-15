@@ -1,155 +1,54 @@
 ---
 name: notion
-description: |
-  Notion 读写 Skill。操作 AI Hub 9 张核心表（Journey/Steps/Feature/SkillRegistry/API/DB/Test/Issues/Notes）。
-  触发词：写进Notion、存到Notion、记录问题/Issue、记录决策/知识/日志、查Notion Issues、更新Journey状态。
-  凭据从 1Password CS Vault "Notion" 条目读取，CCAPI2026 集成账号直接可用。
-  旧 workspace（OKR/Projects/Initiative/Areas）全部 404，禁止使用。
+description: "查询 Notion 页面与数据库，写入获授权的知识或内容真身；Brain 六层目录及任务、决策、Ops 等投影只读，结构和事件写回走 Brain。"
+version: 2.0.0
+updated: 2026-10-15
 ---
 
-# Notion Skill
+# Notion 读写
 
-## 凭据获取（必须第一步）
+## 先确定真身与工作面
 
-```bash
-node -e "
-const fs = require('fs');
-const {execFileSync} = require('child_process');
-const env = {};
-fs.readFileSync(process.env.HOME + '/.credentials/1password.env', 'utf8')
-  .split('\n').forEach(l => { const m = l.match(/^([^=]+)=(.+)/); if (m) env[m[1]]=m[2]; });
-// credential 字段存 token，notesPlain 存 DB IDs（ZenithJoy workspace）
-const token = execFileSync('op', ['item', 'get', 'Notion', '--vault', 'CS', '--fields', 'credential'],
-  {env: {...process.env, ...env}}).toString().trim().replace(/^\"|\"$/g,'');
-const note = execFileSync('op', ['item', 'get', 'Notion', '--vault', 'CS', '--fields', 'notesPlain'],
-  {env: {...process.env, ...env}}).toString().trim().replace(/^\"|\"$/g,'');
-const creds = `NOTION_API_KEY=${token}\n` + note.split('\n').filter(l=>l.startsWith('NOTION_') && !l.startsWith('NOTION_API_KEY')).join('\n') + '\n';
-fs.writeFileSync(process.env.HOME + '/.credentials/notion.env', creds, {mode: 0o600});
-console.log('✅ Notion 凭据已同步');
-"
-```
+按用户当前六去向规则操作：知识与对外内容的真身在 Notion；任务、事件、决定、设备、Ops、
+六层业务树的真身在 Brain，Notion 是投影。不能通过直写投影修正源数据或掩盖同步错误。
 
----
+- 六层业务树的层级与判据只认 `../tree/SKILL.md`、`../tree/references/doctrine.md`。
+- Brain 写入规范读 `../db-update/SKILL.md`，先核实目标环境、实体表与现行写入API。
+- 旧 Journey / Ability / Feature / golden_path 五层模板及旧工作区ID不再作为现行结构依据。
+- 人工可写列保留用户修改；设备状态、电量、心跳和机器关系等按用户列级分权规则执行。
 
-## AI Hub 数据库（9 张核心表，CCAPI2026 集成账号）
+## 凭据
 
-| 变量 | 用途 | DB ID |
-|------|------|-------|
-| `NOTION_JOURNEY_DB` | AI Journey — 能力轴 L1 领域（Journey） | `358c40c2-ba63-8148-bde7-e313d789931a` |
-| `NOTION_STEPS_DB` | AI Steps — 历史遗留 Step 库（journey_steps，已废弃只读；新 L4 step 落 golden_path 表） | `369c40c2-ba63-812c-9f35-e7e43db25014` |
-| `NOTION_JOURNEY_STEP_DB` | Journey-Step 顺序连接表（遗留） | `369c40c2-ba63-81e2-b95a-e5e3d0592676` |
-| `NOTION_FEATURE_DB` | AI Feature — journey_features 载体：kind=ability 即 L3 Golden Path/Ability，kind=feature 即 L5 使能件 | `358c40c2-ba63-81e3-96c5-d762b3d34dff` |
-| `NOTION_SKILL_REGISTRY_DB` | Skill Registry | `353c40c2-ba63-81bf-ae3e-f0e6fa3753d7` |
-| `NOTION_API_REGISTRY_DB` | Sprint State — API Registry | `365c40c2-ba63-81a3-9060-fcef565e5291` |
-| `NOTION_DB_SCHEMA_REGISTRY_DB` | Sprint State — DB Schema Registry | `365c40c2-ba63-8181-9a57-ed760fd68ba3` |
-| `NOTION_TEST_REGISTRY_DB` | Sprint State — Tests Registry | `365c40c2-ba63-8164-8037-eb72e713809e` |
-| `NOTION_ISSUES_DB` | Issues — Bug / 问题追踪 | `a17c40c2-ba63-82fb-9888-8152cefe29ec` |
-| `NOTION_NOTES_DB` | AI Notes — 决策/知识/日志 | `185c40c2-ba63-828c-973f-81a9c4582cd6` |
+按 `../credentials/SKILL.md` 从 1Password CS Vault 的 `Notion` 条目读取。
+本次已核实 `credential` 字段有集成凭据；字段和值仍需按凭据技能验证，不在输出中显示。
+凭据缓存只写 `~/.credentials`，权限600，不进入仓库、聊天或Notion正文。
 
-> ⚠️ **旧 workspace 已废弃**：`NOTION_PROJECTS_DB`（b47c40c2）、`NOTION_EXECUTION_DB`（e9ac40c2）、`NOTION_AREAS_DB`（e62c40c2）、`NOTION_OKR_DB`（a29c40c2）、`NOTION_FEATURE_REGISTRY_DB`（352c40c2）均为 404，禁止使用。
+## 当前六层目录
 
----
+实际结构是 Department → Value Stream → Capability → Workflow → Activity → Step。
+对应实体表及父子关系读 tree；`journeys` 是兼容视图，不代表仍使用旧表模型。
 
-## 模板 1：Issue
+读取正式配置：`GET /api/brain/projections/notion/directory/status`（需内部API鉴权）。
+以响应的 `config.dbs` 获取 areas/value_streams/capabilities/workflows/activities/steps 的库ID，
+不要凭旧静态库名、同名页或历史ID猜测。先核实Brain运行环境及数据库身份。
 
-存入 `NOTION_ISSUES_DB`
+需要同步时调用正式目录入口：`POST /api/brain/projections/notion/directory/run`，请求体为空对象。
+程序负责写投影，禁止另写脚本直接改目录页的名称或关系。目录按批次与游标运行；调度唤醒不等于
+全目录已同步，接口返回、`last_success_at` 也不能单独证明目标页正确。
 
-```javascript
-{
-  parent: {database_id: env.NOTION_ISSUES_DB},
-  properties: {
-    Issue: {title: [{text:{content:'【问题标题】'}}]},
-    Priority: {select: {name: 'P1'}},
-    Horizon: {select: {name: 'Now'}},
-    Area: {relation: [{id: '子Area ID'}]},
-    Projects: {relation: [{id: 'Project ID'}]},  // 双向关联，必填
-  },
-  children: [
-    h2('问题描述'), p('...'),
-    h2('根本原因'), p('...'),
-    h2('修复方案'), p('...'),
-    h2('验证方式'), p('...'),
-  ]
-}
-```
+验收目标页时核对：所属数据库、Brain ID、真实标题、直接父级关系、状态及同步收据。
+不要把分页不全、同名旧页、旧工作区无权限或局部map投影误报为生产结构不存在。
 
----
+## 知识与内容写入
 
-## 模板 2：Decision / Knowledge / Notes
+用户指定库或页面时先读取其实际属性与父级身份，再按现有字段写入；不假设属性名称或枚举。
+知识使用用户当前指定的 Reference / Operational / Insights 真库；对外内容按 Ideas → Seed →
+Core → 发布编排链处理。库ID优先取本次用户提供的现行清单或正式注册表，不沿用旧AI Hub的模板ID。
 
-存入 `NOTION_NOTES_DB`
+普通查询只读；写入范围遵循用户授权。任务、Issue、决策、Ops和运行记录通过Brain正式入口登记，
+不把AI Notes或旧Notion模板当作这些对象的新真身。
 
-**Type 选项：** `Decision`（架构决策）/ `Research`（知识科普）/ `Log`（日志）/ `Notes`（随手记）
+## 结果
 
-```javascript
-{
-  parent: {database_id: env.NOTION_NOTES_DB},
-  properties: {
-    Title: {title: [{text:{content:'【标题】'}}]},
-    Type: {select: {name: 'Decision'}},  // 按实际类型填
-    Date: {date: {start: new Date().toISOString().split('T')[0]}},
-    'Related Areas': {relation: [{id: '子Area ID'}]},
-    Projects: {relation: [{id: 'Project ID'}]},  // 可选
-  },
-  children: [
-    // Decision 结构：
-    h2('决定了什么'), p('...'),
-    h2('为什么这么决定'), p('...'),
-    h2('影响范围'), p('...'),
-    // Research 结构：
-    // h2('是什么'), h2('为什么重要'), h2('正确理解'), h2('当前状态')
-  ]
-}
-```
-
----
-
-## 通用 Block 构建函数
-
-```javascript
-const h2 = text => ({object:'block',type:'heading_2',heading_2:{rich_text:[{type:'text',text:{content:text}}]}});
-const h3 = text => ({object:'block',type:'heading_3',heading_3:{rich_text:[{type:'text',text:{content:text}}]}});
-const p = text => ({object:'block',type:'paragraph',paragraph:{rich_text:[{type:'text',text:{content:text}}]}});
-const todo = text => ({object:'block',type:'to_do',to_do:{rich_text:[{type:'text',text:{content:text}}],checked:false}});
-const li = text => ({object:'block',type:'bulleted_list_item',bulleted_list_item:{rich_text:[{type:'text',text:{content:text}}]}});
-```
-
----
-
-## 查询模板
-
-### 查 Issues（按 Priority 排序）
-
-```javascript
-fetch('https://api.notion.com/v1/databases/' + env.NOTION_ISSUES_DB + '/query', {
-  method: 'POST',
-  headers: { 'Authorization': 'Bearer ' + env.NOTION_API_KEY, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    filter: {
-      and: [
-        { property: 'Status', status: { does_not_equal: 'Done' } },
-        { property: 'Area', relation: { contains: '子Area ID' } }
-      ]
-    },
-    sorts: [{ property: 'Priority', direction: 'ascending' }]
-  })
-}).then(r => r.json()).then(d => {
-  d.results.forEach(p => {
-    const pri = p.properties.Priority?.select?.name;
-    const title = p.properties.Issue.title[0]?.plain_text;
-    console.log(pri, '|', title);
-  });
-});
-```
-
----
-
-## 触发条件
-
-- "记录问题 / 新建 Issue" → 模板 1（NOTION_ISSUES_DB）
-- "记录决策 / 知识 / 日志" → 模板 2（NOTION_NOTES_DB / AI Notes）
-- "更新 Journey / Feature / Step" → 直接用对应 Brain API，再同步 Notion（见 CLAUDE.md 第 11 节）
-
-**写入前必须确认：**
-1. 写哪张表？（见 CLAUDE.md 第 11 节 9 张核心表）
-2. 标题和一句话摘要是什么？
+给出实际页面链接，并区分「源数据已更新」「投影已写入」「已读回验证」三个事实。
+同步失败时保留错误与目标身份，修正源或同步程序；不直改投影补一个表面成功。

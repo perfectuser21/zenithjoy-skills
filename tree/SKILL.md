@@ -1,9 +1,10 @@
 ---
 name: tree
 description: "判定或设计部门、价值流、能力、流程、Activity、Step 的层级与边界，审查能力树和共享合同。用于 /tree、层级归位、流程拆分或六层概念答疑；先加载真树，给出坐标，不自动改树。"
-version: 2.4.2
+version: 2.4.4
 created: 2026-07-24
 changelog:
+  - "2.4.4: 核实生产连接及实体身份；兼容读回按kind和分页，区分journeys视图与API写路由。"
   - "2.4.2: 精简发现描述，原触发细节移入按需读取正文；业务步骤与权限不变"
   - "2.4.0: 门面改名 capability→tree + 部门定义规则（主理人 10-08 拍板，决策 14512222，任务 8a84cc31）——\nskill 目录/name 由 capability 改 tree（它管整棵树六层，不只管能力）；流水线 capability-controller /\nmapper / proposer / reviewer 不改名（它们只管提案一个能力），其对 doctrine 路径的引用同步为\ntree/references/；doctrine 新增 §4A 部门：部门回答「谁负责」、价值流回答「卖什么」，按职能切不按产品线\n切，两个区域（Cecelia 内驱 / ZenithJoy 对外）、成立条件、「服务谁」判据、新增/合并/退出顺序、当前\n名册 8 部门只写在 Brain areas 表不写进本 skill；巡逻新增筛子⑪（部门与价值流重名 / 单价值流部门）；\nevals 加部门相关 3 条"
   - "2.3.0: 共享 Activity 的合同变更（决策 eb9f8f77 补充，任务 c74d6f26）——doctrine 新增 §19：合同四项（承诺 /\n输入字段+来源 / 输出字段+去向 / 读回）+ semver；兼容升小版本、不兼容发大版本逐个切并新旧并存、只一个流程要\n就分叉；改被 ≥2 个流程引用的 Activity 合同前必须出影响表；获客样板补「判定」输入来源变更实例；巡逻新增\n筛子⑩（版本不一致 SQL + 影响表 / semver / 过渡期人工核对项）；设计模式第 5 步加合同核对；Mode B 接\n「改共享 Activity 合同」输入并产出影响表；evals 加「改共享 Activity 输入时怎么办」；reviewer 加打回项"
@@ -39,10 +40,20 @@ agent 换代码 / 获客样板 / 场景牌组 / 归位判定链 / 七动作 / �
 
 ## Step 0：先装六层全树（所有模式的第一动作，不许跳）
 
-首选生产只读库（US-Mac 本机隧道）：
+先确认环境：查 Brain 运行进程的 NODE_ENV、DB_HOST/DB_PORT/DB_NAME（不输出凭据），核对本机
+端口的实际转发目标。库名、表/视图身份和外键从目标数据库只读查询；不能用本地 migration、
+接口名字或服务版本替代数据库事实。2026-10-15 实查：本机 5221 经 socat → us-vps
+100.79.41.61:5221，进程 NODE_ENV=production、DB_NAME=cecelia；每次使用仍须核验连接。
+
+首选目标生产库只读连接（15432 是 SSH 隧道时也要核对实际目的机器）：
 
 ```bash
-psql -h localhost -p 15432 -U cecelia -d cecelia -c "
+psql -h 127.0.0.1 -p 15432 -U cecelia -d cecelia -c "
+BEGIN READ ONLY;
+SELECT current_database(), inet_server_addr(), inet_server_port();
+SELECT relname, relkind FROM pg_class
+WHERE relnamespace = 'public'::regnamespace
+  AND relname IN ('areas','value_streams','capabilities','workflows','activities','workflow_activity_refs','steps','journeys');
 SELECT ar.name 部门, vs.name 价值流, c.name 能力, w.name 流程, r.sequence_no 序,
        a.name activity, a.executor_kind 执行体,
        (SELECT count(*) FROM steps s WHERE s.activity_id = a.id AND s.active) step数
@@ -53,21 +64,31 @@ LEFT JOIN workflows w ON w.capability_id = c.id AND w.status = 'active'
 LEFT JOIN workflow_activity_refs r ON r.workflow_id = w.id AND r.active
 LEFT JOIN activities a ON a.id = r.activity_id
 WHERE vs.status = 'active'
-ORDER BY 1, 2, 3, 4, 5"
+ORDER BY 1, 2, 3, 4, 5;
+COMMIT;"
 ```
 
 psql 不可达时走 Brain 只读接口：
 
 ```bash
-curl -s "$BRAIN/api/brain/value-streams"                 # 价值流（area_id → 部门）
+curl -s "$BRAIN/api/brain/value-streams?limit=200&offset=0" # 兼容实现可能混回价值流与能力；按 kind 分类并查全分页
 curl -s "$BRAIN/api/brain/workflows?status=active"       # 流程，每行带 capability_name / value_stream_id / organization / activities
 curl -s "$BRAIN/api/brain/activities/<id>"               # 单个 Activity 合同（承诺/输入/输出/读回）
 curl -s "$BRAIN/api/brain/activities/<id>/consumers"     # 哪些流程在用它（共用判断）
 curl -s "$BRAIN/api/brain/steps"                         # Step（activity_id / readback）
 ```
 
-注意：`/api/brain/journeys`（只读兼容视图）、`/api/brain/golden-paths`（能力提案管线）、
-`/api/brain/capabilities`（旧能力登记表，不是六层的能力）**都不是地图源**，禁用来判层。
+接口回退须检查响应实际内容：`value-streams` 在当前运行实现中也可能混回 capability，
+`kind=value_stream` 与 `kind=capability` 分开，再用 area_id / parent_journey_id 连树。
+本次实查的 journeys 是二者 UNION ALL 的视图，不是旧实体表；API 名与实体名不保证一一对应。
+默认分页或 scope=zenithjoy 的局部 map 不能证明全库缺少某项；查全实体及父子关系后才报告记录缺失。
+`/map?scope=...` 是该 scope 的投影，不能代替六层组织树。
+
+`/api/brain/journeys` 与 `/api/brain/value-streams` 当前走同一兼容路由；读回须查全分页，
+按 kind 与真实外键连树。数据库 journeys 是兼容视图，不是实体写入目标；API 的 POST/PATCH
+`/journeys` 已核实经 journey-registration 分流到 value_streams / capabilities，调用前仍核对
+现行实现。`/api/brain/capabilities` 是 golden-paths 提案接口的别名，不是六层能力 CRUD。
+局部地图、提案记录和路由名称本身均不能代替六层真表。
 
 为什么是铁律：树上已有的东西绝不重新发明——离了树判层，判得再对也是错的。装载后：
 - 一切结论必须落成**格子坐标**：`部门 · 价值流 · 能力 · 流程 · Activity（· Step）· 动作类型（七动作之一）`

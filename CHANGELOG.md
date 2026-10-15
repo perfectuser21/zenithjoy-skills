@@ -1,3 +1,8 @@
+## [2026-10-15] tree / db-update / notion / dev / credentials — updated（生产层级与投影口径纠错）
+**症状**: 旧五层、兼容路由和过时凭据说明混入现行操作，易把提案表当能力树，或修改 Notion 投影。
+**修改**（Brain 任务 a2b3101f，批准 5155c28c）: 六层实体与 FK、生产身份及兼容 API 分流按实查更新；局部地图不代替全树；目录自动分批同步并读回名称和关系；知识内容保留 Notion 真身；删除路径 C 的旧 Ability/Feature 注册步骤，凭据字段探查不输出秘密。
+**验证**: 全仓 lint、GP 合同层、learning 占位符及 Brain 契约守卫通过；独立审查发现的旧注册指令冲突已修正。
+
 ## [2026-10-12] dev 21.14.0 / line-strategist 1.3.0 — updated（建单合同字段）
 **症状**: new-task 与裸 curl 旧示例缺少 mutation 分类及地图锚点；旧入口曾误分 coding_review、清空 repo 后被错误仓库 daemon 领取，修复后的入口会拒绝不完整请求。
 **根因**: 技能示例没有随 coding_workflow 路由入口的必填合同更新。
