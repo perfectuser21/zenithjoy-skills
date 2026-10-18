@@ -1,0 +1,1473 @@
+{
+  "version": 1,
+  "profiles": {
+    "zenithjoy": {
+      "origin": "perfectuser21/zenithjoy-workspace",
+      "origin_revision": "bcc479682cd2ef62007bfcb1e919e40b2939d70a",
+      "entrypoints": [
+        {
+          "path": ".agents/skills/multi-platform-publish/SKILL.md",
+          "source": "business-skills/zenithjoy/.agents/skills/multi-platform-publish/SKILL.md",
+          "name": "multi-platform-publish",
+          "execution_directory": ".agents/skills/multi-platform-publish",
+          "status": "business-compatibility"
+        },
+        {
+          "path": ".claude/skills/douyin-account-search/SKILL.md",
+          "source": "business-skills/zenithjoy/.claude/skills/douyin-account-search/SKILL.md",
+          "name": "douyin-account-search",
+          "execution_directory": ".claude/skills/douyin-account-search",
+          "status": "business-compatibility"
+        },
+        {
+          "path": ".claude/skills/douyin-video-search/SKILL.md",
+          "source": "business-skills/zenithjoy/.claude/skills/douyin-video-search/SKILL.md",
+          "name": "douyin-video-search",
+          "execution_directory": ".claude/skills/douyin-video-search",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-copy-review/SKILL.md",
+          "source": "business-skills/zenithjoy/docs/pipeline-ops-skills/pipeline-copy-review/SKILL.md",
+          "name": "pipeline-copy-review",
+          "execution_directory": "docs/pipeline-ops-skills/pipeline-copy-review",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-copywrite/SKILL.md",
+          "source": "business-skills/zenithjoy/docs/pipeline-ops-skills/pipeline-copywrite/SKILL.md",
+          "name": "pipeline-copywrite",
+          "execution_directory": "docs/pipeline-ops-skills/pipeline-copywrite",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-diagnose/SKILL.md",
+          "source": "business-skills/zenithjoy/docs/pipeline-ops-skills/pipeline-diagnose/SKILL.md",
+          "name": "pipeline-diagnose",
+          "execution_directory": "docs/pipeline-ops-skills/pipeline-diagnose",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-export/SKILL.md",
+          "source": "_archive/2026-10-13/pipeline-export/SKILL.md",
+          "name": "pipeline-export",
+          "execution_directory": "docs/pipeline-ops-skills/pipeline-export",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-generate/SKILL.md",
+          "source": "_archive/2026-10-13/pipeline-generate/SKILL.md",
+          "name": "pipeline-generate",
+          "execution_directory": "docs/pipeline-ops-skills/pipeline-generate",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-persondata/SKILL.md",
+          "source": "business-skills/zenithjoy/docs/pipeline-ops-skills/pipeline-persondata/SKILL.md",
+          "name": "pipeline-persondata",
+          "execution_directory": "docs/pipeline-ops-skills/pipeline-persondata",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-regen/SKILL.md",
+          "source": "business-skills/zenithjoy/docs/pipeline-ops-skills/pipeline-regen/SKILL.md",
+          "name": "pipeline-regen",
+          "execution_directory": "docs/pipeline-ops-skills/pipeline-regen",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-research/SKILL.md",
+          "source": "business-skills/zenithjoy/docs/pipeline-ops-skills/pipeline-research/SKILL.md",
+          "name": "pipeline-research",
+          "execution_directory": "docs/pipeline-ops-skills/pipeline-research",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-review/SKILL.md",
+          "source": "business-skills/zenithjoy/docs/pipeline-ops-skills/pipeline-review/SKILL.md",
+          "name": "pipeline-review",
+          "execution_directory": "docs/pipeline-ops-skills/pipeline-review",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-run/SKILL.md",
+          "source": "business-skills/zenithjoy/docs/pipeline-ops-skills/pipeline-run/SKILL.md",
+          "name": "pipeline-run",
+          "execution_directory": "docs/pipeline-ops-skills/pipeline-run",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "scripts/phone-account-patrol/SKILL.md",
+          "source": "business-skills/zenithjoy/scripts/phone-account-patrol/SKILL.md",
+          "name": "phone-account-patrol",
+          "execution_directory": "scripts/phone-account-patrol",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/agent/publishers/toutiao-publisher/SKILL.md",
+          "source": "_archive/2026-10-13/toutiao-publisher/SKILL.md",
+          "name": "toutiao-publisher",
+          "execution_directory": "services/agent/publishers/toutiao-publisher",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "services/content-pipeline/.claude/skills/posts/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/.claude/skills/posts/SKILL.md",
+          "name": "posts",
+          "execution_directory": "services/content-pipeline/.claude/skills/posts",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/content-pipeline/scripts/publishers/douyin-publisher/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/scripts/publishers/douyin-publisher/SKILL.md",
+          "name": "douyin-publisher",
+          "execution_directory": "services/content-pipeline/scripts/publishers/douyin-publisher",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/content-pipeline/scripts/publishers/toutiao-publisher/SKILL.md",
+          "source": "_archive/2026-10-13/toutiao-publisher/SKILL.md",
+          "name": "toutiao-publisher",
+          "execution_directory": "services/content-pipeline/scripts/publishers/toutiao-publisher",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "services/content-pipeline/skills/analyze/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/analyze/SKILL.md",
+          "name": "analyze",
+          "execution_directory": "services/content-pipeline/skills/analyze",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/content-pipeline/skills/create/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/create/SKILL.md",
+          "name": "create",
+          "execution_directory": "services/content-pipeline/skills/create",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/content-pipeline/skills/deep-post-generator/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/deep-post-generator/SKILL.md",
+          "name": "deep-post-generator",
+          "execution_directory": "services/content-pipeline/skills/deep-post-generator",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/content-pipeline/skills/image-gen-workflow/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/image-gen-workflow/SKILL.md",
+          "name": "image-gen-workflow",
+          "execution_directory": "services/content-pipeline/skills/image-gen-workflow",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/content-pipeline/skills/quote-card-toapis/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/quote-card-toapis/SKILL.md",
+          "name": "quote-card-toapis",
+          "execution_directory": "services/content-pipeline/skills/quote-card-toapis",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/content-pipeline/skills/rewrite/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/rewrite/SKILL.md",
+          "name": "rewrite",
+          "execution_directory": "services/content-pipeline/skills/rewrite",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/content-pipeline/skills/toutiao-publisher/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/toutiao-publisher/SKILL.md",
+          "name": "toutiao-publisher",
+          "execution_directory": "services/content-pipeline/skills/toutiao-publisher",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "services/phone-adb-controller/commander/skills/wf-douyin_comment_scoring/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/wf-douyin_comment_scoring/SKILL.md",
+          "name": "wf-douyin_comment_scoring",
+          "execution_directory": "services/phone-adb-controller/commander/skills/wf-douyin_comment_scoring",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/commander/skills/wf-douyin_lead_outreach/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/wf-douyin_lead_outreach/SKILL.md",
+          "name": "wf-douyin_lead_outreach",
+          "execution_directory": "services/phone-adb-controller/commander/skills/wf-douyin_lead_outreach",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/commander/skills/wf-douyin_video_discovery/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/wf-douyin_video_discovery/SKILL.md",
+          "name": "wf-douyin_video_discovery",
+          "execution_directory": "services/phone-adb-controller/commander/skills/wf-douyin_video_discovery",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/commander/skills/wf-douyin_video_processing/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/wf-douyin_video_processing/SKILL.md",
+          "name": "wf-douyin_video_processing",
+          "execution_directory": "services/phone-adb-controller/commander/skills/wf-douyin_video_processing",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/commander/skills/wf-douyin_video_publish/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/wf-douyin_video_publish/SKILL.md",
+          "name": "wf-douyin_video_publish",
+          "execution_directory": "services/phone-adb-controller/commander/skills/wf-douyin_video_publish",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/commander/skills/workflow-commander/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/workflow-commander/SKILL.md",
+          "name": "workflow-commander",
+          "execution_directory": "services/phone-adb-controller/commander/skills/workflow-commander",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-101/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-101/SKILL.md",
+          "name": "douyin-leadgen-101",
+          "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-101",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-102/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-102/SKILL.md",
+          "name": "douyin-leadgen-102",
+          "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-102",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-103/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-103/SKILL.md",
+          "name": "douyin-leadgen-103",
+          "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-103",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-104/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-104/SKILL.md",
+          "name": "douyin-leadgen-104",
+          "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-104",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-101-collect-videos/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-101-collect-videos/SKILL.md",
+          "name": "douyin-leadgen-activity-101-collect-videos",
+          "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-activity-101-collect-videos",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-cleanup/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-102-cleanup/SKILL.md",
+          "name": "douyin-leadgen-activity-102-cleanup",
+          "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-cleanup",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-collection/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-102-collection/SKILL.md",
+          "name": "douyin-leadgen-activity-102-collection",
+          "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-collection",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-dedup/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-102-dedup/SKILL.md",
+          "name": "douyin-leadgen-activity-102-dedup",
+          "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-dedup",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-preflight/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-102-preflight/SKILL.md",
+          "name": "douyin-leadgen-activity-102-preflight",
+          "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-preflight",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification/SKILL.md",
+          "name": "douyin-leadgen-activity-102-qualification",
+          "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-103-mark-leads/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-103-mark-leads/SKILL.md",
+          "name": "douyin-leadgen-activity-103-mark-leads",
+          "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-activity-103-mark-leads",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-103-scoring/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-103-scoring/SKILL.md",
+          "name": "douyin-leadgen-activity-103-scoring",
+          "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-activity-103-scoring",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-cleanup/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-104-cleanup/SKILL.md",
+          "name": "douyin-leadgen-activity-104-cleanup",
+          "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-cleanup",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-preflight/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-104-preflight/SKILL.md",
+          "name": "douyin-leadgen-activity-104-preflight",
+          "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-preflight",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-send-dm/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-104-send-dm/SKILL.md",
+          "name": "douyin-leadgen-activity-104-send-dm",
+          "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-send-dm",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-write-back/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-104-write-back/SKILL.md",
+          "name": "douyin-leadgen-activity-104-write-back",
+          "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-write-back",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/wechat-cs-android/skills/wechat-cs-android/SKILL.md",
+          "source": "business-skills/zenithjoy/services/wechat-cs-android/skills/wechat-cs-android/SKILL.md",
+          "name": "wechat-cs-android",
+          "execution_directory": "services/wechat-cs-android/skills/wechat-cs-android",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "services/wechat-cs-android/skills/wechat-friend-onboarding-android/SKILL.md",
+          "source": "business-skills/zenithjoy/services/wechat-cs-android/skills/wechat-friend-onboarding-android/SKILL.md",
+          "name": "wechat-friend-onboarding-android",
+          "execution_directory": "services/wechat-cs-android/skills/wechat-friend-onboarding-android",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "workflows/content-creator/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/create/SKILL.md",
+          "name": "content-creator",
+          "execution_directory": "workflows/content-creator",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "workflows/content-rewriter/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/rewrite/SKILL.md",
+          "name": "content-rewriter",
+          "execution_directory": "workflows/content-rewriter",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "workflows/image-gen/SKILL.md",
+          "source": "business-skills/zenithjoy/workflows/image-gen/SKILL.md",
+          "name": "image-gen",
+          "execution_directory": "workflows/image-gen",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "workflows/platform-data/skill/SKILL.md",
+          "source": "business-skills/zenithjoy/workflows/platform-data/skill/SKILL.md",
+          "name": "skill",
+          "execution_directory": "workflows/platform-data/skill",
+          "status": "business-compatibility"
+        }
+      ],
+      "files": [
+        {
+          "path": ".agents/skills/multi-platform-publish/SKILL.md",
+          "source": "business-skills/zenithjoy/.agents/skills/multi-platform-publish/SKILL.md",
+          "sha256": "830528ec212c8275bff0b892c93f3cd032f0da1ac19df7d340be0dabd862f636",
+          "mode": "100644"
+        },
+        {
+          "path": ".agents/skills/multi-platform-publish/agents/openai.yaml",
+          "source": "business-skills/zenithjoy/.agents/skills/multi-platform-publish/agents/openai.yaml",
+          "sha256": "b79ca5cefd9045bd7fd3bdec9b2815ffec5b7c2ee4b4622df9c6c7ef9762697c",
+          "mode": "100644"
+        },
+        {
+          "path": ".agents/skills/multi-platform-publish/references/android-additional-modes.md",
+          "source": "business-skills/zenithjoy/.agents/skills/multi-platform-publish/references/android-additional-modes.md",
+          "sha256": "dafccea0daa82ebd2491e219eea821c7e9f86417fd9500bb4d1e107474bd78f2",
+          "mode": "100644"
+        },
+        {
+          "path": ".agents/skills/multi-platform-publish/references/catalog.json",
+          "source": "business-skills/zenithjoy/.agents/skills/multi-platform-publish/references/catalog.json",
+          "sha256": "a8d9e1911274cd30406381d1d3d9f9d9a79aceef2162d173e5a69ad0451e5878",
+          "mode": "100644"
+        },
+        {
+          "path": ".agents/skills/multi-platform-publish/references/publishing-matrix.md",
+          "source": "business-skills/zenithjoy/.agents/skills/multi-platform-publish/references/publishing-matrix.md",
+          "sha256": "c9d2f472625ca2d953863002e9039f298c0b32f477ba2da60950975a4d87b36e",
+          "mode": "100644"
+        },
+        {
+          "path": ".claude/skills/douyin-account-search/SKILL.md",
+          "source": "business-skills/zenithjoy/.claude/skills/douyin-account-search/SKILL.md",
+          "sha256": "d238c0b2dd6e5336661b12b57382aec4ba7089337b9e78aa3c108fb71d4af518",
+          "mode": "100644"
+        },
+        {
+          "path": ".claude/skills/douyin-video-search/SKILL.md",
+          "source": "business-skills/zenithjoy/.claude/skills/douyin-video-search/SKILL.md",
+          "sha256": "40f577ddaf196bd96f987c1063e981c371d63b599ac4c36078af4de648bf44ec",
+          "mode": "100644"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-copy-review/SKILL.md",
+          "source": "business-skills/zenithjoy/docs/pipeline-ops-skills/pipeline-copy-review/SKILL.md",
+          "sha256": "2b970407e6b480f4104283e5ca40a7bbe7d899107545a969561b1fea49b84b66",
+          "mode": "100644"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-copywrite/SKILL.md",
+          "source": "business-skills/zenithjoy/docs/pipeline-ops-skills/pipeline-copywrite/SKILL.md",
+          "sha256": "62cf9c16a22ec28de4326820b4cda73114d8bbc0667b6d8fc56d17de9393ea8f",
+          "mode": "100644"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-diagnose/SKILL.md",
+          "source": "business-skills/zenithjoy/docs/pipeline-ops-skills/pipeline-diagnose/SKILL.md",
+          "sha256": "8ed944449e0a415871eac113006edf45619af629962fb6de5a64c84621713344",
+          "mode": "100644"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-export/SKILL.md",
+          "source": "_archive/2026-10-13/pipeline-export/SKILL.md",
+          "sha256": "cc02745d9abe813f8fb3b31938c29bd8f928a6a7ffdfe1021ad230f6d2b40bb9",
+          "mode": "100644"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-generate/SKILL.md",
+          "source": "_archive/2026-10-13/pipeline-generate/SKILL.md",
+          "sha256": "aa9c05647d23b0d56ae649fa59952c99f7490394d0a731b03b44c556808dc3f3",
+          "mode": "100644"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-persondata/SKILL.md",
+          "source": "business-skills/zenithjoy/docs/pipeline-ops-skills/pipeline-persondata/SKILL.md",
+          "sha256": "20176b7db0dc253caac341c362d0d012ab964143a16cb965312f598504ba00f4",
+          "mode": "100644"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-regen/SKILL.md",
+          "source": "business-skills/zenithjoy/docs/pipeline-ops-skills/pipeline-regen/SKILL.md",
+          "sha256": "d5d6968e4d9222198dc839ec1d2ff0092f1faedb5ca4e260c6ecaa7dee6db281",
+          "mode": "100644"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-research/SKILL.md",
+          "source": "business-skills/zenithjoy/docs/pipeline-ops-skills/pipeline-research/SKILL.md",
+          "sha256": "2003a745be262d386ec7288e2c6e014b4514245443ea2acdb09018979792ff9e",
+          "mode": "100644"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-review/SKILL.md",
+          "source": "business-skills/zenithjoy/docs/pipeline-ops-skills/pipeline-review/SKILL.md",
+          "sha256": "1bb4f043675c897444782c1887f191090c10089a338889c8810b767f5afd9bdf",
+          "mode": "100644"
+        },
+        {
+          "path": "docs/pipeline-ops-skills/pipeline-run/SKILL.md",
+          "source": "business-skills/zenithjoy/docs/pipeline-ops-skills/pipeline-run/SKILL.md",
+          "sha256": "ba9d23de35c561fa383e910bcb6e13ca4363efb7f1cc3be80b1f19184d9daa7f",
+          "mode": "100644"
+        },
+        {
+          "path": "scripts/phone-account-patrol/RUNBOOK.md",
+          "source": "business-skills/zenithjoy/scripts/phone-account-patrol/RUNBOOK.md",
+          "sha256": "0c6f7a56733171b6209e6a421df7ea6ea5b71c2083132407fb6d65b2c11e9df6",
+          "mode": "100644"
+        },
+        {
+          "path": "scripts/phone-account-patrol/SKILL.md",
+          "source": "business-skills/zenithjoy/scripts/phone-account-patrol/SKILL.md",
+          "sha256": "ee99dc331f8aec05c1071260dcfb06197c4add7d74b5160ea3084b5b8b5e6dde",
+          "mode": "100644"
+        },
+        {
+          "path": "services/agent/publishers/toutiao-publisher/SKILL.md",
+          "source": "_archive/2026-10-13/toutiao-publisher/SKILL.md",
+          "sha256": "6ebd0658d63517b7e0d2d6a1ce133b5f331da106eafe3ce710ac5b3ed7b0bd22",
+          "mode": "100644"
+        },
+        {
+          "path": "services/content-pipeline/.claude/skills/posts/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/.claude/skills/posts/SKILL.md",
+          "sha256": "0677c0f25d9f0f1164374e21eba16b65a159a767725fca43d20da1439dd75f25",
+          "mode": "100644"
+        },
+        {
+          "path": "services/content-pipeline/scripts/publishers/douyin-publisher/CLEANUP.md",
+          "source": "douyin-publisher/CLEANUP.md",
+          "sha256": "2ee188e3b83b7cdde7a5235ecfad3e46f3fa7079ec8e7bdf82e1f1c24000168a",
+          "mode": "100644"
+        },
+        {
+          "path": "services/content-pipeline/scripts/publishers/douyin-publisher/FIELDS.md",
+          "source": "douyin-publisher/FIELDS.md",
+          "sha256": "d52023241acbf7e37b21f20f31503527798048d0415fd1a3983db5973070d785",
+          "mode": "100644"
+        },
+        {
+          "path": "services/content-pipeline/scripts/publishers/douyin-publisher/REQUIREMENTS.md",
+          "source": "douyin-publisher/REQUIREMENTS.md",
+          "sha256": "2ab2f1b4ed14c82a103d92b09e28471af64315f175424991a6244b319c4031aa",
+          "mode": "100644"
+        },
+        {
+          "path": "services/content-pipeline/scripts/publishers/douyin-publisher/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/scripts/publishers/douyin-publisher/SKILL.md",
+          "sha256": "5febd0b5acbffd1b057c127f08b029c72841aa3f4b73490e5beb9d73fd510161",
+          "mode": "100644"
+        },
+        {
+          "path": "services/content-pipeline/scripts/publishers/douyin-publisher/STATUS.md",
+          "source": "douyin-publisher/STATUS.md",
+          "sha256": "620cdcf1f78f4cbbef6e3eac4886cb246255c4e89744836a9a4800f5abf714ec",
+          "mode": "100644"
+        },
+        {
+          "path": "services/content-pipeline/scripts/publishers/toutiao-publisher/SKILL.md",
+          "source": "_archive/2026-10-13/toutiao-publisher/SKILL.md",
+          "sha256": "6ebd0658d63517b7e0d2d6a1ce133b5f331da106eafe3ce710ac5b3ed7b0bd22",
+          "mode": "100644"
+        },
+        {
+          "path": "services/content-pipeline/skills/analyze/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/analyze/SKILL.md",
+          "sha256": "0b9ab6b13c4ec55bc004f54ca13242800ebbab0cfb322d4414bd83c15c973d24",
+          "mode": "100644"
+        },
+        {
+          "path": "services/content-pipeline/skills/create/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/create/SKILL.md",
+          "sha256": "42c252292ebb19cca8f91eaea102e43f84f4c07895db1218489c67fb652cb8f8",
+          "mode": "100644"
+        },
+        {
+          "path": "services/content-pipeline/skills/deep-post-generator/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/deep-post-generator/SKILL.md",
+          "sha256": "d38a1de9ad225380582f02675bb38a6a880e2491e67e68c9a16e086a9362bed3",
+          "mode": "100644"
+        },
+        {
+          "path": "services/content-pipeline/skills/image-gen-workflow/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/image-gen-workflow/SKILL.md",
+          "sha256": "f955e7647befd821e7d7cd08e90aa9f47d258f5f92d7217d630fd5f6613976d4",
+          "mode": "100644"
+        },
+        {
+          "path": "services/content-pipeline/skills/quote-card-toapis/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/quote-card-toapis/SKILL.md",
+          "sha256": "ea49150532e6e24e503375323f858de5c0c3a6ccdc9b0942a2530bea4858844a",
+          "mode": "100644"
+        },
+        {
+          "path": "services/content-pipeline/skills/rewrite/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/rewrite/SKILL.md",
+          "sha256": "6f7711670a01c5fc0a980182a337cd417674da3240b0168371c21df12a3f4f2a",
+          "mode": "100644"
+        },
+        {
+          "path": "services/content-pipeline/skills/toutiao-publisher/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/toutiao-publisher/SKILL.md",
+          "sha256": "a51d448d9ec0b97f2aa1e4e609c1bfd67c85dae0349d437e2ecd757c42e14a35",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/commander/skills/wf-douyin_comment_scoring/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/wf-douyin_comment_scoring/SKILL.md",
+          "sha256": "7331088ea631bab3aac64cd8ccaef250cff9322b923cccf8ac83712da4bcf693",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/commander/skills/wf-douyin_lead_outreach/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/wf-douyin_lead_outreach/SKILL.md",
+          "sha256": "e185bfa02f499f941d57282a2ffb61d7dea12400493daeaeb2c1389e826298e0",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/commander/skills/wf-douyin_video_discovery/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/wf-douyin_video_discovery/SKILL.md",
+          "sha256": "57180d019493d7cb80a013fe39a2797a7d7bed819b4befde1277fdfa8a0f6689",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/commander/skills/wf-douyin_video_processing/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/wf-douyin_video_processing/SKILL.md",
+          "sha256": "2454689d1b1aac9b02576c9c5189f9809cec8b7d6d204b4ab508f40e02ad4745",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/commander/skills/wf-douyin_video_publish/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/wf-douyin_video_publish/SKILL.md",
+          "sha256": "be50183f99a5a2ef485131531bf497775263912ca5f3e400c8a8c1c277d13313",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/commander/skills/workflow-commander/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/workflow-commander/SKILL.md",
+          "sha256": "91e4434b42635e55c8f9d1cf963454a63b4abb9b62fbd7d513a560f5218aa967",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-101/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-101/SKILL.md",
+          "sha256": "c158f96953cc2e77264a57d84665f631dc62cdbd3936c451c14eb38cce5fb06b",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-101/references/activity-methods.json",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-101/references/activity-methods.json",
+          "sha256": "fe0792ebfea373cd1ed43bfe7ac3ec7b242bf28113ec7e138031455fcfbb0ae2",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-101/references/reuse-map.json",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-101/references/reuse-map.json",
+          "sha256": "f0d24c903180fd7c1da95240d448bd4391eba10e4ee0b8408ab437674030605e",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-101/references/runtime-calls.json",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-101/references/runtime-calls.json",
+          "sha256": "8c965bf043884d3afbd2beaf9ae558b17bb88ff4c1018d2599fdd464fcd2d710",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-102/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-102/SKILL.md",
+          "sha256": "011668570fb1251f6971475e6b907c9e594cfca496275536175fcf4bf69867c9",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-102/references/activity-methods.json",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-102/references/activity-methods.json",
+          "sha256": "44ff96a725c274ae21fba719bd168c4172e97d2dbbc823a2aff0cdf2a0f03a29",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-102/references/reuse-map.json",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-102/references/reuse-map.json",
+          "sha256": "38f997c1623b22672a96ad684037f160087ea797562b8f6ea3551f4c110b3096",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-102/references/runtime-calls.json",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-102/references/runtime-calls.json",
+          "sha256": "9a50340ecdb58dbbb3dbea25b58e17584a8aa3befde40b5cd97b115a48ea8380",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-103/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-103/SKILL.md",
+          "sha256": "cea6503314e36fc7ffe52f546a0d1c7aaf283e7a7a682aae831089f17f118791",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-103/references/activity-methods.json",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-103/references/activity-methods.json",
+          "sha256": "731681b03a2e24ef7f3648d9db2dfec7b179952b7bef1882b7c0781ea713f05c",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-103/references/reuse-map.json",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-103/references/reuse-map.json",
+          "sha256": "52037c3ce1bf8a78958fff4bc000dbbcc84884837ef63fadcaa292d5f4572c77",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-103/references/runtime-calls.json",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-103/references/runtime-calls.json",
+          "sha256": "799267ef1124fcb8814970834f8c7b53b38ada04a21306f4b1a59d011f1c715a",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-104/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-104/SKILL.md",
+          "sha256": "0406d1d378b0535217a4c8bc19074bcc2f51e8cdd3c313131c20572ffa1ff3f2",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-104/references/activity-methods.json",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-104/references/activity-methods.json",
+          "sha256": "d7fdb9394842fe6ee695466d8947e76f2bbcf8780dd403386597f59f30106193",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-104/references/reuse-map.json",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-104/references/reuse-map.json",
+          "sha256": "4ebf41369bef27f5c0fab1584ae654ad87c81ba7bf1e5065708dcd484d739f48",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-104/references/runtime-calls.json",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-104/references/runtime-calls.json",
+          "sha256": "afde0eb690ecb4aa8b6b806ef3050bf67df5b769fc1ff3ddc6fabc61eeb35101",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-101-collect-videos/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-101-collect-videos/SKILL.md",
+          "sha256": "12ca8cffb90e60aa9b39e354093ee1ed165a15efa329dc79059fbad98944ca3f",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-cleanup/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-102-cleanup/SKILL.md",
+          "sha256": "46e9af65a7bd5cbf6307c81b38bf51d7027b66d6babeec636fbf5055e3922110",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-collection/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-102-collection/SKILL.md",
+          "sha256": "eaec0a953c17f3f0c805acf3932a6bc6020a199b41f8ff7343677b897c4ab6b6",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-dedup/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-102-dedup/SKILL.md",
+          "sha256": "4e7820d6d2e0bb2c02df8ce7e642d97926167d9e1ee81dbcbe330de634bf8138",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-preflight/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-102-preflight/SKILL.md",
+          "sha256": "b072de9d89cf9cfdd149b34e99aaaa2261cf9472159f559c0b7a0a7b35809107",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification/SKILL.md",
+          "sha256": "c44bef05fe453793bbfcfd01265fd0166d96ee2035a42437c684c87bc7626cb1",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-103-mark-leads/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-103-mark-leads/SKILL.md",
+          "sha256": "1e305e5213bef4d6a9d7ef90fd860fb55c72c7c7cc616c752750476694be02f4",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-103-scoring/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-103-scoring/SKILL.md",
+          "sha256": "6922a50ad98b42de1377530017bb8dc12a425d385c6ddb943d0a536e0a5649b9",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-cleanup/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-104-cleanup/SKILL.md",
+          "sha256": "116883cc9a948db09dafdb03604c1fcc07e1cdde991bcdf2c478d59506c31adc",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-preflight/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-104-preflight/SKILL.md",
+          "sha256": "096f0d10ca343989c586d78dd9c7e40d7e61800379b5ebcf3a6ebe89381b2413",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-send-dm/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-104-send-dm/SKILL.md",
+          "sha256": "5dc998c8415397b0cd51548154f63ee6834257aad84ced7598b01bb3ffe0f2db",
+          "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-write-back/SKILL.md",
+          "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-104-write-back/SKILL.md",
+          "sha256": "bf28ecb35d2ff34899337cc3b467b125409b61c51364a10f2a12eff96533854e",
+          "mode": "100644"
+        },
+        {
+          "path": "services/wechat-cs-android/skills/wechat-cs-android/SKILL.md",
+          "source": "business-skills/zenithjoy/services/wechat-cs-android/skills/wechat-cs-android/SKILL.md",
+          "sha256": "5858d406da69ac52b8cd65aba24ccc5426570a2491b6b85417ae07d808f9fe16",
+          "mode": "100644"
+        },
+        {
+          "path": "services/wechat-cs-android/skills/wechat-friend-onboarding-android/SKILL.md",
+          "source": "business-skills/zenithjoy/services/wechat-cs-android/skills/wechat-friend-onboarding-android/SKILL.md",
+          "sha256": "53e052b8eeb82f737f6b4d0a7f6f0aee1cd64d0ba1f166b1e53e2bcda45315d3",
+          "mode": "100644"
+        },
+        {
+          "path": "workflows/content-creator/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/create/SKILL.md",
+          "sha256": "42c252292ebb19cca8f91eaea102e43f84f4c07895db1218489c67fb652cb8f8",
+          "mode": "100644"
+        },
+        {
+          "path": "workflows/content-rewriter/SKILL.md",
+          "source": "business-skills/zenithjoy/services/content-pipeline/skills/rewrite/SKILL.md",
+          "sha256": "6f7711670a01c5fc0a980182a337cd417674da3240b0168371c21df12a3f4f2a",
+          "mode": "100644"
+        },
+        {
+          "path": "workflows/image-gen/SKILL.md",
+          "source": "business-skills/zenithjoy/workflows/image-gen/SKILL.md",
+          "sha256": "7ee7ed3c35e51a51d10fb05f04ed3b4f5a4b9fcf537ae1360a7e6af78b5e4ebf",
+          "mode": "100644"
+        },
+        {
+          "path": "workflows/platform-data/skill/SKILL.md",
+          "source": "business-skills/zenithjoy/workflows/platform-data/skill/SKILL.md",
+          "sha256": "d6eba2ca09ecbf78cc1e92ab5f31b6a9c674c115de767c7486a257fb26d4ca7e",
+          "mode": "100644"
+        }
+      ],
+      "runtime_files": [
+        ".agents/skills/multi-platform-publish/scripts/publish_catalog.py",
+        ".agents/skills/multi-platform-publish/scripts/test_publish_catalog.py",
+        "scripts/phone-account-patrol/collector.py",
+        "scripts/phone-account-patrol/deploy.py",
+        "scripts/phone-account-patrol/dispatch.py",
+        "scripts/phone-account-patrol/implementation-contract.json",
+        "scripts/phone-account-patrol/implementation-regression.test.mjs",
+        "scripts/phone-account-patrol/mirror.mjs",
+        "scripts/phone-account-patrol/ocr.swift",
+        "scripts/phone-account-patrol/openclaw_commander.py",
+        "scripts/phone-account-patrol/openclaw_native.py",
+        "scripts/phone-account-patrol/preflight.py",
+        "scripts/phone-account-patrol/publish.mjs",
+        "scripts/phone-account-patrol/runner.py",
+        "scripts/phone-account-patrol/test_deploy.py",
+        "scripts/phone-account-patrol/test_identity.py",
+        "scripts/phone-account-patrol/test_mirror.mjs",
+        "scripts/phone-account-patrol/test_openclaw_commander.py",
+        "scripts/phone-account-patrol/test_openclaw_native.py",
+        "scripts/phone-account-patrol/test_publish.mjs",
+        "scripts/phone-account-patrol/test_runner.py",
+        "scripts/phone-account-patrol/test_runtime_safety.py",
+        "services/agent/publishers/toutiao-publisher/publish-toutiao-article.cjs",
+        "services/agent/publishers/toutiao-publisher/publish-toutiao-image-dryrun.cjs",
+        "services/agent/publishers/toutiao-publisher/publish-toutiao-image.cjs",
+        "services/agent/publishers/toutiao-publisher/publish-toutiao-post.cjs",
+        "services/agent/publishers/toutiao-publisher/publish-toutiao-video.cjs",
+        "services/content-pipeline/scripts/publishers/douyin-publisher/__tests__/sop-account-search.test.cjs",
+        "services/content-pipeline/scripts/publishers/douyin-publisher/publish-douyin-article.js",
+        "services/content-pipeline/scripts/publishers/douyin-publisher/publish-douyin-image-dryrun.cjs",
+        "services/content-pipeline/scripts/publishers/douyin-publisher/publish-douyin-image.js",
+        "services/content-pipeline/scripts/publishers/douyin-publisher/publish-douyin-video.js",
+        "services/content-pipeline/scripts/publishers/douyin-publisher/search-douyin-accounts.js",
+        "services/content-pipeline/scripts/publishers/douyin-publisher/sop-account-search.js",
+        "services/content-pipeline/scripts/publishers/douyin-publisher/sop-keywords.js",
+        "services/content-pipeline/scripts/publishers/douyin-publisher/sop-video-search.js",
+        "services/content-pipeline/scripts/publishers/toutiao-publisher/publish-toutiao-article.cjs",
+        "services/content-pipeline/scripts/publishers/toutiao-publisher/publish-toutiao-image.cjs",
+        "services/content-pipeline/scripts/publishers/toutiao-publisher/publish-toutiao-post.cjs",
+        "services/content-pipeline/scripts/publishers/toutiao-publisher/publish-toutiao-video.cjs",
+        "services/content-pipeline/skills/image-gen-workflow/scripts/chatgpt-gen-v2.sh",
+        "services/content-pipeline/skills/image-gen-workflow/scripts/chatgpt-gen-with-qc.sh",
+        "services/content-pipeline/skills/image-gen-workflow/scripts/chatgpt-generate.sh",
+        "services/content-pipeline/skills/image-gen-workflow/scripts/chatgpt-image-gen.sh",
+        "services/content-pipeline/skills/image-gen-workflow/scripts/chatgpt-with-refs.sh",
+        "services/content-pipeline/skills/image-gen-workflow/scripts/download-chatgpt-image.sh",
+        "services/content-pipeline/skills/image-gen-workflow/scripts/ensure-tunnel.sh",
+        "services/content-pipeline/skills/image-gen-workflow/scripts/extract-image.py",
+        "services/content-pipeline/skills/image-gen-workflow/scripts/send-to-chatgpt.py",
+        "services/content-pipeline/skills/image-gen-workflow/scripts/send-to-feishu.sh",
+        "workflows/image-gen/scripts/ensure-tunnel.sh",
+        "workflows/image-gen/scripts/extract-image.py",
+        "workflows/image-gen/scripts/send-to-chatgpt.py",
+        "workflows/image-gen/scripts/send-to-feishu.sh",
+        "workflows/platform-data/skill/command.sh",
+        "workflows/platform-data/skill/subcommands/analyze.sh",
+        "workflows/platform-data/skill/subcommands/publish.sh",
+        "workflows/platform-data/skill/subcommands/scrape.sh"
+      ]
+    },
+    "cecelia": {
+      "origin": "perfectuser21/cecelia",
+      "origin_revision": "ee143abb5d0994721d7c3963fc93e91b94a0b013",
+      "entrypoints": [
+        {
+          "path": "packages/engine/skills/dev/SKILL.md",
+          "source": "business-skills/cecelia/packages/engine/skills/dev/SKILL.md",
+          "name": "dev",
+          "execution_directory": "packages/engine/skills/dev",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "packages/quality/skills/assurance/SKILL.md",
+          "source": "business-skills/cecelia/packages/quality/skills/assurance/SKILL.md",
+          "name": "assurance",
+          "execution_directory": "packages/quality/skills/assurance",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/quality/skills/audit/SKILL.md",
+          "source": "business-skills/cecelia/packages/quality/skills/audit/SKILL.md",
+          "name": "audit",
+          "execution_directory": "packages/quality/skills/audit",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/quality/skills/qa/SKILL.md",
+          "source": "business-skills/cecelia/packages/quality/skills/qa/SKILL.md",
+          "name": "qa",
+          "execution_directory": "packages/quality/skills/qa",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "packages/workflows/agents/autumnrice/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/agents/autumnrice/SKILL.md",
+          "name": "autumnrice",
+          "execution_directory": "packages/workflows/agents/autumnrice",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/agents/cecelia-brain/SKILL.md",
+          "source": "_archive/2026-10-13/cecelia-brain/SKILL.md",
+          "name": "cecelia-brain",
+          "execution_directory": "packages/workflows/agents/cecelia-brain",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/agents/cecelia/SKILL.md",
+          "source": "_archive/2026-10-13/cecelia/SKILL.md",
+          "name": "cecelia",
+          "execution_directory": "packages/workflows/agents/cecelia",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/agents/explore/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/agents/explore/SKILL.md",
+          "name": "explore",
+          "execution_directory": "packages/workflows/agents/explore",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/agents/nobel/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/agents/nobel/SKILL.md",
+          "name": "nobel",
+          "execution_directory": "packages/workflows/agents/nobel",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "packages/workflows/agents/trading-agent/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/agents/trading-agent/SKILL.md",
+          "name": "trading-agent",
+          "execution_directory": "packages/workflows/agents/trading-agent",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/agents/vivian/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/agents/vivian/SKILL.md",
+          "name": "vivian",
+          "execution_directory": "packages/workflows/agents/vivian",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "packages/workflows/skills/autumnrice/SKILL.md",
+          "source": "_archive/2026-10-13/autumnrice/SKILL.md",
+          "name": "autumnrice",
+          "execution_directory": "packages/workflows/skills/autumnrice",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/capability-controller/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/capability-controller/SKILL.md",
+          "name": "capability-controller",
+          "execution_directory": "packages/workflows/skills/capability-controller",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/capability-mapper/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/capability-mapper/SKILL.md",
+          "name": "capability-mapper",
+          "execution_directory": "packages/workflows/skills/capability-mapper",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/capability-proposer/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/capability-proposer/SKILL.md",
+          "name": "capability-proposer",
+          "execution_directory": "packages/workflows/skills/capability-proposer",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/capability-reviewer/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/capability-reviewer/SKILL.md",
+          "name": "capability-reviewer",
+          "execution_directory": "packages/workflows/skills/capability-reviewer",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/cecelia-brain/SKILL.md",
+          "source": "_archive/2026-10-13/cecelia-brain/SKILL.md",
+          "name": "cecelia-brain",
+          "execution_directory": "packages/workflows/skills/cecelia-brain",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/cecelia/SKILL.md",
+          "source": "_archive/2026-10-13/cecelia/SKILL.md",
+          "name": "cecelia",
+          "execution_directory": "packages/workflows/skills/cecelia",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/ci-patrol/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/ci-patrol/SKILL.md",
+          "name": "ci-patrol",
+          "execution_directory": "packages/workflows/skills/ci-patrol",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/code-review-gate/SKILL.md",
+          "source": "_archive/2026-10-13/code-review-gate/SKILL.md",
+          "name": "code-review-gate",
+          "execution_directory": "packages/workflows/skills/code-review-gate",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/decomp-check/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/decomp-check/SKILL.md",
+          "name": "decomp-check",
+          "execution_directory": "packages/workflows/skills/decomp-check",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/decomp/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/decomp/SKILL.md",
+          "name": "decomp",
+          "execution_directory": "packages/workflows/skills/decomp",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/douyin-publisher/SKILL.md",
+          "source": "douyin-publisher/SKILL.md",
+          "name": "douyin-publisher",
+          "execution_directory": "packages/workflows/skills/douyin-publisher",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "packages/workflows/skills/harness-contract-proposer/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/harness-contract-proposer/SKILL.md",
+          "name": "harness-contract-proposer",
+          "execution_directory": "packages/workflows/skills/harness-contract-proposer",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/harness-contract-reviewer/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/harness-contract-reviewer/SKILL.md",
+          "name": "harness-contract-reviewer",
+          "execution_directory": "packages/workflows/skills/harness-contract-reviewer",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/harness-controller/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/harness-controller/SKILL.md",
+          "name": "harness-controller",
+          "execution_directory": "packages/workflows/skills/harness-controller",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/harness-evaluator/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/harness-evaluator/SKILL.md",
+          "name": "harness-evaluator",
+          "execution_directory": "packages/workflows/skills/harness-evaluator",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/harness-generator/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/harness-generator/SKILL.md",
+          "name": "harness-generator",
+          "execution_directory": "packages/workflows/skills/harness-generator",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/harness-planner/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/harness-planner/SKILL.md",
+          "name": "harness-planner",
+          "execution_directory": "packages/workflows/skills/harness-planner",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/harness-report/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/harness-report/SKILL.md",
+          "name": "harness-report",
+          "execution_directory": "packages/workflows/skills/harness-report",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/kuaishou-publisher/SKILL.md",
+          "source": "_archive/2026-10-13/kuaishou-publisher/SKILL.md",
+          "name": "kuaishou-publisher",
+          "execution_directory": "packages/workflows/skills/kuaishou-publisher",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/line-strategist/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/line-strategist/SKILL.md",
+          "name": "line-strategist",
+          "execution_directory": "packages/workflows/skills/line-strategist",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/plan/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/plan/SKILL.md",
+          "name": "plan",
+          "execution_directory": "packages/workflows/skills/plan",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/spec-review/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/spec-review/SKILL.md",
+          "name": "spec-review",
+          "execution_directory": "packages/workflows/skills/spec-review",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "packages/workflows/skills/toutiao-publisher/SKILL.md",
+          "source": "_archive/2026-10-13/toutiao-publisher/SKILL.md",
+          "name": "toutiao-publisher",
+          "execution_directory": "packages/workflows/skills/toutiao-publisher",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/wechat-publisher/SKILL.md",
+          "source": "wechat-publisher/SKILL.md",
+          "name": "wechat-publisher",
+          "execution_directory": "packages/workflows/skills/wechat-publisher",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "packages/workflows/skills/weibo-publisher/SKILL.md",
+          "source": "weibo-publisher/SKILL.md",
+          "name": "weibo-publisher",
+          "execution_directory": "packages/workflows/skills/weibo-publisher",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "packages/workflows/skills/workflow-authoring/SKILL.md",
+          "source": "workflow-authoring/SKILL.md",
+          "name": "workflow-authoring",
+          "execution_directory": "packages/workflows/skills/workflow-authoring",
+          "status": "business-compatibility"
+        },
+        {
+          "path": "packages/workflows/skills/xiaohongshu-publisher/SKILL.md",
+          "source": "_archive/2026-10-13/xiaohongshu-publisher/SKILL.md",
+          "name": "xiaohongshu-publisher",
+          "execution_directory": "packages/workflows/skills/xiaohongshu-publisher",
+          "status": "retired-in-shared-catalog"
+        },
+        {
+          "path": "packages/workflows/skills/zhihu-publisher/SKILL.md",
+          "source": "zhihu-publisher/SKILL.md",
+          "name": "zhihu-publisher",
+          "execution_directory": "packages/workflows/skills/zhihu-publisher",
+          "status": "business-compatibility"
+        }
+      ],
+      "files": [
+        {
+          "path": "packages/engine/skills/dev/SKILL.md",
+          "source": "business-skills/cecelia/packages/engine/skills/dev/SKILL.md",
+          "sha256": "199ef407201a2ca479d2c52d33855a527d5762bbf0ca95ba3afd3c58b8b42733",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/engine/skills/dev/steps/autonomous-research-proxy.md",
+          "source": "dev-workspace/skill-snapshot/steps/autonomous-research-proxy.md",
+          "sha256": "fdcf2911ede3fc26e4620432ed658d77f43f0dfddc41ac29c992bb02fbd95f65",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/engine/skills/dev/steps/light-evaluator.md",
+          "source": "business-skills/cecelia/packages/engine/skills/dev/steps/light-evaluator.md",
+          "sha256": "cf14996223fc2158d4f09a4602f3abe99e9b0969e796203ae0571bc8cb15fafd",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/quality/skills/assurance/SKILL.md",
+          "source": "business-skills/cecelia/packages/quality/skills/assurance/SKILL.md",
+          "sha256": "6a926139b2d7a5aa10355269e0d557564a2bcdd0a95baac376a98d4c80fbe678",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/quality/skills/audit/SKILL.md",
+          "source": "business-skills/cecelia/packages/quality/skills/audit/SKILL.md",
+          "sha256": "1f816b7a8f3fed779313ed364fbe878202eeba2f52678b7b1d0484ade5947bdc",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/quality/skills/qa/SKILL.md",
+          "source": "business-skills/cecelia/packages/quality/skills/qa/SKILL.md",
+          "sha256": "1190553bf786774f3f85a5bb2515c30c73fa7ab05fcd8a241e1d120a28b318ec",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/quality/skills/qa/knowledge/criteria.md",
+          "source": "business-skills/cecelia/packages/quality/skills/qa/knowledge/criteria.md",
+          "sha256": "c34da236e6db0cfb4924b782b84bff044a8ae894a9108323fa537c2789aefe90",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/quality/skills/qa/knowledge/testing-matrix.md",
+          "source": "business-skills/cecelia/packages/quality/skills/qa/knowledge/testing-matrix.md",
+          "sha256": "abeb6f10cc9a4286aada6b9bad1bbccea996a3dfdf057f9c00f0982e16e24e1a",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/agents/autumnrice/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/agents/autumnrice/SKILL.md",
+          "sha256": "30282aa96ccdd7991d6acc97cc3b633c89f44f2ca6a9ecab8d803b068e450cdb",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/agents/cecelia-brain/SKILL.md",
+          "source": "_archive/2026-10-13/cecelia-brain/SKILL.md",
+          "sha256": "af5d1442c015f0330a4ca286c76cbd062522b409a019ff367d7fe203f84b9fe0",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/agents/cecelia/SKILL.md",
+          "source": "_archive/2026-10-13/cecelia/SKILL.md",
+          "sha256": "1377ae95d76ccd42281a1938c3686cba6e411f9ba0d300f75d26db26cdea5b61",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/agents/explore/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/agents/explore/SKILL.md",
+          "sha256": "dbb768698f751f6abc4754d8b9ea27478f1144a99787daea17c7f3b46bc4654a",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/agents/nobel/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/agents/nobel/SKILL.md",
+          "sha256": "4f73332169c8089de6b019845fa334078ca93a4ffdf4c3888867f3a1d51a3403",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/agents/trading-agent/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/agents/trading-agent/SKILL.md",
+          "sha256": "5970cad19acdf8919ce014e54a83e7526357177761d4ddaa06279e906ea97064",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/agents/trading-agent/config/risk.json",
+          "source": "trading-agent/config/risk.json",
+          "sha256": "e377012a1ad5c8a4d07248655972b58ba53b0c16a0654b24504a21469509d2e3",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/agents/trading-agent/config/strategy.json",
+          "source": "trading-agent/config/strategy.json",
+          "sha256": "fbb763c225310a265bbac0282081d7daeea8d1d9bd2eeadadee9e2c6aee54dab",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/agents/vivian/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/agents/vivian/SKILL.md",
+          "sha256": "d9877c474b3c66ce7c881dfa5dba6a5612b4f6b4487336e7d46609aea03d787f",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/autumnrice/SKILL.md",
+          "source": "_archive/2026-10-13/autumnrice/SKILL.md",
+          "sha256": "7a12426bb9bfe2c4a97b8a1c919e314b284d323942a37903845580e51f0b75ee",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/capability-controller/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/capability-controller/SKILL.md",
+          "sha256": "bcd3d112c1cc5a33d9d70b3900b5dc9125c6ea9a595ad677ce8431ed07aafe90",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/capability-mapper/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/capability-mapper/SKILL.md",
+          "sha256": "90992542e72f47da0fd315da032c7348d843cdbfbc822633a51936d89798ec53",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/capability-proposer/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/capability-proposer/SKILL.md",
+          "sha256": "3932f1169a6db4a6dcae8fcc4f24a30c2a6176e2e8da45ac45e9a94c58ae84b1",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/capability-reviewer/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/capability-reviewer/SKILL.md",
+          "sha256": "f0f6adeeab7ad498c8f78831761beddec117cdf021e0ca690a6ca06af5f5b12e",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/cecelia-brain/SKILL.md",
+          "source": "_archive/2026-10-13/cecelia-brain/SKILL.md",
+          "sha256": "af5d1442c015f0330a4ca286c76cbd062522b409a019ff367d7fe203f84b9fe0",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/cecelia/SKILL.md",
+          "source": "_archive/2026-10-13/cecelia/SKILL.md",
+          "sha256": "1377ae95d76ccd42281a1938c3686cba6e411f9ba0d300f75d26db26cdea5b61",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/ci-patrol/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/ci-patrol/SKILL.md",
+          "sha256": "584434baaeb472e9977b70f1c1b1a8069bcee760eeade7188b2c4bace8eba3ff",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/code-review-gate/SKILL.md",
+          "source": "_archive/2026-10-13/code-review-gate/SKILL.md",
+          "sha256": "e1d13b4dfdff3d9d4201abd9d26cd504b3fae5599395148a8ad6adf875e05c28",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/decomp-check/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/decomp-check/SKILL.md",
+          "sha256": "9d5e86ce5c19df53ffdd67fd3dceb12c4a463cf11d6510c791082ef493a21522",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/decomp/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/decomp/SKILL.md",
+          "sha256": "2e2c0987334f0da334cb6ee1890cfa09bd527318e2d14c71d6134a037f5a731c",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/douyin-publisher/SKILL.md",
+          "source": "douyin-publisher/SKILL.md",
+          "sha256": "0d8e69687ca71b0400ed01f98a7ce9d37538651c738787e3b9f1d19a1718cf9a",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/harness-contract-proposer/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/harness-contract-proposer/SKILL.md",
+          "sha256": "7456c3b2b024d2c6059a9d84e57e0601770f61dc5c310148f0d04c97630cb326",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/harness-contract-reviewer/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/harness-contract-reviewer/SKILL.md",
+          "sha256": "9e6a9fbf2ef5fd674403aa0be4e6078dba19b01a1fd5312bb19aa8d6852578cc",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/harness-controller/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/harness-controller/SKILL.md",
+          "sha256": "fc12b4afd6714db12775bbcf556d38b10fa5ff4a4b5eabf0fa5d2fdc959e454d",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/harness-evaluator/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/harness-evaluator/SKILL.md",
+          "sha256": "791bd57539df3493c2145fc3b0fbe9f59d7ff87eb4865c451a2c34467ae06ae6",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/harness-generator/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/harness-generator/SKILL.md",
+          "sha256": "ebea11d2e5d3f652984c187ec05e6349ba4f7397bb5a8986abd4dacbb73ccc73",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/harness-planner/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/harness-planner/SKILL.md",
+          "sha256": "d373c28c185bd923bfd97d304dfe0e6a81ebf10cca38ee108e734f8e05f12898",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/harness-report/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/harness-report/SKILL.md",
+          "sha256": "5dde59c865df0ce80f0b700834b4573e33936b81f14fd58526c816d0cb873790",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/kuaishou-publisher/SKILL.md",
+          "source": "_archive/2026-10-13/kuaishou-publisher/SKILL.md",
+          "sha256": "e9d1da1da477648730e745e622037b4cebed73433dc36a9dc91cfe2525141358",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/line-strategist/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/line-strategist/SKILL.md",
+          "sha256": "1c1fb5797a5da548eec962f3a196b8d4f77f381243335c149e38c7e111bdf840",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/plan/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/plan/SKILL.md",
+          "sha256": "0c6b9aa03ee5221e9343a8e000cdd670c0e73165405d24fa669064e81df5bf6c",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/spec-review/SKILL.md",
+          "source": "business-skills/cecelia/packages/workflows/skills/spec-review/SKILL.md",
+          "sha256": "ba5ac81f6c269be480f5ad336a64121af3afedf35b5fe6991f7c4d55ae9f0579",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/toutiao-publisher/SKILL.md",
+          "source": "_archive/2026-10-13/toutiao-publisher/SKILL.md",
+          "sha256": "6ebd0658d63517b7e0d2d6a1ce133b5f331da106eafe3ce710ac5b3ed7b0bd22",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/wechat-publisher/SKILL.md",
+          "source": "wechat-publisher/SKILL.md",
+          "sha256": "02b89506338a209e7dfb7f48f226a482be6fcf0c38e3d9f94f31ea0203576e7c",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/weibo-publisher/SKILL.md",
+          "source": "weibo-publisher/SKILL.md",
+          "sha256": "d1bf225684f2cdd6f434ecd33c80c351b602da309e8720fefedb7bf809be7cf7",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/workflow-authoring/SKILL.md",
+          "source": "workflow-authoring/SKILL.md",
+          "sha256": "ea4997667f8e6412178664a65ee019d05de6c9694a46ec7b8ed9a001c7d10afd",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/xiaohongshu-publisher/SKILL.md",
+          "source": "_archive/2026-10-13/xiaohongshu-publisher/SKILL.md",
+          "sha256": "bfb62454e75eb38e426e279ed98154d9ac7681a12b83611c4db77dd2cf551bf4",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/workflows/skills/zhihu-publisher/SKILL.md",
+          "source": "zhihu-publisher/SKILL.md",
+          "sha256": "84dbaf4bf54a2aa83707d33419f99c8e8fc6fea4fcbe2366123bd92ff0ecdecc",
+          "mode": "100644"
+        }
+      ],
+      "runtime_files": [
+        "packages/engine/skills/dev/scripts/__tests__/add-feature.test.mjs",
+        "packages/engine/skills/dev/scripts/add-feature.js",
+        "packages/engine/skills/dev/scripts/brain-auth.js",
+        "packages/engine/skills/dev/scripts/callback-brain-task.sh",
+        "packages/engine/skills/dev/scripts/check-cleanup.sh",
+        "packages/engine/skills/dev/scripts/check.sh",
+        "packages/engine/skills/dev/scripts/cleanup.sh",
+        "packages/engine/skills/dev/scripts/enrich-decide.sh",
+        "packages/engine/skills/dev/scripts/fetch-task-prd.sh",
+        "packages/engine/skills/dev/scripts/fire-learnings-event.sh",
+        "packages/engine/skills/dev/scripts/init-journey.js",
+        "packages/engine/skills/dev/scripts/parse-dev-args.sh",
+        "packages/engine/skills/dev/scripts/status.js",
+        "packages/engine/skills/dev/scripts/thicken.js",
+        "packages/engine/skills/dev/scripts/worktree-manage.sh",
+        "packages/quality/skills/audit/manifest.yml",
+        "packages/workflows/skills/harness-planner/evals/evals.json",
+        "packages/workflows/skills/workflow-authoring/scripts/client.mjs",
+        "packages/workflows/skills/workflow-authoring/scripts/self-definition.mjs"
+      ]
+    }
+  }
+}

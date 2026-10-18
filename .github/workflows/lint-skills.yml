@@ -34,6 +34,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Pinned business skill loader regression
+        run: python3 distribution/test_skills_source.py
+
       - name: Self-test — fixture 证明闸门能拦坏 skill
         run: python3 .github/workflows/scripts/test/test_lint_skills.py
 
