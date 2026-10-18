@@ -203,7 +203,29 @@ class PhoneDependencyTests(DistributionTests):
             self.assertEqual(entry["source"], resource)
             self.assertEqual(hashlib.sha256((root / resource).read_bytes()).hexdigest(), entry["sha256"])
         runtime_sources = {e["source"] for e in profile["files"] if e["path"].startswith(".skills-runtime/")}
-        self.assertEqual(runtime_sources, required)
+        self.assertTrue(required.issubset(runtime_sources))
+
+    def test_all_existing_route_skill_dependencies_are_distributed(self):
+        root = Path(__file__).resolve().parents[1]
+        profile = json.loads((root / "distribution/catalog.json").read_text())["profiles"]["zenithjoy"]
+        routes = json.loads((root / "business-skills/zenithjoy/.agents/skills/multi-platform-publish/references/catalog.json").read_text())
+        required = {"android-publish/SKILL.md"}
+        for route in routes["routes"]:
+            for channel in route["channels"].values():
+                for key in ("source", "instruction"):
+                    resource = channel.get(key, {})
+                    if resource.get("root") == "skills":
+                        required.add(resource["path"])
+        files = {entry["path"]: entry for entry in profile["files"]}
+        missing = set()
+        for resource in required:
+            if not (root / resource).is_file():
+                missing.add(resource)
+                continue
+            self.assertIn(".skills-runtime/" + resource, files, resource)
+        self.assertEqual(missing, {"kuaishou-publisher/SKILL.md", "toutiao-publisher/SKILL.md",
+                                   "xiaohongshu-publisher/SKILL.md"},
+                         "Existing catalog contains archived sources; do not restore them silently")
 
     def test_runtime_missing_or_modified_dependency_is_rejected(self):
         self.configure_runtime_dependency()
