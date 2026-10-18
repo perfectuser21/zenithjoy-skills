@@ -113,6 +113,23 @@ class DistributionTests(unittest.TestCase):
         self.assertIn("loader checksum", result.stderr)
         self.assertNotIn("MUST NOT EXECUTE", result.stderr)
 
+    def test_git_reference_reader_uses_the_reference_lock_not_the_working_copy(self):
+        bootstrap = Path(__file__).with_name("bootstrap.py")
+        subprocess.run(["git", "init", "-q", str(self.workspace)], check=True)
+        (self.workspace / ".git/fixture-hooks").mkdir()
+        subprocess.run(["git", "-C", str(self.workspace), "config", "core.hooksPath",
+                        str(self.workspace / ".git/fixture-hooks")], check=True)
+        subprocess.run(["git", "-C", str(self.workspace), "add", ".skills-source.json"], check=True)
+        subprocess.run(["git", "-C", str(self.workspace), "-c", "user.name=Fixture",
+                        "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false",
+                        "commit", "-qm", "business lock"], check=True)
+        (self.workspace / ".skills-source.json").write_text("broken working copy")
+        command = [sys.executable, str(bootstrap), "cat", "--workspace", str(self.workspace),
+                   "--source", str(self.source), "--ref", "HEAD", "--path", self.entry["path"]]
+        result = subprocess.run(command, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, self.payload)
+
 
 class CatalogTests(unittest.TestCase):
     def test_every_distributed_resource_is_present_and_matches_its_digest(self):
