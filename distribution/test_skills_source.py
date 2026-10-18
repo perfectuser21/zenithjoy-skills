@@ -98,6 +98,20 @@ class DistributionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "revision"):
             self.module.install(self.workspace, self.source)
 
+    def test_removed_entrypoints_are_pruned_without_discarding_local_edits(self):
+        self.module.install(self.workspace, self.source)
+        target = self.workspace / self.entry["path"]
+        self.catalog["profiles"]["example"]["files"] = []
+        self.write_catalog()
+        self.commit_source()
+        target.write_text("local edit")
+        with self.assertRaisesRegex(ValueError, "modified"):
+            self.module.install(self.workspace, self.source)
+        self.assertEqual(target.read_text(), "local edit")
+        target.write_bytes(self.payload)
+        self.assertEqual(self.module.install(self.workspace, self.source), 0)
+        self.assertFalse(target.exists())
+
     def test_bootstrap_checks_loader_before_running_it(self):
         bootstrap = Path(__file__).with_name("bootstrap.py")
         self.assertTrue(bootstrap.exists(), "Business bootstrap has not been implemented")
