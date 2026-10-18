@@ -431,6 +431,34 @@
           "name": "android-xiaohongshu-publish",
           "execution_directory": ".skills-runtime/android-xiaohongshu-publish",
           "status": "pinned-phone-dependency"
+        },
+        {
+          "path": ".skills-runtime/douyin-publisher/SKILL.md",
+          "source": "douyin-publisher/SKILL.md",
+          "name": "douyin-publisher",
+          "execution_directory": ".skills-runtime/douyin-publisher",
+          "status": "pinned-route-dependency"
+        },
+        {
+          "path": ".skills-runtime/wechat-publisher/SKILL.md",
+          "source": "wechat-publisher/SKILL.md",
+          "name": "wechat-publisher",
+          "execution_directory": ".skills-runtime/wechat-publisher",
+          "status": "pinned-route-dependency"
+        },
+        {
+          "path": ".skills-runtime/weibo-publisher/SKILL.md",
+          "source": "weibo-publisher/SKILL.md",
+          "name": "weibo-publisher",
+          "execution_directory": ".skills-runtime/weibo-publisher",
+          "status": "pinned-route-dependency"
+        },
+        {
+          "path": ".skills-runtime/zhihu-publisher/SKILL.md",
+          "source": "zhihu-publisher/SKILL.md",
+          "name": "zhihu-publisher",
+          "execution_directory": ".skills-runtime/zhihu-publisher",
+          "status": "pinned-route-dependency"
         }
       ],
       "files": [
@@ -924,6 +952,30 @@
           "path": ".skills-runtime/android-xiaohongshu-publish/SKILL.md",
           "source": "android-xiaohongshu-publish/SKILL.md",
           "sha256": "d78965137935ee23b42aec529627f5381a6937ee55e95f47aa3657134e24540b",
+          "mode": "100644"
+        },
+        {
+          "path": ".skills-runtime/douyin-publisher/SKILL.md",
+          "source": "douyin-publisher/SKILL.md",
+          "sha256": "0d8e69687ca71b0400ed01f98a7ce9d37538651c738787e3b9f1d19a1718cf9a",
+          "mode": "100644"
+        },
+        {
+          "path": ".skills-runtime/wechat-publisher/SKILL.md",
+          "source": "wechat-publisher/SKILL.md",
+          "sha256": "02b89506338a209e7dfb7f48f226a482be6fcf0c38e3d9f94f31ea0203576e7c",
+          "mode": "100644"
+        },
+        {
+          "path": ".skills-runtime/weibo-publisher/SKILL.md",
+          "source": "weibo-publisher/SKILL.md",
+          "sha256": "d1bf225684f2cdd6f434ecd33c80c351b602da309e8720fefedb7bf809be7cf7",
+          "mode": "100644"
+        },
+        {
+          "path": ".skills-runtime/zhihu-publisher/SKILL.md",
+          "source": "zhihu-publisher/SKILL.md",
+          "sha256": "84dbaf4bf54a2aa83707d33419f99c8e8fc6fea4fcbe2366123bd92ff0ecdecc",
           "mode": "100644"
         }
       ],
