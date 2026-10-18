@@ -29,6 +29,12 @@ changelog:
 
 ---
 
+## 技能任务先路由中心仓
+
+收到创建或修改团队 skill（`SKILL.md`、步骤、技能参考资料）的开发请求时，先将该部分工作路由到 `perfectuser21/zenithjoy-skills` 的独立 worktree 和 feature branch，再按团队 `skill-creator` 流程执行。不要因为当前 cwd 在 Cecelia 或 ZenithJoy 就把技能实体写进业务仓，也不要把 Codex 系统 initializer 的安装默认目录当作团队维护源。初始化时显式指定中心 worktree 绝对路径。
+
+应用服务、发布器、控制器和其他业务运行实现仍在对应业务仓开发；技能引用其接口或业务路径。跨仓改动分别提交：中心维护正文，消费者只更新 `.skills-source.json` 固定版本和必要加载配置，使用 `ensure-skills-source.sh` 还原验证；生成正文不得重新提交业务仓。
+
 ## 第零步 Phase -1：归位（没带 --task-id 时，先判断该挂哪个 project）
 
 如果本次调用**没带** `--task-id`（用户在有头会话里随口说"去做 X"，不是 Brain 派发、也不是已经

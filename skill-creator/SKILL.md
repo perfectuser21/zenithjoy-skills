@@ -45,6 +45,16 @@ Cool? Cool.
 
 所有改动走 zenithjoy-skills 的 feature branch → PR 流程（main 分支有保护）。
 
+### 创建入口与仓库边界
+
+- 新建或修改团队技能前，先进入 `zenithjoy-skills` 的独立 Git worktree 和 feature branch。业务仓的当前目录不能作为技能输出目录。
+- 使用 `bash skill-creator/scripts/create-skill.sh <name> <description> [simple|complex]`：实体写入当前中心 worktree 的 `<name>/`，`~/.claude/skills/<name>` 只安装符号链接。脚本拒绝业务仓、主 checkout 和已有安装，不修改 Engine 或 Personal Registry、不运行旧 loader。
+- `register-skill.sh <core|personal> <name> <description> <central-path>` 保留分类参数兼容；两种分类都只引用当前中心 worktree 内的真实目录，不搬入业务仓。不要删除仍被安装引用的 worktree；合并后按分发流程将引用切到持久安装源。
+- Codex 的系统 `skill-creator` 是通用工具：其默认 `$CODEX_HOME/skills` 是安装路径，不是团队源码路径。调用 `init_skill.py` 时显式传 `--path <中心独立worktree绝对路径>`；完成后通过团队引用安装入口处理发现路径。不要使用业务仓相对路径 `skills/public`。
+- `SKILL.md`、步骤和技能专用参考资料由中心维护；应用服务、发布器、控制器等业务运行实现继续留在业务仓，技能使用业务路径或接口引用它们。
+- 技能合并后更新消费者 `.skills-source.json` 固定版本，通过物化和校验恢复旧读取路径；不要把生成正文提交回业务仓。创建脚本仅生成草稿和本地引用，不代表技能已评测、合并或发布。
+
+
 ### 语言规则
 
 所有输出使用简体中文。
