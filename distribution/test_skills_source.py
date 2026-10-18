@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 import unittest
 import sys
+import os
 
 
 class DistributionTests(unittest.TestCase):
@@ -154,6 +155,18 @@ class DistributionTests(unittest.TestCase):
                    "--workspace", str(self.workspace)]
         result = subprocess.run(command, capture_output=True)
         self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((self.workspace / self.entry["path"]).read_bytes(), self.payload)
+
+    def test_shell_loader_restores_an_archive_without_business_git_metadata(self):
+        scripts = self.workspace / "scripts"
+        scripts.mkdir()
+        (scripts / "skills-source.py").write_bytes(Path(__file__).with_name("bootstrap.py").read_bytes())
+        env = os.environ.copy()
+        env["SKILLS_SOURCE_DIR"] = str(self.source)
+        result = subprocess.run(["bash", str(Path(__file__).with_name("ensure.sh")), str(self.workspace)],
+                                env=env, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse((self.workspace / ".git").exists())
         self.assertEqual((self.workspace / self.entry["path"]).read_bytes(), self.payload)
 
 
