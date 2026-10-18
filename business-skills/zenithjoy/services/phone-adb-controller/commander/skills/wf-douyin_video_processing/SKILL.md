@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_video_processing
-version: 0.2.5
+version: 0.2.6
 description: "抖音视频处理 wf_run 陪跑说明：显式加载本次冻结业务Skill，保持原合同与安全交接边界。"
 ---
 
@@ -23,3 +23,5 @@ description: "抖音视频处理 wf_run 陪跑说明：显式加载本次冻结�
 ## 方法升级
 
 本流程依赖的Activity方法版本由业务Skill的 `references/activity-methods.json` 精确登记。方法变化要同步本陪跑Skill版本与合同 `commander_skill.version`；Commander只使用本run冻结组合。代码内部兼容评估、Skill实机验收和自动handoff能力分别记证据，不从文件存在推定已能接手。
+
+本版依赖 `douyin-leadgen-102@0.2.6` 及 `douyin-leadgen-activity-102-qualification@0.1.4`。仅把明确通知暂态交给该方法有界被动复读；同run/Activity/owner、最多两次只读证和一次原slot resume及原独立verify不变。未知或活跃录制不借陪跑清场，未有实际交接证据仍不宣称Skill救场成功。

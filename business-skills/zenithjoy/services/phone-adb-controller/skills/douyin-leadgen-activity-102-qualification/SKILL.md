@@ -2,7 +2,7 @@
 name: douyin-leadgen-activity-102-qualification
 description: 交出有证据的视频资格结论。用于核对目标视频、录音转写并按公司政策判断资格或接手同一 Activity；不执行整个工作流。
 metadata:
-  version: 0.1.3
+  version: 0.1.4
   activity_ref: douyin_video_processing.qualification
   activity_version: 3.2.0
   validation: awaiting-real-run
@@ -28,10 +28,18 @@ metadata:
 
 1. 用真实视频ID进入详情，核对当前页面确为本轮目标；前台、包UID和播放器归属均留原证。 MMV显式开启设备执行的qualification，在原预检已核公司与账号后，先续期并精确核当前run锁，确认本profile不存在活跃或无法确定的受管录音，再经同owner关闭抖音并直接打开本VID；随后重新取真实分享链接核本VID。该开页边界不猜SDK，不改变M4、identity或collection路径，也不把多音轨改判成可录。
 2. 先实读Android SDK原件；SDK≥33仅选同版3.3.4日志刷新补丁固定客户端与对应server，保留原playback音源、audio-dup、require-audio、Matroska与原编解码选择；不得使用SDK31包或旧brew录制绕过就绪门禁。两类SDK都须成对验client/server固定SHA、同owner有界无覆盖server准备，首末保存同一runtime原件名与SHA，停止后fresh SDK须与启动原件一致。SDK31仅在本run显式设备owner核验、已验收补丁客户端与server精确SHA校验及有界无覆盖jar准备成功后，使用独立output音源、no-video、raw PCM与WAV；这是已核的显式策略，不是失败后自动回退。SDK32、未知SDK、未安装runtime或校验不符保持unsupported/pending。SDK31必须保存私有runtime原件与SHA，起止client/server/原件名及SHA一致，停止后实解码唯一pcm_s16le音轨且无视频轨，必须decoder退出0、真实样本数/采样率/解码秒数达到本次请求80%、私有解码原件SHA及退出后原生恢复原件供queue/Workflow独立核验；首末原生音轨归属、无其他started媒体和退出恢复仍须成立。模式、SDK、required、实际音轨数量及SDK原件名/SHA必须进入本轮proof，起止两端一致，并由qualification独立核验。复用已部署录制与音轨核验方法，分别核对实际媒体音量、native播放/静音状态、真实录像及音轨。设置回显不能代替实际读回；轨道started但标记muted不能直接放行。
-3. 播放控件仅从本次完整新树定位：本包、唯一“播放视频，按钮”或“暂停视频，按钮”、enabled/clickable及合法屏幕bounds；不依赖混淆resource-id，也不凭文案决定播放阶段，动作前后都须原生音轨核验。仅当本包UID/详情前台、唯一started音轨且静音原因只有streamVolume/portVolume、没有受管活录制时，按键紧前必须fresh核同包唯一stream/port候选；若已started则不按键，未知或外来轨道立即拒绝。允许一次已核正数音量→邻近非零档→原档刷新；UP已提交但读回未知/不符时只允许绝对恢复明确非零原档并读回，仍保失败，不起录；每次读回必须成立，恢复后fresh唯一started且muted none才启动录制。未知/外UID/共享UID/解析失败/多音轨不能借恢复放行。录制停止后另存退出后原生恢复证据，持续失败保pending，不重启或kill未知进程。
+3. 播放控件仅从本次完整新树定位：本包、唯一“播放视频，按钮”或“暂停视频，按钮”、enabled/clickable及合法屏幕bounds；不依赖混淆resource-id，也不凭文案决定播放阶段，动作前后都须原生音轨核验。仅当本包UID/详情前台、唯一started音轨且静音原因只有streamVolume/portVolume、没有受管活录制时，按键紧前必须fresh核同包唯一stream/port候选；若已started则不按键；除下述明确通知暂态仅允许被动复读外，未知或外来轨道立即拒绝。允许一次已核正数音量→邻近非零档→原档刷新；UP已提交但读回未知/不符时只允许绝对恢复明确非零原档并读回，仍保失败，不起录；每次读回必须成立，恢复后fresh唯一started且muted none才启动录制。未知/外UID/共享UID/解析失败/多音轨不能借恢复放行。录制停止后另存退出后原生恢复证据，持续失败保pending，不重启或kill未知进程。
 4. SDK/模式未知、require-audio缺失、音轨不符或捕获静音属于捕获/合同能力缺口，不以UI点击、音量循环或Skill重试放行。倍速设置、录制启动或停止失败时保留最早stderr、exit code、阶段和已有证据。proof中media_volume=null只表示未记录，不能据此推断音量0，或把native音轨首错改写成音量失败。
 5. 核对真实采集媒体时长、实际播放速度、提取音频和转写证据，只有达到当前正式合同才调用原公司资格政策。缺真实音频/转写记unknown，不伪造合格。playback_dup被App opt-out、缺音轨或录音静音只证明捕获未知，保持pending，不能借此把原视频内容判rejected；不使用标题或旧ASR兜底。
 6. 缓存结论仅在同视频身份、同公司和政策版本均相符时复用。逐VID交付matched/rejected/unknown和证据；仅合格视频交给评论采集。
+
+## 明确通知暂态与失败后的原生读证
+
+只有原生完整证据能唯一确定：本包唯一 started AudioTrack、外 UID 的 started MediaPlayer 明确标为 `USAGE_NOTIFICATION`、duck 列表唯一精确匹配本包 UID/piid，且 faded/muted/banned 与未知轨道均为空，才归为明确通知暂态。该次仍是 `unknown`，不是可录或资格通过。每次原生读证先无覆盖保留首次全部原件，再最多四次每次500毫秒被动等待并取新原件；每次调用的2秒只限显式等待；最多两次broker读证的显式等待合计不超过4秒，仍不得越过原run总截止。不点击、不调音量、不重启。仅 fresh 证据重新满足原有唯一未静音本包音轨要求时才能继续；到限仍未知、共享UID、同UID通知、duck不符、外来媒体或解析不完整均保留原失败，不扩大录音或资格准入。
+
+在原run已绑定的 `qualification`、`repair` 接手中，先 `inspect` 核对原request/nonce、冻结绑定和本次 `phone_capabilities`；inspect不提供fresh前台与受管录制判据，不能从缺字段推断通过。只有该次broker实际提供能力时，才能通过 `phone` 提交 `{"command":"native-audio-evidence","args":[]}`，最多两次。该原生入口由原owner在执行紧前强制核当前run锁、目标详情前台及无活跃或不明受管录制，任一核验失败保持blocked，不由子会话补造通过字段。证据名与路径由父进程生成；子会话不提供EID、VID、owner或文件路径。入口仅读证及上述有界等待，不停止或kill任何录制。若存在或无法排除活跃录制则blocked；录音退出取证失败由原Code先停自己的录制并确认PID退出，再报告最早错误，Skill不代清未知执行者。
+
+新证据稳定后只能在剩余截止内 `resume` 原失败slot的成熟Code一次，再由原独立verify及业务持久化读回裁判。无法恢复保持blocked/partial并报告具体原因；读证成功不代替真实录音、转写、资格或评论落库，本方法仍待实机接手验收。
 
 ## 代码配套与验收
 
