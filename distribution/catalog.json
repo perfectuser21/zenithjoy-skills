@@ -375,6 +375,62 @@
           "name": "skill",
           "execution_directory": "workflows/platform-data/skill",
           "status": "business-compatibility"
+        },
+        {
+          "path": ".skills-runtime/android-bilibili-publish/SKILL.md",
+          "source": "android-bilibili-publish/SKILL.md",
+          "name": "android-bilibili-publish",
+          "execution_directory": ".skills-runtime/android-bilibili-publish",
+          "status": "pinned-phone-dependency"
+        },
+        {
+          "path": ".skills-runtime/android-douyin-publish/SKILL.md",
+          "source": "android-douyin-publish/SKILL.md",
+          "name": "android-douyin-publish",
+          "execution_directory": ".skills-runtime/android-douyin-publish",
+          "status": "pinned-phone-dependency"
+        },
+        {
+          "path": ".skills-runtime/android-kuaishou-publish/SKILL.md",
+          "source": "android-kuaishou-publish/SKILL.md",
+          "name": "android-kuaishou-publish",
+          "execution_directory": ".skills-runtime/android-kuaishou-publish",
+          "status": "pinned-phone-dependency"
+        },
+        {
+          "path": ".skills-runtime/android-publish/SKILL.md",
+          "source": "android-publish/SKILL.md",
+          "name": "android-publish",
+          "execution_directory": ".skills-runtime/android-publish",
+          "status": "pinned-phone-dependency"
+        },
+        {
+          "path": ".skills-runtime/android-shipinhao-publish/SKILL.md",
+          "source": "android-shipinhao-publish/SKILL.md",
+          "name": "android-shipinhao-publish",
+          "execution_directory": ".skills-runtime/android-shipinhao-publish",
+          "status": "pinned-phone-dependency"
+        },
+        {
+          "path": ".skills-runtime/android-toutiao-publish/SKILL.md",
+          "source": "android-toutiao-publish/SKILL.md",
+          "name": "android-toutiao-publish",
+          "execution_directory": ".skills-runtime/android-toutiao-publish",
+          "status": "pinned-phone-dependency"
+        },
+        {
+          "path": ".skills-runtime/android-weibo-publish/SKILL.md",
+          "source": "android-weibo-publish/SKILL.md",
+          "name": "android-weibo-publish",
+          "execution_directory": ".skills-runtime/android-weibo-publish",
+          "status": "pinned-phone-dependency"
+        },
+        {
+          "path": ".skills-runtime/android-xiaohongshu-publish/SKILL.md",
+          "source": "android-xiaohongshu-publish/SKILL.md",
+          "name": "android-xiaohongshu-publish",
+          "execution_directory": ".skills-runtime/android-xiaohongshu-publish",
+          "status": "pinned-phone-dependency"
         }
       ],
       "files": [
@@ -820,6 +876,54 @@
           "path": "workflows/platform-data/skill/SKILL.md",
           "source": "business-skills/zenithjoy/workflows/platform-data/skill/SKILL.md",
           "sha256": "d6eba2ca09ecbf78cc1e92ab5f31b6a9c674c115de767c7486a257fb26d4ca7e",
+          "mode": "100644"
+        },
+        {
+          "path": ".skills-runtime/android-bilibili-publish/SKILL.md",
+          "source": "android-bilibili-publish/SKILL.md",
+          "sha256": "212618645a5316e7dbb52a9c4fd5b38adf3c3b4ab32012106f275edcf6f2cad6",
+          "mode": "100644"
+        },
+        {
+          "path": ".skills-runtime/android-douyin-publish/SKILL.md",
+          "source": "android-douyin-publish/SKILL.md",
+          "sha256": "a94b7a449dcc865f0a2ae077d079d7cf6121495301bf3807cf560ff5d5fee7d1",
+          "mode": "100644"
+        },
+        {
+          "path": ".skills-runtime/android-kuaishou-publish/SKILL.md",
+          "source": "android-kuaishou-publish/SKILL.md",
+          "sha256": "b09c1e4b6ed1275b0325cc33022be5c6e4b3f603e02a1d83a1232ee72dd92c63",
+          "mode": "100644"
+        },
+        {
+          "path": ".skills-runtime/android-publish/SKILL.md",
+          "source": "android-publish/SKILL.md",
+          "sha256": "a31758caa1b0f300dcb62d7062eaa79178893bcde9226cda161e54c869a3aa0a",
+          "mode": "100644"
+        },
+        {
+          "path": ".skills-runtime/android-shipinhao-publish/SKILL.md",
+          "source": "android-shipinhao-publish/SKILL.md",
+          "sha256": "56ae59aaf7ce7ef138e9b11f0e4d746709f033649fa92f3fc3bd47572499909a",
+          "mode": "100644"
+        },
+        {
+          "path": ".skills-runtime/android-toutiao-publish/SKILL.md",
+          "source": "android-toutiao-publish/SKILL.md",
+          "sha256": "520413df4f3a416fa5a4f9527c66dd7b6a8dcb01c141faaf7fe66dc3d14229a0",
+          "mode": "100644"
+        },
+        {
+          "path": ".skills-runtime/android-weibo-publish/SKILL.md",
+          "source": "android-weibo-publish/SKILL.md",
+          "sha256": "15e8070e92a19aa428ea01b08ff5bf2d6e8fb0d4d110c842b122575db6a235a1",
+          "mode": "100644"
+        },
+        {
+          "path": ".skills-runtime/android-xiaohongshu-publish/SKILL.md",
+          "source": "android-xiaohongshu-publish/SKILL.md",
+          "sha256": "d78965137935ee23b42aec529627f5381a6937ee55e95f47aa3657134e24540b",
           "mode": "100644"
         }
       ],
