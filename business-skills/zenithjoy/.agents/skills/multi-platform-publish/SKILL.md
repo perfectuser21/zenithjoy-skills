@@ -2,7 +2,7 @@
 name: multi-platform-publish
 description: 用 Codex 执行 ZenithJoy 九平台发布；按平台、图文、视频、长文或想法选择已有手机手册、浏览器脚本或公众号 API。用于发布任务、发布队列和迁移后的发布检查。
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
 ---
 
 # 九平台发布
@@ -29,7 +29,9 @@ python3 scripts/publish_catalog.py plan --platform wechat --type article --chann
 
 命令路径相对本 skill 目录。脚本只输出计划，**不执行发布**。输出的 `entrypoint`、`instructions` 和 `warnings` 是需要读取的真实源文件与缺口；不支持的通道显式失败。详情见 [内容分支清单](references/publishing-matrix.md)。 当前任务范围为21个安卓模式与公众号长文API，共22类；历史24候选不是正式workflow数量，公众号本轮只走官方API。小红书图文/原生长文、头条文章、微博原生文章、知乎三类原生模式的步骤与真实验收范围见 [安卓补充手册](references/android-additional-modes.md)，使用这些phone路由时读取对应小节。
 
-默认从当前仓库定位脚本，从相邻 `zenithjoy-skills` 或已安装的 `~/.agents/skills` 定位手册。跨目录部署时可分别设置 `ZENITHJOY_WORKSPACE_ROOT` 和 `ZENITHJOY_SKILLS_ROOT`；覆盖仓库路径不会自动改变手册路径。CI 使用路由文件夹具验证索引，真实源路径与真实发布分别在执行环境验收。
+正式运行从业务仓已安装的执行目录调用脚本；不要直接在中央 Skills 源目录运行。业务仓存在 `.skills-source.json` 时，计划读取固定 Workflow Git 版本（默认 `HEAD`，指定旧发布用 `plan ... --ref <业务commit>`）中的锁与加载器，按锁定的 Skills 完整 SHA 校验已安装文件的真实字节。手机平台手册与公共底座读取业务仓 `.skills-runtime/<skill>/SKILL.md`，根技能及参考资料仍是业务仓原路径上的生成文件；发布器运行代码保留在业务仓。安装缺失、文件篡改、无效发布版本或开发目录覆盖均拒绝，不回退到相邻仓库或全局 Skills。
+
+固定运行不得用 `ZENITHJOY_WORKSPACE_ROOT` 切换业务仓，也不得用 `ZENITHJOY_SKILLS_ROOT` 覆盖手册。`SKILLS_SOURCE_DIR` 仅指定只读 Git 对象缓存（默认业务仓 `.skills-source`），必须事先具备锁定完整 SHA；计划不联网、不读取缓存工作区中的开发修改。缺缓存或缺 commit 时先按业务仓正常安装流程安装固定版本，再重做只读计划。仅独立无锁探索工作区沿用相邻 `zenithjoy-skills` / `~/.agents/skills` 查找及上述开发路径覆盖；探索结果不代表正式发布版本。CI 索引检查、固定来源验证与真实发布验收分别留证。
 
 ## 执行
 
@@ -37,7 +39,7 @@ python3 scripts/publish_catalog.py plan --platform wechat --type article --chann
 
 读取计划返回的文件，并核对源脚本真实 CLI、输入字段、运行宿主、依赖和账号状态。旧 skill 中的 `packages/workflows/skills`、Windows 路径或旧设备坐标可能过时，不能照抄执行；实际脚本接口与现场设备状态为准。
 
-- **手机**：加载仓库 `android-publish/SKILL.md` 和本平台独立手册。经目标设备现成控制器执行；按现场 profile 获取锁、核对账号、加载素材、逐步截图与控件树核验，收尾释放锁并回读。不能把只有视频步骤的手册套在图片或长文上；计划无匹配手册时先报缺项，保留现有任务。
+- **手机**：读取计划返回的 `instructions` 公共底座与平台手册；固定运行使用 `.skills-runtime/android-publish/SKILL.md` 及相应平台生成手册。经目标设备现成控制器执行；按现场 profile 获取锁、核对账号、加载素材、逐步截图与控件树核验，收尾释放锁并回读。不能把只有视频步骤的手册套在图片或长文上；计划无匹配手册时先报缺项，保留现有任务。
 
   素材上传后必须确认 MediaStore 已索引。`/sdcard` 与 `/storage/emulated/0` 是同一文件的别名时，媒体库 `_data` 可能只存真实路径；读回应查询解析后的路径，不能因别名查不到就认定上传失败。以控制器当前实现及回归测试为准。
 - **浏览器**：读取 `services/agent/publishers/<平台>-publisher/` 对应脚本，按其 CLI 组装输入。不要通过旧 handler 调用没有接通的类型，也不要为缺 dryrun 的视频或文章借用图文 dryrun。需要模块时先检查执行机 `node_modules` 与 `playwright-core` / `ws`，不能凭有文件就声称可运行。
