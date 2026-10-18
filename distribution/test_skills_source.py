@@ -144,6 +144,18 @@ class DistributionTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout, self.payload)
 
+    def test_cached_checkout_preserves_bytes_with_windows_autocrlf_enabled(self):
+        cache = self.workspace / ".skills-source"
+        subprocess.run(["git", "init", "-q", str(cache)], check=True)
+        subprocess.run(["git", "-C", str(cache), "config", "core.autocrlf", "true"], check=True)
+        revision = json.loads((self.workspace / ".skills-source.json").read_text())["revision"]
+        subprocess.run(["git", "-C", str(cache), "fetch", "-q", str(self.source), revision], check=True)
+        command = [sys.executable, str(Path(__file__).with_name("bootstrap.py")), "install",
+                   "--workspace", str(self.workspace)]
+        result = subprocess.run(command, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((self.workspace / self.entry["path"]).read_bytes(), self.payload)
+
 
 class CatalogTests(unittest.TestCase):
     def test_every_distributed_resource_is_present_and_matches_its_digest(self):
