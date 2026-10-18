@@ -1,4 +1,10 @@
 ## [2026-10-18] multi-platform-publish 1.0.1 — updated（固定发布来源说明）
+
+## [2026-10-18] douyin-leadgen-activity-102-qualification 0.1.4 / douyin-leadgen-102 0.2.6 / wf-douyin_video_processing 0.2.6 — updated
+**症状**: 102 Code已新增明确通知duck的有界被动复读，Skill仍要求未知立即拒绝，方法与实现失配。
+**根因**: 恢复策略只更新Code，未按决策e62b485e同步Activity方法、Workflow依赖及陪跑说明。
+**修改**（任务2639d238）: 明确通知暂态仍为unknown，保存首次原件后最多4×500ms被动复读，fresh原守卫通过才继续；补同run/owner且无活跃录制的最多两次只读broker入口，最多一次原slot resume和独立核验。同步方法清单、调用映射、陪跑及catalog摘要，保业务Activity3.2.0、原评分/资格/账号政策与awaiting-real-run状态。
+
 **症状**: 根技能仍指示正式运行读取相邻手册并覆盖开发目录，与固定发布路由的实际拒绝行为冲突。
 **根因**: 生成物来源已锁定，执行说明仍沿用无锁探索路径。
 **修改**（Brain 任务 cd5e7802）: 明确固定业务 Git 版本、Skills SHA、`.skills-runtime` 手册与只读对象缓存，区分无锁探索；不改运行脚本或冻结合同。
