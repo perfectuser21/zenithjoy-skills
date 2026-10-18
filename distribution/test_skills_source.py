@@ -179,6 +179,66 @@ class DistributionTests(unittest.TestCase):
         self.assertEqual(path.read_bytes(), b"-----BEGIN TEST KEY-----\nfixture\n-----END TEST KEY-----\n")
 
 
+class PhoneDependencyTests(DistributionTests):
+    def configure_runtime_dependency(self):
+        self.entry["path"] = ".skills-runtime/android-publish/SKILL.md"
+        self.write_catalog()
+        self.commit_source()
+
+    def test_phone_routes_have_fixed_runtime_documents(self):
+        root = Path(__file__).resolve().parents[1]
+        profile = json.loads((root / "distribution/catalog.json").read_text())["profiles"]["zenithjoy"]
+        routes = json.loads((root / "business-skills/zenithjoy/.agents/skills/multi-platform-publish/references/catalog.json").read_text())
+        required = {"android-publish/SKILL.md"}
+        for route in routes["routes"]:
+            phone = route["channels"].get("phone", {})
+            for key in ("source", "instruction"):
+                resource = phone.get(key, {})
+                if resource.get("root") == "skills":
+                    required.add(resource["path"])
+        files = {entry["path"]: entry for entry in profile["files"]}
+        for resource in required:
+            entry = files.get(".skills-runtime/" + resource)
+            self.assertIsNotNone(entry, resource + " is not pinned for runtime")
+            self.assertEqual(entry["source"], resource)
+            self.assertEqual(hashlib.sha256((root / resource).read_bytes()).hexdigest(), entry["sha256"])
+        runtime_sources = {e["source"] for e in profile["files"] if e["path"].startswith(".skills-runtime/")}
+        self.assertEqual(runtime_sources, required)
+
+    def test_runtime_missing_or_modified_dependency_is_rejected(self):
+        self.configure_runtime_dependency()
+        self.module.install(self.workspace, self.source)
+        target = self.workspace / self.entry["path"]
+        target.unlink()
+        with self.assertRaisesRegex(ValueError, "missing"):
+            self.module.verify(self.workspace, self.source)
+        self.module.install(self.workspace, self.source)
+        target.write_text("unverified runtime edits")
+        with self.assertRaisesRegex(ValueError, "modified"):
+            self.module.verify(self.workspace, self.source)
+        with self.assertRaisesRegex(ValueError, "modified"):
+            self.module.install(self.workspace, self.source)
+
+    def test_two_release_workspaces_keep_their_own_runtime_bytes(self):
+        self.configure_runtime_dependency()
+        self.module.install(self.workspace, self.source)
+        old_source = self.root / "old-source"
+        subprocess.run(["git", "clone", "-q", str(self.source), str(old_source)], check=True)
+        old_workspace = self.root / "old-workspace"
+        old_workspace.mkdir()
+        (old_workspace / ".skills-source.json").write_bytes((self.workspace / ".skills-source.json").read_bytes())
+        self.module.install(old_workspace, old_source)
+        (self.source / "example.md").write_bytes(b"# Improved skill\n")
+        self.entry["sha256"] = hashlib.sha256(b"# Improved skill\n").hexdigest()
+        self.write_catalog()
+        self.commit_source()
+        self.module.install(self.workspace, self.source)
+        self.assertEqual((old_workspace / self.entry["path"]).read_bytes(), self.payload)
+        self.assertEqual((self.workspace / self.entry["path"]).read_bytes(), b"# Improved skill\n")
+        self.module.verify(old_workspace, old_source)
+        self.module.verify(self.workspace, self.source)
+
+
 class CatalogTests(unittest.TestCase):
     def test_every_distributed_resource_is_present_and_matches_its_digest(self):
         root = Path(__file__).resolve().parents[1]
