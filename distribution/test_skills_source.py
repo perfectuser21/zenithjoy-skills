@@ -169,6 +169,15 @@ class DistributionTests(unittest.TestCase):
         self.assertFalse((self.workspace / ".git").exists())
         self.assertEqual((self.workspace / self.entry["path"]).read_bytes(), self.payload)
 
+    def test_ssh_identity_is_written_with_lf_for_windows_openssh(self):
+        spec = importlib.util.spec_from_file_location("bootstrap", Path(__file__).with_name("bootstrap.py"))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        self.assertTrue(hasattr(module, "write_identity"), "SSH identity bytes need explicit newline handling")
+        key = "-----BEGIN TEST KEY-----\r\nfixture\r\n-----END TEST KEY-----\r\n"
+        path = module.write_identity(self.root, key)
+        self.assertEqual(path.read_bytes(), b"-----BEGIN TEST KEY-----\nfixture\n-----END TEST KEY-----\n")
+
 
 class CatalogTests(unittest.TestCase):
     def test_every_distributed_resource_is_present_and_matches_its_digest(self):
