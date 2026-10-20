@@ -1,6 +1,6 @@
 ---
 name: workflow-commander
-version: 2.0.22
+version: 2.1.0
 description: "通用 Commander：接收 Brain 原始 JSON 调度单，核对冻结合同与部署，正式派发 Codex 子会话，持续监督同 run、恢复清理和回执，直到独立核验完成。"
 ---
 
@@ -117,3 +117,23 @@ FAIL/INCONCLUSIVE 返回断言、证据和恢复条件。下个获准 attempt �
 使用同一官方sessions_spawn参数及授权模型校验。child任务原样包含request及activity-request（方法Skill与support正文、原Code失败、broker_host/tool/request路径）；上下文隔离，只执行指定slot。child先核agent-binding与自己的session：只用本session精确官方subagents(action=list)返回的callerIsSubagent===true与callerSessionKey逐字等于binding.child_session_key；binding的run/task/parent/nonce逐项核原request。父session_status规则不继承给child，不拿active列表、模型自报或connector近似工具替代caller字段；缺工具/字段/身份不符仍blocked，不增权限。不能使用裸queue/SQL/原phone自由发送或创建Workflow。其唯一业务工具为原run activity-skill-tool：inspect、受控phone、一次该slot resume；send_dm readback_only不得resume或点击发送。父仍用MMV gateway_exec；child只依据自己本session真实暴露schema选择精确gateway_exec（适配器已固定gateway，不添host）或精确exec且显式host=gateway，缺少或冲突即blocked。不得沿用父工具表或用node_exec/local/auto/connector近似名。只使用本次Source提供的固定command模板；每条先精确核hostname为已登记MMV，再由隔离Python将结构化env转原CLI stdin。工具无stdin字段；env仅用模板固定两键，phone只替换JSON值，不插业务字符串到command，不覆盖PATH/PYTHONPATH/BASH_ENV等环境。入口持久固定本run的surface；结果未知不得换通道重发，process只跟踪同surface实际返回的sessionId，poll超时不证明终止。固定relay自行使用原受管SSH路由，不让模型拼SSH。
 
 原官方spawn receipt原样保存到spawn-receipt.json，resolvedProvider必须精确openai，resolvedModel仅接受精确openai/gpt-6.1-sol或兼容裸名gpt-6.1-sol，不修改原receipt；终态effective.model仍核裸ID gpt-6.1-sol。核验后用本次source提供的commander/wf-agent-handoff.py bind，再await持续官方agent.wait。预算不得重置，父CLI exit0/模型自述不能替代child官方终态。未知/超时精确停止原child并读回；无确证时报告unknown保留原run锁。最终结果由原broker记录的成熟代码返回值和原独立verify决定，不由child输出JSON改写闭包/账本。
+
+
+## 同run有界Agent恢复合同
+
+以下仅是原冻结Activity合同的显式opt-in形状，不是模型或方法自行授予的执行额度：
+
+<!-- agent-recovery-policy -->
+```json
+{"agent_recovery":{"max_additional_turns":1}}
+```
+
+从本run对应的 `version.payload.contract.agent_recovery` 核此对象：仅允许唯一键 `max_additional_turns`、值为整数1；字段缺省保持原一次性接手，非法值或多余键阻断。一次额外Agent turn不是新Workflow attempt，不增加业务次数或预算。
+
+Code失败或Code实际产出未过原verify时，首次Skill接手仍走原入口；首次Skill/Agent已确认失败或其实际产出未过原verify时，由唯一work-commander在同一次recover与原broker存活期内决定是否用这一次额外turn。先取得原owner和原child精确官方终态及停止证明，并确认broker无在途操作、原资源授权有效且尚在原Activity执行截止；父CLI或子终态未知、外部写入（含发布/发送）结果未知均不重派、不清pending、不刷新TTL。模型自述、CLI退出0或预览页不能替代这些证明。
+
+保留同run/task/binding/source/Activity、原业务nonce、原handler闭包与已成功VID。每turn只增加不可覆盖的transport generation及官方child绑定，引用原业务nonce；先撤销旧child工具权，再精确授权当前generation，旧child迟到调用/回执不得执行或覆盖新证据。不得删除原launch/binding/closed记录，不能换nonce或重建broker重置额度。
+
+原broker的resume总计最多一次，原生读证总计最多两次，失败调用也消费相应额度。resume前Agent失败且余量合法才可继续使用尚未消耗的resume；resume已预留或业务已执行后，后继turn仅inspect/readback/verify，禁止再resume、受控归位或其他业务动作。资格恢复沿原成功VID集合及每VID次数，不重领、不重录成功项。send_dm始终readback_only；collection partial、能力/权限/来源阻断仍按原规则停止。所有turn共享原截止，不挪用cleanup预算执行业务。
+
+原进程独立verify及真实持久读回通过后才继续后续Activity；无结果不能靠新child文本补成功。额外turn耗尽、剩余预算不足或仍核验失败即准确failed/partial/unknown并保原证，不承诺每种障碍都能救回。本版仍awaiting-real-run，配套源码、发布与实机验收分别留证。

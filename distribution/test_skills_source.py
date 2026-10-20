@@ -306,7 +306,9 @@ class CommanderRecoveryContractTests(unittest.TestCase):
                 text = path.read_text()
                 blocks = re.findall(r'<!-- agent-recovery-policy -->\n```json\n(.*?)\n```', text, re.S)
                 self.assertEqual(len(blocks), 1, "Missing unambiguous frozen opt-in policy")
-                self.assertEqual(json.loads(blocks[0]), {"agent_recovery": {"max_additional_turns": 1}})
+                policy = json.loads(blocks[0])
+                self.assertEqual(policy, {"agent_recovery": {"max_additional_turns": 1}})
+                self.assertIs(type(policy["agent_recovery"]["max_additional_turns"]), int)
 
     def test_method_versions_and_all_workflow_dependency_rows_are_upgraded_together(self):
         import re
