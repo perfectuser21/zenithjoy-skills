@@ -310,6 +310,20 @@ class CommanderRecoveryContractTests(unittest.TestCase):
                 self.assertEqual(policy, {"agent_recovery": {"max_additional_turns": 1}})
                 self.assertIs(type(policy["agent_recovery"]["max_additional_turns"]), int)
 
+    def test_frozen_opt_in_is_bound_to_new_activity_contract_versions(self):
+        import re
+        activity, _, _, _ = self.skills()
+        expected = {"101-collect-videos": "4.1.0", "102-preflight": "2.1.0",
+                    "102-dedup": "3.1.0", "102-qualification": "3.3.0",
+                    "102-collection": "2.5.0", "102-cleanup": "2.1.0",
+                    "103-scoring": "2.1.0", "103-mark-leads": "3.2.0",
+                    "104-preflight": "4.1.0", "104-send-dm": "3.1.0",
+                    "104-write-back": "3.1.0", "104-cleanup": "3.1.0"}
+        for path in activity:
+            with self.subTest(method=path.parent.name):
+                actual = re.search(r"^  activity_version: (\S+)$", path.read_text(), re.M)[1]
+                self.assertEqual(actual, expected[path.parent.name.removeprefix("douyin-leadgen-activity-")])
+
     def test_method_versions_and_all_workflow_dependency_rows_are_upgraded_together(self):
         import re
         activity, workflows, wrappers, commander = self.skills()
