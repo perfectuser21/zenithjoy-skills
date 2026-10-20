@@ -1,7 +1,7 @@
 ## [2026-10-20] 获客12Activity方法 / 4Workflow / 4陪跑 / workflow-commander — updated（原run有界Agent恢复）
 **症状**: Code异常已可交同Activity Skill，但Skill/Agent确认失败或产出不符后，现行方法仅规定停止，无法表达用户批准的有限原run续行。
 **根因**: 缺少冻结的额外Agent turn政策与跨turn共享原业务额度、精确撤权的合同。
-**修改**（任务2c8f9af6）: 12方法续至0.2.0，4Workflow及4陪跑续至0.3.0，通用Commander续至2.1.0；显式冻结agent_recovery.max_additional_turns=1，旧无字段仍一次性。仅双停止已证/原权限和截止内复用原broker与业务nonce；resume一次/native读证两次累计，已resume后仅读回核验；unknown不重派，send_dm/collection partial/能力权限阻断不变。同步真实依赖及catalog摘要，业务支持文件仍由业务仓维护，不迁移、不冒称发布或实机通过。
+**修改**（任务2c8f9af6）: 12方法续至0.2.0，4Workflow及4陪跑续至0.3.0，通用Commander续至2.1.0；显式冻结agent_recovery.max_additional_turns=1，旧无字段仍一次性。仅双停止已证/原权限和截止内复用原broker与业务nonce；resume一次/native读证两次累计，已resume后仅读回核验；unknown不重派，send_dm/collection partial/能力权限阻断不变。新增冻结配置按真实Activity合同minor续版，并同步12方法activity_version；同步真实依赖及catalog摘要，业务支持文件仍由业务仓维护，不迁移、不冒称发布或实机通过。
 
 ## [2026-10-18] multi-platform-publish 1.0.1 — updated（固定发布来源说明）
 

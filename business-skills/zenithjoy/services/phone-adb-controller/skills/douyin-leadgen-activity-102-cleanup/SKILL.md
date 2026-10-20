@@ -4,7 +4,7 @@ description: 归位采集现场并释放本人资源。用于采集流程收尾�
 metadata:
   version: 0.2.0
   activity_ref: douyin_video_processing.cleanup
-  activity_version: 2.0.0
+  activity_version: 2.1.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -12,7 +12,7 @@ metadata:
 
 # 归位采集现场并释放本人资源
 
-仅执行 `douyin_video_processing.cleanup`。业务合同版本为 `2.0.0`；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_video_processing.cleanup`。业务合同版本为 `2.1.0`；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-102/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_video_processing.yaml)的 `cleanup` 为准；本文件不覆盖该合同或公司政策。
 
