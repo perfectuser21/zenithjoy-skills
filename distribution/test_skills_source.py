@@ -282,5 +282,71 @@ class CatalogTests(unittest.TestCase):
                 self.assertIn(path.resolve(), sources, str(path))
 
 
+
+class CommanderRecoveryContractTests(unittest.TestCase):
+    root = Path(__file__).resolve().parents[1]
+    base = root / "business-skills/zenithjoy/services/phone-adb-controller"
+
+    def skills(self):
+        activity = sorted((self.base / "skills").glob("douyin-leadgen-activity-*/SKILL.md"))
+        workflows = [self.base / f"skills/douyin-leadgen-{n}/SKILL.md" for n in range(101, 105)]
+        wrappers = [p for p in (self.base / "commander/skills").glob("wf-douyin_*/SKILL.md")
+                    if p.parent.name != "wf-douyin_video_publish"]
+        commander = self.base / "commander/skills/workflow-commander/SKILL.md"
+        self.assertEqual((len(activity), len(workflows), len(wrappers)), (12, 4, 4))
+        return activity, workflows, wrappers, commander
+
+    def test_recovery_policy_is_explicit_and_identical_across_frozen_methods(self):
+        # Parse the normative structured example, rather than treating a prose
+        # mention or a dependency's policy as authorization for this method.
+        import re
+        activity, workflows, wrappers, commander = self.skills()
+        for path in activity + workflows + wrappers + [commander]:
+            with self.subTest(path=path.relative_to(self.root)):
+                text = path.read_text()
+                blocks = re.findall(r'<!-- agent-recovery-policy -->\n```json\n(.*?)\n```', text, re.S)
+                self.assertEqual(len(blocks), 1, "Missing unambiguous frozen opt-in policy")
+                policy = json.loads(blocks[0])
+                self.assertEqual(policy, {"agent_recovery": {"max_additional_turns": 1}})
+                self.assertIs(type(policy["agent_recovery"]["max_additional_turns"]), int)
+
+    def test_frozen_opt_in_is_bound_to_new_activity_contract_versions(self):
+        import re
+        activity, _, _, _ = self.skills()
+        expected = {"101-collect-videos": "4.1.0", "102-preflight": "2.1.0",
+                    "102-dedup": "3.1.0", "102-qualification": "3.3.0",
+                    "102-collection": "2.5.0", "102-cleanup": "2.1.0",
+                    "103-scoring": "2.1.0", "103-mark-leads": "3.2.0",
+                    "104-preflight": "4.1.0", "104-send-dm": "3.1.0",
+                    "104-write-back": "3.1.0", "104-cleanup": "3.1.0"}
+        for path in activity:
+            with self.subTest(method=path.parent.name):
+                actual = re.search(r"^  activity_version: (\S+)$", path.read_text(), re.M)[1]
+                self.assertEqual(actual, expected[path.parent.name.removeprefix("douyin-leadgen-activity-")])
+
+    def test_method_versions_and_all_workflow_dependency_rows_are_upgraded_together(self):
+        import re
+        activity, workflows, wrappers, commander = self.skills()
+        def version(path):
+            return re.search(r"^  ?version: (\S+)$|^version: (\S+)$", path.read_text(), re.M).group(0).split(": ")[1]
+        for path in activity:
+            self.assertEqual(version(path), "0.2.0", path.name)
+        for path in workflows + wrappers:
+            self.assertEqual(version(path), "0.3.0", path.parent.name)
+        self.assertEqual(version(commander), "2.1.0")
+        versions = {path.parent.name: version(path) for path in activity + workflows + wrappers + [commander]}
+        for path in activity + workflows + wrappers + [commander]:
+            for name, mentioned in re.findall(r"(douyin-leadgen-[a-z0-9-]+)@(\d+\.\d+\.\d+)", path.read_text()):
+                self.assertEqual(mentioned, versions[name], f"Stale prose dependency in {path}")
+        seen = set()
+        for workflow in workflows:
+            manifest = json.loads((workflow.parent / "references/activity-methods.json").read_text())
+            for row in manifest["activities"]:
+                method = self.base / Path(row["skill_path"]).relative_to("services/phone-adb-controller")
+                self.assertEqual(row["skill_version"], version(method))
+                seen.add(method.resolve())
+        self.assertEqual(seen, {p.resolve() for p in activity})
+
+
 if __name__ == "__main__":
     unittest.main()
