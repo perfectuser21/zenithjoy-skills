@@ -334,6 +334,10 @@ class CommanderRecoveryContractTests(unittest.TestCase):
         for path in workflows + wrappers:
             self.assertEqual(version(path), "0.3.0", path.parent.name)
         self.assertEqual(version(commander), "2.1.0")
+        versions = {path.parent.name: version(path) for path in activity + workflows + wrappers + [commander]}
+        for path in activity + workflows + wrappers + [commander]:
+            for name, mentioned in re.findall(r"(douyin-leadgen-[a-z0-9-]+)@(\d+\.\d+\.\d+)", path.read_text()):
+                self.assertEqual(mentioned, versions[name], f"Stale prose dependency in {path}")
         seen = set()
         for workflow in workflows:
             manifest = json.loads((workflow.parent / "references/activity-methods.json").read_text())
