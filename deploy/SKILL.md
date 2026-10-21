@@ -1,105 +1,64 @@
 ---
 name: deploy
-description: 部署指南——ZenithJoy + Cecelia 统一部署模型（push main→CI 自动 staging→smoke test→人工手点 promote 生产）。AI 只部署到 staging，生产必须人工手点放行。触发场景：部署代码、发布到生产、promote 上线、staging 验证。
+version: 2.0.0
+description: 部署或回退 ZenithJoy、Cecelia；先核对仓库与组件的实际发布入口，固定候选版本，验证 staging 和真实业务证据，再按已有授权晋级并读回生产结果。用于部署代码、promote 上线、候选验收和发布失败恢复。
 ---
 
-# 部署指南（ZenithJoy + Cecelia 统一模型）
+# 部署与回退
 
-## 核心模型（两个 repo 完全一致）
+## 开始前
 
-```
-push main → CI 自动 staging → smoke test ✅
-                ↓
-        人工打开 staging 验证
-                ↓
-        GitHub Actions 手点 promote → 生产
-```
+1. 读取目标仓库 AGENTS.md、当前分支和实际工作流；查关联 Project、Task、上一棒交接及现行发布记录。按 dev / db-update 登记或续接任务，再执行。
+2. 明确仓库、组件、机器、环境、候选完整 SHA 和授权范围。ZenithJoy 业务与 Cecelia 调度基础设施分别发布；ROG Windows 与安卓 RPA 分别验收，不能把一端登录状态当另一端的放行条件。
+3. 代码变更走独立 worktree、PR 和完整必需 CI。不直推 main、不管理员合并、不以紧急为由直跑旧部署脚本。凭据按 credentials skill 获取，禁止出现在日志或提交中。
+4. 用户已有的发布授权继续有效；仅在新动作超出授权或 AGENTS.md 明确要求确认时说明具体风险并确认。`confirm=PROMOTE` 是入口参数，不能替代真实验收。
 
-**死规矩：AI 只部署到 staging，生产必须人工手点放行。**
+## 四层证据分别判断
 
----
+| 层 | 通过证据 | 未证明的事项 |
+|---|---|---|
+| CI | 候选 SHA 对应必需检查成功 | 生产业务能用 |
+| 候选 | 固定源码与产物哈希、staging 实际运行和读回 | 业务验收通过 |
+| 业务 | 同一候选、账号、输入的真实输出及独立读回 | 已经生产发布 |
+| 生产 | 准入通过后切换，生产实际版本及目标业务读回 | 其他设备/组件也成功 |
 
-## ZenithJoy Dashboard
+测试失败、取消、未执行、登录失效、证据缺失都不能写成通过。任务只按实际完成范围回写；构建或安装成功不得表述为“业务已修好”。
 
-**Staging（自动）**
-- 触发：push main 命中 `apps/dashboard/**`
-- Workflow：`deploy-dashboard-staging.yml`
-- URL：https://staging-autopilot.zenjoymedia.media
-- Smoke：`.github/workflows/scripts/smoke/staging-smoke.sh`（HTML 内容校验）
+## ZenithJoy 入口地图
 
-**生产（人工放行）**
-- 入口：GitHub Actions → `promote-dashboard-prod.yml` → workflow_dispatch
-- 确认：confirm 输入框填 `PROMOTE`
-- URL：https://autopilot.zenjoymedia.media
+下面是查找入口，不是替代代码的运行参数表。每次先读目标 SHA 的 YAML、被调用脚本及验收合同，核实当前 main 是否已包含所需机制。
 
-**应急手动部署（绕过 CI，慎用）**
-```bash
-cd ~/perfect21/zenithjoy && git pull origin main && bash deploy.sh hk
-```
-含：git 安全三检（未提交/未跟踪/未 push）+ build + rsync + 备份 + 公网 smoke
+| 组件 | 候选/验收入口 | 正式晋级/回退入口 |
+|---|---|---|
+| API（香港） | `deploy-staging-hk.yml` | `promote-prod-hk.yml` / `rollback-prod.yml` |
+| Dashboard | `deploy-dashboard-staging.yml` | `promote-dashboard-prod.yml` / `rollback-dashboard-prod.yml` |
+| Staff Hub | `deploy-staff-hub-staging.yml` | `promote-staff-hub-prod-hk.yml`；按现行脚本核对前驱 |
+| 多组件 | 各组件同 SHA 的 staging 与共同业务验收 | `promote-all-prod.yml`，共享生产锁 |
+| 安卓运行包 | `deploy-phone-adb-controller.yml` 的候选模式与手机发布合同 | 同入口生产模式；整包事务能力须在候选中核实 |
+| Windows 安装包/模块 | `agent-installpack.yml`；先核实是否已改为只产候选 | 只有实际存在且启用的 `promote-installpack.yml` / `rollback-installpack.yml` 才能调用 |
 
----
+- 应用晋级需 `release-admission.yml` 核验同 SHA staging 运行、验收 run key、目标组件及合同。读取 Brain 原记录，不能以聊天自述或自填 PASS 代替。
+- Pilot Release Verification 只证明它合同内的内容；源码核验通过不等于采集、触达或发布业务成功。
+- 安卓候选先按合同完成六项业务证据。101–103核实视频、评论持久化、评分结果；104只触达获批账号和收件人；发布只用获批账号与素材。队列领取范围大于授权范围时，先修到可限定，再执行，不领取整家公司队列试发。
+- 手机整包必须把 MMV/M4、Commander、手册、运行文件和配置一起纳入原始快照及恢复合同。生产准入前读候选的 `deployment-protocol.json`；缺少所需事务协议不能声称已有整包回退。
+- 安装包候选不得改生产 manifest 或现役模块要求版本。晋级须同源 core+模块哈希、真实业务验收、不可变前驱和并发版本校验；旧无门禁入口不能继续作为正常路径。
+- 安装包分发指针回退与已安装客户端降级是两个结果；分别实测，不把前者当后者成功。
+- Staff Hub 若用户明确停用，保持该范围决定，不为其他组件验收恢复其生产容器或代理。
 
-## Cecelia Dashboard
+## Cecelia Brain
 
-**Staging（自动）**
-- 触发：push main
-- Workflow：`auto-staging-deploy.yml`
-- URL：http://perfect21:5222
-- Smoke：`scripts/auto-staging-smoke.sh`
+先读 `brain-ci-deploy.yml`、`scripts/ci/gate3-trigger-deploy.sh`、`scripts/brain-deploy.sh`、`scripts/staging-deploy.sh` 及所引用 helper；不能假定它与 ZenithJoy 有相同的手动 promote 模型。
 
-**生产（人工放行）**
-- 入口：GitHub Actions → `promote-dashboard-prod.yml` → workflow_dispatch
-- 确认：confirm 输入框填 `PROMOTE`
-- URL：http://perfect21:5211
+生产改动前必须核验：固定 SHA 构建的同一镜像，已在隔离数据库完成迁移、启动及真实 API/数据库读回；staging 不继承生产凭据、生产挂载和对外调度。receipt 必须绑定本次 request、SHA、镜像；旧 receipt、skip 或安装成功都不能放行。隔离验收失败时，不执行生产迁移或生产切换。
 
-**应急手动部署（绕过 CI，慎用）**
-```bash
-bash scripts/promote-dashboard.sh
-```
+这些机制若只存在于待合并 PR，明确记为“尚未上线”；先完成代码修复及正常 CI，不凭本说明假设生产具备隔离闸门。成功切换后独立核对运行 SHA、版本、数据库目标、健康状态和本次功能效果。
 
----
+Cecelia Dashboard 单独读取当前 UI 工作流与实际部署目标；不要把 Brain 的 5222 验证端口当成 UI staging。旧 AI Gateway/N8N 路径须先核实仍在使用，不能按历史说明直接执行。
 
-## Cecelia Brain / API
+## 失败恢复与收尾
 
-**自动部署**
-- 触发：push main 命中 `packages/brain/**`
-- Workflow：`brain-ci-deploy.yml`
-- 无手动 promote（Brain 改动直接上生产）
-
----
-
-## Cecelia Workflows（AI Gateway + N8N）
-
-```bash
-bash packages/workflows/deploy/deploy.sh hk
-```
-
----
-
-## 502 / 页面空白排查
-
-**ZenithJoy 502：**
-```bash
-ssh hk-vps "docker ps | grep autopilot"
-ssh hk-vps "curl -s -o /dev/null -w '%{http_code}' http://localhost/"
-# 502 但容器 200 → Cloudflare Tunnel ingress 问题
-# tunnel 必须写 http://172.17.0.1:80，不能写 localhost:80
-```
-
-**Cecelia PWA 显示旧版（SW 缓存）：**
-```js
-// 浏览器 console 执行
-navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()))
-```
-
----
-
-## 何时用应急手动 vs 正常 CI
-
-| 场景 | 用法 |
-|------|------|
-| 日常改代码 | PR merge → CI 自动 staging → 手点 promote |
-| CI 挂了但必须立刻上线 | 应急手动（`bash deploy.sh hk`） |
-| 只改配置/nginx | 应急手动更快 |
-| 新功能/重要改动 | 必须走 CI，不走应急 |
+1. 安装前确认原版本、备份/事务日志、实际恢复入口与所需磁盘空间；恢复材料必须先于覆盖落盘。
+2. 失败后按原事务状态决定继续恢复或回退；提交结果未知时先读回，不能盲目重发、反向恢复或清除锁。跨宿主部分失败保持执行屏障，恢复后逐端核对原始字节和原生发布记录。
+3. API 镜像、前端指针、手机整包和安装包分发各用自己的恢复入口。只清理本次拥有的资源；网络变更、生产容器强删等依仓库规则确认。
+4. 实际备份验收要读回真实备份、校验哈希，并在隔离库恢复验证。CI fixture 导出只能证明演练脚本；不能声称生产数据已有异地备份。
+5. 向原 Task 写事实、证据、actor，以及已做/未做/下一步交接，保留原 Project 与根目标。Brain 负责 Notion 投影，再读回目标页面正文与项目关系；不直接修投影，不将 Windows 问题混入安卓完成条件。
