@@ -3,7 +3,7 @@
   "full_flow_entry": "leadgen-run.sh",
   "single_activity_public_entry_available": true,
   "raw_queue_cli_authorized": false,
-  "source_scope": "当前已发布成熟代码调用说明；不是本版Skill运行PASS",
+  "source_scope": "正式冻结入口说明及101 5.0.0候选配套；候选实现已补，仍须正常发布与本版真机验收，不代表当前运行宿主已升级或Skill运行PASS",
   "public_entry": {
     "skill": "douyin-leadgen-101",
     "classification": "PUBLIC_FULL_FROZEN_WORKFLOW_CLI",
@@ -34,10 +34,11 @@
       "discovery-progress.json 中实际 videos/captures/counts/request/stop_reason/all_results_scanned",
       "split-result.json，3个activity真实Commander/verification/cleanup",
       "PG leadgen_videos同line/VID/link来源读回",
-      "正式run-definition.json/run-bindings/*.ack.json/runtime及中央span/outbox"
+      "正式run-definition.json/run-bindings/*.ack.json/runtime及中央span/outbox",
+      "5.0.0候选要求：Video.discovery_metrics（运行结果Video.metrics）同次详情XML原件与身份；PG专用discovery_metrics完整观测及公司绑定经discover_readback独立相等读回，discovery_metrics_verified == 1"
     ],
     "not_guaranteed_by_code": [
-      "当前101代码未输出或持久化同视频真实like_count/comment_total分档字段，不能以cards/linked/counts冒互动指标；按Skill保留metrics_persistence_missing。"
+      "101候选实现已补同视频真实likes/comment_total及分档、专用discovery_metrics持久化和独立读回；运行宿主是否已发布仍须核实际固定版本，当前方法awaiting-real-run。旧版本不支持或读回不符时保留metrics_persistence_missing/实际失败原因，不以cards/linked/counts或102 comment_count冒互动指标，也不以候选代码存在判5.0.0通过。"
     ],
     "mmv_device_runtime": {
       "flag": "LEADGEN_MMV_DEVICE_RUNTIME=1",
@@ -91,7 +92,7 @@
     }
   ],
   "known_gaps": [
-    "现CLI可启动旧合同Code四flow，不自动证明新Skill0.1.0所有实屏指标/ordinary/deep/auto/可中断逐Activity救场合同已实现。",
+    "现CLI存在不证明本轮已部署collect_videos 5.0.0或Skill0.4.0实屏指标与持久化验收已通过；ordinary/deep/auto及其他Activity接手仍按各自原合同与真实证据判定。",
     "原run有受控单Activity入口；没有脱离冻结run的任意queue/发送CLI，Agent只能使用该次handoff提供的工具。",
     "104原private-message-send虽是controller动作，不是公开可独立绕prepared调用的业务发送入口；不能用旧tick或裸phone命令替104。"
   ],

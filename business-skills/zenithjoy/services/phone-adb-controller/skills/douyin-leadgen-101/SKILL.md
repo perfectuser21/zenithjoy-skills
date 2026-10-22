@@ -2,7 +2,7 @@
 name: douyin-leadgen-101
 description: 执行抖音获客101视频发现：按公司关键词和筛选条件取真实视频链接、读取互动指标并交接视频。用于Agent执行或同业务合同的代码异常接手；不做视频资格判断、评论评分或私信。
 metadata:
-  version: 0.3.0
+  version: 0.4.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-101/references/reuse-map.json
@@ -12,14 +12,14 @@ metadata:
 
 # 101 · 视频发现
 
-这是可由 Agent 加载的首版操作 Skill，尚无本版实机验收记录。创建文件不表示 Brain 已安装、派单或生产已恢复。
+这是可由 Agent 加载的操作 Skill，尚无本版实机验收记录。当前配套collect_videos 5.0.0新增强制指标读回；候选实现已补不表示运行宿主已发布、Brain已安装或生产已恢复。
 
 ## Activity 方法配套
 
 本工作流的方法依赖真身见[Activity方法清单](references/activity-methods.json)。执行指定Activity时，按本轮冻结 `activities[].implementations` 的真实name/version/source/digest及execution_path加载对应独立Skill；不能把本工作流Skill当作每个Activity的同一份方法。
 
 - `douyin_video_processing.preflight` → `douyin-leadgen-activity-102-preflight@0.2.0`。
-- `douyin_video_discovery.collect_videos` → `douyin-leadgen-activity-101-collect-videos@0.2.0`。
+- `douyin_video_discovery.collect_videos` → `douyin-leadgen-activity-101-collect-videos@0.3.0`（业务合同5.0.0）。
 - `douyin_video_processing.cleanup` → `douyin-leadgen-activity-102-cleanup@0.2.0`。
 
 Activity方法、支持文件或合同改变时，更新对应方法版本、所有消费者清单、本工作流Skill与Commander Skill版本；纯代码内部兼容优化用明确兼容评估绑定前后代码集合。先跑 `npm run leadgen:methods:check`，再做相应独立验收。方法配套完成不表示单Activity执行权交接已经接通。
@@ -50,7 +50,7 @@ Activity方法、支持文件或合同改变时，更新对应方法版本、所
 4. 逐屏识别真实视频卡片。排除相关搜索词块、广告入口及加载占位；相关搜索词不算视频。记录当前可见卡片，点击前重读树定位，不用历史坐标或标题假定位置。
 5. 点开候选后取得实际分享链接并解析 video_id；复制前后身份、剪贴板结果与当前页面要对应。取不到记失败候选，不把上一条链接记到新卡片。标题相同不能直接判定为同一视频。
 6. 在同一视频现场读取点赞数、页面评论总数，保留原始显示值、观测时间、树/截图证据。解析万、亿等显示单位；无法解析记 unknown，不记 0。按真实评论总数分为 zero、1～100、101～500、超过500、unknown；分档是代码算术，无须逐条模型判断。
-7. 复用本公司的正式入库接口保存视频，再独立读回 ID、链接、公司与来源。指标使用已发布的真实字段/证据存储接口；若尚不支持，保留带视频身份的持久指标工件并明确 `metrics_persistence_missing`，不能宣称指标已入库或整版完成。重复发现更新观测，保留判定、已采进度和历史来源。
+7. 复用本公司的正式入库接口保存视频和正式输出 `Video.discovery_metrics`（运行结果 `Video.metrics`）对应的专用 `discovery_metrics`，经原 `discover_readback` 逐VID独立读回完整观测及公司绑定，与同次详情XML重算结果一致后才满足 `discovery_metrics_verified == 1`。观测绑定原run tag、实际run_id/attempt、profile、line、固定源码及VID/链接；公司/租户由正式接口独立实读，不从视频自报获取。重复VID仅幂等接受相同观测或更新更晚观测，旧观测不能计成功；保留102判定、transcript、comment_count、已采进度、历史来源及已采视频原batch。未发布该接口、缺字段或读回不符，保留原件及 `metrics_persistence_missing`/实际失败原因，不能宣称指标已入库或5.0.0通过；原comment_count不是页面评论总数。
 8. 返回并核对搜索现场，继续当前屏剩余卡片，再翻屏。等待真实加载；单次空树、连续几屏重复只能说明停滞，不能宣称到底。只在明确页尾证据下记 exhausted；数量上限、截止、停滞分别记 limit_reached、deadline、stalled。101 不按标题做历史业务排除；同一真实ID可幂等入库，重复观测另计。
 9. 到业务截止停止新候选，在收尾预算内核对已提交数据、关闭应用、回安全桌面、释放自己持有的锁/租约并读回。释放失败如实保留，不能抢删其他 owner 的锁。
 
