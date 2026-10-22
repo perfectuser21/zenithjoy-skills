@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_video_discovery
-version: 0.3.0
+version: 0.4.0
 description: "抖音视频发现 wf_run 陪跑说明：显式加载本次冻结业务Skill，保持原合同与安全交接边界。"
 ---
 
@@ -16,7 +16,7 @@ description: "抖音视频发现 wf_run 陪跑说明：显式加载本次冻结�
 
 `mode=workflow` 仅在当前业务 Skill 的正式完整CLI满足本轮范围时执行该流程；`mode=activity` 只处理指定冻结 Activity。仅接受原run已生成的leadgen-activity-v1请求及其私有broker工具；无法安全移交当前执行权或工具缺失时保留原失败及恢复条件并报告 BLOCKED，不能重跑整流程冒单步接手、使用 `leadgen-activity.sh` 冒 resume、直调裸queue/RPC函数、并发接管活动run或回退旧流程。旧Skill参考仅加载 reuse-map 明确适用动作，不把 reference_only 当可执行fallback。
 
-只处理101视频发现。本流程共享的设备预检与收尾引用 douyin_video_processing.preflight / cleanup；遇到这两个 Activity，显式加载冻结的 douyin-leadgen-102，只执行其预检或收尾范围，不启动102资格判断或评论采集。发现链接不能冒充同视频互动指标已持久化。
+只处理101视频发现。本流程共享的设备预检与收尾引用 douyin_video_processing.preflight / cleanup；遇到这两个 Activity，显式加载冻结的 douyin-leadgen-102，只执行其预检或收尾范围，不启动102资格判断或评论采集。collect_videos 5.0.0要求 `Video.metrics` 及 `discovery_metrics_verified == 1`：同视频原件重算、独立PG完整观测与公司绑定读回均通过；发现链接或旧观测存在不能冒充新版本指标已持久化。unknown不填0，旧观测拒绝不能计成功。本0.4.0方法配套仍awaiting-real-run，候选源码修复不代表运行宿主已发布或本版实机验收通过。
 
 交接只报告实际运行、逐活动/Step核验、清理及业务读回；代码退出0、合同可加载或 planned登记均不等于业务PASS。未知外部副作用先取合法读回，不能补造证据或重放动作。
 
