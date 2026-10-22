@@ -313,7 +313,7 @@ class CommanderRecoveryContractTests(unittest.TestCase):
     def test_frozen_opt_in_is_bound_to_new_activity_contract_versions(self):
         import re
         activity, _, _, _ = self.skills()
-        expected = {"101-collect-videos": "4.1.0", "102-preflight": "2.1.0",
+        expected = {"101-collect-videos": "5.0.0", "102-preflight": "2.1.0",
                     "102-dedup": "3.1.0", "102-qualification": "3.3.0",
                     "102-collection": "2.5.0", "102-cleanup": "2.1.0",
                     "103-scoring": "2.1.0", "103-mark-leads": "3.2.0",
@@ -330,9 +330,11 @@ class CommanderRecoveryContractTests(unittest.TestCase):
         def version(path):
             return re.search(r"^  ?version: (\S+)$|^version: (\S+)$", path.read_text(), re.M).group(0).split(": ")[1]
         for path in activity:
-            self.assertEqual(version(path), "0.2.0", path.name)
+            expected = "0.3.0" if path.parent.name == "douyin-leadgen-activity-101-collect-videos" else "0.2.0"
+            self.assertEqual(version(path), expected, path.parent.name)
         for path in workflows + wrappers:
-            self.assertEqual(version(path), "0.3.0", path.parent.name)
+            expected = "0.4.0" if path.parent.name in {"douyin-leadgen-101", "wf-douyin_video_discovery"} else "0.3.0"
+            self.assertEqual(version(path), expected, path.parent.name)
         self.assertEqual(version(commander), "2.1.0")
         versions = {path.parent.name: version(path) for path in activity + workflows + wrappers + [commander]}
         for path in activity + workflows + wrappers + [commander]:
