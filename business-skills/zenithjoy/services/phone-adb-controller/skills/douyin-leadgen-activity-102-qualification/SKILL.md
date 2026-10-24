@@ -2,7 +2,7 @@
 name: douyin-leadgen-activity-102-qualification
 description: 交出有证据的视频资格结论。用于核对目标视频、录音转写并按公司政策判断资格或接手同一 Activity；不执行整个工作流。
 metadata:
-  version: 0.2.0
+  version: 0.2.1
   activity_ref: douyin_video_processing.qualification
   activity_version: 3.3.0
   validation: awaiting-real-run

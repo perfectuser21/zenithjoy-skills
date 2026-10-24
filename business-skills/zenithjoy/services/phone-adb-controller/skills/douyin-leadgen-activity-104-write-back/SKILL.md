@@ -2,7 +2,7 @@
 name: douyin-leadgen-activity-104-write-back
 description: 交出原订单状态的独立读回。用于写回真实发送结果或接手已发未回写 Activity；不执行整个工作流。
 metadata:
-  version: 0.2.0
+  version: 0.2.1
   activity_ref: douyin_lead_outreach.write_back
   activity_version: 3.1.0
   validation: awaiting-real-run

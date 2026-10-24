@@ -1,3 +1,8 @@
+## [2026-10-24] collection请求归还 — updated
+**症状**: Code已产出但独立验收失败后，原停止规则拒绝只读接手和本人清场。
+**根因**: 请求确定归还与业务成功、OS全子树停止未分层，正式方法缺精确受限例外。
+**修改**: collection/cleanup明确私有归还能力仅准同run一次readback_only与受管cleanup；原FAIL、OSunknown及child未知拒绝保持。共享support变化机械递增12方法及四父/Commander、依赖清单，不改变业务合同或现场权限。实机仍awaiting-real-run。Task1f3。
+
 ## [2026-10-24] douyin-leadgen-102 / collection / Commander — updated（显式零评论证据合同）
 **症状**: 35f真实零评论分支未打开panel/screen，被原StepDoD拒绝；代码不能按Step key隐式放宽合同。
 **根因**: 原方法只描述有评论面板路径，未声明逐VID已证零结果；无数字、禁用或错包也不能据此当零。

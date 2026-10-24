@@ -2,7 +2,7 @@
 name: douyin-leadgen-activity-104-preflight
 description: 取得已授权触达上下文。用于触达前核对发送账号、批准政策与资源或接手同一预检 Activity；不执行整个工作流。
 metadata:
-  version: 0.2.0
+  version: 0.2.1
   activity_ref: douyin_lead_outreach.preflight
   activity_version: 4.1.0
   validation: awaiting-real-run

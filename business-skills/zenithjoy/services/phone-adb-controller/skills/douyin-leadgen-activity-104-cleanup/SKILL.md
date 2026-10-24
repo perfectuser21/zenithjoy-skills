@@ -2,7 +2,7 @@
 name: douyin-leadgen-activity-104-cleanup
 description: 归位触达现场并保留未决发送。用于触达收尾、失败后保护订单或接手同一收尾 Activity；不执行整个工作流。
 metadata:
-  version: 0.2.0
+  version: 0.2.1
   activity_ref: douyin_lead_outreach.cleanup
   activity_version: 3.1.0
   validation: awaiting-real-run
