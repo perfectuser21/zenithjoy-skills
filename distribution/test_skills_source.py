@@ -315,7 +315,7 @@ class CommanderRecoveryContractTests(unittest.TestCase):
         activity, _, _, _ = self.skills()
         expected = {"101-collect-videos": "5.0.0", "102-preflight": "2.1.0",
                     "102-dedup": "3.1.0", "102-qualification": "3.3.0",
-                    "102-collection": "2.5.0", "102-cleanup": "2.1.0",
+                    "102-collection": "2.5.1", "102-cleanup": "2.1.0",
                     "103-scoring": "2.1.0", "103-mark-leads": "3.2.0",
                     "104-preflight": "4.1.0", "104-send-dm": "3.1.0",
                     "104-write-back": "3.1.0", "104-cleanup": "3.1.0"}
@@ -330,10 +330,10 @@ class CommanderRecoveryContractTests(unittest.TestCase):
         def version(path):
             return re.search(r"^  ?version: (\S+)$|^version: (\S+)$", path.read_text(), re.M).group(0).split(": ")[1]
         for path in activity:
-            expected = "0.3.0" if path.parent.name == "douyin-leadgen-activity-101-collect-videos" else "0.2.0"
+            expected = "0.3.0" if path.parent.name == "douyin-leadgen-activity-101-collect-videos" else "0.2.1" if path.parent.name == "douyin-leadgen-activity-102-collection" else "0.2.0"
             self.assertEqual(version(path), expected, path.parent.name)
         for path in workflows + wrappers:
-            expected = "0.4.0" if path.parent.name in {"douyin-leadgen-101", "wf-douyin_video_discovery"} else "0.3.0"
+            expected = "0.4.0" if path.parent.name in {"douyin-leadgen-101", "wf-douyin_video_discovery"} else "0.3.1" if path.parent.name in {"douyin-leadgen-102", "wf-douyin_video_processing"} else "0.3.0"
             self.assertEqual(version(path), expected, path.parent.name)
         self.assertEqual(version(commander), "2.1.0")
         versions = {path.parent.name: version(path) for path in activity + workflows + wrappers + [commander]}
