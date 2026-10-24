@@ -1,10 +1,12 @@
 ---
 name: douyin-leadgen-activity-102-collection
 description: 交出持久化且身份可验证的评论。用于从合格视频采集评论并读回或接手同一评论采集 Activity；不执行整个工作流。
+changelog:
+  - "0.2.1: 正式声明同VID已证零评论替代证据，正数与未知门禁保持"
 metadata:
-  version: 0.2.0
+  version: 0.2.1
   activity_ref: douyin_video_processing.collection
-  activity_version: 2.5.0
+  activity_version: 2.5.1
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -12,7 +14,7 @@ metadata:
 
 # 交出持久化且身份可验证的评论
 
-仅执行 `douyin_video_processing.collection`。业务合同版本为 `2.5.0`；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_video_processing.collection`。业务合同版本为 `2.5.1`；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-102/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_video_processing.yaml)的 `collection` 为准；本文件不覆盖该合同或公司政策。
 
@@ -53,7 +55,9 @@ Code失败、分类与有限安全重试后，由原run的handoff broker持有�
 
 MMV102首个设备动作前把选定profile/serial冻结到本run的company_config_runs.task_inputs.device_binding，再核当前原生抖音号；实号通过后生成本run私有company-binding工件。原生评论证明、解析和PG提交必须消费同一绑定，PG按原102冻结行重验公司/租户/平台与唯一verified enabled账号；不将原件自报字段当授权，不为缺失历史来源新建快照。旧M4无此新工件的路径保持原守卫。
 
-评论区StepDoD只接受抖音原生 `ety`、`e19` 或 `eyi` EditText 与原生精确评论数量header配对；资源、class和package须同时成立。该面板证据不替代逐VID的新鲜nonce与identity sidecar，也不替代评论身份和持久化读回。
+有评论视频的评论区StepDoD仍只接受抖音原生 `ety`、`e19` 或 `eyi` EditText 与原生精确评论数量header配对，并保留同VID逐屏评论原件；资源、class和package须同时成立。只有本轮冻结两Step合同显式声明 `zero_comment_alternative: verified_video_ui_v1`，才允许同run逐VID的已证零评论原件替代该VID未打开的面板和逐屏证据：本次before完整XML中必须有唯一可点、enabled=true、package精确为抖音且bounds有效的 `评论评论，按钮`；同时核对本次取链identity原件、run/VID/EID及两份原件SHA256。缺按钮、错包、禁用、加载中或未知计数均拒绝，不因无数字判零，也不点击可能带发送按钮的空评论入口。
+
+零证明不能替另一VID或有评论视频补证；正数仍须原panel/screen。零评论交付只表示本VID没有待采评论，实际新增/覆盖均为0，不当作采满配额、采得评论或103评分成功。原身份、PG读回与停止/清场要求保持；没有显式合同标记的旧冻结定义仍执行原面板证据要求。
 
 
 ## 同run有界Agent恢复合同
