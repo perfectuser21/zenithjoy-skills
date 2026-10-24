@@ -1,0 +1,106 @@
+{
+  "schema_version": "1.0.0",
+  "key": "wechat-contact-intake",
+  "name": "微信个人与群会话登记",
+  "version": "0.1.0",
+  "maturity": "candidate",
+  "skill": "wechat-contact-intake/SKILL.md",
+  "runtime": {
+    "repository": "perfectuser21/zenithjoy-workspace",
+    "entrypoint": "services/wechat-contact-inventory/cli.py",
+    "schema_version": "1.0.0",
+    "source_revision": "from_private_deployment_binding"
+  },
+  "modes": [
+    {
+      "key": "initial_inventory",
+      "activities": [
+        {
+          "key": "preflight",
+          "acceptance": [
+            "私有绑定与当前微信账号一致并留同run证据",
+            "设备锁为当前run持有，登录已核实且通话空闲"
+          ],
+          "on_failure": "blocked"
+        },
+        {
+          "key": "observe",
+          "acceptance": [
+            "个人和群每项均有当次证据",
+            "报告实际覆盖与未覆盖范围，不按昵称或群名合并身份"
+          ],
+          "on_failure": "blocked_or_partial_coverage"
+        },
+        {
+          "key": "register_pending",
+          "acceptance": [
+            "ingest回执可读回",
+            "新项pending，collect_enabled与auto_reply_enabled均false",
+            "重扫保留人工分类"
+          ],
+          "on_failure": "blocked"
+        },
+        {
+          "key": "review_handoff",
+          "acceptance": [
+            "export-review产物可访问且含快照与revision",
+            "未确认项不可进入eligible名单",
+            "设备归位、锁释放或明确cleanup_pending"
+          ],
+          "on_success": "awaiting_review"
+        }
+      ]
+    },
+    {
+      "key": "apply_human_classification",
+      "activities": [
+        {
+          "key": "apply_review",
+          "acceptance": [
+            "只导入实际人工确认的文件并记录真实actor",
+            "整批快照与revision校验，失败全回滚",
+            "再次导出与人工确认一致，自动回复false"
+          ],
+          "on_failure": "blocked_or_awaiting_review"
+        }
+      ]
+    },
+    {
+      "key": "incremental_gate",
+      "activities": [
+        {
+          "key": "rescan",
+          "acceptance": [
+            "按initial_inventory核实当次账号与证据",
+            "缺席对象不被删除，已有人工分类保留"
+          ],
+          "on_failure": "blocked"
+        },
+        {
+          "key": "eligible_plan",
+          "acceptance": [
+            "仅customer且客户关联非空、稳定身份核验且collect_enabled=true的记录入选",
+            "输出明确为采集计划，未运行消息读取或自动回复"
+          ],
+          "on_success": "plan_ready"
+        }
+      ]
+    }
+  ],
+  "state_semantics": {
+    "blocked": "前置不成立，不造零联系人或历史证据成功",
+    "awaiting_review": "真实盘点与私有审阅交接完成，人工尚未确认",
+    "plan_ready": "门禁计划已读回，不代表消息采集完成"
+  },
+  "side_effects": [
+    "私有SQLite登记与审阅产物",
+    "手机导航可能改变已读状态，须报告"
+  ],
+  "prohibited": [
+    "发送消息",
+    "自动回复",
+    "按昵称归并",
+    "群成员自动建客户",
+    "没有适配器时声称Notion反向同步已上线"
+  ]
+}
