@@ -4,7 +4,7 @@
 
 ## 身份命名空间
 
-`tenant_id + wechat_account_id` 隔离账号；渠道类型为 `person` 或 `group`。`account_key`、`record_id`、`snapshot_id` 和 revision 均从机器回执／导出文件传递，不由模型转抄、拼接或从昵称计算。`account_key` 由 runtime 对规范账号对象计算，调用方只读取回执。
+`tenant_id + wechat_account_id` 隔离账号；渠道类型为 `person` 或 `group`。`account_key`、`record_id`、`snapshot_id` 和 revision 均从机器回执／导出文件传递，不由模型转抄、拼接或从昵称计算。`account_key` 由 runtime 对 `tenant_id + wechat_account_id` 规范对象计算，调用方只读取回执；`device_serial` 是本次采集来源，不参与渠道归并身份，换机不得丢失已确认分类。
 
 已核验稳定 ID 只在相同租户、微信账号和渠道类型中归并。同一客户跨账号关联客户主档时保留原渠道，不修改渠道身份。未核验 ID 的对象是本 run 观察项；同名个人／群可以有多条，不能跨 run 自动合并，也不能启用采集。
 
