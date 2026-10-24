@@ -2,7 +2,7 @@
 name: douyin-leadgen-activity-102-dedup
 description: 交出本轮可处理的视频集合。用于核验101来源、筛选与认领视频或接手同一判重 Activity；不执行整个工作流。
 metadata:
-  version: 0.2.0
+  version: 0.2.1
   activity_ref: douyin_video_processing.dedup
   activity_version: 3.1.0
   validation: awaiting-real-run

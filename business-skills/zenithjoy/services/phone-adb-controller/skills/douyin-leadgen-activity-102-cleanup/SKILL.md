@@ -2,7 +2,7 @@
 name: douyin-leadgen-activity-102-cleanup
 description: 归位采集现场并释放本人资源。用于采集流程收尾、失败后清理或接手同一收尾 Activity；不执行整个工作流。
 metadata:
-  version: 0.2.0
+  version: 0.2.1
   activity_ref: douyin_video_processing.cleanup
   activity_version: 2.1.0
   validation: awaiting-real-run
@@ -63,3 +63,9 @@ Code失败或Code实际产出未过原verify时，首次Skill接手仍走原入�
 原broker的resume总计最多一次，原生读证总计最多两次，失败调用也消费相应额度。resume前Agent失败且余量合法才可继续使用尚未消耗的resume；resume已预留或业务已执行后，后继turn仅inspect/readback/verify，禁止再resume、受控归位或其他业务动作。资格恢复沿原成功VID集合及每VID次数，不重领、不重录成功项。send_dm始终readback_only；collection partial、能力/权限/来源阻断仍按原规则停止。所有turn共享原截止，不挪用cleanup预算执行业务。
 
 原进程独立verify及真实持久读回通过后才继续后续Activity；无结果不能靠新child文本补成功。额外turn耗尽、剩余预算不足或仍核验失败即准确failed/partial/unknown并保原证，不承诺每种障碍都能救回。本版仍awaiting-real-run，配套源码、发布与实机验收分别留证。
+
+## 已归还请求的只读与清场例外
+
+仅原进程签发的 `collection-returned-phone-v1` 私有能力可启用此例外：collection Code正常返回、原独立verify失败，固定nofork producer全部请求已有封闭intent/start/exit且已确定归还，无受管请求unknown、signal、超时、输出超限或未闭合。它不是OS全进程树停止证明；原observed_only收据和业务FAIL保持。每阶段重核原run/task/source/account、冻结目录与录音身份及原截止；JSON/自报布尔、错身份或重放均无效。
+
+只允许同run一次readback_only接手及本人受管cleanup，各阶段仍须真实producer封闭归还；禁止resume、重新领取、重做已提交VID或延长预算。只读失败保失败；child未知或新受管请求终止未知必须保资源并禁止清场。没有该原进程能力的旧冻结运行仍执行原未知隔离规则。

@@ -2,7 +2,7 @@
 name: douyin-leadgen-activity-101-collect-videos
 description: 按关键词交出筛选后的视频链接。用于采集关键词搜索结果或接手同一视频发现 Activity；不执行整个工作流。
 metadata:
-  version: 0.3.0
+  version: 0.3.1
   activity_ref: douyin_video_discovery.collect_videos
   activity_version: 5.0.0
   validation: awaiting-real-run

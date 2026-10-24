@@ -2,7 +2,7 @@
 name: douyin-leadgen-activity-103-scoring
 description: 交出按公司原政策持久化的评论评分。用于独立消费已提交评论评分或接手同一评分 Activity；不执行整个工作流。
 metadata:
-  version: 0.2.0
+  version: 0.2.1
   activity_ref: douyin_comment_scoring.scoring
   activity_version: 2.1.0
   validation: awaiting-real-run

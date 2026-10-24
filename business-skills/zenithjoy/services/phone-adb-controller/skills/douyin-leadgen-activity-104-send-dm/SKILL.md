@@ -2,7 +2,7 @@
 name: douyin-leadgen-activity-104-send-dm
 description: 交出一次可核验的批准私信发送结果。用于执行已授权单次私信或接手同一触达 Activity；不执行整个工作流。
 metadata:
-  version: 0.2.0
+  version: 0.2.1
   activity_ref: douyin_lead_outreach.send_dm
   activity_version: 3.1.0
   validation: awaiting-real-run

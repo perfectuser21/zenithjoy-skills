@@ -4,7 +4,7 @@ description: 执行抖音获客102视频处理：验证101来源、领取待处�
 changelog:
   - "0.3.1: 绑定collection0.2.1的显式已证零评论合同，正数与未知要求不变"
 metadata:
-  version: 0.3.1
+  version: 0.3.2
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-102/references/reuse-map.json
@@ -24,11 +24,11 @@ MMV102首个设备动作前把选定profile/serial冻结到本run的company_conf
 
 本工作流的方法依赖真身见[Activity方法清单](references/activity-methods.json)。执行指定Activity时，按本轮冻结 `activities[].implementations` 的真实name/version/source/digest及execution_path加载对应独立Skill；不能把本工作流Skill当作每个Activity的同一份方法。
 
-- `douyin_video_processing.preflight` → `douyin-leadgen-activity-102-preflight@0.2.0`。
-- `douyin_video_processing.dedup` → `douyin-leadgen-activity-102-dedup@0.2.0`。
-- `douyin_video_processing.qualification` → `douyin-leadgen-activity-102-qualification@0.2.0`。
-- `douyin_video_processing.collection` → `douyin-leadgen-activity-102-collection@0.2.1`。
-- `douyin_video_processing.cleanup` → `douyin-leadgen-activity-102-cleanup@0.2.0`。
+- `douyin_video_processing.preflight` → `douyin-leadgen-activity-102-preflight@0.2.1`。
+- `douyin_video_processing.dedup` → `douyin-leadgen-activity-102-dedup@0.2.1`。
+- `douyin_video_processing.qualification` → `douyin-leadgen-activity-102-qualification@0.2.1`。
+- `douyin_video_processing.collection` → `douyin-leadgen-activity-102-collection@0.2.2`。
+- `douyin_video_processing.cleanup` → `douyin-leadgen-activity-102-cleanup@0.2.1`。
 
 Activity方法、支持文件或合同改变时，更新对应方法版本、所有消费者清单、本工作流Skill与Commander Skill版本；纯代码内部兼容优化用明确兼容评估绑定前后代码集合。先跑 `npm run leadgen:methods:check`，再做相应独立验收。方法配套完成不表示单Activity执行权交接已经接通。
 
@@ -72,7 +72,7 @@ Activity方法、支持文件或合同改变时，更新对应方法版本、所
 
 代码为采集主体，Agent/Commander 接收摘要与异常，不把所有评论堆入上下文。代码失败后由 Commander 核对旧执行者、锁及外部结果，再把同一 Activity 交给本 Skill；同一任务目标、身份和截止不变，不现场改代码。
 
-资格判断的通知暂态恢复按冻结 `douyin-leadgen-activity-102-qualification@0.2.0` 执行：仅明确通知duck允许保留原证后的有界被动复读，未知不直接放行；原run broker只读证最多两次，稳定后同slot仅resume一次，再做原独立核验。其他未知、活跃录制、权限或冻结来源不符均保持blocked，不把本恢复策略用于评分或触达。
+资格判断的通知暂态恢复按冻结 `douyin-leadgen-activity-102-qualification@0.2.1` 执行：仅明确通知duck允许保留原证后的有界被动复读，未知不直接放行；原run broker只读证最多两次，稳定后同slot仅resume一次，再做原独立核验。其他未知、活跃录制、权限或冻结来源不符均保持blocked，不把本恢复策略用于评分或触达。
 
 现场仍在：重读当前树并核对视频后续采，不复用旧坐标。现场丢失：重开目标、重扫并按已提交记录去重；累计计数不是可靠位置游标。缺安全执行权交接、结果未知或锁冲突时保留 blocked，不并起第二采集器。失败运行的采样不能兑现配额。
 
