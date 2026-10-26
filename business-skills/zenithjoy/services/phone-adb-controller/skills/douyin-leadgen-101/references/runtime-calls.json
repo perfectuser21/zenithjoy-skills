@@ -21,7 +21,9 @@
       "LEADGEN_SOURCES_FILE": "已有权限600的换行关键词文件；只用公司已启用词；未传时keywords RPC正常取公司配置",
       "LEADGEN_SOURCE_KIND": "keyword或benchmark；本关键词任务用keyword",
       "LEADGEN_LOCATION": "任务实际地区条件，默认same_city",
-      "LEADGEN_MAX_SCREENS": "1..1000，默认100"
+      "LEADGEN_MAX_SCREENS": "1..1000，默认100",
+      "LEADGEN_DISCOVERY_MAX_CANDIDATES": "可选1..1000；schema1严格首屏卡片数上限，首屏>N即零候选动作；与MAX_ATTEMPTS互斥，必须唯一关键词和MAX_SCREENS=1",
+      "LEADGEN_DISCOVERY_MAX_ATTEMPTS": "可选1..1000；schema2实际尝试上限，首屏>N只尝试前N原槽位，显示数照记；重复/失败/缺身份耗额，与MAX_CANDIDATES互斥，必须唯一关键词和MAX_SCREENS=1"
     },
     "supported_constraints": {
       "VIDEO_LIMIT": "整数0..1000，0是无成功条数配额但仍受预算/屏数，不代表无限或搜尽；必须从当前任务明确范围取",
@@ -55,7 +57,8 @@
     "WFR_RUN_DIR由入口生成：${WFR_HOME:-$HOME/.config/zenithjoy}/ledger/<flow>-<tag>；正式实际runID为<flow>-<tag>__aN；不要手写a1或伪ACK",
     "readFrozen/readBinding/run_id/runtime执行文件/Company frozen config必须全核；WFR_*或LEADGEN_LOCAL_RPC不得伪造绕宿主",
     "默认无任务数量/预算不可自行用样本1/5当产能；各env取当前任务/Company配置，参考shell变量只是占位",
-    "source部署/定义gate失败阻断；未登记Skill首跑只能显式称headed Skill first run，不将缺code/release gate降成可运行"
+    "source部署/定义gate失败阻断；未登记Skill首跑只能显式称headed Skill first run，不将缺code/release gate降成可运行",
+    "两种有界模式须在新run显式冻结；不因普通首屏显示更多就重释旧strict授权，schema2无失败/缺口达到attempt上限仅本次采样完成，all_results_scanned=false；不翻屏/露出/恢复视口/同run重入补额，预算/unknown/发送守卫不变"
   ],
   "restricted_entries": [
     {

@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_video_discovery
-version: 0.4.1
+version: 0.4.2
 description: "抖音视频发现 wf_run 陪跑说明：显式加载本次冻结业务Skill，保持原合同与安全交接边界。"
 ---
 
@@ -19,6 +19,8 @@ description: "抖音视频发现 wf_run 陪跑说明：显式加载本次冻结�
 只处理101视频发现。本流程共享的设备预检与收尾引用 douyin_video_processing.preflight / cleanup；遇到这两个 Activity，显式加载冻结的 douyin-leadgen-102，只执行其预检或收尾范围，不启动102资格判断或评论采集。collect_videos 5.0.0要求正式输出 `Video.discovery_metrics`（运行结果 `Video.metrics`）及 `discovery_metrics_verified == 1`：同视频原件重算、独立PG完整观测与公司绑定读回均通过；发现链接或旧观测存在不能冒充新版本指标已持久化。unknown不填0，旧观测拒绝不能计成功。本0.4.0方法配套仍awaiting-real-run，候选源码修复不代表运行宿主已发布或本版实机验收通过。
 
 交接只报告实际运行、逐活动/Step核验、清理及业务读回；代码退出0、合同可加载或 planned登记均不等于业务PASS。未知外部副作用先取合法读回，不能补造证据或重放动作。
+
+判读数量时读取本次冻结的 `discovery_input`：schema 1 严格限首屏卡片数，超额零候选动作；schema 2 显式 `max_attempts` 才允许首屏较多时处理前 N 槽位。实际显示、尝试、唯一保存和新增数分别读回；重复/失败/缺身份消耗尝试，不为凑数量建议新 run 或翻屏。schema 2 无失败/缺口且 `attempt_limit_reached` 仅本次采样完成，`all_results_scanned=false` 不能说搜尽；执行未知仍阻断，不以新方法洗旧 strict 失败。完整输入约束取业务 Skill 的本次版本。
 
 ## 方法升级
 

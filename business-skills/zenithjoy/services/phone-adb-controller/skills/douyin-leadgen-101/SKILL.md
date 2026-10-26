@@ -2,7 +2,7 @@
 name: douyin-leadgen-101
 description: 执行抖音获客101视频发现：按公司关键词和筛选条件取真实视频链接、读取互动指标并交接视频。用于Agent执行或同业务合同的代码异常接手；不做视频资格判断、评论评分或私信。
 metadata:
-  version: 0.4.1
+  version: 0.4.2
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-101/references/reuse-map.json
@@ -19,7 +19,7 @@ metadata:
 本工作流的方法依赖真身见[Activity方法清单](references/activity-methods.json)。执行指定Activity时，按本轮冻结 `activities[].implementations` 的真实name/version/source/digest及execution_path加载对应独立Skill；不能把本工作流Skill当作每个Activity的同一份方法。
 
 - `douyin_video_processing.preflight` → `douyin-leadgen-activity-102-preflight@0.2.1`。
-- `douyin_video_discovery.collect_videos` → `douyin-leadgen-activity-101-collect-videos@0.3.1`（业务合同5.0.0）。
+- `douyin_video_discovery.collect_videos` → `douyin-leadgen-activity-101-collect-videos@0.3.2`（业务合同5.0.0）。
 - `douyin_video_processing.cleanup` → `douyin-leadgen-activity-102-cleanup@0.2.1`。
 
 Activity方法、支持文件或合同改变时，更新对应方法版本、所有消费者清单、本工作流Skill与Commander Skill版本；纯代码内部兼容优化用明确兼容评估绑定前后代码集合。先跑 `npm run leadgen:methods:check`，再做相应独立验收。方法配套完成不表示单Activity执行权交接已经接通。
@@ -39,6 +39,10 @@ Activity方法、支持文件或合同改变时，更新对应方法版本、所
 ## 输入与交付
 
 接收真实 task_id、run_id、公司/租户/业务线、host/profile/serial/目标账号、关键词、排序/时间/地区筛选、视频数量上限、业务截止及收尾截止、授权范围。关键词可以来自任务输入或该公司的已启用配置，记录实际来源；账号和公司不得从示例或其他租户补齐。未给数量时先从任务/运营配置取，仍缺则确认本轮范围，不能把冒烟样本数当默认产能。
+
+可选的首屏有界模式必须在新任务和本次冻结输入中明确选择，不能事后解释旧运行的额度。`LEADGEN_DISCOVERY_MAX_CANDIDATES=N` 冻结为 schema 1 的 `max_candidates`：首屏实际卡片数超过 N 即停止，零候选点击与落库。`LEADGEN_DISCOVERY_MAX_ATTEMPTS=N` 冻结为 schema 2 的 `max_attempts`：首屏显示更多卡片时仅按原槽位顺序尝试前 N 条；重复、缺身份和失败都消耗额度。两字段互斥，N 为 1..1000，均须唯一关键词、`LEADGEN_MAX_SCREENS=1`，禁止露出、恢复视口、翻屏或同 run 重入补额度。实际显示 `counts.cards` 与 `counts.attempted` 分开；既有 `LEADGEN_LIMIT` 仍只限制成功唯一视频数。
+
+schema 2 无失败或已知缺口且达到尝试上限时，只能交付本次有界采样完成：`stop_reason=attempt_limit_reached`、`all_results_scanned=false`，不得称全部结果搜尽，也不保证新增 N 条。真实失败、未知执行、原生身份缺失或预算不足仍按原流程停止并保留 partial/failed；新模式不扩大锁、预算、政策或发送权。未显式选模式保持现有普通行为，schema 1 旧严格停止语义不变。
 
 输出逐视频的真实 video_id、分享/规范链接、标题、作者、关键词、筛选条件、来源 run_id、真实互动指标及证据；附数据库读回、实际条数、停止原因和清理结果。输入数量是本轮上限，不是保证搜得到的数量。
 
