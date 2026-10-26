@@ -2,7 +2,7 @@
 name: douyin-leadgen-activity-101-collect-videos
 description: 按关键词交出筛选后的视频链接。用于采集关键词搜索结果或接手同一视频发现 Activity；不执行整个工作流。
 metadata:
-  version: 0.3.1
+  version: 0.3.2
   activity_ref: douyin_video_discovery.collect_videos
   activity_version: 5.0.0
   validation: awaiting-real-run
@@ -24,6 +24,10 @@ metadata:
 - 输入 `SearchRequest`：`keywords`、`sort`、`time_layer`、`location`、`target_count`、`max_duration_s`。
 - 输出 `Video`：`line_key`、`video_id`、`video_url`、`title`、`keyword`、`comment_count`、`harvest_batch`、`author`、`discovery_metrics`。正式输出 `Video.discovery_metrics` 映射运行结果的 `Video.metrics`，保存本次真实观测，含同视频点赞数、页面评论总数、分档及身份和原始证据；原 `comment_count` 保留102已采评论数量语义，不能拿它存页面评论总数。
 - 输出 `Run`：`status`、`stop_reason`、`all_results_scanned`。
+
+可选 `Run.discovery_input` 使用本次冻结的显式模式，不能从成功数量推导尝试额度：schema 1 的 `max_candidates` 限首屏卡片数，超额零候选动作；schema 2 的 `max_attempts` 限实际尝试，首屏卡片较多时只尝试前 N 个原槽位，真实显示数仍照记。两模式互斥、唯一关键词、单首屏，不翻屏、不露出/恢复视口，不用同 run 重入重置额度。重复、缺身份、失败均耗尝试；失败/执行未知仍按原安全合同停止，不为凑 N 重试或补后续槽位。`target_count` 仍是独立的成功唯一视频上限。
+
+schema 2 达到 N 且无失败或已知缺口时，本次有界尝试采样可完成，输出 `attempt_limit_reached` 与 `all_results_scanned=false`，实际持久化数量独立读回；不能声称新增 N 条或搜尽。预算不足、存在失败/缺口或真实未知，按实际 partial/failed/unknown 交付；旧 schema 1 超额/达到上限的原语义不改。
 
 公司、task/run、截止、源码及执行权从本次正式绑定读取。缺字段保持缺失并报告，不从示例或其他租户补。
 
