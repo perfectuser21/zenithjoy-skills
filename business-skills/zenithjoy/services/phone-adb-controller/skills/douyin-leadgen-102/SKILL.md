@@ -27,7 +27,7 @@ MMV102首个设备动作前把选定profile/serial冻结到本run的company_conf
 
 描述符须为本用户所有的绝对路径普通文件、权限0600、单硬链接且非符号链接，字段与固定值须通过已发布validator。保留完整原101冻结定义及含两条视频的进度原字节，按固定snapshot／progress哈希和全部原文件闭包核验；不能裁成一条、改原source、补造快照或把新consumer来源冒成旧producer。新consumer仍使用自身真实已验证manifest与冻结身份。
 
-本固定M4旧快照的 `platform` 或PG `task_inputs.device_binding` 缺省，只能按本次已发布validator的精确兼容分支接受，不能补写旧字段或自造通过值；显式错误仍拒绝。每次仍须核本run冻结的profile／serial、原公司已验证启用账号及原生实际抖音号 `44997267357`，qualification前再核该账号。MMV原严格绑定守卫不变。
+本固定M4旧快照的 `platform` 或PG `task_inputs.device_binding` 缺省，只能按本次已发布validator的精确兼容分支接受，不能补写旧字段或自造通过值；显式错误仍拒绝。每次仍须核本run冻结的profile／serial、原公司已验证启用账号，并在领取前比对本run原生预检实际读出的抖音号 `44997267357`；此比对不新增第二次account-current读取。MMV原严格绑定守卫不变。
 
 新run必须冻结原来源与采样输入：最多领取1条、每条1至5条评论、采集预算480秒，其他截止及原生2秒守卫不变。PG在领取同一事务内重验原producer与当前consumer的公司冻结资料、完整政策内容、已验证启用的实际账号及绑定；仅 `pending`／`待判定` 且 `harvest_batch` 仍为原101批次的唯一VID可原子领取。状态或批次漂移、已matched／人工隔离／过期处理中均拒绝，不能使用普通队列的15分钟重领规则；领取0条不换领、不新搜索。旁VID `7700112581541257551` 的人工状态保持。
 
