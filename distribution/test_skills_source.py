@@ -333,7 +333,7 @@ class CommanderRecoveryContractTests(unittest.TestCase):
             expected = "0.3.2" if path.parent.name == "douyin-leadgen-activity-101-collect-videos" else "0.2.2" if path.parent.name in {"douyin-leadgen-activity-102-dedup", "douyin-leadgen-activity-102-qualification", "douyin-leadgen-activity-102-collection"} else "0.2.1"
             self.assertEqual(version(path), expected, path.parent.name)
         for path in workflows + wrappers:
-            expected = "0.4.2" if path.parent.name in {"douyin-leadgen-101", "wf-douyin_video_discovery"} else "0.3.3" if path.parent.name in {"douyin-leadgen-102", "wf-douyin_video_processing"} else "0.3.1"
+            expected = "0.4.2" if path.parent.name in {"douyin-leadgen-101", "wf-douyin_video_discovery"} else "0.3.4" if path.parent.name in {"douyin-leadgen-102", "wf-douyin_video_processing"} else "0.3.1"
             self.assertEqual(version(path), expected, path.parent.name)
         self.assertEqual(version(commander), "2.1.0")
         versions = {path.parent.name: version(path) for path in activity + workflows + wrappers + [commander]}
