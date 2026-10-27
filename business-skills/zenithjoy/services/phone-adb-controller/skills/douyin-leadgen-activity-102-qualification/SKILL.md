@@ -2,7 +2,7 @@
 name: douyin-leadgen-activity-102-qualification
 description: 交出有证据的视频资格结论。用于核对目标视频、录音转写并按公司政策判断资格或接手同一 Activity；不执行整个工作流。
 metadata:
-  version: 0.2.1
+  version: 0.2.2
   activity_ref: douyin_video_processing.qualification
   activity_version: 3.3.0
   validation: awaiting-real-run
@@ -32,6 +32,12 @@ metadata:
 4. SDK/模式未知、require-audio缺失、音轨不符或捕获静音属于捕获/合同能力缺口，不以UI点击、音量循环或Skill重试放行。倍速设置、录制启动或停止失败时保留最早stderr、exit code、阶段和已有证据。proof中media_volume=null只表示未记录，不能据此推断音量0，或把native音轨首错改写成音量失败。
 5. 核对真实采集媒体时长、实际播放速度、提取音频和转写证据，只有达到当前正式合同才调用原公司资格政策。缺真实音频/转写记unknown，不伪造合格。playback_dup被App opt-out、缺音轨或录音静音只证明捕获未知，保持pending，不能借此把原视频内容判rejected；不使用标题或旧ASR兜底。
 6. 缓存结论仅在同视频身份、同公司和政策版本均相符时复用。逐VID交付matched/rejected/unknown和证据；仅合格视频交给评论采集。
+
+## 显式v2领取边界
+
+本run显式冻结并核验的v2 producer交接沿所属工作流的唯一pending白名单执行：实际领取在同一事务内重验原producer与当前consumer公司／完整政策／已verified启用账号及设备绑定，并以 `pending`、`待判定`、原101 `harvest_batch` 精确CAS，最多1条；已matched、人工、批次漂移或过期处理中不得按普通15分钟规则重领，领取0条不换领、不恢复隔离旁VID。保持原资格步骤、采集1至5条及480秒冻结预算，UI评论总量unknown要原生复核，不能用旧PG默认0或标题判零。默认队列、原v1和原生2秒／UNKNOWN安全边界不变；本v2仍待实机验收。
+
+本固定M4旧快照缺省字段只按所属工作流的已发布精确兼容分支处理，不补旧PG绑定；本run冻结profile／serial和qualification前原生抖音号 `44997267357` 仍须通过，显式错误拒、MMV严格绑定不变。
 
 ## 明确通知暂态与失败后的原生读证
 

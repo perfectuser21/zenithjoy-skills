@@ -19,7 +19,7 @@
     "command_template": "env LEADGEN_SOURCE_RUN=\"$SOURCE_101_TAG\" LEADGEN_LIMIT=\"$VIDEO_CLAIM_LIMIT\" LEADGEN_COMMENT_LIMIT=\"$COMMENT_LIMIT\" QUEUED_VIDEO_COLLECTION_SECONDS=\"$COLLECTION_SECONDS\" WF_RUN_MAX_SECONDS=\"$RUN_SECONDS\" /bin/zsh \"$PHONE_RUNNER\" douyin_video_processing \"$PROFILE\" \"$SERIAL\" \"$LINE\" \"$RUN_TAG\"",
     "mandatory_guards": [
       "SOURCE_101_TAG有效1..120，必须是真101 tag；不取latest目录代替",
-      "上游同profile/同deployed source commit、discovery-progress videos/captures精确VID对应、PG行数/归属读回",
+      "默认上游同profile/同deployed source commit；仅显式冻结且通过已发布validator的原v1或精确v2 producer_descriptor例外；完整discovery-progress videos/captures精确VID对应、PG行数/归属读回不减",
       "公司冻结102启用、native实际视频ID/录制音轨/音频/资格、matched后才采、持有自己视频与设备锁",
       "sampling输入冻结在run-definition，resume不得改变SOURCE_RUN/comment_limit或预算"
     ],
@@ -42,6 +42,42 @@
       "bridge": "显式DOUYIN_ADB_PORT与numeric127.0.0.1的ADB_SERVER_SOCKET同一既有本机端口，本地ADB及server协议均须41；入口只读核桥，不能创建或重启ADB",
       "company_guard": "原公司冻结资料、verified platform account/profile/device/douyin_id以及实际登录账号核验仍须通过；draft或缺绑定不能借其他公司兜底",
       "command_template": "env LEADGEN_MMV_DEVICE_RUNTIME=1 DOUYIN_PHONE_REGISTRY=\"$VERIFIED_REGISTRY\" DOUYIN_ADB_PORT=\"$EXISTING_ADB_PORT\" ADB_SERVER_SOCKET=\"tcp:127.0.0.1:$EXISTING_ADB_PORT\" env LEADGEN_SOURCE_RUN=\"$SOURCE_101_TAG\" LEADGEN_LIMIT=\"$VIDEO_CLAIM_LIMIT\" LEADGEN_COMMENT_LIMIT=\"$COMMENT_LIMIT\" QUEUED_VIDEO_COLLECTION_SECONDS=\"$COLLECTION_SECONDS\" WF_RUN_MAX_SECONDS=\"$RUN_SECONDS\" /bin/zsh \"$PHONE_RUNNER\" douyin_video_processing \"$PROFILE\" \"$SERIAL\" \"$LINE\" \"$RUN_TAG\""
+    },
+    "optional_producer_descriptor": {
+      "flag": "LEADGEN_PRODUCER_DESCRIPTOR_FILE",
+      "file_guard": "绝对路径、本用户所有、0600、普通文件、单硬链接、非符号链接；正式入口冻结原文件，不手写run-definition",
+      "default_and_v1": "缺省同source；v1原固定24c9/原单VID策略保持，不授予恢复或发送权限",
+      "schema2_scope": {
+        "profile": "legacy",
+        "serial": "ANGYVB4402004137",
+        "line": "jinuo",
+        "company_id": "ef8e14b0-4018-4e54-bc7a-866e51a0ce0b",
+        "tenant_id": "a4ca8914-f5a7-4928-b1e3-6b69f9c0ab61",
+        "company_config_version": 14,
+        "policy_id": "jinoshengyuan-existing-acquisition-rules-v1",
+        "video_ids": [
+          "7689863996204591985"
+        ],
+        "snapshot_sha256": "fe7da095eb9184ae5eba9c71af78b7c679a6f752509e5e8c5ed1a5a4288fee67",
+        "progress_sha256": "fbbee23e36623307ab19ca9abbfb1626e6b94a00e05439dad6f3add8174646bc",
+        "source_commit": "beb37370c047a13013aa0cc997a0fecc09534dde",
+        "run_tag": "cicdbeb_101_attempt2_20261027_a2dcb023",
+        "schema_version": 2,
+        "workflow_key": "douyin_video_discovery"
+      },
+      "schema2_constraints": {
+        "VIDEO_CLAIM_LIMIT": 1,
+        "COMMENT_LIMIT": "1..5",
+        "COLLECTION_SECONDS": 480,
+        "guards": [
+          "完整原两VID定义与进度及全部原文件闭包保持，不能裁剪或改旧source；consumer仍用自身真实manifest/冻结来源",
+          "同事务重验producer/current公司完整冻结政策、已verified enabled账号及设备绑定，pending/待判定/原harvest_batch精确CAS",
+          "领取0条不换领；不重领过期处理中、不恢复770011人工隔离、不新搜索、不发私信",
+          "原2秒/原截止/UNKNOWN仍拒；未知UI评论数不当零，旧PG默认0不当原生总量",
+          "仅此固定M4旧快照可沿已发布精确分支接受platform或PGtask_inputs.device_binding缺省，不补旧字段；显式错误拒，qualification前重核原生44997267357，MMV严格绑定不变"
+        ]
+      },
+      "validation": "awaiting-real-run；方法/代码/CI通过不代表本交接或正向102→103实机通过"
     }
   },
   "guards": [

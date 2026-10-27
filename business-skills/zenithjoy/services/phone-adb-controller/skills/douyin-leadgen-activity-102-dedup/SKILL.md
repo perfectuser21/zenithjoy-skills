@@ -2,7 +2,7 @@
 name: douyin-leadgen-activity-102-dedup
 description: 交出本轮可处理的视频集合。用于核验101来源、筛选与认领视频或接手同一判重 Activity；不执行整个工作流。
 metadata:
-  version: 0.2.1
+  version: 0.2.2
   activity_ref: douyin_video_processing.dedup
   activity_version: 3.1.0
   validation: awaiting-real-run
@@ -29,6 +29,12 @@ metadata:
 2. 读取原正式队列，排除合法完成、确认不合格及被其他有效租约持有的视频。按真实video_id判断，不用标题或昵称当唯一身份。
 3. 通过现有原子领取协议持有本轮视频集合；丢失回复先读回领取归属，不重复创建竞争领取。
 4. 分别输出received、eligible、已完成跳过及其他排除原因，保留逐VID和租约证据；不在判重阶段录音或评分。
+
+## 显式v2固定来源范围
+
+仅在所属工作流已按正式入口冻结并通过validator核验的 `producer_descriptor.schema_version=2` 时，接受其固定a83／beb原来源：完整两VID定义与进度原字节、snapshot／progress固定哈希及所有冻结文件闭包均须通过；不能裁剪为目标一条或重写旧来源。范围只含 `7689863996204591985`，其他公司、批次、profile／serial或VID均拒绝。缺省同来源和原v1保持；该描述符不是通用跨版、隔离恢复或设备授权。
+
+交出来源与排除证据后，实际领取仍由qualification所调用的正式队列事务执行；事务必须重验当前仍 `pending`／`待判定` 且 `harvest_batch` 为原101、公司完整冻结政策和账号绑定一致，最多1条。不以先前读回替代领取紧前CAS，不借普通队列15分钟重领，领取0条不换领。保留旁VID `7700112581541257551` 的人工状态。UI评论总量未知保持unknown，不用旧PG默认0代替原生总量。
 
 ## 代码配套与验收
 

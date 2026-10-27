@@ -2,9 +2,10 @@
 name: douyin-leadgen-102
 description: 执行抖音获客102视频处理：验证101来源、领取待处理视频、判断资格并按评论量采集持久化。用于普通、深采或自动策略及代码异常接手；不修改评分标准或执行私信。
 changelog:
+  - "0.3.3: 声明显式v2单条待判定视频的有限producer交接，保留默认同源与v1"
   - "0.3.1: 绑定collection0.2.1的显式已证零评论合同，正数与未知要求不变"
 metadata:
-  version: 0.3.2
+  version: 0.3.3
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-102/references/reuse-map.json
@@ -20,13 +21,25 @@ metadata:
 
 MMV102首个设备动作前把选定profile/serial冻结到本run的company_config_runs.task_inputs.device_binding，再核当前原生抖音号；实号通过后生成本run私有company-binding工件。原生评论证明、解析和PG提交必须消费同一绑定，PG按原102冻结行重验公司/租户/平台与唯一verified enabled账号；不将原件自报字段当授权，不为缺失历史来源新建快照。旧M4无此新工件的路径保持原守卫。
 
+### 显式v2单条待判定producer交接
+
+缺省仍要求101与本run同部署来源；既有v1只接受其原有固定范围。只有本次已发布实现支持、任务明确选择且通过 `LEADGEN_PRODUCER_DESCRIPTOR_FILE` 冻结的 `schema_version: 2` 描述符，才可消费原 `beb37370c047a13013aa0cc997a0fecc09534dde` 的 `cicdbeb_101_attempt2_20261027_a2dcb023`。此例外仅限 `legacy`／`ANGYVB4402004137`／`jinuo`、原公司与租户及v14政策、唯一VID `7689863996204591985`；不是通用跨版本许可，也不授予恢复隔离、设备或发送权限。
+
+描述符须为本用户所有的绝对路径普通文件、权限0600、单硬链接且非符号链接，字段与固定值须通过已发布validator。保留完整原101冻结定义及含两条视频的进度原字节，按固定snapshot／progress哈希和全部原文件闭包核验；不能裁成一条、改原source、补造快照或把新consumer来源冒成旧producer。新consumer仍使用自身真实已验证manifest与冻结身份。
+
+本固定M4旧快照的 `platform` 或PG `task_inputs.device_binding` 缺省，只能按本次已发布validator的精确兼容分支接受，不能补写旧字段或自造通过值；显式错误仍拒绝。每次仍须核本run冻结的profile／serial、原公司已验证启用账号及原生实际抖音号 `44997267357`，qualification前再核该账号。MMV原严格绑定守卫不变。
+
+新run必须冻结原来源与采样输入：最多领取1条、每条1至5条评论、采集预算480秒，其他截止及原生2秒守卫不变。PG在领取同一事务内重验原producer与当前consumer的公司冻结资料、完整政策内容、已验证启用的实际账号及绑定；仅 `pending`／`待判定` 且 `harvest_batch` 仍为原101批次的唯一VID可原子领取。状态或批次漂移、已matched／人工隔离／过期处理中均拒绝，不能使用普通队列的15分钟重领规则；领取0条不换领、不新搜索。旁VID `7700112581541257551` 的人工状态保持。
+
+评论总量沿原101证据及打开后真实读回：`unknown` 不当零，旧PG `comment_count` 的默认0不代替原生总量。仍须原录音／资格、评论身份与PG提交读回及清理验收；零评论或文档／代码通过不表示正向102→103已通过。本v2实机状态仍为 awaiting-real-run。
+
 ## Activity 方法配套
 
 本工作流的方法依赖真身见[Activity方法清单](references/activity-methods.json)。执行指定Activity时，按本轮冻结 `activities[].implementations` 的真实name/version/source/digest及execution_path加载对应独立Skill；不能把本工作流Skill当作每个Activity的同一份方法。
 
 - `douyin_video_processing.preflight` → `douyin-leadgen-activity-102-preflight@0.2.1`。
-- `douyin_video_processing.dedup` → `douyin-leadgen-activity-102-dedup@0.2.1`。
-- `douyin_video_processing.qualification` → `douyin-leadgen-activity-102-qualification@0.2.1`。
+- `douyin_video_processing.dedup` → `douyin-leadgen-activity-102-dedup@0.2.2`。
+- `douyin_video_processing.qualification` → `douyin-leadgen-activity-102-qualification@0.2.2`。
 - `douyin_video_processing.collection` → `douyin-leadgen-activity-102-collection@0.2.2`。
 - `douyin_video_processing.cleanup` → `douyin-leadgen-activity-102-cleanup@0.2.1`。
 
@@ -72,7 +85,7 @@ Activity方法、支持文件或合同改变时，更新对应方法版本、所
 
 代码为采集主体，Agent/Commander 接收摘要与异常，不把所有评论堆入上下文。代码失败后由 Commander 核对旧执行者、锁及外部结果，再把同一 Activity 交给本 Skill；同一任务目标、身份和截止不变，不现场改代码。
 
-资格判断的通知暂态恢复按冻结 `douyin-leadgen-activity-102-qualification@0.2.1` 执行：仅明确通知duck允许保留原证后的有界被动复读，未知不直接放行；原run broker只读证最多两次，稳定后同slot仅resume一次，再做原独立核验。其他未知、活跃录制、权限或冻结来源不符均保持blocked，不把本恢复策略用于评分或触达。
+资格判断的通知暂态恢复按冻结 `douyin-leadgen-activity-102-qualification@0.2.2` 执行：仅明确通知duck允许保留原证后的有界被动复读，未知不直接放行；原run broker只读证最多两次，稳定后同slot仅resume一次，再做原独立核验。其他未知、活跃录制、权限或冻结来源不符均保持blocked，不把本恢复策略用于评分或触达。
 
 现场仍在：重读当前树并核对视频后续采，不复用旧坐标。现场丢失：重开目标、重扫并按已提交记录去重；累计计数不是可靠位置游标。缺安全执行权交接、结果未知或锁冲突时保留 blocked，不并起第二采集器。失败运行的采样不能兑现配额。
 

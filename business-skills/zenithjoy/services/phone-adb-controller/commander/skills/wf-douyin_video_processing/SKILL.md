@@ -1,7 +1,8 @@
 ---
 name: wf-douyin_video_processing
-version: 0.3.2
+version: 0.3.3
 changelog:
+  - "0.3.3: 配套固定a83/beb单pending来源交接及事务领取方法，默认同源与v1不变"
   - "0.3.1: 配套collection0.2.1的显式零评论证据合同，沿冻结方法验收"
 description: "抖音视频处理 wf_run 陪跑说明：显式加载本次冻结业务Skill，保持原合同与安全交接边界。"
 ---
@@ -22,11 +23,13 @@ description: "抖音视频处理 wf_run 陪跑说明：显式加载本次冻结�
 
 交接只报告实际运行、逐活动/Step核验、清理及业务读回；代码退出0、合同可加载或 planned登记均不等于业务PASS。未知外部副作用先取合法读回，不能补造证据或重放动作。
 
+本版显式v2 producer交接只按业务Skill已冻结范围处理a83／beb的唯一pending VID `7689863996204591985`，加载dedup／qualification `0.2.2`。完整原两VID来源、固定哈希与consumer自身真实来源保持，事务领取最多1条／采集最多5评论及480秒；领取0条不换领，旁VID人工状态不恢复。不把它当通用跨版、新搜索或发送许可，原v1／缺省同源与原2秒、未知拒绝边界不变；新组合的实机验收仍未完成。
+
 ## 方法升级
 
 本流程依赖的Activity方法版本由业务Skill的 `references/activity-methods.json` 精确登记。方法变化要同步本陪跑Skill版本与合同 `commander_skill.version`；Commander只使用本run冻结组合。代码内部兼容评估、Skill实机验收和自动handoff能力分别记证据，不从文件存在推定已能接手。
 
-本版依赖 `douyin-leadgen-102@0.3.2` 及 `douyin-leadgen-activity-102-qualification@0.2.1`。仅把明确通知暂态交给该方法有界被动复读；同run/Activity/owner、最多两次只读证和一次原slot resume及原独立verify不变。未知或活跃录制不借陪跑清场，未有实际交接证据仍不宣称Skill救场成功。
+本版依赖 `douyin-leadgen-102@0.3.3` 及 `douyin-leadgen-activity-102-qualification@0.2.2`。仅把明确通知暂态交给该方法有界被动复读；同run/Activity/owner、最多两次只读证和一次原slot resume及原独立verify不变。未知或活跃录制不借陪跑清场，未有实际交接证据仍不宣称Skill救场成功。
 
 
 ## 同run有界Agent恢复合同
