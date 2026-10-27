@@ -2,10 +2,11 @@
 name: douyin-leadgen-102
 description: 执行抖音获客102视频处理：验证101来源、领取待处理视频、判断资格并按评论量采集持久化。用于普通、深采或自动策略及代码异常接手；不修改评分标准或执行私信。
 changelog:
+  - "0.3.4: 将冻结来源规范块内的v2小标题改为普通段落，兼容严格发布验收解析，交接语义不变"
   - "0.3.3: 声明显式v2单条待判定视频的有限producer交接，保留默认同源与v1"
   - "0.3.1: 绑定collection0.2.1的显式已证零评论合同，正数与未知要求不变"
 metadata:
-  version: 0.3.3
+  version: 0.3.4
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-102/references/reuse-map.json
@@ -21,7 +22,7 @@ metadata:
 
 MMV102首个设备动作前把选定profile/serial冻结到本run的company_config_runs.task_inputs.device_binding，再核当前原生抖音号；实号通过后生成本run私有company-binding工件。原生评论证明、解析和PG提交必须消费同一绑定，PG按原102冻结行重验公司/租户/平台与唯一verified enabled账号；不将原件自报字段当授权，不为缺失历史来源新建快照。旧M4无此新工件的路径保持原守卫。
 
-### 显式v2单条待判定producer交接
+显式v2单条待判定producer交接：
 
 缺省仍要求101与本run同部署来源；既有v1只接受其原有固定范围。只有本次已发布实现支持、任务明确选择且通过 `LEADGEN_PRODUCER_DESCRIPTOR_FILE` 冻结的 `schema_version: 2` 描述符，才可消费原 `beb37370c047a13013aa0cc997a0fecc09534dde` 的 `cicdbeb_101_attempt2_20261027_a2dcb023`。此例外仅限 `legacy`／`ANGYVB4402004137`／`jinuo`、原公司与租户及v14政策、唯一VID `7689863996204591985`；不是通用跨版本许可，也不授予恢复隔离、设备或发送权限。
 

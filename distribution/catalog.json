@@ -687,7 +687,7 @@
         {
           "path": "services/phone-adb-controller/commander/skills/wf-douyin_video_processing/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/wf-douyin_video_processing/SKILL.md",
-          "sha256": "0cd1dd02c78a2e4b197adac3004afd41a47a9204908320ac0357efe3505382db",
+          "sha256": "b1e22f932c02643c3ed6bb7585a50829d2c709081ebbd3d63ffb51554e3c1243",
           "mode": "100644"
         },
         {
@@ -729,7 +729,7 @@
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-102/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-102/SKILL.md",
-          "sha256": "e07519c3addebe776a964f8bf068e4c03cc552430b7655f7942e1f53a2bbb4a9",
+          "sha256": "dedb2bcb785aa43322886847a08eb3348b4f33d220727dd6d25694ac52aad8bf",
           "mode": "100644"
         },
         {
