@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-101-collect-videos
 description: 按关键词交出筛选后的视频链接。用于采集关键词搜索结果或接手同一视频发现 Activity；不执行整个工作流。
 metadata:
-  version: 0.3.2
+  version: 0.4.0
   activity_ref: douyin_video_discovery.collect_videos
-  activity_version: 5.0.0
+  activity_version: 5.1.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -12,7 +12,7 @@ metadata:
 
 # 按关键词交出筛选后的视频链接
 
-仅执行 `douyin_video_discovery.collect_videos`。业务合同版本为 `5.0.0`（breaking）；新增同视频指标输出与持久化读回通过条件，不能沿用4.1.0的成功回执。方法版本独立记录，Activity身份保持不变。
+仅执行 `douyin_video_discovery.collect_videos`。业务合同版本为 `5.1.0`（breaking）；新增同视频指标输出与持久化读回通过条件，不能沿用4.1.0的成功回执。方法版本独立记录，Activity身份保持不变。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-101/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_video_discovery.yaml)的 `collect_videos` 为准；本文件不覆盖该合同或公司政策。
 
