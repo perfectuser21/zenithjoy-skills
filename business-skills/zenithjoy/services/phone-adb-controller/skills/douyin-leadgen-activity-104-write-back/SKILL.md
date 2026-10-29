@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-104-write-back
 description: 交出原订单状态的独立读回。用于写回真实发送结果或接手已发未回写 Activity；不执行整个工作流。
 metadata:
-  version: 0.3.0
+  version: 1.0.0
   activity_ref: douyin_lead_outreach.write_back
-  activity_version: 3.2.0
+  activity_version: 4.0.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -12,7 +12,7 @@ metadata:
 
 # 交出原订单状态的独立读回
 
-仅执行 `douyin_lead_outreach.write_back`。业务合同版本为 `3.2.0`；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_lead_outreach.write_back`。业务合同版本为 `4.0.0`（breaking 纠错）；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-104/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_lead_outreach.yaml)的 `write_back` 为准；本文件不覆盖该合同或公司政策。
 
@@ -22,7 +22,7 @@ metadata:
 - 输入 `Account`：`profile`、`sender_id`、`dm_paused`、`daily_cap`。
 - 输入 `Device`：`serial`、`lock_holder`。
 - 输入 `OutreachOrder`：`lead_record_id`、`result`。
-- 输出 `OutreachOrder`：`lead_record_id`、`douyin_id`、`sender_id`、`script_id`、`message`、`result`。
+- 更新 `OutreachOrder`：`lead_record_id`、`douyin_id`、`sender_id`、`script_id`、`message`、`result`。
 - 输出 `Lead`：`status`、`send_status`、`script_id`、`sender_id`、`reached_at`。
 
 公司、task/run、截止、源码及执行权从本次正式绑定读取。缺字段保持缺失并报告，不从示例或其他租户补。
