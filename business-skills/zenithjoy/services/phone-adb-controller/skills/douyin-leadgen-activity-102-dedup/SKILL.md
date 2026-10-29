@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-102-dedup
 description: 交出本轮可处理的视频集合。用于核验101来源、筛选与认领视频或接手同一判重 Activity；不执行整个工作流。
 metadata:
-  version: 0.2.2
+  version: 0.3.0
   activity_ref: douyin_video_processing.dedup
-  activity_version: 3.1.0
+  activity_version: 3.2.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -12,7 +12,7 @@ metadata:
 
 # 交出本轮可处理的视频集合
 
-仅执行 `douyin_video_processing.dedup`。业务合同版本为 `3.1.0`；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_video_processing.dedup`。业务合同版本为 `3.2.0`；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-102/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_video_processing.yaml)的 `dedup` 为准；本文件不覆盖该合同或公司政策。
 

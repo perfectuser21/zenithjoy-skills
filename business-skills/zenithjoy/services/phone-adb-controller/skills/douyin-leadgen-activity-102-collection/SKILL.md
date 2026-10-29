@@ -4,9 +4,9 @@ description: 交出持久化且身份可验证的评论。用于从合格视频�
 changelog:
   - "0.2.1: 正式声明同VID已证零评论替代证据，正数与未知门禁保持"
 metadata:
-  version: 0.2.2
+  version: 0.3.0
   activity_ref: douyin_video_processing.collection
-  activity_version: 2.5.1
+  activity_version: 2.6.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -14,7 +14,7 @@ metadata:
 
 # 交出持久化且身份可验证的评论
 
-仅执行 `douyin_video_processing.collection`。业务合同版本为 `2.5.1`；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_video_processing.collection`。业务合同版本为 `2.6.0`；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-102/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_video_processing.yaml)的 `collection` 为准；本文件不覆盖该合同或公司政策。
 

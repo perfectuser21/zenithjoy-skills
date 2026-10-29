@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-103-mark-leads
 description: 交出原生身份核实的线索与配送状态。用于按评分保留线索、独立资格核对并配送或接手同一标记 Activity；不执行整个工作流。
 metadata:
-  version: 0.2.1
+  version: 0.3.0
   activity_ref: douyin_comment_scoring.mark_leads
-  activity_version: 3.2.0
+  activity_version: 3.3.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -12,7 +12,7 @@ metadata:
 
 # 交出原生身份核实的线索与配送状态
 
-仅执行 `douyin_comment_scoring.mark_leads`。业务合同版本为 `3.2.0`；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_comment_scoring.mark_leads`。业务合同版本为 `3.3.0`；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-103/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_comment_scoring.yaml)的 `mark_leads` 为准；本文件不覆盖该合同或公司政策。
 
