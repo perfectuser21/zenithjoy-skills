@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-104-send-dm
 description: 交出一次可核验的批准私信发送结果。用于执行已授权单次私信或接手同一触达 Activity；不执行整个工作流。
 metadata:
-  version: 1.0.0
+  version: 1.1.0
   activity_ref: douyin_lead_outreach.send_dm
-  activity_version: 4.0.0
+  activity_version: 5.0.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -12,7 +12,7 @@ metadata:
 
 # 交出一次可核验的批准私信发送结果
 
-仅执行 `douyin_lead_outreach.send_dm`。业务合同版本为 `4.0.0`（breaking 纠错）；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_lead_outreach.send_dm`。业务合同版本为 `5.0.0`（真实发送结果硬探针）；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-104/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_lead_outreach.yaml)的 `send_dm` 为准；本文件不覆盖该合同或公司政策。
 
@@ -42,6 +42,8 @@ metadata:
 按正式合同的后置探针、原始证据及持久化读回验收；区分Code结果、Skill接手结果和清理结果。单Activity接手入口为原run的 `activity-skill-tool.mjs <broker-request.json> inspect|phone|resume`；只能使用本次持久handoff给出的冻结路径，不能自己建request、换run或直接启动Workflow。源码接线与Skill实机接手验收分别记证据，当前方法仍 awaiting-real-run。
 
 ## 本方法的真实接手入口
+
+`out_delivery_result_verified` 是 Activity 的硬探针：只有原生发送前后 XML、准确发送账号、目标与正文、风险页和前台原件均核验通过，原运行才能报告发送或明确限制。探针缺失或为 0 保留失败或未知；无订单为 skipped，不得充当发送成功。探针不表示对方送达或已读。
 
 Code失败、分类与有限安全重试后，由原run的handoff broker持有同一Activity闭包、身份、资源和截止。真实work-commander父会话经官方sessions_spawn派本Skill子会话；先核原request/nonce及自己的绑定。只调用本次给出的工具路径：`inspect`读取实际进度；`phone`经stdin JSON `{command,args}`仅读证或受控归位；必要时 `resume`仅继续当前slot的成熟Code一次。不得构造新Workflow、改源码/策略/账号/暂停或另取/释放锁。
 

@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_lead_outreach
-version: 0.5.0
+version: 0.6.0
 description: "抖音线索触达 wf_run 陪跑说明：显式加载本次冻结业务Skill，保持原合同与安全交接边界。"
 ---
 
@@ -9,6 +9,8 @@ description: "抖音线索触达 wf_run 陪跑说明：显式加载本次冻结�
 此薄 wrapper 对应 `product-map/contracts/douyin_lead_outreach.yaml` 的 `commander_skill`；业务真身只有 `services/phone-adb-controller/skills/douyin-leadgen-104/SKILL.md`，不在此复制动作。
 
 当前 `wf_run` 须由 Agent 显式加载本 wrapper 和业务 Skill，自动调用未接好。此字段入冻结合同不表示 runner 已调用 Skill，也不把本流程改成通用 Commander 的 `codex_agent` 或 commander-v2 执行协议。
+
+`send_dm` 成功判定须包含 `out_delivery_result_verified` 硬探针；未取到原生结果或探针失败时保持失败或未知，不按模型判断补成功。
 
 先从本run已验证的冻结部署清单读取工作流业务Skill `runtime/skills/douyin-leadgen-104/SKILL.md` 及其 `references/activity-methods.json`、`runtime-calls.json`、`reuse-map.json`，核对本run源码和每文件SHA。再从 `run-definition.json` 对应Activity的 `implementations` 选择确切 `kind: skill`、name/version/source/digest，并按真实 `execution_path` 读取独立Activity Skill及其支持文件。Workflow清单必须与各Activity冻结绑定完全一致；不能再把整流程业务Skill路径当成每个Activity方法。最新部署副本或本机Codex链接不能代替本run冻结字节，缺绑定或原件即阻断。
 
