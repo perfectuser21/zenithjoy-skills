@@ -241,7 +241,8 @@
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-103/SKILL.md",
           "name": "douyin-leadgen-103",
           "execution_directory": "services/phone-adb-controller/skills/douyin-leadgen-103",
-          "status": "business-compatibility"
+          "status": "business-compatibility",
+          "sha256": "5fed7473f2ca8619f65f055c81bab734defbb3e5e7701aaf4104297b2bf04f60"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-104/SKILL.md",
@@ -753,7 +754,7 @@
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-103/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-103/SKILL.md",
-          "sha256": "f3d724d9b9312bfc5f3a99d311718dd2d64620ebbaf8f75be6759a93b1530e88",
+          "sha256": "5fed7473f2ca8619f65f055c81bab734defbb3e5e7701aaf4104297b2bf04f60",
           "mode": "100644"
         },
         {
@@ -771,7 +772,7 @@
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-103/references/runtime-calls.json",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-103/references/runtime-calls.json",
-          "sha256": "8381a55aac4311745db70a7808687d11ecec24a9957f69ac4659c9160b1a3972",
+          "sha256": "7388025c25030f18bf522d0e710fd0c85fd0339caad7afb83fae02019a3e2925",
           "mode": "100644"
         },
         {
