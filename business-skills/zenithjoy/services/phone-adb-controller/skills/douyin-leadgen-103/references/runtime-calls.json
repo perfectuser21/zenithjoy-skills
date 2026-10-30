@@ -17,7 +17,7 @@
       "$RUN_TAG"
     ],
     "command_template": "env -u LEADGEN_SOURCE_RUN -u LEADGEN_COMMENT_LIMIT LEADGEN_LIMIT=\"$COMMENT_BATCH_LIMIT\" LEADGEN_SEND=0 WF_RUN_MAX_SECONDS=\"$RUN_SECONDS\" /bin/zsh \"$MMV_RUNNER\" douyin_comment_scoring mmv-scoring none \"$LINE\" \"$RUN_TAG\"",
-    "batch_scope": "未限定批次时显式移除继承SOURCE_RUN；任务明确限定则另设真实102tag，保持原约束",
+    "batch_scope": "未限定批次时显式移除继承SOURCE_RUN；任务明确限定则另设真实102tag。失败102来源默认不可领，金诺102g仅在审计接纳回执绑定本run后显式限定原批次运行",
     "queue_semantics": [
       "score按line+待分拣+relevance NULL，事务FOR UPDATE SKIP LOCKED逐条真实模型判定/保存",
       "mark_leads按line+待分拣+relevance非NULL，同事务line advisory锁/原PGlead upsert/recipient独立资格/outbox/已分拣",
@@ -48,6 +48,12 @@
     "source部署/定义gate失败阻断；未登记Skill首跑只能显式称headed Skill first run，不将缺code/release gate降成可运行"
   ],
   "restricted_entries": [
+    {
+      "entry": "leadgen-run.sh douyin_comment_scoring，内部依次调用 admit_102g_comments/admit_102g_readback",
+      "classification": "EXACT_SINGLE_VIDEO_MAINTENANCE_ONLY",
+      "protocol": "正式入口显式 LEADGEN_SOURCE_RUN=accept3a903_jinuo102g_20261030t0712、LEADGEN_102G_ADMISSION_DECISION_ID=<用户决定UUID>、LEADGEN_102G_ADMISSION_TASK_ID=<已claim维护Task UUID>、LEADGEN_LIMIT<=3、LEADGEN_SEND=0；金诺原102g VID7699489394579915663三条固定UUID；用户决定正文精确绑定维护Task、单一103 run及最终冻结候选source commit，RPC重验该SHA；原生旧进程实时复核且无旧outbox；接纳只插入db_audit，读回不写",
+      "guards": "只在用户另行批准该单VID范围后由已claim的维护Task通过正式冻结入口执行。低级queue CLI不授权Agent直接调用；不得改旧102失败、视频隔离或评论状态，不得发送104私信。"
+    },
     {
       "entry": "leadgen-client.mjs createRpc()/rpcSource()",
       "classification": "INTERNAL_LIBRARY",
