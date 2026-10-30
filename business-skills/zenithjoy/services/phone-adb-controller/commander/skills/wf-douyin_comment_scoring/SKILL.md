@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_comment_scoring
-version: 0.6.0
+version: 0.7.0
 description: "抖音评论评分 wf_run 陪跑说明：显式加载本次冻结业务Skill，保持原合同与安全交接边界。"
 ---
 
@@ -17,6 +17,8 @@ description: "抖音评论评分 wf_run 陪跑说明：显式加载本次冻结�
 `mode=workflow` 仅在当前业务 Skill 的正式完整CLI满足本轮范围时执行该流程；`mode=activity` 只处理指定冻结 Activity。仅接受原run已生成的leadgen-activity-v1请求及其私有broker工具；无法安全移交当前执行权或工具缺失时保留原失败及恢复条件并报告 BLOCKED，不能重跑整流程冒单步接手、使用 `leadgen-activity.sh` 冒 resume、直调裸queue/RPC函数、并发接管活动run或回退旧流程。旧Skill参考仅加载 reuse-map 明确适用动作，不把 reference_only 当可执行fallback。
 
 只处理103原政策评分与标记，独立消费已提交PG评论；使用冻结公司原评分政策。MMV/none不占手机锁或手机中央租约。mark资格每人最多15秒且RPC180秒，首批5、建议每批不超过10，不能以语法允许50冒充本轮可完成50。
+
+评分须在同一事务中取得两份有效且响应身份不同的政策证据后才持久化；后续评分读回与mark_leads从PG原文、视频及冻结政策独立确定性重验，不能补第三次政策模型调用。旧单份证据保持unknown，不凭旧评分直接建线索。
 
 交接只报告实际运行、逐活动/Step核验、清理及业务读回；代码退出0、合同可加载或 planned登记均不等于业务PASS。未知外部副作用先取合法读回，不能补造证据或重放动作。
 
