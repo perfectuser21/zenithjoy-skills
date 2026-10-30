@@ -51,7 +51,7 @@
     {
       "entry": "leadgen-run.sh douyin_comment_scoring，内部依次调用 admit_102g_comments/admit_102g_readback",
       "classification": "EXACT_SINGLE_VIDEO_MAINTENANCE_ONLY",
-      "protocol": "正式入口显式 LEADGEN_SOURCE_RUN=accept3a903_jinuo102g_20261030t0712、LEADGEN_102G_ADMISSION_DECISION_ID=<用户决定UUID>、LEADGEN_102G_ADMISSION_TASK_ID=<已claim维护Task UUID>、LEADGEN_LIMIT<=3、LEADGEN_SEND=0；金诺原102g VID7699489394579915663三条固定UUID；用户决定正文精确绑定维护Task和单一103 run，原生旧进程实时复核且无旧outbox；接纳只插入db_audit，读回不写",
+      "protocol": "正式入口显式 LEADGEN_SOURCE_RUN=accept3a903_jinuo102g_20261030t0712、LEADGEN_102G_ADMISSION_DECISION_ID=<用户决定UUID>、LEADGEN_102G_ADMISSION_TASK_ID=<已claim维护Task UUID>、LEADGEN_LIMIT<=3、LEADGEN_SEND=0；金诺原102g VID7699489394579915663三条固定UUID；用户决定正文精确绑定维护Task、单一103 run及最终冻结候选source commit，RPC重验该SHA；原生旧进程实时复核且无旧outbox；接纳只插入db_audit，读回不写",
       "guards": "只在用户另行批准该单VID范围后由已claim的维护Task通过正式冻结入口执行。低级queue CLI不授权Agent直接调用；不得改旧102失败、视频隔离或评论状态，不得发送104私信。"
     },
     {
