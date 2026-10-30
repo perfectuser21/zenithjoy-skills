@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_comment_scoring
-version: 0.4.0
+version: 0.5.0
 description: "抖音评论评分 wf_run 陪跑说明：显式加载本次冻结业务Skill，保持原合同与安全交接边界。"
 ---
 
