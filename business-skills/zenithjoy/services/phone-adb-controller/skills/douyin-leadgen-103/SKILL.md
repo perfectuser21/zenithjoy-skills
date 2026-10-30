@@ -2,7 +2,7 @@
 name: douyin-leadgen-103
 description: 执行抖音获客103评论评分与线索标记，独立消费已提交评论并使用公司原评分政策。用于Agent执行、调用成熟评分代码及异常接手；不占手机、不等待整批102结束、不发送私信。
 metadata:
-  version: 0.8.0
+  version: 0.9.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-103/references/reuse-map.json
@@ -22,8 +22,8 @@ metadata:
 
 本工作流的方法依赖真身见[Activity方法清单](references/activity-methods.json)。执行指定Activity时，按本轮冻结 `activities[].implementations` 的真实name/version/source/digest及execution_path加载对应独立Skill；不能把本工作流Skill当作每个Activity的同一份方法。
 
-- `douyin_comment_scoring.scoring` → `douyin-leadgen-activity-103-scoring@0.6.0`。
-- `douyin_comment_scoring.mark_leads` → `douyin-leadgen-activity-103-mark-leads@0.6.0`。
+- `douyin_comment_scoring.scoring` → `douyin-leadgen-activity-103-scoring@0.7.0`。
+- `douyin_comment_scoring.mark_leads` → `douyin-leadgen-activity-103-mark-leads@0.7.0`。
 
 Activity方法、支持文件或合同改变时，更新对应方法版本、所有消费者清单、本工作流Skill与Commander Skill版本；纯代码内部兼容优化用明确兼容评估绑定前后代码集合。先跑 `npm run leadgen:methods:check`，再做相应独立验收。方法配套完成不表示单Activity执行权交接已经接通。
 
@@ -48,7 +48,7 @@ Activity方法、支持文件或合同改变时，更新对应方法版本、所
 ## 执行
 
 1. 登记/认领任务，读取并固定当前已发布实现、原公司政策及本 Skill 校验值。核对公司与业务线唯一映射、产品/客户资料及输入范围；凭据按 `credentials` 从1Password及已核同步镜像加载，不写运行正文。
-2. 使用现有队列事务和有效租约领取已成功提交、属于本公司的待评分评论。无需等待102整轮结束；不占ADB锁、不操作手机，不消费未提交的采集缓存。
+2. 使用现有队列事务和有效租约领取已成功提交、属于本公司的待评分评论。无需等待102整轮结束；不占ADB锁、不操作手机，不消费未提交的采集缓存。失败102来源仍默认隔离；金诺102g指定单视频的三条评论只有在用户决定与独立旧执行终止证明形成精确 `db_audit` 接纳回执后、由回执绑定的单一103 run显式指定原批次才可领取，原102失败与视频隔离不变。
 3. 优先复用已验证的原 `judge-comment`/评分及 `mark_leads` 实现。当前金诺政策为原2.0.0口径；具体版本从任务与公司冻结配置读回，不跨公司复制规则。评分涉及语义模型，不因外层代码成熟就宣称模型调用为零。
 4. 评分只在同一事务内取得两份独立、同等级、不同响应身份且原文可核的政策证据后提交；政策模型总计最多两次，视频引用重试也占额度。评分后独立从PG原评论、视频和冻结政策确定性重验两份证据；标记人另行重验，不额外调用政策模型。模型报错、双审分歧、证据缺失或unknown保持待决，不能由 Agent 猜分填上，也不能为了验收制造合格线索。
 5. 复用现有线索标记及PG→原飞书桥接，保留评论原生身份来源、资格和事务outbox。分别报告PG线索创建、外部创建/确认、unknown/held；不把PG提交直接当成飞书交付，也不把全部评分行当成可触达行。
