@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-103-scoring
 description: 交出按公司原政策持久化的评论评分。用于独立消费已提交评论评分或接手同一评分 Activity；不执行整个工作流。
 metadata:
-  version: 0.5.0
+  version: 0.6.0
   activity_ref: douyin_comment_scoring.scoring
-  activity_version: 2.2.0
+  activity_version: 2.3.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -12,7 +12,7 @@ metadata:
 
 # 交出按公司原政策持久化的评论评分
 
-仅执行 `douyin_comment_scoring.scoring`。业务合同版本为 `2.2.0`；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_comment_scoring.scoring`。业务合同版本为 `2.3.0`；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-103/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_comment_scoring.yaml)的 `scoring` 为准；本文件不覆盖该合同或公司政策。
 
@@ -27,9 +27,9 @@ metadata:
 ## 方法
 
 1. 在MMV执行，不取手机租约、不操作ADB，也不等待整批102结束。任务限定来源批次时严格保留该范围；无有效评论就empty，不拿历史bench凑验收。
-2. 通过原队列事务领取本公司的已提交待评分评论，读取关联视频及冻结公司政策。产品/目标客户和等级规则来自本公司，不从旧技能固定分类复制。
+2. 通过原队列事务领取本公司的已提交待评分评论，仅接受同来源批次、视频状态“评论已采”、资格 matched 的PG行，读取关联视频及冻结公司政策。产品/目标客户和等级规则来自本公司，不从旧技能固定分类复制。
 3. 复用正式judge-comment与持久化评分入口；当前金诺保留原2.0.0政策。A须有评论原文中的个人提问或冻结意向信号，并以视频标题原文片段核同主题；B可为相关讨论而无行动意向，C可为画像内寒暄，但B/C均须有评论原文引用与冻结画像片段相连；不相关需独立模型复核一致。调用模型的真实provider/model/回执与失败按原件记录。
-4. 同一评论的政策Commander最多调用两次，必须得到两份不同response_id且均符合原等级与原文证据的结论，才在同一PG事务提交评分与 `judgment_config.policy_reviews[2]`；首审视频引用重试也占这两次额度，额度耗尽而未取得双份有效结论则整笔回滚。总上限仍为Jev 1次、评分Commander 2次、政策Commander 2次。任一证据不合格、模型异常或两次结论不一致，评分字段保持空、评论留待分拣并交安全 `policy_review_reason`，不猜分、不伪造合格或C级。
+4. 同一评论的政策Commander最多调用两次，必须得到两份不同response_id且均符合原等级与原文证据的结论，才在同一PG事务提交评分与 `judgment_config.policy_reviews[2]`；首审视频引用重试也占这两次额度，额度耗尽而未取得双份有效结论则整笔回滚。总上限仍为Jev 1次、评分Commander 2次、政策Commander 2次。旧单审半提交评论仅凭固定ID、原102/103 run、同公司冻结政策、维护Task在位且无配送意图受控重评；新双审失败则保留旧行且标记关口继续阻断。任一证据不合格、模型异常或两次结论不一致，评分字段保持空、评论留待分拣并交安全 `policy_review_reason`，不猜分、不伪造合格或C级。
 5. 评分后由独立读回器重新读取PG原评论、视频、冻结公司政策与两份有模型身份、逐字引证和摘要的证据，确定性核验两份均仍成立；不发第三次政策模型调用。证据缺失、被改或绑定不符时保持unknown，不能把score-time pass自认作独立验收。
 6. 本活动交出评分结果，不直接发私信，也不把评分成功等同于线索已配送。
 
