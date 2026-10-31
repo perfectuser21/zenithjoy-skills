@@ -329,6 +329,8 @@ class CommanderRecoveryContractTests(unittest.TestCase):
         body = path.read_text()
         for required in ("飞书 record_id", "comment_id", "公司", "来源", "不领取旁单", "未匹配则拒发"):
             self.assertIn(required, body)
+        for required in ("company_queue", "exact", "LEADGEN_OUTREACH_MODE", "LEADGEN_OUTREACH_SCOPE_FILE"):
+            self.assertIn(required, body)
 
     def test_method_versions_and_all_workflow_dependency_rows_are_upgraded_together(self):
         import re
