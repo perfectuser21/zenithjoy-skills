@@ -6,7 +6,7 @@ changelog:
   - "0.3.3: 声明显式v2单条待判定视频的有限producer交接，保留默认同源与v1"
   - "0.3.1: 绑定collection0.2.1的显式已证零评论合同，正数与未知要求不变"
 metadata:
-  version: 0.5.0
+  version: 0.5.1
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-102/references/reuse-map.json
@@ -40,8 +40,8 @@ MMV102首个设备动作前把选定profile/serial冻结到本run的company_conf
 
 - `douyin_video_processing.preflight` → `douyin-leadgen-activity-102-preflight@0.3.0`。
 - `douyin_video_processing.dedup` → `douyin-leadgen-activity-102-dedup@0.3.0`。
-- `douyin_video_processing.qualification` → `douyin-leadgen-activity-102-qualification@0.3.0`。
-- `douyin_video_processing.collection` → `douyin-leadgen-activity-102-collection@0.4.0`。
+- `douyin_video_processing.qualification` → `douyin-leadgen-activity-102-qualification@0.3.1`。
+- `douyin_video_processing.collection` → `douyin-leadgen-activity-102-collection@0.4.1`。
 - `douyin_video_processing.cleanup` → `douyin-leadgen-activity-102-cleanup@0.3.0`。
 
 Activity方法、支持文件或合同改变时，更新对应方法版本、所有消费者清单、本工作流Skill与Commander Skill版本；纯代码内部兼容优化用明确兼容评估绑定前后代码集合。先跑 `npm run leadgen:methods:check`，再做相应独立验收。方法配套完成不表示单Activity执行权交接已经接通。
@@ -74,7 +74,7 @@ Activity方法、支持文件或合同改变时，更新对应方法版本、所
 4. 普通策略领真实评论数不超过500的视频；深采领超过500的视频；自动策略在范围内补读未知指标并选预算。unknown 不当零。分档由101提供，打开后复核；预检不承担业务分档。没有延长授权不突破原总预算。
 5. 用实际视频ID打开并核对当前视频。SDK≥33维持playback_dup；SDK31仅可用本run明确owner、固定已验客户端/server及原件哈希的output PCM/WAV策略，SDK32或证据不全保持pending。复用已部署录音/播放核验、转写和原资格判断。没有真实录音或转写证据记 unknown，不伪判合格；缓存判断仅在同公司政策版本与真实身份一致时复用。只有资格合格的视频进入评论采集。
 6. 先区分已证零评论、正数与未知；仅冻结合同显式允许且同run逐VID原UI/identity/hash齐全时交付零评论，不点击空评论入口、不计采样达标，未知拒绝。正数按原要求打开评论区，逐屏读取并小批提交。保留正式字段合同要求的正文、时间、地区、评论人稳定身份、主页/视频链接及原生关联证据；只采昵称正文的测速脚本不能冒充完整102。优先真实评论ID去重；缺ID时用视频、稳定评论人、完整正文等组合，说明近似去重局限。
-7. 每批提交后读回实际行，分别累计 inserted、history_verified、duplicates、coverage；失败批不计入已提交。优先复用既有事务、评论历史核验和采样读回，不另写一套评分或业务计数。显式采样的每视频精确 PG ID 集与规范行摘要须进入本轮 collection 主 span，供跨机103独立核验；历史命中保原批次，不改成新批次。
+7. 每批提交后读回实际行，分别累计 inserted、history_verified、duplicates、coverage；失败批不计入已提交。优先复用既有事务、评论历史核验和采样读回，不另写一套评分或业务计数。显式采样的每视频精确 PG ID 集与规范行摘要须进入本轮 collection 主 span；本轮资格主 span 另留同绑定、同 SHA、逐 VID 原生身份和旧判断 run 收据，供跨机103双回执比对。旧 matched 视频只在同冻结公司/租户/版本/政策与本轮身份核验通过后使用，PG 旧判断 run 不重写；历史评论保原批次。
 8. 达到任务采样配额可结束本次采样，标 sampled/quota_reached，不标整条视频采尽。50或500是实现上限/分档边界，命中不等于到底。尽量采集目标下，仅在明确页尾、范围说明和提交读回齐全时标本范围完成；否则 partial，保存累计数和最后成功批次。
 9. 业务截止后不再领新视频，留出提交与清理预算。持久记录来源、视频身份、已提交集合、停止原因和恢复入口；关闭App、释放自己的租约和设备锁并读回。
 
@@ -86,7 +86,7 @@ Activity方法、支持文件或合同改变时，更新对应方法版本、所
 
 代码为采集主体，Agent/Commander 接收摘要与异常，不把所有评论堆入上下文。代码失败后由 Commander 核对旧执行者、锁及外部结果，再把同一 Activity 交给本 Skill；同一任务目标、身份和截止不变，不现场改代码。
 
-资格判断的通知暂态恢复按冻结 `douyin-leadgen-activity-102-qualification@0.3.0` 执行：仅明确通知duck允许保留原证后的有界被动复读，未知不直接放行；原run broker只读证最多两次，稳定后同slot仅resume一次，再做原独立核验。其他未知、活跃录制、权限或冻结来源不符均保持blocked，不把本恢复策略用于评分或触达。
+资格判断的通知暂态恢复按冻结 `douyin-leadgen-activity-102-qualification@0.3.1` 执行：仅明确通知duck允许保留原证后的有界被动复读，未知不直接放行；原run broker只读证最多两次，稳定后同slot仅resume一次，再做原独立核验。其他未知、活跃录制、权限或冻结来源不符均保持blocked，不把本恢复策略用于评分或触达。
 
 现场仍在：重读当前树并核对视频后续采，不复用旧坐标。现场丢失：重开目标、重扫并按已提交记录去重；累计计数不是可靠位置游标。缺安全执行权交接、结果未知或锁冲突时保留 blocked，不并起第二采集器。失败运行的采样不能兑现配额。
 

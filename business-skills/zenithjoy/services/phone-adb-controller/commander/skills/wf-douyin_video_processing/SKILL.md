@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_video_processing
-version: 0.5.0
+version: 0.5.1
 changelog:
   - "0.4.0: 同步活动合同的承诺、来源去向与可判定读回；样本仍待业务核准"
   - "0.3.4: 同步102规范块格式兼容版本，方法合同与授权范围不变"
@@ -23,7 +23,7 @@ description: "抖音视频处理 wf_run 陪跑说明：显式加载本次冻结�
 
 只处理102资格与评论采集。来源必须是本次冻结并合法验证的101 source_run；保持实际VID、音频、评论者身份、正文和返回面板守卫。首轮5评论与后续分档按授权及业务Skill支持情况执行，未实施分档不能冒称自动支持。
 
-交接只报告实际运行、逐活动/Step核验、清理及业务读回；代码退出0、合同可加载或 planned登记均不等于业务PASS。未知外部副作用先取合法读回，不能补造证据或重放动作。
+交接须保留本轮 qualification 主 span 的逐 VID 身份、旧判断 run 与 collection 主 span 的精确评论 ID；旧 PG 判断 run 不重写。交接只报告实际运行、逐活动/Step核验、清理及业务读回；代码退出0、合同可加载或 planned登记均不等于业务PASS。未知外部副作用先取合法读回，不能补造证据或重放动作。
 
 本版显式v2 producer交接只按业务Skill已冻结范围处理a83／beb的唯一pending VID `7689863996204591985`，加载dedup／qualification `0.2.2`。完整原两VID来源、固定哈希与consumer自身真实来源保持，事务领取最多1条／采集最多5评论及480秒；领取0条不换领，旁VID人工状态不恢复。不把它当通用跨版、新搜索或发送许可，原v1／缺省同源与原2秒、未知拒绝边界不变；新组合的实机验收仍未完成。
 
@@ -31,7 +31,7 @@ description: "抖音视频处理 wf_run 陪跑说明：显式加载本次冻结�
 
 本流程依赖的Activity方法版本由业务Skill的 `references/activity-methods.json` 精确登记。方法变化要同步本陪跑Skill版本与合同 `commander_skill.version`；Commander只使用本run冻结组合。代码内部兼容评估、Skill实机验收和自动handoff能力分别记证据，不从文件存在推定已能接手。
 
-本版依赖 `douyin-leadgen-102@0.5.0` 及 `douyin-leadgen-activity-102-qualification@0.3.0`。仅把明确通知暂态交给该方法有界被动复读；同run/Activity/owner、最多两次只读证和一次原slot resume及原独立verify不变。未知或活跃录制不借陪跑清场，未有实际交接证据仍不宣称Skill救场成功。
+本版依赖 `douyin-leadgen-102@0.5.1` 及 `douyin-leadgen-activity-102-qualification@0.3.1`。仅把明确通知暂态交给该方法有界被动复读；同run/Activity/owner、最多两次只读证和一次原slot resume及原独立verify不变。未知或活跃录制不借陪跑清场，未有实际交接证据仍不宣称Skill救场成功。
 
 
 ## 同run有界Agent恢复合同

@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-103-scoring
 description: 交出按公司原政策持久化的评论评分。用于独立消费已提交评论评分或接手同一评分 Activity；不执行整个工作流。
 metadata:
-  version: 0.10.0
+  version: 0.10.1
   activity_ref: douyin_comment_scoring.scoring
-  activity_version: 2.7.0
+  activity_version: 2.7.1
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -12,7 +12,7 @@ metadata:
 
 # 交出按公司原政策持久化的评论评分
 
-仅执行 `douyin_comment_scoring.scoring`。业务合同版本为 `2.7.0`；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_comment_scoring.scoring`。业务合同版本为 `2.7.1`；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-103/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_comment_scoring.yaml)的 `scoring` 为准；本文件不覆盖该合同或公司政策。
 
@@ -27,7 +27,7 @@ metadata:
 ## 方法
 
 1. 在MMV执行，不取手机租约、不操作ADB，也不等待整批102结束。任务限定来源批次时严格保留该范围；无有效评论就empty，不拿历史bench凑验收。
-2. 通过原队列事务领取本公司的已提交待评分评论。通常要求同来源批次、视频状态“评论已采”、资格 matched。正式102配额抽样是窄例外：视频保持“待判定”表示未全量采尽；只有 Brain 原102绑定、同SHA来源、全部Activity/Step与终态 pass/verified、冻结采样上限、原101来源、公司政策和PG整批评论原生身份逐条核实后，103才可领取 collection 主 span 点名的精确ID。逐视频覆盖=配额，新增及历史计数相加、规范PG行摘要与Brain回执一致；历史行保留旧harvest_batch，未评分者才进入103。多视频、跨机同样核，缺回执或歧义拒绝。金诺已验收102d跨SHA历史批次只按 Issue `3004abdb-d5b8-448c-b35c-58203ef84e1d` 的固定run、绑定、VID和五条原件受控兼容，不扩大到其他旧批。软预算、失败102或任意“待判定”视频不能凭状态进入。原102g失败run、VID `7699489394579915663` 的三条固定UUID仍仅凭用户决定、旧执行停止、原生身份、v14冻结政策、无旧outbox及精确 `db_audit` 回执接纳，且只绑定单一103 run。所有路径不改原102结论或视频状态；产品、客户与等级规则仍来自本公司。
+2. 通过原队列事务领取本公司的已提交待评分评论。通常要求同来源批次、视频状态“评论已采”、资格 matched。正式102配额抽样是窄例外：视频保持“待判定”表示未全量采尽；只有 Brain 原102绑定、同SHA来源、全部Activity/Step与终态 pass/verified、冻结采样上限、原101来源、公司政策和PG整批评论原生身份逐条核实后，103才可领取 collection 主 span 点名的精确ID。逐视频覆盖=配额，新增及历史计数相加、规范PG行摘要与Brain回执一致；历史行保留旧harvest_batch，未评分者才进入103。多视频、跨机同样核；每 VID 还要将 qualification 与 collection 两个主 span 的本轮原生身份收据、旧判断 run 与 PG 冻结公司/租户/版本/政策逐项比对。旧判断 run 可保留原值，仅本轮资格 Activity/Step 全 pass 且身份核验通过才接纳；哈希仅是 102 官方验收收据，103 不重算私有文件。quota 与 footer/no_comments 混合时只接纳 quota 精确 ID。缺回执或歧义拒绝。金诺已验收102d跨SHA历史批次只按 Issue `3004abdb-d5b8-448c-b35c-58203ef84e1d` 的固定run、绑定、VID和五条原件受控兼容，不扩大到其他旧批。软预算、失败102或任意“待判定”视频不能凭状态进入。原102g失败run、VID `7699489394579915663` 的三条固定UUID仍仅凭用户决定、旧执行停止、原生身份、v14冻结政策、无旧outbox及精确 `db_audit` 回执接纳，且只绑定单一103 run。所有路径不改原102结论或视频状态；产品、客户与等级规则仍来自本公司。
 3. 复用正式judge-comment与持久化评分入口；当前金诺保留原2.0.0政策。A须有评论原文中的个人提问或冻结意向信号，并以视频标题原文片段核同主题。若冻结A标准含“求资料”或“明确求助”，合格视频标题明确涉及流程，评论明确请求给出流程，则按原政策的求助证据审查；泛问句或不索取流程不凭此升级。模型引用必须分别是评论、视频的原文片段；引用短片段时以完整原文作窄判据，不能要求引用片段重复整个请求。B可为相关讨论而无行动意向，C可为画像内寒暄，但B/C均须有评论原文引用与冻结画像片段相连；不相关需独立模型复核一致。调用模型的真实provider/model/回执与失败按原件记录。
 4. 同一评论的政策Commander最多调用两次。两份不同 response_id 且均符合原等级与原文证据，才在同一PG事务提交评分与 `judgment_config.policy_reviews[2]`。两份独立复核都确认缺 `personal_intent_evidence_missing` 或 `audience_or_topic_evidence_missing`，且原因和候选等级一致时，同一事务把评论置为 `已排除`，清空旧评分，保存安全原因与两份复核身份及哈希。首审视频引用重试也占两次额度；Jev、评分Commander、政策Commander原调用上限不增加。旧单审半提交评论仍须按固定ID、原run、公司冻结政策、维护Task和无配送意图受控重评；满足双审缺证据条件时清空旧A并排除。模型/HTTP/网络故障、身份复用、额度耗尽或两审分歧保持待分拣与原安全原因，不能猜分或把它们当作业务排除。
 5. 评分与排除分别计数、共同占本轮预算。评分行由独立读回器重新读取PG原评论、视频、冻结公司政策和双审证据；排除行独立读回终态、来源、无评分、双审缺证据摘要及无触达outbox。纯排除批次须有真实排除读回才可完成；真正空批不得伪称产出。两类读回均不发第三次政策模型调用；任何绑定或证据不符保持unknown。
