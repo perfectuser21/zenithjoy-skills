@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_lead_outreach
-version: 0.7.0
+version: 0.7.1
 description: "抖音线索触达 wf_run 陪跑说明：显式加载本次冻结业务Skill，保持原合同与安全交接边界。"
 ---
 
@@ -19,6 +19,8 @@ description: "抖音线索触达 wf_run 陪跑说明：显式加载本次冻结�
 `mode=workflow` 仅在当前业务 Skill 的正式完整CLI满足本轮范围时执行该流程；`mode=activity` 只处理指定冻结 Activity。仅接受原run已生成的leadgen-activity-v1请求及其私有broker工具；无法安全移交当前执行权或工具缺失时保留原失败及恢复条件并报告 BLOCKED，不能重跑整流程冒单步接手、使用 `leadgen-activity.sh` 冒 resume、直调裸queue/RPC函数、并发接管活动run或回退旧流程。旧Skill参考仅加载 reuse-map 明确适用动作，不把 reference_only 当可执行fallback。
 
 只处理104 canonical ready队列的已批准触达与写回。保持原prepared、一次发送、全池去重、账号及原生目标身份、批准正文、风险和ratecaps；暂停未解除不发送。已发送或结果未知先按原状态机读回，不重复POST、不释放prepared重发，不用裸private-message-send或旧outreach-tick代替正式入口。
+
+普通 `company_queue` 入口按公司资格队列领取；单条授权验收须显式 `LEADGEN_OUTREACH_MODE=exact` 并提供私有 `LEADGEN_OUTREACH_SCOPE_FILE`，冻结飞书记录、comment及来源。精确输入缺失或不符不得退回普通队列。
 
 交接只报告实际运行、逐活动/Step核验、清理及业务读回；代码退出0、合同可加载或 planned登记均不等于业务PASS。未知外部副作用先取合法读回，不能补造证据或重放动作。
 
