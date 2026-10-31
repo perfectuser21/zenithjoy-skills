@@ -2,7 +2,7 @@
 name: douyin-leadgen-104
 description: 执行已授权抖音获客104线索触达与写回，核对公司、发送账号、原生目标身份及批准话术。用于独立消费合格队列或代码异常接手；结果未知先读回，同一动作不重复发送。
 metadata:
-  version: 0.7.0
+  version: 0.7.1
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-104/references/reuse-map.json
@@ -19,7 +19,7 @@ metadata:
 本工作流的方法依赖真身见[Activity方法清单](references/activity-methods.json)。执行指定Activity时，按本轮冻结 `activities[].implementations` 的真实name/version/source/digest及execution_path加载对应独立Skill；不能把本工作流Skill当作每个Activity的同一份方法。
 
 - `douyin_lead_outreach.preflight` → `douyin-leadgen-activity-104-preflight@1.0.0`。
-- `douyin_lead_outreach.send_dm` → `douyin-leadgen-activity-104-send-dm@1.2.0`。
+- `douyin_lead_outreach.send_dm` → `douyin-leadgen-activity-104-send-dm@1.2.1`。
 - `douyin_lead_outreach.write_back` → `douyin-leadgen-activity-104-write-back@1.0.0`。
 - `douyin_lead_outreach.cleanup` → `douyin-leadgen-activity-104-cleanup@0.3.0`。
 
@@ -53,7 +53,7 @@ Activity方法、支持文件或合同改变时，更新对应方法版本、所
 6. 调用已发布发送原语执行一次。点击后核对同一会话、准确内容和新消息证据；已有旧消息不能冒充本轮新增。平台限制/验证码等按现场回报，不自动重试发送。
 7. 发送已证实时，使用原写回接口更新原订单并读回。发送结果未知、超时、进程死亡或写回失败时，先查原动作、会话和原行；不能凭退出码或换成Skill再发送一次。结果持续未知则保持未决，保留证据和恢复条件。
 
-`send_dm` 必须只领本run冻结的唯一飞书 record_id，并核对 comment_id、公司及来源；输入缺失或不符时拒发，不得从全公司队列挑排序首单。`out_delivery_result_verified` 是 Activity 硬探针；它要求原生前后 XML、发送账号、目标、正文及限制结果的原件核验。范围内空订单记 skipped，探针未知或失败不计发送通过；不宣称对方送达或已读。
+`send_dm` 普通 `company_queue` 模式沿本公司已核资格队列，仍须保留原排序、风控及批准话术；`LEADGEN_OUTREACH_MODE=exact` 模式仅领本run冻结的唯一飞书 record_id，并核对 comment_id、公司及来源。精确输入缺失或不符时拒发，不得从全公司队列挑排序首单。`out_delivery_result_verified` 是 Activity 硬探针；它要求原生前后 XML、发送账号、目标、正文及限制结果的原件核验。范围内空订单记 skipped，探针未知或失败不计发送通过；不宣称对方送达或已读。
 8. 到业务截止不再取新单，完成可安全核对的写回和收尾；关闭App、回安全桌面，释放自己的订单/设备锁与中央租约并回读。无法确认旧执行者停止时不强放锁，不启动竞争发送者。
 
 ## 原实现的数据外发与调用记录
