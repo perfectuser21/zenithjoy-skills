@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-103-mark-leads
 description: 交出原生身份核实的线索与配送状态。用于按评分保留线索、独立资格核对并配送或接手同一标记 Activity；不执行整个工作流。
 metadata:
-  version: 0.9.0
+  version: 0.10.0
   activity_ref: douyin_comment_scoring.mark_leads
-  activity_version: 3.7.0
+  activity_version: 3.8.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -12,7 +12,7 @@ metadata:
 
 # 交出原生身份核实的线索与配送状态
 
-仅执行 `douyin_comment_scoring.mark_leads`。业务合同版本为 `3.7.0`；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_comment_scoring.mark_leads`。业务合同版本为 `3.8.0`；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-103/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_comment_scoring.yaml)的 `mark_leads` 为准；本文件不覆盖该合同或公司政策。
 
@@ -29,7 +29,7 @@ metadata:
 
 ## 方法
 
-1. 只消费 `process_status=待分拣`、`relevance` 已写且通过双独立政策证据读回的真实评分评论。`process_status=已排除` 的评论即使原来带过A分也不得进入本活动，不得建 Lead、outbox 或104订单；纯排除批次空消费是合法结果。对可消费评分，从PG重新读取原评论、同来源视频、冻结公司政策及两份不同response_id的政策证据。普通视频须为“评论已采”；正式102配额抽样的视频保持“待判定”，仅当评分阶段已核 Brain pass/verified、冻结上限、公司政策、PG整批原生身份且本活动再次复核来源时可继续。金诺旧102d跨SHA只限固定历史桥；金诺旧102g隔离视频仍仅凭三条原生评论的单次接纳回执与本103 run精确匹配。软预算、其他失败102、任意待判定或隔离视频不放行。独立确定性复核后按原规则保留线索与重复出现次数：A须有个人提问或冻结意向信号，B/C可按对应相关讨论或画像内寒暄成立；三档均须有可逐字核验的评论证据，A的语境提问还须视频原文同主题证据。摘要、引证、公司或评分绑定不符，以及旧单份证据均保持unknown；本活动不补第三次政策模型调用，不把score-time pass自动当成标记通过。不修改评分标准或把全部评分行直接变成104ready。
+1. 只消费 `process_status=待分拣`、`relevance` 已写且通过双独立政策证据读回的真实评分评论。`process_status=已排除` 的评论即使原来带过A分也不得进入本活动，不得建 Lead、outbox 或104订单；纯排除批次空消费是合法结果。对可消费评分，从PG重新读取原评论、同来源视频、冻结公司政策及两份不同response_id的政策证据。普通视频须为“评论已采”；正式102配额抽样的视频保持“待判定”，仅当评分阶段已核 Brain pass/verified、冻结上限、公司政策、Brain collection 主 span 的逐视频精确ID/PG行摘要及本活动再次复核来源时可继续；历史行仍用原批次，但必须在本103已评分且双审通过。金诺旧102d跨SHA只限固定历史桥；金诺旧102g隔离视频仍仅凭三条原生评论的单次接纳回执与本103 run精确匹配。软预算、其他失败102、任意待判定或隔离视频不放行。独立确定性复核后按原规则保留线索与重复出现次数：A须有个人提问或冻结意向信号，B/C可按对应相关讨论或画像内寒暄成立；三档均须有可逐字核验的评论证据，A的语境提问还须视频原文同主题证据。摘要、引证、公司或评分绑定不符，以及旧单份证据均保持unknown；本活动不补第三次政策模型调用，不把score-time pass自动当成标记通过。不修改评分标准或把全部评分行直接变成104ready。
 2. 独立核对评论人的原生主页/稳定身份和冻结公司受众条件；证据不足或模型未验证保持unknown，昵称/相似账号不能放行。
 3. 复用原事务保存comment→lead关联和durable outbox，线索落实后再推进评论状态；异常回滚/未决须保留。
 4. 按原桥接协议先持久动作身份再单次外部创建。响应未知先按原marker/UID/完整字段读回，不重复POST、不修改受保护或已发送的历史行。

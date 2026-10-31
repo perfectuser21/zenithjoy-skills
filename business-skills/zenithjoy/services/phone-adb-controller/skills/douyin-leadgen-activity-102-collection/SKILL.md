@@ -4,9 +4,9 @@ description: 交出持久化且身份可验证的评论。用于从合格视频�
 changelog:
   - "0.2.1: 正式声明同VID已证零评论替代证据，正数与未知门禁保持"
 metadata:
-  version: 0.3.0
+  version: 0.4.0
   activity_ref: douyin_video_processing.collection
-  activity_version: 2.6.0
+  activity_version: 2.7.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -14,7 +14,7 @@ metadata:
 
 # 交出持久化且身份可验证的评论
 
-仅执行 `douyin_video_processing.collection`。业务合同版本为 `2.6.0`；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_video_processing.collection`。业务合同版本为 `2.7.0`；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-102/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_video_processing.yaml)的 `collection` 为准；本文件不覆盖该合同或公司政策。
 
@@ -37,7 +37,7 @@ metadata:
 2. 逐屏读取评论，保留正文、原显示时间地区、评论人稳定身份、主页/视频链接和原生关联证据；相关搜索词、仅昵称或缺身份的测速结果不当完整评论。
 3. 优先真实评论ID幂等；没有ID按原正式组合键去重并说明局限。每小批走原事务提交，之后独立读回完整UID、正文、URL、公司与来源。
 4. 原生头像/主页核验失败保持未决，不用相似账号或模型猜测补身份。别名URL只有同真实VID且正式读回接口验证时才可复用。
-5. 分别累计新增、历史核实、重复、实际覆盖；提交失败不计成功。达到本任务comment_limit是采样达标，不代表评论已采尽；保留部分成果和最后成功批次。
+5. 分别累计新增、历史核实、重复、实际覆盖；提交失败不计成功。达到本任务comment_limit是采样达标，不代表评论已采尽；保留部分成果和最后成功批次。正式完成时把逐视频精确 PG 评论 ID 集、规范身份摘要、停止原因及新增/历史计数绑定本 run/binding/SHA，作为 collection 主 span 的跨机回执；回执缺失、超过3MB或身份不符均拒绝宣称可交103。
 
 ## 代码配套与验收
 
