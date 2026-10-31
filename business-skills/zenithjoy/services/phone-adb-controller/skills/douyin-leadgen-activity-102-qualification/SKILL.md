@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-102-qualification
 description: 交出有证据的视频资格结论。用于核对目标视频、录音转写并按公司政策判断资格或接手同一 Activity；不执行整个工作流。
 metadata:
-  version: 0.3.0
+  version: 0.3.1
   activity_ref: douyin_video_processing.qualification
-  activity_version: 3.4.0
+  activity_version: 3.4.1
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -12,7 +12,7 @@ metadata:
 
 # 交出有证据的视频资格结论
 
-仅执行 `douyin_video_processing.qualification`。业务合同版本为 `3.4.0`；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_video_processing.qualification`。业务合同版本为 `3.4.1`；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-102/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_video_processing.yaml)的 `qualification` 为准；本文件不覆盖该合同或公司政策。
 
@@ -31,7 +31,7 @@ metadata:
 3. 播放控件仅从本次完整新树定位：本包、唯一“播放视频，按钮”或“暂停视频，按钮”、enabled/clickable及合法屏幕bounds；不依赖混淆resource-id，也不凭文案决定播放阶段，动作前后都须原生音轨核验。仅当本包UID/详情前台、唯一started音轨且静音原因只有streamVolume/portVolume、没有受管活录制时，按键紧前必须fresh核同包唯一stream/port候选；若已started则不按键；除下述明确通知暂态仅允许被动复读外，未知或外来轨道立即拒绝。允许一次已核正数音量→邻近非零档→原档刷新；UP已提交但读回未知/不符时只允许绝对恢复明确非零原档并读回，仍保失败，不起录；每次读回必须成立，恢复后fresh唯一started且muted none才启动录制。未知/外UID/共享UID/解析失败/多音轨不能借恢复放行。录制停止后另存退出后原生恢复证据，持续失败保pending，不重启或kill未知进程。
 4. SDK/模式未知、require-audio缺失、音轨不符或捕获静音属于捕获/合同能力缺口，不以UI点击、音量循环或Skill重试放行。倍速设置、录制启动或停止失败时保留最早stderr、exit code、阶段和已有证据。proof中media_volume=null只表示未记录，不能据此推断音量0，或把native音轨首错改写成音量失败。
 5. 核对真实采集媒体时长、实际播放速度、提取音频和转写证据，只有达到当前正式合同才调用原公司资格政策。缺真实音频/转写记unknown，不伪造合格。playback_dup被App opt-out、缺音轨或录音静音只证明捕获未知，保持pending，不能借此把原视频内容判rejected；不使用标题或旧ASR兜底。
-6. 缓存结论仅在同视频身份、同公司和政策版本均相符时复用。逐VID交付matched/rejected/unknown和证据；仅合格视频交给评论采集。
+6. 缓存结论仅在同视频原生身份、同公司和政策版本均相符时复用。若本轮核验旧 matched 结论，原 PG judgment_config.run_id 保持旧批次；本轮资格主 Activity span 发布同一 run/binding/SHA、精确 VID、cached/fresh、旧判断 run 和本轮原生身份核验哈希。该哈希是 102 对私有原件的正式验收收据，103 跨机只核两份官方 span 与 PG 冻结记录，不声称重算本机私有文件。资格 Activity/Step 任一 fail/partial 都不能供采样准入。逐 VID 交付 matched/rejected/unknown 和证据；仅合格视频交给评论采集。
 
 ## 显式v2领取边界
 

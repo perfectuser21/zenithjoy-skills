@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_comment_scoring
-version: 0.12.0
+version: 0.12.1
 description: "抖音评论评分 wf_run 陪跑说明：显式加载本次冻结业务Skill，保持原合同与安全交接边界。"
 ---
 
@@ -12,7 +12,7 @@ description: "抖音评论评分 wf_run 陪跑说明：显式加载本次冻结�
 
 先从本run已验证的冻结部署清单读取工作流业务Skill `runtime/skills/douyin-leadgen-103/SKILL.md` 及其 `references/activity-methods.json`、`runtime-calls.json`、`reuse-map.json`，核对本run源码和每文件SHA。再从 `run-definition.json` 对应Activity的 `implementations` 选择确切 `kind: skill`、name/version/source/digest，并按真实 `execution_path` 读取独立Activity Skill及其支持文件。Workflow清单必须与各Activity冻结绑定完全一致；不能再把整流程业务Skill路径当成每个Activity方法。最新部署副本或本机Codex链接不能代替本run冻结字节，缺绑定或原件即阻断。
 
-执行前确认 workflow_key 为 `douyin_comment_scoring`，实际公司、line、profile、serial、run_id、attempt、source_run（适用时）、执行权、截止时间及锁/租约均与冻结事实一致。正式102配额抽样只在Brain原绑定、pass/verified、冻结上限与公司、Brain collection 主 span 点名的逐视频精确评论ID和PG规范行摘要核实后接纳；未全采视频仍保“待判定”，软预算与失败102仍隔离。金诺102d跨SHA仅限固定历史桥；金诺102g失败来源仍须用户决定、原生终止证明与PG审计回执，且只绑定单一103 run。保持原 Activity Commander、定义ACK、原件及PG独立读回；不改现场代码、不换账号、不扩大预算或输入范围。
+执行前确认 workflow_key 为 `douyin_comment_scoring`，实际公司、line、profile、serial、run_id、attempt、source_run（适用时）、执行权、截止时间及锁/租约均与冻结事实一致。正式102配额抽样只在Brain原绑定、pass/verified、冻结上限与公司、Brain qualification/collection 两主 span 同绑定同 SHA 逐 VID 原生身份，以及 collection 点名的精确评论ID和PG规范行摘要核实后接纳；未全采视频仍保“待判定”，软预算与失败102仍隔离。金诺102d跨SHA仅限固定历史桥；金诺102g失败来源仍须用户决定、原生终止证明与PG审计回执，且只绑定单一103 run。保持原 Activity Commander、定义ACK、原件及PG独立读回；不改现场代码、不换账号、不扩大预算或输入范围。
 
 `mode=workflow` 仅在当前业务 Skill 的正式完整CLI满足本轮范围时执行该流程；`mode=activity` 只处理指定冻结 Activity。仅接受原run已生成的leadgen-activity-v1请求及其私有broker工具；无法安全移交当前执行权或工具缺失时保留原失败及恢复条件并报告 BLOCKED，不能重跑整流程冒单步接手、使用 `leadgen-activity.sh` 冒 resume、直调裸queue/RPC函数、并发接管活动run或回退旧流程。旧Skill参考仅加载 reuse-map 明确适用动作，不把 reference_only 当可执行fallback。
 

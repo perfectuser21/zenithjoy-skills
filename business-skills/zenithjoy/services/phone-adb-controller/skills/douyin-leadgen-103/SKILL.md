@@ -2,7 +2,7 @@
 name: douyin-leadgen-103
 description: 执行抖音获客103评论评分与线索标记，独立消费已提交评论并使用公司原评分政策。用于Agent执行、调用成熟评分代码及异常接手；不占手机、不等待整批102结束、不发送私信。
 metadata:
-  version: 0.12.0
+  version: 0.12.1
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-103/references/reuse-map.json
@@ -22,8 +22,8 @@ metadata:
 
 本工作流的方法依赖真身见[Activity方法清单](references/activity-methods.json)。执行指定Activity时，按本轮冻结 `activities[].implementations` 的真实name/version/source/digest及execution_path加载对应独立Skill；不能把本工作流Skill当作每个Activity的同一份方法。
 
-- `douyin_comment_scoring.scoring` → `douyin-leadgen-activity-103-scoring@0.10.0`。
-- `douyin_comment_scoring.mark_leads` → `douyin-leadgen-activity-103-mark-leads@0.10.0`。
+- `douyin_comment_scoring.scoring` → `douyin-leadgen-activity-103-scoring@0.10.1`。
+- `douyin_comment_scoring.mark_leads` → `douyin-leadgen-activity-103-mark-leads@0.10.1`。
 
 Activity方法、支持文件或合同改变时，更新对应方法版本、所有消费者清单、本工作流Skill与Commander Skill版本；纯代码内部兼容优化用明确兼容评估绑定前后代码集合。先跑 `npm run leadgen:methods:check`，再做相应独立验收。方法配套完成不表示单Activity执行权交接已经接通。
 
@@ -48,7 +48,7 @@ Activity方法、支持文件或合同改变时，更新对应方法版本、所
 ## 执行
 
 1. 登记/认领任务，读取并固定当前已发布实现、原公司政策及本 Skill 校验值。核对公司与业务线唯一映射、产品/客户资料及输入范围；凭据按 `credentials` 从1Password及已核同步镜像加载，不写运行正文。
-2. 使用现有队列事务和有效租约领取已成功提交、属于本公司的待评分评论。无需等待102整轮结束；不占ADB锁、不操作手机，不消费未提交的采集缓存。正式102已验收配额抽样的评论可在视频仍“待判定”时进入103，但先核同SHA或金诺102d固定历史桥、Brain完整 pass/verified、冻结公司政策和PG整批原生身份；软预算或失败102仍隔离。金诺102g失败来源仍按原受控路径：从正式 `leadgen-run.sh` 显式设置原 `LEADGEN_SOURCE_RUN`、用户决定和维护Task及最多3条预算；Runner核旧执行停止、三份原生身份、v14及无旧outbox，写精确 `db_audit` 回执并独立读回，只供绑定的单一103 run领取。原102失败与视频隔离不变；不得直接调用裸队列入口。
+2. 使用现有队列事务和有效租约领取已成功提交、属于本公司的待评分评论。无需等待102整轮结束；不占ADB锁、不操作手机，不消费未提交的采集缓存。正式102已验收配额抽样的评论可在视频仍“待判定”时进入103，但先核同SHA或金诺102d固定历史桥、Brain完整 pass/verified、资格与采集两主 span 同绑定同 SHA 逐 VID 身份收据、冻结公司/租户/版本/政策和PG精确评论原生身份；软预算或失败102仍隔离。金诺102g失败来源仍按原受控路径：从正式 `leadgen-run.sh` 显式设置原 `LEADGEN_SOURCE_RUN`、用户决定和维护Task及最多3条预算；Runner核旧执行停止、三份原生身份、v14及无旧outbox，写精确 `db_audit` 回执并独立读回，只供绑定的单一103 run领取。原102失败与视频隔离不变；不得直接调用裸队列入口。
 3. 优先复用已验证的原 `judge-comment`/评分及 `mark_leads` 实现。当前金诺政策为原2.0.0口径；具体版本从任务与公司冻结配置读回，不跨公司复制规则。评分涉及语义模型，不因外层代码成熟就宣称模型调用为零。
 4. 评分只在同一事务内取得两份独立、同等级、不同响应身份且原文可核的政策证据后提交；政策模型总计最多两次，视频引用重试也占额度。两次独立复核一致缺个人意向或受众/话题证据时，自动置评论为 `已排除`，清除旧评分并留安全原因和双审摘要；排除与评分分列计数、共用预算、分别从PG独立读回。模型/HTTP/网络故障、双审分歧、身份复用或其他unknown保留待分拣并可重试，不以人工决定替代自动处理，不猜分填上，也不制造合格线索。
 5. 复用现有线索标记及PG→原飞书桥接，只消费独立核验通过的评分行；已排除评论绝不建Lead、outbox或104订单，纯排除批次可空消费。对真实线索保留评论原生身份来源、资格和事务outbox。分别报告PG线索创建、外部创建/确认、unknown/held；不把PG提交直接当成飞书交付，也不把全部评分行当成可触达行。
