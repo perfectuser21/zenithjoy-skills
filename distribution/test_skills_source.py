@@ -324,6 +324,12 @@ class CommanderRecoveryContractTests(unittest.TestCase):
                 actual = re.search(r"^  activity_version: (\S+)$", path.read_text(), re.M)[1]
                 self.assertEqual(actual, expected[path.parent.name.removeprefix("douyin-leadgen-activity-")])
 
+    def test_104_send_method_requires_frozen_exact_order_scope(self):
+        path = self.base / "skills/douyin-leadgen-activity-104-send-dm/SKILL.md"
+        body = path.read_text()
+        for required in ("飞书 record_id", "comment_id", "公司", "来源", "不领取旁单", "未匹配则拒发"):
+            self.assertIn(required, body)
+
     def test_method_versions_and_all_workflow_dependency_rows_are_upgraded_together(self):
         import re
         activity, workflows, wrappers, commander = self.skills()
