@@ -33,7 +33,8 @@
       "qualification/collection/intake/sampling-readback真实原件与实际failures",
       "PG leadgen_comments完整UID/body/URL/recipient_evidence同事务提交及history消费",
       "新count inserted/coverage/history_verified/身份rescan/avatar recovery分别记录",
-      "cleanup自己视频lease+phone lock释放；partial/failed原件不覆写"
+      "cleanup自己视频lease+phone lock释放；partial/failed原件不覆写",
+      "显式采样的逐视频精确PG评论ID集与规范行摘要进入Brain collection主span，绑定run/binding/SHA，供跨机103读回"
     ],
     "source_difference": "6dc会被合法前序failed sampling terminal阻塞；cf9最窄修复在完整旧frozen/binding/scope验证后忽略failed，不兑现采样。6dc现场遇此真实阻点不可假称已修或绕intake。",
     "mmv_device_runtime": {

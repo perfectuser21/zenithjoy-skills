@@ -17,7 +17,7 @@
       "$RUN_TAG"
     ],
     "command_template": "env -u LEADGEN_SOURCE_RUN -u LEADGEN_COMMENT_LIMIT LEADGEN_LIMIT=\"$COMMENT_BATCH_LIMIT\" LEADGEN_SEND=0 WF_RUN_MAX_SECONDS=\"$RUN_SECONDS\" /bin/zsh \"$MMV_RUNNER\" douyin_comment_scoring mmv-scoring none \"$LINE\" \"$RUN_TAG\"",
-    "batch_scope": "未限定批次时显式移除继承SOURCE_RUN；任务明确限定则另设真实102tag。普通来源须视频评论已采；正式102配额抽样可在Brain pass/verified、同SHA或金诺102d固定历史桥、冻结公司政策与PG整批原生身份核验后消费，视频仍待判定。软预算和失败102默认不可领；金诺102g仍仅凭审计接纳回执绑定本run后显式限定原批次",
+    "batch_scope": "未限定批次时显式移除继承SOURCE_RUN；任务明确限定则另设真实102tag。普通来源须视频评论已采；正式102配额抽样可在Brain pass/verified、同SHA或金诺102d固定历史桥、冻结公司政策与Brain collection 主 span 逐视频精确ID/规范PG行摘要与原生身份核验后消费；历史行保留旧批次且须本103新评分，视频仍待判定。软预算和失败102默认不可领；金诺102g仍仅凭审计接纳回执绑定本run后显式限定原批次",
     "queue_semantics": [
       "score按line+待分拣+relevance NULL，事务FOR UPDATE SKIP LOCKED逐条真实模型判定/保存",
       "mark_leads按line+待分拣+relevance非NULL，同事务line advisory锁/原PGlead upsert/recipient独立资格/outbox/已分拣",
