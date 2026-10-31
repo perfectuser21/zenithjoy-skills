@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-103-scoring
 description: 交出按公司原政策持久化的评论评分。用于独立消费已提交评论评分或接手同一评分 Activity；不执行整个工作流。
 metadata:
-  version: 0.7.0
+  version: 0.8.0
   activity_ref: douyin_comment_scoring.scoring
-  activity_version: 2.4.0
+  activity_version: 2.5.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -12,7 +12,7 @@ metadata:
 
 # 交出按公司原政策持久化的评论评分
 
-仅执行 `douyin_comment_scoring.scoring`。业务合同版本为 `2.4.0`；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_comment_scoring.scoring`。业务合同版本为 `2.5.0`；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-103/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_comment_scoring.yaml)的 `scoring` 为准；本文件不覆盖该合同或公司政策。
 
@@ -20,7 +20,7 @@ metadata:
 
 - 输入 `Comment`：`dedup_key`、`body`、`nickname`、`douyin_id`、`profile_url`、`process_status`。
 - 输入 `Video`：`title`、`transcript`。
-- 输出 `Comment`：`process_status`、`relevance`、`intent_grade`、`promoted`。
+- 输出 `Comment`：评分通过时交出 `relevance`、`intent_grade` 及双审证据；两审一致缺证据时交出独立 `process_status=已排除`、安全原因及双审摘要，评分字段为空。
 
 公司、task/run、截止、源码及执行权从本次正式绑定读取。缺字段保持缺失并报告，不从示例或其他租户补。
 
@@ -29,9 +29,9 @@ metadata:
 1. 在MMV执行，不取手机租约、不操作ADB，也不等待整批102结束。任务限定来源批次时严格保留该范围；无有效评论就empty，不拿历史bench凑验收。
 2. 通过原队列事务领取本公司的已提交待评分评论，通常只接受同来源批次、视频状态“评论已采”、资格 matched 的PG行。唯一例外是金诺原102g失败run、VID `7699489394579915663` 的三条固定UUID：用户决定与维护Task、旧执行停止、三份原生身份、v14冻结政策和无旧outbox经独立核验后，`db_audit` 产生一次精确接纳回执；只允许回执绑定的原source_run与单一103 run领取。回执缺失、变更或评分run不符时继续隔离，不修改旧视频状态或旧102结果。产品/目标客户和等级规则仍来自本公司。
 3. 复用正式judge-comment与持久化评分入口；当前金诺保留原2.0.0政策。A须有评论原文中的个人提问或冻结意向信号，并以视频标题原文片段核同主题；B可为相关讨论而无行动意向，C可为画像内寒暄，但B/C均须有评论原文引用与冻结画像片段相连；不相关需独立模型复核一致。调用模型的真实provider/model/回执与失败按原件记录。
-4. 同一评论的政策Commander最多调用两次，必须得到两份不同response_id且均符合原等级与原文证据的结论，才在同一PG事务提交评分与 `judgment_config.policy_reviews[2]`；首审视频引用重试也占这两次额度，额度耗尽而未取得双份有效结论则整笔回滚。总上限仍为Jev 1次、评分Commander 2次、政策Commander 2次。旧单审半提交评论仅凭固定ID、原102/103 run、同公司冻结政策、维护Task在位且无配送意图受控重评；新双审失败则保留旧行且标记关口继续阻断。任一证据不合格、模型异常或两次结论不一致，评分字段保持空、评论留待分拣并交安全 `policy_review_reason`，不猜分、不伪造合格或C级。
-5. 评分后由独立读回器重新读取PG原评论、视频、冻结公司政策与两份有模型身份、逐字引证和摘要的证据，确定性核验两份均仍成立；不发第三次政策模型调用。证据缺失、被改或绑定不符时保持unknown，不能把score-time pass自认作独立验收。
-6. 本活动交出评分结果，不直接发私信，也不把评分成功等同于线索已配送。
+4. 同一评论的政策Commander最多调用两次。两份不同 response_id 且均符合原等级与原文证据，才在同一PG事务提交评分与 `judgment_config.policy_reviews[2]`。两份独立复核都确认缺 `personal_intent_evidence_missing` 或 `audience_or_topic_evidence_missing`，且原因和候选等级一致时，同一事务把评论置为 `已排除`，清空旧评分，保存安全原因与两份复核身份及哈希。首审视频引用重试也占两次额度；Jev、评分Commander、政策Commander原调用上限不增加。旧单审半提交评论仍须按固定ID、原run、公司冻结政策、维护Task和无配送意图受控重评；满足双审缺证据条件时清空旧A并排除。模型/HTTP/网络故障、身份复用、额度耗尽或两审分歧保持待分拣与原安全原因，不能猜分或把它们当作业务排除。
+5. 评分与排除分别计数、共同占本轮预算。评分行由独立读回器重新读取PG原评论、视频、冻结公司政策和双审证据；排除行独立读回终态、来源、无评分、双审缺证据摘要及无触达outbox。纯排除批次须有真实排除读回才可完成；真正空批不得伪称产出。两类读回均不发第三次政策模型调用；任何绑定或证据不符保持unknown。
+6. 本活动只交评分或排除结果，不建线索、outbox，也不发送私信；评分成功仍须由后续标记活动独立验收。
 
 ## 代码配套与验收
 
