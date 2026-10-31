@@ -672,7 +672,7 @@
         {
           "path": "services/phone-adb-controller/commander/skills/wf-douyin_comment_scoring/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/wf-douyin_comment_scoring/SKILL.md",
-          "sha256": "8c3c472b088b8ec96ad0df4679bc9c0252e204ba73fe29ef9bc879563be1d967",
+          "sha256": "4fe0bd666a2051ff321d8e4a50976cf994e4f8b5578a0465ec3f782805191dd9",
           "mode": "100644"
         },
         {
@@ -756,13 +756,13 @@
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-103/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-103/SKILL.md",
-          "sha256": "7094a463df70cfefbdd02ec4f80557958965ea229ceea903007f4d3c6160b43f",
+          "sha256": "c6253fd2067700bfd913582901030a45ce67de3909328df354a897437b81bc5c",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-103/references/activity-methods.json",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-103/references/activity-methods.json",
-          "sha256": "64a36b3779b763bfa083322d9a57db0e4f52924c685ac45056e25b2dab92a663",
+          "sha256": "a2cab5066f6bebd19d80f959b16d9af2768291cda9fce9f1cd2ee3d1a11d2f90",
           "mode": "100644"
         },
         {
@@ -774,7 +774,7 @@
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-103/references/runtime-calls.json",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-103/references/runtime-calls.json",
-          "sha256": "188761391cee46640da871523ec8596e50b00260823644254b1424ef7c7b1a54",
+          "sha256": "743e2d0ee74c6d0b5280351d8187f5b08a3fc26f2a5ae634cd435295f0232b46",
           "mode": "100644"
         },
         {
@@ -840,7 +840,7 @@
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-103-mark-leads/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-103-mark-leads/SKILL.md",
-          "sha256": "211a73b7d73087b4e5fbc90796d0116ab7bc399a63d835fd106056301d3bde74",
+          "sha256": "885f21f34142d0873dbff3b90498ecc6fbce0a52c6e05e49fada14bca4b6584f",
           "mode": "100644"
         },
         {
