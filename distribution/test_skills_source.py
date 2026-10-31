@@ -316,7 +316,7 @@ class CommanderRecoveryContractTests(unittest.TestCase):
         expected = {"101-collect-videos": "5.1.0", "102-preflight": "2.2.0",
                     "102-dedup": "3.2.0", "102-qualification": "3.4.0",
                     "102-collection": "2.6.0", "102-cleanup": "2.2.0",
-                    "103-scoring": "2.5.0", "103-mark-leads": "3.6.0",
+                    "103-scoring": "2.6.0", "103-mark-leads": "3.6.0",
                     "104-preflight": "5.0.0", "104-send-dm": "6.0.1",
                     "104-write-back": "4.0.0", "104-cleanup": "3.2.0"}
         for path in activity:
@@ -338,10 +338,10 @@ class CommanderRecoveryContractTests(unittest.TestCase):
         def version(path):
             return re.search(r"^  ?version: (\S+)$|^version: (\S+)$", path.read_text(), re.M).group(0).split(": ")[1]
         for path in activity:
-            expected = "0.8.1" if path.parent.name == "douyin-leadgen-activity-103-scoring" else "0.8.0" if path.parent.name == "douyin-leadgen-activity-103-mark-leads" else "0.4.0" if path.parent.name == "douyin-leadgen-activity-101-collect-videos" else "1.2.1" if path.parent.name == "douyin-leadgen-activity-104-send-dm" else "1.0.0" if path.parent.name in {"douyin-leadgen-activity-104-preflight", "douyin-leadgen-activity-104-write-back"} else "0.3.0"
+            expected = "0.9.0" if path.parent.name == "douyin-leadgen-activity-103-scoring" else "0.8.0" if path.parent.name == "douyin-leadgen-activity-103-mark-leads" else "0.4.0" if path.parent.name == "douyin-leadgen-activity-101-collect-videos" else "1.2.1" if path.parent.name == "douyin-leadgen-activity-104-send-dm" else "1.0.0" if path.parent.name in {"douyin-leadgen-activity-104-preflight", "douyin-leadgen-activity-104-write-back"} else "0.3.0"
             self.assertEqual(version(path), expected, path.parent.name)
         for path in workflows + wrappers:
-            expected = "0.10.1" if path.parent.name in {"douyin-leadgen-103", "wf-douyin_comment_scoring"} else "0.7.1" if path.parent.name in {"douyin-leadgen-104", "wf-douyin_lead_outreach"} else "0.5.0" if path.parent.name in {"douyin-leadgen-101", "wf-douyin_video_discovery"} else "0.4.0"
+            expected = "0.11.0" if path.parent.name in {"douyin-leadgen-103", "wf-douyin_comment_scoring"} else "0.7.1" if path.parent.name in {"douyin-leadgen-104", "wf-douyin_lead_outreach"} else "0.5.0" if path.parent.name in {"douyin-leadgen-101", "wf-douyin_video_discovery"} else "0.4.0"
             self.assertEqual(version(path), expected, path.parent.name)
         self.assertEqual(version(commander), "2.1.0")
         versions = {path.parent.name: version(path) for path in activity + workflows + wrappers + [commander]}
