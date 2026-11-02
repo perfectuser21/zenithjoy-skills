@@ -1,3 +1,8 @@
+## [2026-11-02] engine-worktree / Cecelia 技能分发 — updated
+**症状**: Engine、Quality 包退役后，worktree 技能仍指向旧脚本，技能恢复会重新创建旧包目录并发出含失效命令的旧 dev 正文。
+**根因**: 技能命令、guard 说明和 Cecelia 分发 profile 没有随实际执行入口与当前中央 dev 合同归位。
+**修改**（Brain 任务 b1df0724）: engine-worktree 16.1.1 改用 scripts/dev/worktree/worktree-manage.sh，按实际 main-repo-write/branch-protect 说明安全兜底。Cecelia 仅把当前中央 dev/SKILL.md 物化到 .claude/skills/dev/SKILL.md，8 份旧分发记录转为只读 retired_files 并保留源字节摘要；当前 runtime_files 移除旧 Engine/Quality 路径，按 Cecelia 候选实存归位到 scripts/dev/hooks、lib、worktree 与 Brain codex-bridge，加上原 Workflows 共 13 项，其他 profile 不变。真实 bootstrap 新工作区恢复测试确认不生成 Engine/Quality、正文为当前 coding_workflow 合同；分发回归 33/33 通过，未执行外部模型评测、未发布或同步生产登记。
+
 ## [2026-10-24] collection请求归还 — updated
 **症状**: Code已产出但独立验收失败后，原停止规则拒绝只读接手和本人清场。
 **根因**: 请求确定归还与业务成功、OS全子树停止未分层，正式方法缺精确受限例外。

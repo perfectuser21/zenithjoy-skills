@@ -62,6 +62,47 @@ class DistributionTests(unittest.TestCase):
         self.assertEqual(self.module.verify(self.workspace, self.source), 1)
         self.assertEqual(self.module.install(self.workspace, self.source), 1)
 
+    def test_cecelia_bootstrap_restores_dev_without_reviving_retired_packages(self):
+        # Exercise the real catalog, bootstrap and pinned loader in a fresh
+        # business workspace. The fixture commit pins candidate bytes without
+        # requiring the working source repository to be committed first.
+        root = Path(__file__).resolve().parents[1]
+        self.catalog = json.loads((root / "distribution/catalog.json").read_text())
+        entries = self.catalog["profiles"]["cecelia"]["files"]
+        for entry in entries:
+            target = self.source / entry["source"]
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes((root / entry["source"]).read_bytes())
+        self.write_catalog()
+        self.commit_source()
+        lock = json.loads((self.workspace / ".skills-source.json").read_text())
+        lock["profile"] = "cecelia"
+        (self.workspace / ".skills-source.json").write_text(json.dumps(lock))
+        subprocess.run(["git", "init", "-q", str(self.workspace)], check=True)
+        subprocess.run(["git", "-C", str(self.workspace), "config", "core.hooksPath", "/dev/null"], check=True)
+        subprocess.run(["git", "-C", str(self.workspace), "add", ".skills-source.json"], check=True)
+        subprocess.run(["git", "-C", str(self.workspace), "-c", "user.name=Fixture", "-c",
+                        "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false",
+                        "commit", "-qm", "pinned Cecelia source"], check=True)
+        bootstrap = Path(__file__).with_name("bootstrap.py")
+        for command in ["install", "verify"]:
+            result = subprocess.run([sys.executable, str(bootstrap), command,
+                                     "--workspace", str(self.workspace), "--source", str(self.source)],
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse((self.workspace / "packages/engine").exists())
+        self.assertFalse((self.workspace / "packages/quality").exists())
+        restored = self.workspace / ".claude/skills/dev/SKILL.md"
+        self.assertEqual(restored.read_bytes(), (root / "dev/SKILL.md").read_bytes())
+        self.assertIn("coding_workflow", restored.read_text())
+        self.assertNotIn("packages/engine/", restored.read_text())
+        self.assertFalse((restored.parent / "steps").exists())
+        read = subprocess.run([sys.executable, str(bootstrap), "cat", "--workspace", str(self.workspace),
+                               "--source", str(self.source), "--path", ".claude/skills/dev/SKILL.md"],
+                              capture_output=True)
+        self.assertEqual(read.returncode, 0, read.stderr)
+        self.assertEqual(read.stdout, (root / "dev/SKILL.md").read_bytes())
+
     def test_local_edit_is_never_overwritten(self):
         self.module.install(self.workspace, self.source)
         restored = self.workspace / self.entry["path"]
@@ -277,6 +318,13 @@ class CatalogTests(unittest.TestCase):
                 sources.add(path)
             self.assertEqual({e["path"] for e in profile["entrypoints"]},
                              {path for path in files if path.endswith("/SKILL.md")})
+            for entry in profile.get("retired_files", []):
+                self.assertEqual(entry["status"], "retired-business-distribution")
+                self.assertNotIn(entry["path"], files, "Retired outputs must not be restored")
+                path = (root / entry["source"]).resolve()
+                self.assertTrue(path.is_relative_to(root))
+                self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), entry["sha256"], entry["source"])
+                sources.add(path)
         for path in (root / "business-skills").rglob("*"):
             if path.is_file():
                 self.assertIn(path.resolve(), sources, str(path))

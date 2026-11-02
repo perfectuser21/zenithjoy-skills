@@ -15,3 +15,5 @@ python3 scripts/skills-source.py verify
 `retired-in-shared-catalog` 表示该名称已在共享技能目录退役。迁移只保存业务兼容版本，不重新注册、启用或自动安装为全局技能。现有 `_archive`、有效根技能与业务来源版本的合并应分别评审。
 
 更新时先改本仓对应中心文件与清单校验和，验证后提交；再更新业务仓锁定的 commit。CI 用 `SKILLS_SOURCE_SSH_KEY` 只读 deploy key 拉取固定版本，不随 main 自动更新。禁止在业务生成文件上维护正文。
+
+`retired_files` 精确记录已停止向业务仓物化的历史文件及其来源摘要；这些源文件保留并继续校验字节，不进入 `files` 安装清单。Cecelia 的 `/dev` 正文还原到 `.claude/skills/dev/SKILL.md`，使用当前中央 `dev/SKILL.md`，不再恢复旧 Engine/Quality 目录。

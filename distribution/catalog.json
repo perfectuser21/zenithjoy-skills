@@ -1048,31 +1048,10 @@
       "origin_revision": "ee143abb5d0994721d7c3963fc93e91b94a0b013",
       "entrypoints": [
         {
-          "path": "packages/engine/skills/dev/SKILL.md",
-          "source": "business-skills/cecelia/packages/engine/skills/dev/SKILL.md",
+          "path": ".claude/skills/dev/SKILL.md",
+          "source": "dev/SKILL.md",
           "name": "dev",
-          "execution_directory": "packages/engine/skills/dev",
-          "status": "business-compatibility"
-        },
-        {
-          "path": "packages/quality/skills/assurance/SKILL.md",
-          "source": "business-skills/cecelia/packages/quality/skills/assurance/SKILL.md",
-          "name": "assurance",
-          "execution_directory": "packages/quality/skills/assurance",
-          "status": "retired-in-shared-catalog"
-        },
-        {
-          "path": "packages/quality/skills/audit/SKILL.md",
-          "source": "business-skills/cecelia/packages/quality/skills/audit/SKILL.md",
-          "name": "audit",
-          "execution_directory": "packages/quality/skills/audit",
-          "status": "retired-in-shared-catalog"
-        },
-        {
-          "path": "packages/quality/skills/qa/SKILL.md",
-          "source": "business-skills/cecelia/packages/quality/skills/qa/SKILL.md",
-          "name": "qa",
-          "execution_directory": "packages/quality/skills/qa",
+          "execution_directory": ".claude/skills/dev",
           "status": "business-compatibility"
         },
         {
@@ -1330,51 +1309,9 @@
       ],
       "files": [
         {
-          "path": "packages/engine/skills/dev/SKILL.md",
-          "source": "business-skills/cecelia/packages/engine/skills/dev/SKILL.md",
-          "sha256": "199ef407201a2ca479d2c52d33855a527d5762bbf0ca95ba3afd3c58b8b42733",
-          "mode": "100644"
-        },
-        {
-          "path": "packages/engine/skills/dev/steps/autonomous-research-proxy.md",
-          "source": "dev-workspace/skill-snapshot/steps/autonomous-research-proxy.md",
-          "sha256": "fdcf2911ede3fc26e4620432ed658d77f43f0dfddc41ac29c992bb02fbd95f65",
-          "mode": "100644"
-        },
-        {
-          "path": "packages/engine/skills/dev/steps/light-evaluator.md",
-          "source": "business-skills/cecelia/packages/engine/skills/dev/steps/light-evaluator.md",
-          "sha256": "cf14996223fc2158d4f09a4602f3abe99e9b0969e796203ae0571bc8cb15fafd",
-          "mode": "100644"
-        },
-        {
-          "path": "packages/quality/skills/assurance/SKILL.md",
-          "source": "business-skills/cecelia/packages/quality/skills/assurance/SKILL.md",
-          "sha256": "6a926139b2d7a5aa10355269e0d557564a2bcdd0a95baac376a98d4c80fbe678",
-          "mode": "100644"
-        },
-        {
-          "path": "packages/quality/skills/audit/SKILL.md",
-          "source": "business-skills/cecelia/packages/quality/skills/audit/SKILL.md",
-          "sha256": "1f816b7a8f3fed779313ed364fbe878202eeba2f52678b7b1d0484ade5947bdc",
-          "mode": "100644"
-        },
-        {
-          "path": "packages/quality/skills/qa/SKILL.md",
-          "source": "business-skills/cecelia/packages/quality/skills/qa/SKILL.md",
-          "sha256": "1190553bf786774f3f85a5bb2515c30c73fa7ab05fcd8a241e1d120a28b318ec",
-          "mode": "100644"
-        },
-        {
-          "path": "packages/quality/skills/qa/knowledge/criteria.md",
-          "source": "business-skills/cecelia/packages/quality/skills/qa/knowledge/criteria.md",
-          "sha256": "c34da236e6db0cfb4924b782b84bff044a8ae894a9108323fa537c2789aefe90",
-          "mode": "100644"
-        },
-        {
-          "path": "packages/quality/skills/qa/knowledge/testing-matrix.md",
-          "source": "business-skills/cecelia/packages/quality/skills/qa/knowledge/testing-matrix.md",
-          "sha256": "abeb6f10cc9a4286aada6b9bad1bbccea996a3dfdf057f9c00f0982e16e24e1a",
+          "path": ".claude/skills/dev/SKILL.md",
+          "source": "dev/SKILL.md",
+          "sha256": "26ac80b22f0ae6fa4d90cfc394528aafc45a62ab459a81590c98abbc863c9e2b",
           "mode": "100644"
         },
         {
@@ -1607,25 +1544,77 @@
         }
       ],
       "runtime_files": [
-        "packages/engine/skills/dev/scripts/__tests__/add-feature.test.mjs",
-        "packages/engine/skills/dev/scripts/add-feature.js",
-        "packages/engine/skills/dev/scripts/brain-auth.js",
-        "packages/engine/skills/dev/scripts/callback-brain-task.sh",
-        "packages/engine/skills/dev/scripts/check-cleanup.sh",
-        "packages/engine/skills/dev/scripts/check.sh",
-        "packages/engine/skills/dev/scripts/cleanup.sh",
-        "packages/engine/skills/dev/scripts/enrich-decide.sh",
-        "packages/engine/skills/dev/scripts/fetch-task-prd.sh",
-        "packages/engine/skills/dev/scripts/fire-learnings-event.sh",
-        "packages/engine/skills/dev/scripts/init-journey.js",
-        "packages/engine/skills/dev/scripts/parse-dev-args.sh",
-        "packages/engine/skills/dev/scripts/status.js",
-        "packages/engine/skills/dev/scripts/thicken.js",
-        "packages/engine/skills/dev/scripts/worktree-manage.sh",
-        "packages/quality/skills/audit/manifest.yml",
+        "packages/brain/scripts/codex-bridge/runner.sh",
         "packages/workflows/skills/harness-planner/evals/evals.json",
         "packages/workflows/skills/workflow-authoring/scripts/client.mjs",
-        "packages/workflows/skills/workflow-authoring/scripts/self-definition.mjs"
+        "packages/workflows/skills/workflow-authoring/scripts/self-definition.mjs",
+        "scripts/dev/hooks/bash-guard.sh",
+        "scripts/dev/hooks/branch-protect.sh",
+        "scripts/dev/hooks/dev-mode-tool-guard.sh",
+        "scripts/dev/hooks/main-repo-write-guard.sh",
+        "scripts/dev/hooks/pre-commit",
+        "scripts/dev/lib/hook-utils.sh",
+        "scripts/dev/worktree/dev-heartbeat-guardian.sh",
+        "scripts/dev/worktree/worktree-lifecycle.sh",
+        "scripts/dev/worktree/worktree-manage.sh"
+      ],
+      "retired_files": [
+        {
+          "path": "packages/engine/skills/dev/SKILL.md",
+          "source": "business-skills/cecelia/packages/engine/skills/dev/SKILL.md",
+          "sha256": "199ef407201a2ca479d2c52d33855a527d5762bbf0ca95ba3afd3c58b8b42733",
+          "mode": "100644",
+          "status": "retired-business-distribution"
+        },
+        {
+          "path": "packages/engine/skills/dev/steps/autonomous-research-proxy.md",
+          "source": "dev-workspace/skill-snapshot/steps/autonomous-research-proxy.md",
+          "sha256": "fdcf2911ede3fc26e4620432ed658d77f43f0dfddc41ac29c992bb02fbd95f65",
+          "mode": "100644",
+          "status": "retired-business-distribution"
+        },
+        {
+          "path": "packages/engine/skills/dev/steps/light-evaluator.md",
+          "source": "business-skills/cecelia/packages/engine/skills/dev/steps/light-evaluator.md",
+          "sha256": "cf14996223fc2158d4f09a4602f3abe99e9b0969e796203ae0571bc8cb15fafd",
+          "mode": "100644",
+          "status": "retired-business-distribution"
+        },
+        {
+          "path": "packages/quality/skills/assurance/SKILL.md",
+          "source": "business-skills/cecelia/packages/quality/skills/assurance/SKILL.md",
+          "sha256": "6a926139b2d7a5aa10355269e0d557564a2bcdd0a95baac376a98d4c80fbe678",
+          "mode": "100644",
+          "status": "retired-business-distribution"
+        },
+        {
+          "path": "packages/quality/skills/audit/SKILL.md",
+          "source": "business-skills/cecelia/packages/quality/skills/audit/SKILL.md",
+          "sha256": "1f816b7a8f3fed779313ed364fbe878202eeba2f52678b7b1d0484ade5947bdc",
+          "mode": "100644",
+          "status": "retired-business-distribution"
+        },
+        {
+          "path": "packages/quality/skills/qa/SKILL.md",
+          "source": "business-skills/cecelia/packages/quality/skills/qa/SKILL.md",
+          "sha256": "1190553bf786774f3f85a5bb2515c30c73fa7ab05fcd8a241e1d120a28b318ec",
+          "mode": "100644",
+          "status": "retired-business-distribution"
+        },
+        {
+          "path": "packages/quality/skills/qa/knowledge/criteria.md",
+          "source": "business-skills/cecelia/packages/quality/skills/qa/knowledge/criteria.md",
+          "sha256": "c34da236e6db0cfb4924b782b84bff044a8ae894a9108323fa537c2789aefe90",
+          "mode": "100644",
+          "status": "retired-business-distribution"
+        },
+        {
+          "path": "packages/quality/skills/qa/knowledge/testing-matrix.md",
+          "source": "business-skills/cecelia/packages/quality/skills/qa/knowledge/testing-matrix.md",
+          "sha256": "abeb6f10cc9a4286aada6b9bad1bbccea996a3dfdf057f9c00f0982e16e24e1a",
+          "mode": "100644",
+          "status": "retired-business-distribution"
+        }
       ]
     }
   }
