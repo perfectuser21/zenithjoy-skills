@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-104-send-dm
 description: 交出一次可核验的批准私信发送结果。用于执行已授权单次私信或接手同一触达 Activity；不执行整个工作流。
 metadata:
-  version: 1.2.1
+  version: 1.2.2
   activity_ref: douyin_lead_outreach.send_dm
-  activity_version: 6.0.1
+  activity_version: 6.0.2
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -12,7 +12,7 @@ metadata:
 
 # 交出一次可核验的批准私信发送结果
 
-仅执行 `douyin_lead_outreach.send_dm`。业务合同版本为 `6.0.1`（普通资格队列与有界精确订单、真实发送结果硬探针）；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_lead_outreach.send_dm`。业务合同版本为 `6.0.2`（普通资格队列与有界精确订单、真实发送结果硬探针）；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-104/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_lead_outreach.yaml)的 `send_dm` 为准；本文件不覆盖该合同或公司政策。
 
