@@ -462,6 +462,13 @@
           "name": "zhihu-publisher",
           "execution_directory": ".skills-runtime/zhihu-publisher",
           "status": "pinned-route-dependency"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/runner-commander/SKILL.md",
+          "source": "runner-commander/SKILL.md",
+          "name": "runner-commander",
+          "execution_directory": "services/phone-adb-controller/skills/runner-commander",
+          "status": "business-compatibility"
         }
       ],
       "files": [
@@ -980,6 +987,12 @@
           "source": "zhihu-publisher/SKILL.md",
           "sha256": "84dbaf4bf54a2aa83707d33419f99c8e8fc6fea4fcbe2366123bd92ff0ecdecc",
           "mode": "100644"
+        },
+        {
+          "path": "services/phone-adb-controller/skills/runner-commander/SKILL.md",
+          "source": "runner-commander/SKILL.md",
+          "sha256": "600c57f8ca65790d44847ad3f39e4f22cd3aac71e78cd88478a47f7562f26e78",
+          "mode": "100644"
         }
       ],
       "runtime_files": [
@@ -1326,6 +1339,13 @@
           "name": "zhihu-publisher",
           "execution_directory": "packages/workflows/skills/zhihu-publisher",
           "status": "business-compatibility"
+        },
+        {
+          "path": "packages/brain/skills/runner-commander/SKILL.md",
+          "source": "runner-commander/SKILL.md",
+          "name": "runner-commander",
+          "execution_directory": "packages/brain/skills/runner-commander",
+          "status": "business-compatibility"
         }
       ],
       "files": [
@@ -1603,6 +1623,12 @@
           "path": "packages/workflows/skills/zhihu-publisher/SKILL.md",
           "source": "zhihu-publisher/SKILL.md",
           "sha256": "84dbaf4bf54a2aa83707d33419f99c8e8fc6fea4fcbe2366123bd92ff0ecdecc",
+          "mode": "100644"
+        },
+        {
+          "path": "packages/brain/skills/runner-commander/SKILL.md",
+          "source": "runner-commander/SKILL.md",
+          "sha256": "600c57f8ca65790d44847ad3f39e4f22cd3aac71e78cd88478a47f7562f26e78",
           "mode": "100644"
         }
       ],
