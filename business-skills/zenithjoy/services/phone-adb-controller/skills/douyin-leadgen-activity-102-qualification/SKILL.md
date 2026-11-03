@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-102-qualification
 description: 交出有证据的视频资格结论。用于核对目标视频、录音转写并按公司政策判断资格或接手同一 Activity；不执行整个工作流。
 metadata:
-  version: 0.3.1
+  version: 0.3.2
   activity_ref: douyin_video_processing.qualification
-  activity_version: 3.4.1
+  activity_version: 3.4.2
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -12,7 +12,7 @@ metadata:
 
 # 交出有证据的视频资格结论
 
-仅执行 `douyin_video_processing.qualification`。业务合同版本为 `3.4.1`；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_video_processing.qualification`。业务合同版本为 `3.4.2`；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-102/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_video_processing.yaml)的 `qualification` 为准；本文件不覆盖该合同或公司政策。
 

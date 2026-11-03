@@ -2,7 +2,7 @@
 name: douyin-leadgen-103
 description: 执行抖音获客103评论评分与线索标记，独立消费已提交评论并使用公司原评分政策。用于Agent执行、调用成熟评分代码及异常接手；不占手机、不等待整批102结束、不发送私信。
 metadata:
-  version: 0.12.1
+  version: 0.12.2
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-103/references/reuse-map.json
@@ -22,8 +22,8 @@ metadata:
 
 本工作流的方法依赖真身见[Activity方法清单](references/activity-methods.json)。执行指定Activity时，按本轮冻结 `activities[].implementations` 的真实name/version/source/digest及execution_path加载对应独立Skill；不能把本工作流Skill当作每个Activity的同一份方法。
 
-- `douyin_comment_scoring.scoring` → `douyin-leadgen-activity-103-scoring@0.10.1`。
-- `douyin_comment_scoring.mark_leads` → `douyin-leadgen-activity-103-mark-leads@0.10.1`。
+- `douyin_comment_scoring.scoring` → `douyin-leadgen-activity-103-scoring@0.10.2`。
+- `douyin_comment_scoring.mark_leads` → `douyin-leadgen-activity-103-mark-leads@0.10.2`。
 
 Activity方法、支持文件或合同改变时，更新对应方法版本、所有消费者清单、本工作流Skill与Commander Skill版本；纯代码内部兼容优化用明确兼容评估绑定前后代码集合。先跑 `npm run leadgen:methods:check`，再做相应独立验收。方法配套完成不表示单Activity执行权交接已经接通。
 

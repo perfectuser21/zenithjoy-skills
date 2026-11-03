@@ -361,12 +361,12 @@ class CommanderRecoveryContractTests(unittest.TestCase):
     def test_frozen_opt_in_is_bound_to_new_activity_contract_versions(self):
         import re
         activity, _, _, _ = self.skills()
-        expected = {"101-collect-videos": "5.1.0", "102-preflight": "2.2.0",
-                    "102-dedup": "3.2.0", "102-qualification": "3.4.1",
-                    "102-collection": "2.7.1", "102-cleanup": "2.2.0",
-                    "103-scoring": "2.7.1", "103-mark-leads": "3.8.1",
-                    "104-preflight": "5.0.0", "104-send-dm": "6.0.1",
-                    "104-write-back": "4.0.0", "104-cleanup": "3.2.0"}
+        expected = {"101-collect-videos": "5.1.1", "102-preflight": "2.2.1",
+                    "102-dedup": "3.2.1", "102-qualification": "3.4.2",
+                    "102-collection": "2.7.2", "102-cleanup": "2.2.1",
+                    "103-scoring": "2.7.2", "103-mark-leads": "3.8.2",
+                    "104-preflight": "5.0.1", "104-send-dm": "6.0.2",
+                    "104-write-back": "4.0.1", "104-cleanup": "3.2.1"}
         for path in activity:
             with self.subTest(method=path.parent.name):
                 actual = re.search(r"^  activity_version: (\S+)$", path.read_text(), re.M)[1]
@@ -386,10 +386,10 @@ class CommanderRecoveryContractTests(unittest.TestCase):
         def version(path):
             return re.search(r"^  ?version: (\S+)$|^version: (\S+)$", path.read_text(), re.M).group(0).split(": ")[1]
         for path in activity:
-            expected = "0.10.1" if path.parent.name in {"douyin-leadgen-activity-103-scoring", "douyin-leadgen-activity-103-mark-leads"} else "0.4.1" if path.parent.name == "douyin-leadgen-activity-102-collection" else "0.4.0" if path.parent.name == "douyin-leadgen-activity-101-collect-videos" else "1.2.1" if path.parent.name == "douyin-leadgen-activity-104-send-dm" else "1.0.0" if path.parent.name in {"douyin-leadgen-activity-104-preflight", "douyin-leadgen-activity-104-write-back"} else "0.3.1" if path.parent.name == "douyin-leadgen-activity-102-qualification" else "0.3.0"
+            expected = "0.10.2" if path.parent.name in {"douyin-leadgen-activity-103-scoring", "douyin-leadgen-activity-103-mark-leads"} else "0.4.2" if path.parent.name == "douyin-leadgen-activity-102-collection" else "0.4.1" if path.parent.name == "douyin-leadgen-activity-101-collect-videos" else "1.2.2" if path.parent.name == "douyin-leadgen-activity-104-send-dm" else "1.0.1" if path.parent.name in {"douyin-leadgen-activity-104-preflight", "douyin-leadgen-activity-104-write-back"} else "0.3.2" if path.parent.name == "douyin-leadgen-activity-102-qualification" else "0.3.1"
             self.assertEqual(version(path), expected, path.parent.name)
         for path in workflows + wrappers:
-            expected = "0.12.1" if path.parent.name in {"douyin-leadgen-103", "wf-douyin_comment_scoring"} else "0.7.1" if path.parent.name in {"douyin-leadgen-104", "wf-douyin_lead_outreach"} else "0.5.0" if path.parent.name in {"douyin-leadgen-101", "wf-douyin_video_discovery"} else "0.5.1" if path.parent.name in {"douyin-leadgen-102", "wf-douyin_video_processing"} else "0.4.0"
+            expected = "0.12.2" if path.parent.name in {"douyin-leadgen-103", "wf-douyin_comment_scoring"} else "0.7.2" if path.parent.name in {"douyin-leadgen-104", "wf-douyin_lead_outreach"} else "0.5.1" if path.parent.name in {"douyin-leadgen-101", "wf-douyin_video_discovery"} else "0.5.2" if path.parent.name in {"douyin-leadgen-102", "wf-douyin_video_processing"} else "0.4.1"
             self.assertEqual(version(path), expected, path.parent.name)
         self.assertEqual(version(commander), "2.1.0")
         versions = {path.parent.name: version(path) for path in activity + workflows + wrappers + [commander]}

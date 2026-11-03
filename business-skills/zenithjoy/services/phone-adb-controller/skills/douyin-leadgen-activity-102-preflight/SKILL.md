@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-102-preflight
 description: 取得采集设备与账号执行上下文。用于采集预检、确认手机账号或接手同一预检 Activity；不执行整个工作流。
 metadata:
-  version: 0.3.0
+  version: 0.3.1
   activity_ref: douyin_video_processing.preflight
-  activity_version: 2.2.0
+  activity_version: 2.2.1
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -12,7 +12,7 @@ metadata:
 
 # 取得采集设备与账号执行上下文
 
-仅执行 `douyin_video_processing.preflight`。业务合同版本为 `2.2.0`；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_video_processing.preflight`。业务合同版本为 `2.2.1`；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-102/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_video_processing.yaml)的 `preflight` 为准；本文件不覆盖该合同或公司政策。
 
