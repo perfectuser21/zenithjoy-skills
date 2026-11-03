@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_video_publish
-version: 0.1.3
+version: 0.1.2
 description: "通用 Commander 的抖音私密视频合同说明：固定输入、手机资源、活动事实、停止边界与独立核验。"
 ---
 
