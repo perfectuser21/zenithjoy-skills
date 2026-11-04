@@ -34,6 +34,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Regression — ci-poll 与 watchdog 状态未知拒绝合并
+        run: python3 scripts/__tests__/test_ci_poll.py
+
       - name: Pinned business skill loader regression
         run: python3 distribution/test_skills_source.py
 
