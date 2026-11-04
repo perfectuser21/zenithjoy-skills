@@ -4,7 +4,8 @@ description: 交出持久化且身份可验证的评论。用于从合格视频�
 changelog:
   - "0.2.1: 正式声明同VID已证零评论替代证据，正数与未知门禁保持"
 metadata:
-  version: 0.4.2
+  version: 0.5.0
+  primary_execution: agent-v1
   activity_ref: douyin_video_processing.collection
   activity_version: 2.7.2
   validation: awaiting-real-run
@@ -17,6 +18,21 @@ metadata:
 仅执行 `douyin_video_processing.collection`。业务合同版本为 `2.7.2`；方法版本独立记录，不因生成代码而更换Activity身份。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-102/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_video_processing.yaml)的 `collection` 为准；本文件不覆盖该合同或公司政策。
+
+## 从第一步执行本 Activity
+
+本版支持 Runner 正式选择的 `mode=execute`，以及原有失败后接手模式；共同执行约束中关于 Code 失败、原 handler 和 resume 的条款只用于失败接手，不用于 `execute`。只执行本次指定的一个 Activity，不自行启动、切换或重启 Workflow。
+
+`execute` 必须由本 run 的冻结 `execution_mode=agent`、中央不可变 `actor=runtime:phone-adb-controller:agent-v1` 声明及原 runtime snapshot、来源、方法和资源绑定共同准入。actor 是运行声明，不是权限或执行成功证明；Agent 不创建绑定、不改 actor、不调用内部 RPC 或裸队列。缺合法工具或准入即报告具体阻断。
+
+1. 先核官方 child 绑定与本次私有 request 的 run、task、Activity、来源、方法和截止，调用 `inspect` 读取输入、当前原件、允许操作及 Commander 指导。
+2. 只用本 request 给出的 `phone` 和 `business` 工具逐步执行。`phone` 输入为 `{command,args}`，`business` 输入为 `{operation,input}`；操作及字段以服务端本 Activity 当前实际暴露的 schema 为准，不猜操作名或自己扩白名单。锁和资源由 Runner 代码管理，Agent 不能更换 owner、公司、账号、设备、来源、额度或截止。
+3. 按下文业务方法，从新鲜原生证据选择每一步，调用细粒度操作并保存/读回结果。禁止 `resume`、调用原 Activity handler、整段 `collect-comments` 或用整工作流脚本代替本 Activity。资格与评分沿原公司政策及实际授权的判断工具，不自己改阈值或补造证据。
+4. 副作用调用保留原持久操作身份。回执丢失、写入或原生动作结果未知时只读回同一操作，不重新提交、不换 operation ID 重做。确认 0 评论不得入待采队列；无结果、部分成果和真实空结果分别交付。
+5. 进度、问题或错误通过 `inspect` 的结构化事件报告。下一回合读取并处理 `commander_guidance`；收到 `commander_abort` 停止本 child。Commander 不批准外部动作，不改业务顺序、规则或状态。
+6. 交付本次工具产生的持久结果及证据位置。Agent 的完成文字不是结果，Runner 根据服务端回执、原件、PG 及原独立 verify 判定；无法验证时明确未完成。执行终态未知保留隔离，不能为下一 Activity 清场。
+
+`execute` 不适用于 104；本版正常执行与故障接手均仍需分别留实机证据，状态保持 `awaiting-real-run`。
 
 ## 输入输出
 

@@ -107,5 +107,31 @@
     "validation": "source_ready_awaiting_real_handoff_acceptance",
     "outward_unknown": "readback_only; send_dm不可resume",
     "authority": "原run ACK/冻结definition/method与官方child绑定，未知保持锁，原独立verify裁判"
+  },
+  "agent_first_entry": {
+    "runner": "leadgen-run.sh",
+    "environment": {
+      "LEADGEN_EXECUTION_MODE": "agent"
+    },
+    "protocol": "leadgen-activity-v1",
+    "mode": "execute",
+    "operations": [
+      "inspect",
+      "phone",
+      "business"
+    ],
+    "business_shape": {
+      "operation": "本Activity服务端声明的操作",
+      "input": {}
+    },
+    "resume_allowed": false,
+    "binding_actor": "runtime:phone-adb-controller:agent-v1",
+    "guards": [
+      "运行模式与方法来源冻结；代码与Agent不可续跑互换",
+      "Starter创建真实run，子Agent不能自造request、nonce、绑定或调用裸RPC",
+      "受控原语结果及原件由原独立verify验收；文字不判成功",
+      "未知不重发；父子/原生终态未知保隔离；104不启用"
+    ],
+    "validation": "awaiting-real-run"
   }
 }

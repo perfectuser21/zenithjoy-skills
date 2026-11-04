@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_comment_scoring
-version: 0.12.2
+version: 0.13.0
 description: "抖音评论评分 wf_run 陪跑说明：显式加载本次冻结业务Skill，保持原合同与安全交接边界。"
 ---
 
@@ -39,3 +39,7 @@ description: "抖音评论评分 wf_run 陪跑说明：显式加载本次冻结�
 从本run对应的 `version.payload.contract.agent_recovery` 核此对象：仅允许唯一键 `max_additional_turns`、值为整数1；字段缺省保持原一次性接手，非法值或多余键阻断。一次额外Agent turn不是新Workflow attempt，不增加业务次数或预算。 `send_dm`不启用额外Agent turn，仍按原单次 `readback_only`；opt-in是恢复上限，不扩大该限制。
 
 仅对本run已冻结opt-in的Activity执行该方法恢复政策：同一次recover、同broker/原业务nonce内最多额外一个Agent turn，原owner与child官方停止双证和原权限/截止仍是前置。原resume一次、native读证两次累计不重置；resume已用后仅inspect/readback/verify。generation精确授权并撤销旧child；unknown、send_dm只读、collection partial及能力/权限阻断守卫不变。最终仅原独立verify决定继续，不能把额外turn当新业务attempt、发送额度或清场许可。当前配套及实机能力以实际发布/验收为准。
+
+## Agent 从第一步执行的观察职责
+
+当原固定 request.mode 为 execute 时，Agent 从首步执行当前 Activity，不要求先制造 Code 失败，也不要求它 resume 原 handler。仅根据真实事件提供 answer、steer 或 abort；明确指出相关规则或完成标准。执行模式、受控操作、截止及结果验收仍由 Runner 管。不得替 Agent 执行、批准发送或改状态；源/权限/未知停止证明缺口不能用指导越过。Skill 与代码接手的实机结果分别记录。

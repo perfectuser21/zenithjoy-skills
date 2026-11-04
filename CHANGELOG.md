@@ -1,3 +1,8 @@
+## [2026-11-04] douyin-leadgen-101/102/103 — updated
+**症状**: Skill 文件已存在，但现入口只允许 Code 失败后接手，不能证明从第一步由 Agent 执行。
+**根因**: 方法只描述恢复 broker，与新 Agent-first 执行入口和受控业务原语不配套。
+**修改**: 升级八个 Activity 方法、三份工作流及 Commander 配套版本，声明 execute 与恢复的独立准入、原语边界、持久结果及原独立验收。104 不启用 execute；仍标 awaiting-real-run，不以文档或模拟替代实机验证。
+
 ## [2026-11-02] engine-worktree / Cecelia 技能分发 — updated
 **症状**: Engine、Quality 包退役后，worktree 技能仍指向旧脚本，技能恢复会重新创建旧包目录并发出含失效命令的旧 dev 正文。
 **根因**: 技能命令、guard 说明和 Cecelia 分发 profile 没有随实际执行入口与当前中央 dev 合同归位。
