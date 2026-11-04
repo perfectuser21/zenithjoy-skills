@@ -1,6 +1,8 @@
 """真实 ci-poll 与 watchdog 命令块回归；仅替换外部 gh/sleep。"""
 import json
 import os
+import shlex
+import shutil
 from pathlib import Path
 import subprocess
 import tempfile
@@ -18,7 +20,7 @@ def snapshot(checks=None, merge='CLEAN'):
 
 
 class CiPollTest(unittest.TestCase):
-    def run_entry(self, snapshots, *, api_exit=0, watchdog=False, state_exit=0, cleanup=False, initial_state="OPEN", final_state="MERGED", final_state_exit=0):
+    def run_entry(self, snapshots, *, api_exit=0, watchdog=False, state_exit=0, cleanup=False, initial_state="OPEN", final_state="MERGED", final_state_exit=0, release_fixture=False, loaded_path="valid", install_dir=".agents"):
         with tempfile.TemporaryDirectory(prefix='ci-poll-regression-') as tmp:
             base = Path(tmp)
             bin_dir = base / 'bin'
@@ -58,9 +60,53 @@ print(row if isinstance(row, str) else json.dumps(row))
                 tool.write_text("#!/usr/bin/env python3\nimport os, pathlib, json, sys\np=pathlib.Path(os.environ['FIXTURE_DIR'])\nwith (p/'calls').open('a') as f: f.write(json.dumps(['fixture-'+pathlib.Path(sys.argv[0]).name]+sys.argv[1:])+'\\n')\nprint('{}')\n")
                 tool.chmod(0o755)
             (base/'dev-mode').write_text('task_id: fixture-task\n')
-            home = base / 'home' 
+            home = base / 'home'
             (home / 'perfect21').mkdir(parents=True)
-            (home / 'perfect21/zenithjoy-skills').symlink_to(ROOT)
+            loaded = ROOT / 'engine-pr-watchdog/SKILL.md'
+            cwd = ROOT
+            if release_fixture:
+                # 两个旧入口都毒化；只有当前加载Skill同release保留真实守卫。
+                legacy = home / 'perfect21/zenithjoy-skills'
+                (legacy / 'scripts').mkdir(parents=True)
+                poison = '#!/bin/sh\necho legacy-runtime >> "$FIXTURE_DIR/poison"\nexit 0\n'
+                (legacy / 'scripts/ci-poll.sh').write_text(poison)
+                cwd = base / 'poisoned cwd'
+                (cwd / 'scripts').mkdir(parents=True)
+                (cwd / 'scripts/ci-poll.sh').write_text(poison)
+                release = base / 'fixed release with spaces'
+                skill = release / 'engine-pr-watchdog'
+                skill.mkdir(parents=True)
+                shutil.copyfile(ROOT / 'engine-pr-watchdog/SKILL.md', skill / 'SKILL.md')
+                (release / 'scripts').mkdir()
+                if loaded_path != 'missing_script':
+                    shutil.copyfile(ROOT / 'scripts/ci-poll.sh', release / 'scripts/ci-poll.sh')
+                installed = home / install_dir / 'skills/engine-pr-watchdog'
+                installed.parent.mkdir(parents=True)
+                installed.symlink_to(skill, target_is_directory=True)
+                loaded = installed / 'SKILL.md'
+                if loaded_path == 'relative':
+                    loaded = Path('engine-pr-watchdog/SKILL.md')
+                elif loaded_path == 'missing_skill':
+                    loaded = base / 'missing/engine-pr-watchdog/SKILL.md'
+                elif loaded_path == 'other_skill':
+                    other = release / 'other-skill'
+                    other.mkdir()
+                    shutil.copyfile(skill / 'SKILL.md', other / 'SKILL.md')
+                    loaded = other / 'SKILL.md'
+                elif loaded_path == 'copied_skill_only':
+                    installed.unlink()
+                    installed.mkdir()
+                    shutil.copyfile(skill / 'SKILL.md', installed / 'SKILL.md')
+                elif loaded_path in ('stale_skill', 'wrong_identity'):
+                    source = (skill / 'SKILL.md').read_text()
+                    source = source.replace('version: 3.5.2', 'version: 3.5.1') if loaded_path == 'stale_skill' else source.replace('name: engine-pr-watchdog', 'name: different-skill')
+                    (skill / 'SKILL.md').write_text(source)
+                elif loaded_path == 'escaped_script':
+                    runtime = release / 'scripts/ci-poll.sh'
+                    runtime.unlink()
+                    runtime.symlink_to(legacy / 'scripts/ci-poll.sh')
+            else:
+                (home / 'perfect21/zenithjoy-skills').symlink_to(ROOT)
             env = {**os.environ, 'PATH': str(bin_dir) + ':' + os.environ['PATH'],
                    'FIXTURE_DIR': str(base), 'API_EXIT': str(api_exit),
                    'STATE_EXIT': str(state_exit), 'HOME': str(home), 'INITIAL_STATE': initial_state,
@@ -70,6 +116,7 @@ print(row if isinstance(row, str) else json.dumps(row))
                 text = (ROOT / 'engine-pr-watchdog/SKILL.md').read_text()
                 blocks = text.split('```bash\n')
                 block = next(b.split('```')[0] for b in blocks[1:] if 'MAX_FIXES=3' in b)
+                block = block.replace("LOADED_SKILL_MD='<本次实际加载的SKILL.md绝对路径>'", 'LOADED_SKILL_MD=' + shlex.quote(str(loaded)))
                 block = block.replace('PR_NUMBER=<PR号>', 'PR_NUMBER=987654321')
                 block = block.replace('REPO=<owner/repo>', 'REPO=owned/fixture')
                 block = block.replace('WORKTREE_PATH=<worktree路径>', 'WORKTREE_PATH=/unused')
@@ -79,8 +126,10 @@ print(row if isinstance(row, str) else json.dumps(row))
                 if cleanup:
                     block += '\n' + next(b.split('```')[0] for b in blocks[1:] if '# 清理前再次验真' in b or '# 读取 task_id' in b)
                 command = ['bash', '-c', block]
-            result = subprocess.run(command, env=env, text=True, capture_output=True, timeout=5)
-            calls = [json.loads(x) for x in (base/'calls').read_text().splitlines()]
+            result = subprocess.run(command, cwd=cwd, env=env, text=True, capture_output=True, timeout=5)
+            calls = [json.loads(x) for x in (base/'calls').read_text().splitlines()] if (base/'calls').exists() else []
+            if (base/'poison').exists():
+                calls += [['poison-runtime', line] for line in (base/'poison').read_text().splitlines()]
             slept = (base/'sleeps').exists()
             return result, calls, slept
 
@@ -90,6 +139,29 @@ print(row if isinstance(row, str) else json.dumps(row))
         self.assertNotIn('CI_GREEN', result.stderr)
         self.assertNotIn('已合并', result.stdout)
         self.assertFalse(any(c[:2] == ['pr', 'merge'] for c in calls))
+
+    def test_loaded_release_beats_poisoned_main_and_cwd(self):
+        for installation in ('.agents', '.claude'):
+            for value, code, api_exit in [(snapshot(), 12, 1), (snapshot(), 0, 0),
+                    (snapshot([check(conclusion='FAILURE')]), 10, 0),
+                    (snapshot(merge='BEHIND'), 11, 0)]:
+                with self.subTest(installation=installation, code=code):
+                    result, calls, _ = self.run_entry([value], watchdog=True, release_fixture=True,
+                                                      install_dir=installation, api_exit=api_exit)
+                    self.assertEqual(result.returncode, code, result.stderr)
+                    self.assertFalse(any(c[0] == 'poison-runtime' for c in calls))
+                    self.assertIn('fixed release with spaces/scripts/ci-poll.sh', result.stderr)
+                    if code:
+                        self.assertFalse(any(c[:2] == ['pr', 'merge'] for c in calls))
+
+    def test_invalid_loaded_skill_or_release_layout_has_no_side_effects(self):
+        for mode in ('relative', 'missing_skill', 'other_skill', 'copied_skill_only',
+                     'missing_script', 'escaped_script', 'stale_skill', 'wrong_identity'):
+            with self.subTest(mode=mode):
+                result, calls, _ = self.run_entry([snapshot()], watchdog=True,
+                    release_fixture=True, loaded_path=mode)
+                self.assertEqual(result.returncode, 12, result.stderr)
+                self.assertEqual(calls, [], '错误身份/布局不能执行gh或另一个runtime')
 
     def test_api_failure_is_unknown(self):
         self.assert_unknown(snapshot(), api_exit=1)
