@@ -42,6 +42,10 @@ class CandidateReceiptTest(unittest.TestCase):
                 outside.write_text("raise Exception('cross release executed')")
                 helper.unlink()
                 helper.symlink_to(outside)
+            mode_file = base / '.dev-mode.cp-owned'
+            mode_file.write_text('task_id: '+TASK+'\nstep_4_ship: pending\n')
+            if mode == 'marker-wrong-task': mode_file.write_text('task_id: bad\nstep_4_ship: pending\n')
+            if mode == 'marker-duplicate': mode_file.write_text('task_id: '+TASK+'\nstep_4_ship: pending\nstep_4_ship: done\n')
             facts = base / 'facts.json'
             facts.write_text(json.dumps({'facts': ['已修复当前CLI回归'], 'evidence': [{'path': '/tmp/owned-result.json', 'sha256': 'b' * 64}]}))
             bindir = base / 'bin'
@@ -53,7 +57,7 @@ p=pathlib.Path(os.environ['OWNED_FIXTURE']);m=os.environ['OWNED_MODE']
 with (p/'calls').open('a') as f:f.write(json.dumps(['gh']+sys.argv[1:])+'\\n')
 if m=='gh-error':sys.exit(1)
 if m=='bad-pr-json':print('{broken');sys.exit(0)
-print(json.dumps({'number':7,'url':'https://github.com/perfectuser21/cecelia/pull/7','headRefOid':('c'*40 if m=='wrong-head' else 'a'*40),'state':{'closed':'CLOSED','merged':'MERGED','unknown':'UNKNOWN'}.get(m,'OPEN')}))
+print(json.dumps({'number':7,'url':('https://github.com/other/repo/pull/7' if m=='wrong-repo' else 'https://github.com/perfectuser21/cecelia/pull/7'),'headRefOid':('c'*40 if m=='wrong-head' else 'a'*40),'state':{'closed':'CLOSED','merged':'MERGED','unknown':'UNKNOWN'}.get(m,'OPEN')}))
 """)
             gh.chmod(0o755)
             git = bindir / 'git'
@@ -74,6 +78,9 @@ print(json.dumps({'number':7,'url':'https://github.com/perfectuser21/cecelia/pul
                     self.wfile.write(json.dumps(value).encode())
                 def do_GET(self):
                     trace.append({'method': 'GET', 'path': self.path})
+                    if mode == 'get-error': return self.send_json({'error':'owned unavailable'}, 503)
+                    if mode == 'bad-task-json':
+                        self.send_response(200); self.end_headers(); self.wfile.write(b'{broken'); return
                     out = copy.deepcopy(current)
                     if mode == 'wrong-task': out['id'] = 'bad'
                     if mode == 'terminal-task': out['status'] = 'completed'
@@ -94,13 +101,18 @@ print(json.dumps({'number':7,'url':'https://github.com/perfectuser21/cecelia/pul
                     '<Task UUID>': TASK, '<owner/repo>': REPO, '<PR号>': '7',
                     '<当前候选完整HEAD>': HEAD, '<执行者>': 'codex:owned-review',
                     '<事实证据JSON绝对路径>': str(facts),
+                    '<本仓.dev-mode绝对路径>': str(mode_file),
                     '<Brain API根地址>': 'http://127.0.0.1:' + str(server.server_port),
                 }
                 for key, value in replacements.items(): commands = commands.replace(shlex.quote(key), shlex.quote(value))
+                poison = base / 'engine-ship/scripts'
+                poison.mkdir(parents=True)
+                (poison / 'record-candidate.py').write_text("raise Exception('CWD fallback executed')")
                 env = {**os.environ, 'PATH': str(bindir)+os.pathsep+os.environ['PATH'], 'OWNED_FIXTURE':str(base), 'OWNED_MODE': mode, 'PYTHONDONTWRITEBYTECODE':'1'}
                 result = subprocess.run(['bash','-euo','pipefail','-c',commands],cwd=base,env=env,capture_output=True,text=True,timeout=15)
             finally:
                 server.shutdown(); server.server_close(); thread.join()
+            current['_owned_marker'] = mode_file.read_text()
             return result, trace, current, (base/'calls').read_text() if (base/'calls').exists() else ''
 
     def test_open_candidate_real_receipt_without_terminal_claim(self):
@@ -114,21 +126,23 @@ print(json.dumps({'number':7,'url':'https://github.com/perfectuser21/cecelia/pul
         for key,value in {'head_sha':HEAD,'pr_url':'https://github.com/'+REPO+'/pull/7','actor':'codex:owned-review','stage':'candidate','merged':False}.items(): self.assertEqual(candidate[key],value)
         self.assertTrue(candidate['facts']); self.assertTrue(candidate['evidence'])
         self.assertEqual(state['status'],'in_progress')
+        self.assertIn('step_4_ship: done',state['_owned_marker'])
         self.assertEqual(state['result']['unrelated'],{'keep':True})
         self.assertNotIn('PASS',json.dumps(candidate))
         self.assertNotIn('forbidden-curl',calls)
 
     def test_unknown_or_terminal_pr_never_writes_candidate(self):
-        for mode in ['gh-error','bad-pr-json','wrong-head','closed','merged','unknown']:
+        for mode in ['gh-error','bad-pr-json','wrong-head','wrong-repo','closed','merged','unknown']:
             with self.subTest(mode=mode):
                 r,trace,_,_ = self.run_entry(mode)
                 self.assertNotEqual(r.returncode,0,r.stdout)
                 self.assertFalse(any(x['method']=='PATCH'for x in trace))
 
     def test_task_identity_or_write_failure_does_not_report_success(self):
-        for mode in ['wrong-task','terminal-task','patch-error','readback-mismatch']:
+        for mode in ['wrong-task','terminal-task','patch-error','readback-mismatch','get-error','bad-task-json','marker-wrong-task','marker-duplicate']:
             with self.subTest(mode=mode):
-                r,_,_,_ = self.run_entry(mode)
+                r,_,state,_ = self.run_entry(mode)
+                self.assertIn('step_4_ship: pending', state['_owned_marker'])
                 self.assertNotEqual(r.returncode,0,r.stdout)
                 self.assertNotIn('CANDIDATE_RECORDED',r.stdout)
 
@@ -139,6 +153,21 @@ print(json.dumps({'number':7,'url':'https://github.com/perfectuser21/cecelia/pul
                 self.assertNotEqual(r.returncode,0,r.stdout)
                 self.assertEqual(trace,[])
                 self.assertEqual(calls,'')
+
+    def test_legacy_cleanup_no_longer_calls_retired_snapshot(self):
+        # 旧公开CLI当前无注册caller；只执行源码2.6段并隔离其旧边界，不运行整个清理器。
+        text = (ROOT/'dev/scripts/cleanup.sh').read_text()
+        block = text.split('# 2.6 ', 1)[1].split('# 3. ', 1)[0]
+        block = '\n'.join(block.splitlines()[1:])
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root/'scripts').mkdir()
+            script = root/'scripts/write-current-state.sh'
+            script.write_text('#!/bin/sh\necho old-generator-called > "'+str(root/'called')+'"\n')
+            env = {**os.environ,'REPO_ROOT':tmp,'WARNINGS':'0','GREEN':'','YELLOW':'','NC':''}
+            result = subprocess.run(['bash','-euo','pipefail','-c',block],env=env,capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stderr)
+            self.assertFalse((root/'called').exists(), '旧cleanup仍执行退休快照生成器')
 
     def test_legacy_callback_cannot_mark_unmerged_task_completed(self):
         with tempfile.TemporaryDirectory() as tmp:
