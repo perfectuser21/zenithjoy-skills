@@ -17,3 +17,7 @@ python3 scripts/skills-source.py verify
 更新时先改本仓对应中心文件与清单校验和，验证后提交；再更新业务仓锁定的 commit。CI 用 `SKILLS_SOURCE_SSH_KEY` 只读 deploy key 拉取固定版本，不随 main 自动更新。禁止在业务生成文件上维护正文。
 
 `retired_files` 精确记录已停止向业务仓物化的历史文件及其来源摘要；这些源文件保留并继续校验字节，不进入 `files` 安装清单。Cecelia 的 `/dev` 正文还原到 `.claude/skills/dev/SKILL.md`，使用当前中央 `dev/SKILL.md`，不再恢复旧 Engine/Quality 目录。
+
+固定版本首次下载只使用明确的 `SKILLS_SOURCE_SSH_KEY` 文件身份，禁用交互和 ssh-agent，不回退到 HTTPS 或其他凭据。连接超时为 10 秒，单次 fetch 进程上限 35 秒；暂态连接故障或同身份已成功过的间歇公钥拒绝最多尝试 3 次，间隔 1、2 秒，总 fetch 预算不超过 108 秒。每次请求始终使用同一个完整 commit、私钥临时文件及严格 host-key 校验。已缓存的固定对象仍可不带网络凭据本地还原。
+
+私钥格式、host-key、仓库不存在与固定对象不存在属于永久错误，立即失败；重试耗尽仍输出原失败原因并非零退出。源 loader 校验、install 或 verify 失败不进入网络重试。`test_bootstrap_fetch.py` 以真实 bootstrap 子进程和真实临时 Git 对象覆盖这些边界，网络传输仅由本地 fixture 接管，不接触真实凭据。
