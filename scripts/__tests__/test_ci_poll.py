@@ -97,6 +97,10 @@ print(row if isinstance(row, str) else json.dumps(row))
                     installed.unlink()
                     installed.mkdir()
                     shutil.copyfile(skill / 'SKILL.md', installed / 'SKILL.md')
+                elif loaded_path in ('stale_skill', 'wrong_identity'):
+                    source = (skill / 'SKILL.md').read_text()
+                    source = source.replace('version: 3.5.2', 'version: 3.5.1') if loaded_path == 'stale_skill' else source.replace('name: engine-pr-watchdog', 'name: different-skill')
+                    (skill / 'SKILL.md').write_text(source)
                 elif loaded_path == 'escaped_script':
                     runtime = release / 'scripts/ci-poll.sh'
                     runtime.unlink()
@@ -146,12 +150,13 @@ print(row if isinstance(row, str) else json.dumps(row))
                                                       install_dir=installation, api_exit=api_exit)
                     self.assertEqual(result.returncode, code, result.stderr)
                     self.assertFalse(any(c[0] == 'poison-runtime' for c in calls))
+                    self.assertIn('fixed release with spaces/scripts/ci-poll.sh', result.stderr)
                     if code:
                         self.assertFalse(any(c[:2] == ['pr', 'merge'] for c in calls))
 
     def test_invalid_loaded_skill_or_release_layout_has_no_side_effects(self):
         for mode in ('relative', 'missing_skill', 'other_skill', 'copied_skill_only',
-                     'missing_script', 'escaped_script'):
+                     'missing_script', 'escaped_script', 'stale_skill', 'wrong_identity'):
             with self.subTest(mode=mode):
                 result, calls, _ = self.run_entry([snapshot()], watchdog=True,
                     release_fixture=True, loaded_path=mode)

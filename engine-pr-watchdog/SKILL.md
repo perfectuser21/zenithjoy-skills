@@ -1,6 +1,6 @@
 ---
 name: engine-pr-watchdog
-version: 3.5.1
+version: 3.5.2
 updated: 2026-11-04
 description: PR 合并守卫。任何 PR 开完后立刻调用，监控所有 repo 的 open PR，阻塞轮询 CI + 合并状态，CI 失败自动修复，直到全部 PR 合并才退出。不使用 ScheduleWakeup，不提前 exit。
 trigger: 任何 PR 开完之后（gh pr create 之后），立刻调用本 skill。engine-ship 完成后也调用。
@@ -54,7 +54,42 @@ done
 - `12` = 状态未知（API 错误、检查缺失或格式异常）→ 保持任务未完成，恢复状态读取后重新核验；不得当作已合并、CI 测试失败或继续合并的依据
 - 超时（Bash call 到 10 分钟）→ **立刻重新发起 Step 2 的 Bash 调用，不输出任何文字**
 
+执行下列命令前，从**本次实际 Skill 加载上下文**取得本文件的绝对路径并填写 `LOADED_SKILL_MD`。路径未提供时保持未知状态，不执行命令。不要用当前目录、固定安装位置或 Claude 专属变量猜测该路径。安装引用可通过符号链接定位完整中央 release；脚本必须属于解析后的同一物理 release。
+
 ```bash
+LOADED_SKILL_MD='<本次实际加载的SKILL.md绝对路径>'
+if ! CI_POLL_SCRIPT=$(python3 - "$LOADED_SKILL_MD" <<'PYTHON'
+from pathlib import Path
+import re
+import sys
+
+try:
+    loaded = Path(sys.argv[1])
+    if not loaded.is_absolute():
+        raise ValueError("实际加载 Skill 路径必须为绝对路径")
+    skill = loaded.resolve(strict=True)
+    if not skill.is_file() or skill.name != "SKILL.md" or skill.parent.name != "engine-pr-watchdog":
+        raise ValueError("实际路径不是 watchdog 技能正文")
+    frontmatter = skill.read_text(encoding="utf-8").split("---", 2)
+    if len(frontmatter) != 3 or frontmatter[0].strip():
+        raise ValueError("Skill 头部格式无效")
+    header = frontmatter[1]
+    if (re.findall(r"^name:\s*(.+?)\s*$", header, re.M) != ["engine-pr-watchdog"]
+            or re.findall(r"^version:\s*(.+?)\s*$", header, re.M) != ["3.5.2"]):
+        raise ValueError("实际加载 Skill 名称或版本不符")
+    release = skill.parent.parent
+    script = release / "scripts" / "ci-poll.sh"
+    if not script.is_file() or script.resolve(strict=True) != script:
+        raise ValueError("同版本脚本缺失或物理路径越界")
+    print(script)
+except (OSError, ValueError) as error:
+    sys.exit(str(error))
+PYTHON
+); then
+  echo "CI_UNKNOWN: 无法确认本次加载 Skill 的同版本脚本" >&2
+  exit 12
+fi
+printf 'watchdog 固定脚本: %s\n' "$CI_POLL_SCRIPT" >&2
 PR_NUMBER=<PR号>
 REPO=<owner/repo>          # 如 perfectuser21/cecelia
 WORKTREE_PATH=<worktree路径>
@@ -88,7 +123,7 @@ while true; do
 
   # ── CI 轮询（共享脚本，sleep 30 在脚本内）───────
   POLL_EXIT=0
-  bash ~/perfect21/zenithjoy-skills/scripts/ci-poll.sh "$PR_NUMBER" "$REPO" || POLL_EXIT=$?
+  bash "$CI_POLL_SCRIPT" "$PR_NUMBER" "$REPO" || POLL_EXIT=$?
 
   if [ "$POLL_EXIT" -eq 10 ]; then
     if [ "$FIX_COUNT" -ge "$MAX_FIXES" ]; then
