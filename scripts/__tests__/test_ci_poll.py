@@ -107,6 +107,8 @@ print(row if isinstance(row, str) else json.dumps(row))
     def test_pending_must_wait_for_actual_green(self):
         for pending in [check(status='QUEUED', conclusion=None),
                         check(status='IN_PROGRESS', conclusion=None),
+                        check(status='QUEUED', conclusion=''),
+                        check(status='IN_PROGRESS', conclusion=''),
                         {'__typename': 'StatusContext', 'state': 'PENDING', 'context': 'lint'}]:
             with self.subTest(pending=pending):
                 result, calls, slept = self.run_entry([snapshot([pending]), snapshot()])
