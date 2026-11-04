@@ -1,7 +1,7 @@
 ---
 name: engine-pr-watchdog
-version: 3.5.0
-updated: 2026-07-13
+version: 3.5.1
+updated: 2026-11-04
 description: PR 合并守卫。任何 PR 开完后立刻调用，监控所有 repo 的 open PR，阻塞轮询 CI + 合并状态，CI 失败自动修复，直到全部 PR 合并才退出。不使用 ScheduleWakeup，不提前 exit。
 trigger: 任何 PR 开完之后（gh pr create 之后），立刻调用本 skill。engine-ship 完成后也调用。
 ---
@@ -67,8 +67,15 @@ echo "🔍 开始监控 PR #$PR_NUMBER ($REPO)"
 
 while true; do
   # ── 检查是否已合并 ──────────────────────────────
-  STATE=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json state --jq '.state' 2>/dev/null)
-  if [ "$STATE" = "MERGED" ] || [ -z "$STATE" ]; then
+  if ! STATE=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json state --jq '.state' 2>/dev/null); then
+    echo "CI_UNKNOWN: 无法读取 PR 状态，不能判定已合并" >&2
+    exit 12
+  fi
+  case "$STATE" in
+    OPEN|MERGED|CLOSED) ;;
+    *) echo "CI_UNKNOWN: PR 状态缺失或未知" >&2; exit 12 ;;
+  esac
+  if [ "$STATE" = "MERGED" ]; then
     echo "✅ PR #$PR_NUMBER 已合并，退出轮询"
     rm -f "$FIX_COUNT_FILE"
     break
@@ -79,8 +86,8 @@ while true; do
   fi
 
   # ── CI 轮询（共享脚本，sleep 30 在脚本内）───────
-  bash ~/perfect21/zenithjoy-skills/scripts/ci-poll.sh "$PR_NUMBER" "$REPO"
-  POLL_EXIT=$?
+  POLL_EXIT=0
+  bash ~/perfect21/zenithjoy-skills/scripts/ci-poll.sh "$PR_NUMBER" "$REPO" || POLL_EXIT=$?
 
   if [ "$POLL_EXIT" -eq 10 ]; then
     if [ "$FIX_COUNT" -ge "$MAX_FIXES" ]; then
@@ -97,6 +104,11 @@ while true; do
   if [ "$POLL_EXIT" -eq 11 ]; then
     echo "📦 分支落后 main，需要 rebase"
     exit 11
+  fi
+
+  if [ "$POLL_EXIT" -ne 0 ]; then
+    echo "CI_UNKNOWN: 无法确认检查通过（exit=${POLL_EXIT}），不进入合并" >&2
+    exit "$POLL_EXIT"
   fi
 
   # ── CI 全绿：确认 auto-merge ─────────────────────
