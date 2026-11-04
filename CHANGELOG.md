@@ -8,6 +8,7 @@
 
 - 裸建单示例明确传入真实目标分支和完整基线 SHA，避免服务端缺 checkout 时推断失败；提醒新请求不得重放回执中的内部路由字段。
 - 发送前核对显式目标仓Git/origin、拟建cp分支与实际基准commit；错误Git、缺分支、假SHA或错仓均零请求拒绝。
+- 有头claim严格使用本次成功JSON响应中的规范UUID；创建HTTP失败、坏响应或claim HTTP失败均非零退出，无头模式仍只交runner认领。
 - 保留仓库/地图归位、有头字符串与立即 claim；实际示例 Bash 通过隔离 HTTP 永久回归。
 
 ## [2026-11-04] engine-pr-watchdog — updated

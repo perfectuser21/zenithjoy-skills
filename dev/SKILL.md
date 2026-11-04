@@ -720,7 +720,7 @@ case "$REMOTE" in
 esac
 BASE_SHA=$(git -C "$TASK_REPO" rev-parse --verify --end-of-options "$TASK_BASE^{commit}") || exit 12
 [[ "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 12
-curl -s -X POST localhost:5221/api/brain/tasks \
+curl -fsS -X POST localhost:5221/api/brain/tasks \
   -H "Content-Type: application/json" \
   -d "{
     \"task_type\": \"coding_workflow\",
@@ -740,7 +740,7 @@ curl -s -X POST localhost:5221/api/brain/tasks \
       \"acceptance\": [\"<可验证断言>\"],
       \"gp_anchor\": \"none(infra)\"
     }
-  }"
+  }" || exit 12
 ```
 
 > 旧借壳形状 `task_type=data` + `payload.coding_workflow=true` + `payload.headed_manual="true"`（**字符串**）runner 仍认、Brain 建单时归一成 coding_workflow；新建一律直接用 `coding_workflow`。
@@ -763,12 +763,24 @@ case "$REMOTE" in
 esac
 BASE_SHA=$(git -C "$TASK_REPO" rev-parse --verify --end-of-options "$TASK_BASE^{commit}") || exit 12
 [[ "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 12
-curl -s -X POST localhost:5221/api/brain/tasks -H "Content-Type: application/json" \
+TASK_CREATED=$(curl -fsS -X POST localhost:5221/api/brain/tasks -H "Content-Type: application/json" \
   -d "{\"title\": \"<PR 标题>\", \"task_type\": \"dev\", \"mutation_intent\": \"write\", \"priority\": \"P1\", \"change_kind\": \"capability_change\",
        \"repo_hint\": \"https://github.com/perfectuser21/zenithjoy-workspace\", \"map_scope_hint\": [\"<格子>\"],
        \"branch\": \"$TASK_BRANCH\", \"base_sha\": \"$BASE_SHA\",
-       \"trigger_source\": \"manual\", \"payload\": {\"headed_manual\": \"true\"}}"
-curl -s -X POST localhost:5221/api/brain/tasks/<id>/claim -H "Content-Type: application/json" -d '{"claimer":"interactive-dev-skill"}'
+       \"trigger_source\": \"manual\", \"payload\": {\"headed_manual\": \"true\"}}") || exit 12
+TASK_ID=$(printf '%s' "$TASK_CREATED" | python3 -c '
+import json, sys, uuid
+try:
+    response = json.load(sys.stdin)
+    if not isinstance(response, dict): raise ValueError("任务响应必须是对象")
+    value = response.get("id")
+    if not isinstance(value, str) or str(uuid.UUID(value)) != value:
+        raise ValueError("任务id必须是本次响应中的规范UUID")
+    print(value)
+except (ValueError, TypeError, AttributeError):
+    sys.exit(12)
+') || exit 12
+curl -fsS -X POST "localhost:5221/api/brain/tasks/$TASK_ID/claim" -H "Content-Type: application/json" -d '{"claimer":"interactive-dev-skill"}' || exit 12
 ```
 
 进度：`curl localhost:5221/api/brain/tasks/<task_id>`（`result.coding_workflow` 有 runner 写回），MMV 上 `~/Library/Logs/coding-workflow-runner.log`。
