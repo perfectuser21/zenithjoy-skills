@@ -1,7 +1,7 @@
 ## [2026-11-04] engine-pr-watchdog — updated
 **症状**: gh 查询失败或检查缺失时 ci-poll 仍报告绿色，watchdog 可能继续进入合并。
 **根因**: 文本计数把空响应当零失败，消费者只处理 10/11 且把空 PR 状态当已合并。
-**修改**: 解析同次 PR JSON，未知返回 12；真实 pending 继续等待，watchdog 对所有非零拒绝合并，并在既有 CI 执行真实脚本及命令块回归。
+**修改**: 解析同次 PR JSON，未知返回 12；真实 pending 继续等待，watchdog 对所有非零拒绝合并，清理前再次读取精确终态，关闭未合并只记 failed/FAIL；在既有 CI 执行真实脚本及命令块回归。
 
 ## [2026-11-04] douyin-leadgen-101/102/103 — updated
 **症状**: Skill 文件已存在，但现入口只允许 Code 失败后接手，不能证明从第一步由 Agent 执行。

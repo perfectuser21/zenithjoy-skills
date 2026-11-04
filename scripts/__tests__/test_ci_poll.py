@@ -77,7 +77,7 @@ print(row if isinstance(row, str) else json.dumps(row))
                 # 隔离原命令块的计数文件，不修改控制流。
                 block = block.replace('/tmp/watchdog-fix-count-', str(base) + '/watchdog-fix-count-')
                 if cleanup:
-                    block += '\n' + next(b.split('```')[0] for b in blocks[1:] if '# 读取 task_id' in b)
+                    block += '\n' + next(b.split('```')[0] for b in blocks[1:] if '# 清理前再次验真' in b or '# 读取 task_id' in b)
                 command = ['bash', '-c', block]
             result = subprocess.run(command, env=env, text=True, capture_output=True, timeout=5)
             calls = [json.loads(x) for x in (base/'calls').read_text().splitlines()]
