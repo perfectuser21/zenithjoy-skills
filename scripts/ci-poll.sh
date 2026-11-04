@@ -36,7 +36,7 @@ def classify(data):
         kind = item.get("__typename")
         if kind == "CheckRun":
             status, conclusion = item.get("status"), item.get("conclusion")
-            if status in {"QUEUED", "IN_PROGRESS", "WAITING", "PENDING", "REQUESTED"} and conclusion is None:
+            if status in {"QUEUED", "IN_PROGRESS", "WAITING", "PENDING", "REQUESTED"} and conclusion in (None, ""):
                 states.append("PENDING")
             elif status == "COMPLETED":
                 if conclusion == "SUCCESS":
