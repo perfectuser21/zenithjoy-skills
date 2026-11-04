@@ -1,6 +1,7 @@
 """执行实际Skill Bash及同release helper；GitHub/git为边界夹具，Brain为本人HTTP。"""
 import copy
 import http.server
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -47,7 +48,19 @@ class CandidateReceiptTest(unittest.TestCase):
             if mode == 'marker-wrong-task': mode_file.write_text('task_id: bad\nstep_4_ship: pending\n')
             if mode == 'marker-duplicate': mode_file.write_text('task_id: '+TASK+'\nstep_4_ship: pending\nstep_4_ship: done\n')
             facts = base / 'facts.json'
-            facts.write_text(json.dumps({'facts': ['已修复当前CLI回归'], 'evidence': [{'path': '/tmp/owned-result.json', 'sha256': 'b' * 64}]}))
+            artifact = base / 'owned-result.json'
+            artifact.write_text('{"passed":true,"tests":2}\n')
+            item = {'path':str(artifact),'sha256':hashlib.sha256(artifact.read_bytes()).hexdigest(),
+                    'command':'python3 owned-test.py','result':'exit 0; 2 tests passed'}
+            if mode == 'junk-evidence': item = {'junk':True}
+            if mode == 'missing-location': item.pop('path')
+            if mode == 'bad-sha256': item['sha256'] = 'not-a-hash'
+            if mode == 'wrong-sha256': item['sha256'] = 'c' * 64
+            if mode == 'empty-command': item['command'] = '  '
+            if mode == 'empty-result': item['result'] = ''
+            if mode == 'missing-artifact': item['path'] = str(base/'not-present.json')
+            if mode == 'https-evidence': item['path'] = 'https://example.invalid/owned-result.json'
+            facts.write_text(json.dumps({'facts': ['已修复当前CLI回归'], 'evidence': [item]}))
             bindir = base / 'bin'
             bindir.mkdir()
             gh = bindir / 'gh'
@@ -153,6 +166,21 @@ print(json.dumps({'number':7,'url':('https://github.com/other/repo/pull/7' if m=
                 self.assertNotEqual(r.returncode,0,r.stdout)
                 self.assertEqual(trace,[])
                 self.assertEqual(calls,'')
+
+    def test_non_evidence_cannot_become_candidate_done(self):
+        for mode in ['junk-evidence','missing-location','bad-sha256','wrong-sha256','empty-command','empty-result','missing-artifact']:
+            with self.subTest(mode=mode):
+                r,trace,state,calls = self.run_entry(mode)
+                self.assertNotEqual(r.returncode,0,r.stdout)
+                self.assertEqual(trace,[])
+                self.assertEqual(calls,'')
+                self.assertIn('step_4_ship: pending',state['_owned_marker'])
+
+    def test_https_reference_is_recorded_without_remote_fetch(self):
+        r,trace,state,_ = self.run_entry('https-evidence')
+        self.assertEqual(r.returncode,0,r.stderr)
+        self.assertEqual(state['result']['ship_candidate']['evidence'][0]['path'],'https://example.invalid/owned-result.json')
+        self.assertEqual(len(trace),3)
 
     def test_legacy_cleanup_no_longer_calls_retired_snapshot(self):
         # 旧公开CLI当前无注册caller；只执行源码2.6段并隔离其旧边界，不运行整个清理器。
