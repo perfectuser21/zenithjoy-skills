@@ -100,7 +100,7 @@ print(row if isinstance(row, str) else json.dumps(row))
                     shutil.copyfile(skill / 'SKILL.md', installed / 'SKILL.md')
                 elif loaded_path in ('stale_skill', 'wrong_identity'):
                     source = (skill / 'SKILL.md').read_text()
-                    source = source.replace('version: 3.5.2', 'version: 3.5.1') if loaded_path == 'stale_skill' else source.replace('name: engine-pr-watchdog', 'name: different-skill')
+                    source = source.replace('version: 3.5.3', 'version: 3.5.2') if loaded_path == 'stale_skill' else source.replace('name: engine-pr-watchdog', 'name: different-skill')
                     (skill / 'SKILL.md').write_text(source)
                 elif loaded_path == 'escaped_script':
                     runtime = release / 'scripts/ci-poll.sh'

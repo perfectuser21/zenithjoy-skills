@@ -1,6 +1,6 @@
 ---
 name: engine-pr-watchdog
-version: 3.5.2
+version: 3.5.3
 updated: 2026-11-04
 description: PR 合并守卫。任何 PR 开完后立刻调用，监控所有 repo 的 open PR，阻塞轮询 CI + 合并状态，CI 失败自动修复，直到全部 PR 合并才退出。不使用 ScheduleWakeup，不提前 exit。
 trigger: 任何 PR 开完之后（gh pr create 之后），立刻调用本 skill。engine-ship 完成后也调用。
@@ -26,16 +26,46 @@ trigger: 任何 PR 开完之后（gh pr create 之后），立刻调用本 skill
 
 ```bash
 WATCH_REPOS="perfectuser21/cecelia perfectuser21/zenithjoy-workspace perfectuser21/zenithjoy-skills"
+TARGETS=""
 for REPO in $WATCH_REPOS; do
-  gh pr list --repo "$REPO" --json number,headRefName,title \
-    --jq '.[] | "\(.number) \(.headRefName)"' 2>/dev/null \
-    | while read num branch; do
-      echo "REPO=$REPO PR=$num BRANCH=$branch"
-    done
+  if ! OPEN_PRS=$(gh pr list --repo "$REPO" --state open --json number,headRefName,title); then
+    echo "CI_UNKNOWN: 无法读取待监控 PR" >&2
+    exit 12
+  fi
+  if ! REPO_TARGETS=$(printf '%s' "$OPEN_PRS" | python3 -c '
+import json, re, sys
+try:
+    rows = json.load(sys.stdin)
+    if not isinstance(rows, list):
+        raise ValueError("PR 列表不是数组")
+    for row in rows:
+        if (not isinstance(row, dict) or type(row.get("number")) is not int
+                or row["number"] <= 0 or not isinstance(row.get("title"), str)
+                or not isinstance(row.get("headRefName"), str)
+                or not re.fullmatch(r"[^\s]+", row["headRefName"])):
+            raise ValueError("PR 条目格式无效")
+    for row in rows:
+        print(str(row["number"]) + " " + row["headRefName"])
+except (ValueError, TypeError):
+    sys.exit(12)
+'); then
+    echo "CI_UNKNOWN: 待监控 PR 列表缺失或格式异常" >&2
+    exit 12
+  fi
+  while read -r num branch; do
+    [ -n "$num" ] || continue
+    TARGETS="${TARGETS}REPO=$REPO PR=$num BRANCH=$branch"$'\n'
+  done <<< "$REPO_TARGETS"
 done
+# 所有仓库均取得合法响应后才交付目标，避免部分读取失败时误继续。
+if [ -n "$TARGETS" ]; then
+  printf '%s' "$TARGETS"
+else
+  echo "无待监控 open PR；未核验指定 PR 终态，不执行清理或任务完成回写"
+fi
 ```
 
-对每个找到的 PR 执行 Step 2。若没有任何 open PR → 直接退出。
+对每个找到的 PR 执行 Step 2。只有所有查询成功且均为合法 JSON `[]` 才表示无待监控 PR；这不是已合并证据，不执行 Step 5 清理、任务完成回写或会话关闭。任何 API 失败、空白或坏 JSON 均返回未知 `12`。
 
 ---
 
@@ -75,7 +105,7 @@ try:
         raise ValueError("Skill 头部格式无效")
     header = frontmatter[1]
     if (re.findall(r"^name:\s*(.+?)\s*$", header, re.M) != ["engine-pr-watchdog"]
-            or re.findall(r"^version:\s*(.+?)\s*$", header, re.M) != ["3.5.2"]):
+            or re.findall(r"^version:\s*(.+?)\s*$", header, re.M) != ["3.5.3"]):
         raise ValueError("实际加载 Skill 名称或版本不符")
     release = skill.parent.parent
     script = release / "scripts" / "ci-poll.sh"
@@ -164,9 +194,46 @@ done
 ### 3a. 读取失败日志
 
 ```bash
-RUN_ID=$(gh pr checks "$PR_NUMBER" --repo "$REPO" --json name,conclusion,databaseId 2>/dev/null \
-  | jq -r '[.[] | select(.conclusion=="failure")] | sort_by(.databaseId) | last | .databaseId // empty')
-gh run view "$RUN_ID" --repo "$REPO" --log-failed 2>/dev/null | tail -200
+# gh pr checks 的 JSON 字段是 bucket/link，而非 conclusion/databaseId。
+# 明确失败检查会让 gh 返回1；保留退出状态并校验JSON，不能吞真实API错误。
+CHECKS_EXIT=0
+CHECKS=$(gh pr checks "$PR_NUMBER" --repo "$REPO" --json bucket,link) || CHECKS_EXIT=$?
+case "$CHECKS_EXIT" in
+  0|1) ;;
+  *) echo "CI_UNKNOWN: 失败检查读取异常" >&2; exit 12 ;;
+esac
+if ! RUN_ID=$(printf '%s' "$CHECKS" | python3 -c '
+import json, re, sys
+try:
+    rows = json.load(sys.stdin)
+    if not isinstance(rows, list):
+        raise ValueError("检查不是数组")
+    runs = []
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("检查格式无效")
+        if row.get("bucket") != "fail":
+            continue
+        link = row.get("link")
+        pattern = r"https://github\.com/" + re.escape(sys.argv[1]) + r"/actions/runs/([1-9][0-9]*)(?:/job/[1-9][0-9]*)?/?"
+        match = re.fullmatch(pattern, link) if isinstance(link, str) else None
+        if not match:
+            raise ValueError("失败检查不是本仓 Actions run")
+        runs.append(int(match.group(1)))
+    if not runs:
+        raise ValueError("没有可确认的失败run")
+    print(max(runs))
+except (ValueError, TypeError):
+    sys.exit(12)
+' "$REPO"); then
+  echo "CI_UNKNOWN: 无法确认失败检查所属的本仓 Actions run" >&2
+  exit 12
+fi
+if ! FAILURE_LOG=$(gh run view "$RUN_ID" --repo "$REPO" --log-failed); then
+  echo "CI_UNKNOWN: 无法读取已确认失败run的日志" >&2
+  exit 12
+fi
+printf '%s\n' "$FAILURE_LOG" | tail -200
 ```
 
 ### 3b. 在 worktree 里修复
@@ -358,7 +425,7 @@ fi
 2. **禁止提前 exit 0**：只有合并/关闭/fix_count≥3 才能退出
 3. **Bash timeout 设 600000**：单次轮询最长 10 分钟，超时后立即再发起一次
 4. **无 worktree 也能轮询**：找不到 worktree 时跳过修复步骤，仍持续轮询合并状态
-5. **`gh pr list` 返空 = 已合并**：视为正常退出
+5. **发现列表不等于终态**：`gh pr list` 只有成功返回合法 JSON `[]` 才表示无待监控 PR；API 失败、空白或格式异常均为未知 `12`。不得据此宣称已合并、清理、完成任务或关闭会话；指定 PR 必须经 Step 2/5 精确终态验真。
 
 ---
 
