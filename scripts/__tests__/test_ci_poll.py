@@ -18,7 +18,7 @@ def snapshot(checks=None, merge='CLEAN'):
 
 
 class CiPollTest(unittest.TestCase):
-    def run_entry(self, snapshots, *, api_exit=0, watchdog=False, state_exit=0):
+    def run_entry(self, snapshots, *, api_exit=0, watchdog=False, state_exit=0, cleanup=False, initial_state="OPEN", final_state="MERGED", final_state_exit=0):
         with tempfile.TemporaryDirectory(prefix='ci-poll-regression-') as tmp:
             base = Path(tmp)
             bin_dir = base / 'bin'
@@ -35,7 +35,11 @@ if args[:2] == ['pr', 'merge']: sys.exit(0)
 if '--json' in args and args[args.index('--json')+1] == 'state':
     if int(os.environ['STATE_EXIT']): sys.exit(int(os.environ['STATE_EXIT']))
     state = p/'state-count'; n = int(state.read_text()) if state.exists() else 0
-    state.write_text(str(n+1)); print('OPEN' if n == 0 else 'MERGED'); sys.exit(0)
+    state.write_text(str(n+1))
+    if n > 0 and int(os.environ['FINAL_STATE_EXIT']): sys.exit(int(os.environ['FINAL_STATE_EXIT']))
+    print(os.environ['INITIAL_STATE'] if n == 0 else os.environ['FINAL_STATE']); sys.exit(0)
+if '--json' in args and args[args.index('--json')+1] == 'url':
+    print('https://fixture.invalid/pr/1'); sys.exit(0)
 if '--json' in args and args[args.index('--json')+1] == 'autoMergeRequest':
     print('null'); sys.exit(0)
 if int(os.environ['API_EXIT']): sys.exit(int(os.environ['API_EXIT']))
@@ -49,12 +53,18 @@ print(row if isinstance(row, str) else json.dumps(row))
             sleep = bin_dir / 'sleep'
             sleep.write_text('#!/bin/sh\necho sleep >> "$FIXTURE_DIR/sleeps"\n')
             sleep.chmod(0o755)
-            home = base / 'home'
+            for name in ('git', 'curl', 'jq'):
+                tool = bin_dir / name
+                tool.write_text("#!/usr/bin/env python3\nimport os, pathlib, json, sys\np=pathlib.Path(os.environ['FIXTURE_DIR'])\nwith (p/'calls').open('a') as f: f.write(json.dumps(['fixture-'+pathlib.Path(sys.argv[0]).name]+sys.argv[1:])+'\\n')\nprint('{}')\n")
+                tool.chmod(0o755)
+            (base/'dev-mode').write_text('task_id: fixture-task\n')
+            home = base / 'home' 
             (home / 'perfect21').mkdir(parents=True)
             (home / 'perfect21/zenithjoy-skills').symlink_to(ROOT)
             env = {**os.environ, 'PATH': str(bin_dir) + ':' + os.environ['PATH'],
                    'FIXTURE_DIR': str(base), 'API_EXIT': str(api_exit),
-                   'STATE_EXIT': str(state_exit), 'HOME': str(home)}
+                   'STATE_EXIT': str(state_exit), 'HOME': str(home), 'INITIAL_STATE': initial_state,
+                   'FINAL_STATE': final_state, 'FINAL_STATE_EXIT': str(final_state_exit)}
             command = ['bash', str(ROOT / 'scripts/ci-poll.sh'), '987654321', 'owned/fixture']
             if watchdog:
                 text = (ROOT / 'engine-pr-watchdog/SKILL.md').read_text()
@@ -63,9 +73,11 @@ print(row if isinstance(row, str) else json.dumps(row))
                 block = block.replace('PR_NUMBER=<PR号>', 'PR_NUMBER=987654321')
                 block = block.replace('REPO=<owner/repo>', 'REPO=owned/fixture')
                 block = block.replace('WORKTREE_PATH=<worktree路径>', 'WORKTREE_PATH=/unused')
-                block = block.replace('DEV_MODE_FILE=<.dev-mode文件路径>', 'DEV_MODE_FILE=/unused')
+                block = block.replace('DEV_MODE_FILE=<.dev-mode文件路径>', 'DEV_MODE_FILE=' + str(base/'dev-mode'))
                 # 隔离原命令块的计数文件，不修改控制流。
                 block = block.replace('/tmp/watchdog-fix-count-', str(base) + '/watchdog-fix-count-')
+                if cleanup:
+                    block += '\n' + next(b.split('```')[0] for b in blocks[1:] if '# 读取 task_id' in b)
                 command = ['bash', '-c', block]
             result = subprocess.run(command, env=env, text=True, capture_output=True, timeout=5)
             calls = [json.loads(x) for x in (base/'calls').read_text().splitlines()]
@@ -126,6 +138,35 @@ print(row if isinstance(row, str) else json.dumps(row))
 
     def test_watchdog_initial_state_api_failure_must_not_claim_merged(self):
         self.assert_unknown(snapshot(), state_exit=1, watchdog=True)
+
+    def test_closed_cleanup_never_records_a_successful_merge(self):
+        result, calls, _ = self.run_entry([snapshot()], watchdog=True, cleanup=True,
+                                         initial_state='CLOSED', final_state='CLOSED')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        writes = [json.loads(c[c.index('-d')+1]) for c in calls if c[0] == 'fixture-curl']
+        self.assertEqual(len(writes), 1)
+        self.assertEqual(writes[0]['status'], 'failed')
+        self.assertEqual(writes[0]['result']['merged'], False)
+        self.assertEqual(writes[0]['result']['closed'], True)
+        self.assertEqual(writes[0]['result'].get('handoff', {}).get('verdict'), 'FAIL')
+
+    def test_cleanup_rechecks_state_before_any_mutation(self):
+        for state, api_exit in [('OPEN', 0), ('', 0), ('UNKNOWN', 0), ('MERGED', 1)]:
+            with self.subTest(state=state, api_exit=api_exit):
+                result, calls, _ = self.run_entry([snapshot()], watchdog=True, cleanup=True,
+                    initial_state='MERGED', final_state=state, final_state_exit=api_exit)
+                self.assertEqual(result.returncode, 12, result.stderr)
+                self.assertFalse(any(c[0] in ('fixture-git', 'fixture-curl') for c in calls))
+
+    def test_verified_merged_cleanup_records_pass(self):
+        result, calls, _ = self.run_entry([snapshot()], watchdog=True, cleanup=True,
+                                         initial_state='MERGED', final_state='MERGED')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        writes = [json.loads(c[c.index('-d')+1]) for c in calls if c[0] == 'fixture-curl']
+        self.assertEqual(len(writes), 1)
+        self.assertEqual(writes[0]['status'], 'completed')
+        self.assertEqual(writes[0]['result']['merged'], True)
+        self.assertEqual(writes[0]['result'].get('handoff', {}).get('verdict'), 'PASS')
 
     def test_watchdog_green_can_request_auto_merge(self):
         result, calls, _ = self.run_entry([snapshot()], watchdog=True)
