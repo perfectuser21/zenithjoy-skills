@@ -34,6 +34,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Regression — dev真实建单示例路由证据
+        run: python3 dev/tests/test_task_registration.py
+
       - name: Regression — engine-ship candidate Task receipt
         run: python3 engine-ship/tests/test_candidate_receipt.py
 
