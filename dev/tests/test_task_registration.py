@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import threading
 import unittest
+import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
 TASK = '11111111-1111-4111-8111-111111111111'
@@ -21,6 +22,7 @@ class TaskRegistrationTest(unittest.TestCase):
                       and '\\"task_type\\": \\"' + task_type + '\\"' in block]
         self.assertEqual(len(candidates), 1, '必须执行唯一当前建单示例，而非历史changelog')
         trace = []
+        created_id = str(uuid.uuid4())
         class Handler(http.server.BaseHTTPRequestHandler):
             def log_message(self, *_args): pass
             def do_POST(self):
@@ -31,11 +33,16 @@ class TaskRegistrationTest(unittest.TestCase):
                     and payload['branch'].startswith('cp-')
                     and re.fullmatch('[0-9a-f]{40}', payload.get('base_sha', '')))
                 code = 200 if valid else 500
-                trace.append({'path': self.path, 'body': payload, 'status': code})
+                if not is_claim and mode in ('create-error', 'create-forbidden'): code = 500 if mode == 'create-error' else 403
+                if is_claim and mode == 'claim-error': code = 500
+                trace.append({'path': self.path, 'body': payload, 'status': code, 'response_id': created_id})
                 self.send_response(code); self.send_header('Content-Type', 'application/json')
                 self.end_headers()
-                self.wfile.write(json.dumps({'id': TASK} if valid else
-                    {'error': 'routing_evidence_unavailable'}).encode())
+                if not is_claim and mode == 'create-bad-json': self.wfile.write(b'{broken'); return
+                response = {'id': created_id} if code == 200 else {'error': 'owned rejected'}
+                if not is_claim and mode == 'create-missing-id': response = {}
+                if not is_claim and mode == 'create-invalid-id': response = {'id': 'not-a-task'}
+                self.wfile.write(json.dumps(response).encode())
         with tempfile.TemporaryDirectory(prefix='dev-entry-owned-') as tmp:
             fixture = Path(tmp)
             git = ['git', '-c', 'core.hooksPath=/dev/null', '-c', 'commit.gpgsign=false']
@@ -67,9 +74,18 @@ class TaskRegistrationTest(unittest.TestCase):
                                         env=env, capture_output=True, text=True, timeout=10)
             finally:
                 server.shutdown(); server.server_close(); thread.join()
-        if mode != 'ok':
+        if mode in ('git-error', 'missing-branch', 'fake-sha', 'wrong-repo'):
             self.assertNotEqual(result.returncode, 0, '错误Git/缺分支/假SHA必须在发请求前拒绝')
             self.assertEqual(trace, [], '无可信路由身份不能POST或claim')
+            return trace
+        if mode.startswith('create-'):
+            self.assertNotEqual(result.returncode, 0, '创建失败/响应未知不可成功收尾')
+            self.assertEqual(len(trace), 1, '创建未知不得继续claim旧任务')
+            return trace
+        if mode == 'claim-error':
+            self.assertNotEqual(result.returncode, 0, 'claim HTTP失败不可成功收尾')
+            self.assertEqual(len(trace), 2)
+            self.assertEqual(trace[1]['path'], '/api/brain/tasks/' + created_id + '/claim')
             return trace
         self.assertEqual(result.returncode, 0, result.stderr)
         create = trace[0]
@@ -96,7 +112,8 @@ class TaskRegistrationTest(unittest.TestCase):
         trace = self.execute_example('dev')
         self.assertEqual(len(trace), 2)
         self.assertEqual(trace[0]['body']['payload']['headed_manual'], 'true')
-        self.assertEqual(trace[1]['path'], '/api/brain/tasks/' + TASK + '/claim')
+        self.assertNotEqual(trace[0]['response_id'], TASK, '回执使用新随机id，不能由预填常量凑绿')
+        self.assertEqual(trace[1]['path'], '/api/brain/tasks/' + trace[0]['response_id'] + '/claim')
         self.assertEqual(trace[1]['body']['claimer'], 'interactive-dev-skill')
 
     def test_untrusted_routing_context_never_sends_any_request(self):
@@ -104,6 +121,18 @@ class TaskRegistrationTest(unittest.TestCase):
             for mode in ('git-error', 'missing-branch', 'fake-sha', 'wrong-repo'):
                 with self.subTest(task_type=task_type, mode=mode):
                     self.execute_example(task_type, mode)
+
+
+    def test_failed_or_unknown_headed_creation_never_claims(self):
+        for mode in ('create-error', 'create-forbidden', 'create-bad-json', 'create-missing-id', 'create-invalid-id'):
+            with self.subTest(mode=mode): self.execute_example('dev', mode)
+
+    def test_coding_workflow_http_failure_is_nonzero_and_never_claims(self):
+        for mode in ('create-error', 'create-forbidden'):
+            with self.subTest(mode=mode): self.execute_example('coding_workflow', mode)
+
+    def test_headed_claim_http_failure_is_nonzero(self):
+        self.execute_example('dev', 'claim-error')
 
 
 if __name__ == '__main__': unittest.main()
