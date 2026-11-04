@@ -1,7 +1,7 @@
 ---
 name: dev
-version: 21.14.2
-updated: 2026-10-15
+version: 21.14.3
+updated: 2026-11-04
 description: "执行代码开发、Bug 修复或功能改动，按改动范围选择开发路径，完成任务归位、验收与交接。用于 /dev 或明确开发任务；保留 task-id claim、变更隔离与现行部署验收规则。"
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
@@ -701,6 +701,8 @@ node packages/brain/scripts/coding-workflow/new-task.mjs /tmp/cw-plan.json --rep
 
 下例 `F1` 是 Cecelia 地图节点示例；repo / repo_hint / map_scope_hint 必须查真实目标后替换，不能固定为默认。`change_kind` 按实际改动选择，bug 用 `bugfix`；脚本会在请求体显式写 `mutation_intent:"write"`、`repo_hint`，裸 curl 也必须带；gp_anchor 使用已确认的真实 Line/GP 锚点，仅基础设施等获准豁免才用 `none(infra)`，不得为业务功能默认豁免。
 
+裸建单前，从真实目标仓确认本次 `cp-*` 分支与 `git rev-parse --verify origin/main^{commit}` 的完整 40 位 SHA，分别填 `branch` / `base_sha`。显式传入可避免 Brain 依赖服务器本地 checkout 推断基线；不要拿其它仓库或旧任务的身份代填。响应中的 payload 是服务端归一结果，不把 `orchestrator`、`harness_runtime`、`routing_receipt_id` 等内部字段复制到新请求。有头建单取任务 `id` 后立即 claim；无头 `coding_workflow` 仍由 runner 认领。
+
 等价的 curl（不用脚本时，字段照 runner 口径）：
 ```bash
 curl -s -X POST localhost:5221/api/brain/tasks \
@@ -711,6 +713,8 @@ curl -s -X POST localhost:5221/api/brain/tasks \
     \"change_kind\": \"capability_change\",
     \"repo_hint\": \"cecelia\",
     \"map_scope_hint\": [\"F1\"],
+    \"branch\": \"<当前cp分支>\",
+    \"base_sha\": \"<真实origin/main完整SHA>\",
     \"title\": \"<feature_name>\",
     \"description\": \"<thin_prd>\",
     \"priority\": \"P1\",
@@ -732,6 +736,7 @@ curl -s -X POST localhost:5221/api/brain/tasks \
 curl -s -X POST localhost:5221/api/brain/tasks -H "Content-Type: application/json" \
   -d "{\"title\": \"<PR 标题>\", \"task_type\": \"dev\", \"mutation_intent\": \"write\", \"priority\": \"P1\", \"change_kind\": \"capability_change\",
        \"repo_hint\": \"https://github.com/perfectuser21/zenithjoy-workspace\", \"map_scope_hint\": [\"<格子>\"],
+       \"branch\": \"<当前cp分支>\", \"base_sha\": \"<真实origin/main完整SHA>\",
        \"trigger_source\": \"manual\", \"payload\": {\"headed_manual\": \"true\"}}"
 curl -s -X POST localhost:5221/api/brain/tasks/<id>/claim -H "Content-Type: application/json" -d '{"claimer":"interactive-dev-skill"}'
 ```
