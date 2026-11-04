@@ -7,6 +7,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from test_watchdog_discovery import WatchdogDiscoveryTest
 
 ROOT = Path(__file__).resolve().parents[2]
 
