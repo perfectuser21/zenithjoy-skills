@@ -1,113 +1,98 @@
 ---
 name: engine-ship
-version: 16.4.0
-updated: 2026-07-14
-description: Cecelia /dev 接力链终棒。Superpowers finishing 完成 push+PR 后，写 Learning + 触发 Brain fire-learnings-event + 标记 step_4_ship=done。完成后下一 tool call 必须 Skill(engine-pr-watchdog)。
-trigger: Superpowers finishing-a-development-branch 完成后，按 /dev SKILL.md Phase 5 硬规则点火
+version: 17.0.0
+updated: 2026-11-04
+description: /dev 创建PR后的候选交付接力。核对实际PR与完整HEAD，将事实、证据、actor写入Brain Task并读回，然后立即交engine-pr-watchdog监控CI和真实合并终态。
+trigger: Superpowers finishing-a-development-branch 创建PR后，按 /dev 接力进入
 ---
 
-> **CRITICAL LANGUAGE RULE**: 所有输出简体中文。
+所有输出使用简体中文。Task 是事件真身；知识按 Notion 知识库归位，PR 不是已合并交付。
 
-## Harness 模式检测
+## 1. 确认候选与有效门禁
+
+在对应仓库的独立 worktree 中完成实际验收，提交全部候选改动并创建 PR。记录真实
+Task UUID、owner/repo、PR 号、完整 40 位 Git HEAD、执行者与可读回证据。
+
+保留目标仓库当前有效 DevGate；Cecelia 的事实、版本、DoD 门使用当前
+`scripts/facts-check.mjs`、`scripts/check-version-sync.sh`、
+`scripts/devgate/check-dod-mapping.cjs`。没有当前测试证据不写“通过”。
+不要调用旧 Engine 目录下的清理、回调或 finalize 脚本来代替这些门。
+
+不创建 Learning Markdown、handoff 镜像或 CURRENT_STATE 快照来满足交付仪式。
+不运行旧快照生成器，不发送自动 Learning/fire-event 通知。历史文档与冻结证据保留原位。
+需要记录本次经验时，把具体事实与证据写入本 Task；可复用知识另按用户授权写 Notion 真身。
+
+## 2. 写入候选事实并读回
+
+先在仓库外准备 JSON 文件，必须含非空 `facts` 字符串数组和非空 `evidence` 对象数组。
+每个证据对象必须有 `path`、`sha256`、`command`、`result` 四个非空字符串字段。
+`path` 为存在的绝对文件路径或 HTTPS URL；`sha256` 为 64 位十六进制。helper 对本地文件
+计算真实 SHA256 并比对。HTTPS 引用仅验证结构，不下载、不代表远端产物或业务效果已验证。
+`command` / `result` 填真实执行命令及结果，helper 不会执行所填命令；不要放凭据或原始日志。
+未知项明确写未证，不能把模型/设备/生产效果填成已经验证。
+
+从**本次实际加载**的 Skill 上下文填写 `LOADED_SKILL_MD`；不猜 Claude/Codex 专属变量，
+不从旧 main、CWD 或其它安装位置回落加载 helper。下面整块在目标候选 worktree 执行。
 
 ```bash
-BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
-DEV_MODE_FILE=".dev-mode.${BRANCH_NAME}"
-harness_mode=$(grep -m1 "^harness_mode:" "$DEV_MODE_FILE" 2>/dev/null | awk '{print $2}')
-[[ "$harness_mode" == "true" ]] && { echo "harness mode — 跳 Learning/fire-event，直接标 done"; skip_learning=1; }
-```
-
-harness_mode=true 时跳过 §1.5、§2，直达 §3。
-
-## 1. 完工清理检查（engine/ 有改动时必做）
-
-```bash
-bash packages/engine/skills/dev/scripts/check-cleanup.sh
-```
-
-检查 regression-contract 引用 / Shell 硬引用 / 6 个版本文件同步。有问题必修。
-
-## 1.5 毕业步（测试入册，v16.4 — 配套 cecelia test-pyramid-guard 孤儿棘轮锁 0）
-
-harness_mode=true 直接跳过本节（relay 路径的毕业由 harness-controller Step 6 负责）。
-
-有头路径：若当前分支在 `sprints/*/tests/` 或 `sprints/*/e2e-verify.sh` 有本分支新增文件，且 repo 存在 `scripts/graduate-sprint-tests.mjs`，必须逐 sprint 跑毕业脚本把测试搬进永久池（tests/regression/<slug>/ + scripts/smoke/e2e/<slug>.sh），否则 test-pyramid-guard 会把 PR 拦红：
-
-```bash
-if [[ "$harness_mode" != "true" && -f scripts/graduate-sprint-tests.mjs ]]; then
-  # 找出本分支新增的 sprint 测试/E2E 脚本（对比 merge-base）
-  GRAD_SPRINTS=$(git diff --name-only --diff-filter=A "$(git merge-base origin/main HEAD)"..HEAD \
-    | grep -E '^sprints/[^/]+/(tests/|e2e-verify\.sh)' | cut -d/ -f1-2 | sort -u)
-  for SPRINT in $GRAD_SPRINTS; do
-    # --update-refs：重写根 DoD.md 旧路径引用，防毕业 commit 被 dod-behavior-dynamic 拦死（#3870 实证）
-    node scripts/graduate-sprint-tests.mjs --sprint "$SPRINT" --update-refs
-  done
-  if [[ -n "$GRAD_SPRINTS" ]] && ! git diff --quiet; then
-    git add -A && git commit -m "chore(quality): 毕业 sprint 测试入册永久池（纯 rename）"
-    git push origin HEAD
-    # 此时 PR 已开、watchdog 尚未接手，追加 commit 会重触 CI——正常，由 engine-pr-watchdog 照常等绿
-  fi
+# engine-ship candidate receipt
+LOADED_SKILL_MD='<本次实际加载的SKILL.md绝对路径>'
+if ! SHIP_HELPER=$(python3 - "$LOADED_SKILL_MD" <<'PYTHON'
+from pathlib import Path
+import re
+import sys
+try:
+    loaded = Path(sys.argv[1])
+    if not loaded.is_absolute():
+        raise ValueError('必须给实际加载Skill绝对路径')
+    skill = loaded.resolve(strict=True)
+    parts = skill.read_text(encoding='utf-8').split('---', 2)
+    if (skill.name != 'SKILL.md' or skill.parent.name != 'engine-ship'
+            or len(parts) != 3 or parts[0].strip()
+            or re.findall(r'^name:\s*(.+?)\s*$', parts[1], re.M) != ['engine-ship']
+            or re.findall(r'^version:\s*(.+?)\s*$', parts[1], re.M) != ['17.0.0']):
+        raise ValueError('Skill身份或版本不符')
+    helper = skill.parent / 'scripts/record-candidate.py'
+    if not helper.is_file() or helper.resolve(strict=True) != helper:
+        raise ValueError('同release helper缺失或物理路径越界')
+    print(helper)
+except (OSError, ValueError):
+    sys.exit(12)
+PYTHON
+); then
+  echo 'SHIP_UNKNOWN: 无法确认实际加载Skill的同release helper' >&2
+  exit 12
 fi
+python3 "$SHIP_HELPER" \
+  --loaded-skill "$LOADED_SKILL_MD" \
+  --task-id '<Task UUID>' --repo '<owner/repo>' --pr '<PR号>' \
+  --head '<当前候选完整HEAD>' --actor '<执行者>' \
+  --facts-file '<事实证据JSON绝对路径>' --dev-mode '<本仓.dev-mode绝对路径>' \
+  --brain-url '<Brain API根地址>'
 ```
 
-## 2. 写 Learning + fire Brain 事件（harness_mode=false）
+正常 Brain 根地址为 `http://localhost:5221`；该端口是生产 Brain 账本代理，仅交付本 Task
+候选事件，不当测试服务。回归只使用本人隔离的 loopback HTTP 端口，不调用真实业务或通知。
 
-格式：`## <任务简述>（YYYY-MM-DD）` + `### 根本原因` + `### 下次预防` checklist。
+helper 验真实 Git HEAD/干净树、GitHub PR 的仓库/URL/head/OPEN 状态、进行中的 Task 身份，
+只 PATCH `result.ship_candidate`，随后 GET 精确读回。不会发送 Task status、generator_done、
+终态 verdict 或 merged=true；因此不会把 PR 尚未合并写成 completed/PASS。
 
-```bash
-LEARNING_FILE="docs/learnings/${BRANCH_NAME}.md"
-mkdir -p docs/learnings
-# 写 Learning 内容到 $LEARNING_FILE
-git add "$LEARNING_FILE"
-git commit -m "docs: add learning for ${BRANCH_NAME}
+任何 API 失败、坏 JSON、身份未知、写失败或读回不一致均返回 12。保留工作树；已发生但未确认
+的写入先读回核对，不重复伪报成功。若 PR 已 MERGED/CLOSED，直接交 watchdog 验真终态，
+不要在这里猜测或覆盖终态。候选回执成功只代表候选事实已入账，不代表 GitHub CI/部署通过。
 
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
-git push origin HEAD
+## 3. 接力到真实终态
 
-bash packages/engine/skills/dev/scripts/fire-learnings-event.sh \
-  --branch "$BRANCH_NAME" --pr "$PR_NUMBER" --task-id "$TASK_ID"
+候选回执读回后立即调用 `engine-pr-watchdog`。它负责当前 PR 的 CI 轮询、失败修复、合并状态
+确认与 Task 终态 handoff；未知不能当绿，CLOSED 未合并不能写 PASS。
 
-# 闭环回写 Brain task status=completed（CLAUDE.md §8）
-bash packages/engine/skills/dev/scripts/callback-brain-task.sh \
-  --branch "$BRANCH_NAME" --pr "$PR_NUMBER" --task-id "$TASK_ID"
+helper 在 Task 候选回执精确读回后，才把当前工作树中同 Task 的 `step_4_ship` 标为 done。
+这个本地阶段仅表示“候选已交付”，Task 仍为 in_progress；写入或读回失败保持 pending。
+不创建 Learning 文件来绕开旧门。只有当前执行现场真实加载的门才按当前合同验收；
+磁盘上的旧 hook 不作为恢复旧流程的理由。
 
-bash scripts/write-current-state.sh
-```
+handoff 的 `next_steps` 每条保留明确 kind：`resume_headed` / `dispatch_headless` /
+`decision` / `note`。无下一步用 note 明确“完成，无下一步”。不主动创建仓库 Markdown 镜像。
 
-## 2.5 关 guardian + 写 done-marker（v23 心跳模型）
-
-```bash
-PR_NUMBER=$(gh pr view --json number -q .number 2>/dev/null || echo "")
-PR_URL=$(gh pr view --json url -q .url 2>/dev/null || echo "")
-bash packages/engine/scripts/ship-finalize.sh "$BRANCH_NAME" "$PR_NUMBER" "$PR_URL" || \
-  echo "[engine-ship] ship-finalize 失败但不阻塞合并（灯文件可能已被 reaper 清）"
-```
-
-## 3. 标记完成
-
-```bash
-sed -i '' "s/step_4_ship: pending/step_4_ship: done/" "$DEV_MODE_FILE"
-git push origin HEAD
-```
-
-## 完成标志
-
-- `.dev-mode` 里 `step_4_ship: done`（两模式都必须）
-- harness_mode=false 时额外：`docs/learnings/<branch>.md` 存在且已 push
-
----
-
-## TERMINAL IMPERATIVE
-
-engine-ship 是 /dev 接力链倒数第二棒。**完成后下一 tool call 必须是 `Skill({"skill":"engine-pr-watchdog"})`**，由它接管 CI 监控 + 自动合并 + cleanup。CI 红 → engine-pr-watchdog 内部调 `superpowers:systematic-debugging`。
-
-## 终态 Handoff 说明（decisions cf998025 — engine-pr-watchdog 3.2.0）
-
-engine-pr-watchdog 3.2.0 起，merge 确认后**自动写 handoff**，路径 A/B 无需手动写：
-- **SSOT**：`tasks.result.handoff`（Brain DB，task_id 对应行）
-- **镜像**：`docs/handoffs/<timestamp>-<taskId>.md`（仓库内，可 grep 查历史）
-- **格式协议**：`packages/brain/src/handoff.js`（saveHandoff 函数）
-- **无下一步时**：next_steps 字段显式写「完成，无下一步」，禁止留空
-- **next_steps 每条带 kind**（2026-10-11 决策）：`resume_headed`（有头续接，不派发，进待续列表）/ `dispatch_headless`（无头派发，自动建子任务）/ `decision`（待拍板）/ `note`（备注）。详见 engine-pr-watchdog Step 5.5
-
-engine-ship 本身不写 handoff，只负责 Learning + fire-event + done-marker；handoff 是 engine-pr-watchdog 在 merge 后的收尾职责。
+**完成后下一 tool call 必须加载并执行 `engine-pr-watchdog`，使用本次真实 PR、repo 与 Task。**
