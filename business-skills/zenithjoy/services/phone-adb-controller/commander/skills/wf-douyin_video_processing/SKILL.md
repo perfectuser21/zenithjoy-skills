@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_video_processing
-version: 0.6.0
+version: 0.6.1
 changelog:
   - "0.4.0: 同步活动合同的承诺、来源去向与可判定读回；样本仍待业务核准"
   - "0.3.4: 同步102规范块格式兼容版本，方法合同与授权范围不变"
@@ -31,7 +31,7 @@ description: "抖音视频处理 wf_run 陪跑说明：显式加载本次冻结�
 
 本流程依赖的Activity方法版本由业务Skill的 `references/activity-methods.json` 精确登记。方法变化要同步本陪跑Skill版本与合同 `commander_skill.version`；Commander只使用本run冻结组合。代码内部兼容评估、Skill实机验收和自动handoff能力分别记证据，不从文件存在推定已能接手。
 
-本版依赖 `douyin-leadgen-102@0.6.0` 及 `douyin-leadgen-activity-102-qualification@0.4.0`。仅把明确通知暂态交给该方法有界被动复读；同run/Activity/owner、最多两次只读证和一次原slot resume及原独立verify不变。未知或活跃录制不借陪跑清场，未有实际交接证据仍不宣称Skill救场成功。
+本版依赖 `douyin-leadgen-102@0.6.1` 及 `douyin-leadgen-activity-102-qualification@0.4.1`。仅把明确通知暂态交给该方法有界被动复读；同run/Activity/owner、最多两次只读证和一次原slot resume及原独立verify不变。未知或活跃录制不借陪跑清场，未有实际交接证据仍不宣称Skill救场成功。
 
 
 ## 同run有界Agent恢复合同

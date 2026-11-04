@@ -4,7 +4,7 @@ description: 交出持久化且身份可验证的评论。用于从合格视频�
 changelog:
   - "0.2.1: 正式声明同VID已证零评论替代证据，正数与未知门禁保持"
 metadata:
-  version: 0.5.0
+  version: 0.5.1
   primary_execution: agent-v1
   activity_ref: douyin_video_processing.collection
   activity_version: 2.7.2
@@ -24,6 +24,8 @@ metadata:
 本版支持 Runner 正式选择的 `mode=execute`，以及原有失败后接手模式；共同执行约束中关于 Code 失败、原 handler 和 resume 的条款只用于失败接手，不用于 `execute`。只执行本次指定的一个 Activity，不自行启动、切换或重启 Workflow。
 
 `execute` 必须由本 run 的冻结 `execution_mode=agent`、中央不可变 `actor=runtime:phone-adb-controller:agent-v1` 声明及原 runtime snapshot、来源、方法和资源绑定共同准入。actor 是运行声明，不是权限或执行成功证明；Agent 不创建绑定、不改 actor、不调用内部 RPC 或裸队列。缺合法工具或准入即报告具体阻断。
+
+仓库 YAML 链接仅定位业务合同来源，不要求执行目录具有该仓库。执行时读取本次 `request.method.contract` 中由 Runner 与中央固定 Activity 版本核验过的 `payload`、`sha256` 和版本身份；缺该原件即报告缺失，不从最新仓库、链接不存在或自拟内容补合同。
 
 1. 先核官方 child 绑定与本次私有 request 的 run、task、Activity、来源、方法和截止，调用 `inspect` 读取输入、当前原件、允许操作及 Commander 指导。
 2. 只用本 request 给出的 `phone` 和 `business` 工具逐步执行。`phone` 输入为 `{command,args}`，`business` 输入为 `{operation,input}`；操作及字段以服务端本 Activity 当前实际暴露的 schema 为准，不猜操作名或自己扩白名单。锁和资源由 Runner 代码管理，Agent 不能更换 owner、公司、账号、设备、来源、额度或截止。
@@ -100,3 +102,5 @@ Code失败或Code实际产出未过原verify时，首次Skill接手仍走原入�
 仅原进程签发的 `collection-returned-phone-v1` 私有能力可启用此例外：collection Code正常返回、原独立verify失败，固定nofork producer全部请求已有封闭intent/start/exit且已确定归还，无受管请求unknown、signal、超时、输出超限或未闭合。它不是OS全进程树停止证明；原observed_only收据和业务FAIL保持。每阶段重核原run/task/source/account、冻结目录与录音身份及原截止；JSON/自报布尔、错身份或重放均无效。
 
 只允许同run一次readback_only接手及本人受管cleanup，各阶段仍须真实producer封闭归还；禁止resume、重新领取、重做已提交VID或延长预算。只读失败保失败；child未知或新受管请求终止未知必须保资源并禁止清场。没有该原进程能力的旧冻结运行仍执行原未知隔离规则。
+
+作者被排除且原生 footer 明确到达、实际 coverage=0 时，记录 `footer_reached` 和零覆盖；不得写成 UI `no_comments` 或 `quota_reached`。只交实际范围和原件，最终状态与路由由 Runner 按冻结合同决定。
