@@ -25,7 +25,10 @@ Task UUID、owner/repo、PR 号、完整 40 位 Git HEAD、执行者与可读回
 ## 2. 写入候选事实并读回
 
 先在仓库外准备 JSON 文件，必须含非空 `facts` 字符串数组和非空 `evidence` 对象数组。
-证据对象填写实际产物路径/URL、SHA256、真实执行命令与结果；不要放凭据或整段原始日志。
+每个证据对象必须有 `path`、`sha256`、`command`、`result` 四个非空字符串字段。
+`path` 为存在的绝对文件路径或 HTTPS URL；`sha256` 为 64 位十六进制。helper 对本地文件
+计算真实 SHA256 并比对。HTTPS 引用仅验证结构，不下载、不代表远端产物或业务效果已验证。
+`command` / `result` 填真实执行命令及结果，helper 不会执行所填命令；不要放凭据或原始日志。
 未知项明确写未证，不能把模型/设备/生产效果填成已经验证。
 
 从**本次实际加载**的 Skill 上下文填写 `LOADED_SKILL_MD`；不猜 Claude/Codex 专属变量，

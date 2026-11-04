@@ -2,6 +2,7 @@
 """只记录同一PR/head的候选交付；PR终态留给watchdog。"""
 import argparse
 import datetime
+import hashlib
 import json
 import os
 import tempfile
@@ -72,6 +73,33 @@ def brain_client(base):
     return request
 
 
+def validate_evidence(items):
+    required = {'path', 'sha256', 'command', 'result'}
+    for item in items:
+        if (not required.issubset(item)
+                or any(not isinstance(item[key], str) or not item[key].strip() for key in required)
+                or not re.fullmatch(r'[0-9a-fA-F]{64}', item['sha256'])):
+            raise Unknown('证据必须有location/hash/真实command与result')
+        location = item['path']
+        if location.startswith('https://'):
+            url = urllib.parse.urlsplit(location)
+            if (not url.hostname or url.username or url.password
+                    or (url.port is not None and url.port < 1)
+                    or any(c.isspace() for c in location)):
+                raise Unknown('HTTPS证据引用结构无效')
+            # 只确认引用结构；不下载、不声称URL的远端产物或业务效果已经验收。
+            continue
+        artifact = Path(location)
+        if not artifact.is_absolute() or not artifact.is_file():
+            raise Unknown('本地证据必须是存在的绝对文件路径')
+        digest = hashlib.sha256()
+        with artifact.open('rb') as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+                digest.update(chunk)
+        if digest.hexdigest() != item['sha256'].lower():
+            raise Unknown('本地产物实际SHA256不符')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for field in ('loaded-skill', 'task-id', 'repo', 'pr', 'head', 'actor', 'facts-file', 'dev-mode'):
@@ -97,6 +125,7 @@ def main():
             or not isinstance(evidence['evidence'], list) or not evidence['evidence']
             or any(not isinstance(x, dict) or not x for x in evidence['evidence'])):
         raise Unknown('必须提供具体事实与证据引用')
+    validate_evidence(evidence['evidence'])
     supplied_mode = Path(args.dev_mode)
     if not supplied_mode.is_absolute() or supplied_mode.is_symlink():
         raise Unknown('dev-mode必须是本仓绝对路径且不是文件软链')

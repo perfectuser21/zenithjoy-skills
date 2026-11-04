@@ -2,7 +2,7 @@
 
 **症状**: 创建PR后仍调用已移除Engine路径、旧快照生成器，并在未验合并时把Task写成completed。
 **根因**: 交付仪式沿用旧目录和本地Markdown台账，将候选提交与真实合并终态混为一谈。
-**修改**: 实际加载Skill绑定同release候选回执helper；校验PR/head/Task，事实证据写入后精确读回，失败返回未知；终态交watchdog。退休旧completed回调，不创建新Markdown或通知。
+**修改**: 实际加载Skill绑定同release候选回执helper；校验PR/head/Task，证据要求路径/URL、64位SHA256、非空命令与结果，本地产物真实hash比对；事实写入后精确读回，失败返回未知；终态交watchdog。退休旧completed回调，不创建新Markdown或通知。
 
 ## [2026-11-04] engine-pr-watchdog — updated
 **症状**: Step1 将 API 失败和空白混同无 PR，规则5错误宣称返空已合并；Step3a 使用本机不支持的检查字段，失败日志读取失效。
