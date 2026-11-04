@@ -21,3 +21,5 @@ python3 scripts/skills-source.py verify
 固定版本首次下载只使用明确的 `SKILLS_SOURCE_SSH_KEY` 文件身份，禁用交互和 ssh-agent，不回退到 HTTPS 或其他凭据。连接超时为 10 秒，单次 fetch 进程上限 35 秒；暂态连接故障或同身份已成功过的间歇公钥拒绝最多尝试 3 次，间隔 1、2 秒，总 fetch 预算不超过 108 秒。每次请求始终使用同一个完整 commit、私钥临时文件及严格 host-key 校验。已缓存的固定对象仍可不带网络凭据本地还原。
 
 私钥格式、host-key、仓库不存在与固定对象不存在属于永久错误，立即失败；重试耗尽仍输出原失败原因并非零退出。源 loader 校验、install 或 verify 失败不进入网络重试。`test_bootstrap_fetch.py` 以真实 bootstrap 子进程和真实临时 Git 对象覆盖这些边界，网络传输仅由本地 fixture 接管，不接触真实凭据。
+
+首次 fetch 前诊断临时身份，只输出派生公钥的类型和 SHA256 fingerprint；不输出公钥、私钥或任何密钥正文片段。`ssh-keygen -y -P ''` 关闭标准输入且限时 5 秒；诊断不可用时仅报告固定提示，实际 fetch 与后续字节校验仍按原规则成功或失败。SSH 使用 `-F /dev/null`，不继承 runner 的用户配置。
