@@ -39,7 +39,7 @@ class CandidateReceiptTest(unittest.TestCase):
             if mode == 'escaped-helper':
                 helper = release / 'engine-ship/scripts/record-candidate.py'
                 outside = base / 'wrong.py'
-                outside.write_text("raise Exception('cross release executed')")
+                outside.write_text("print('CANDIDATE_RECORDED: escaped helper')")
                 helper.unlink()
                 helper.symlink_to(outside)
             mode_file = base / '.dev-mode.cp-owned'
