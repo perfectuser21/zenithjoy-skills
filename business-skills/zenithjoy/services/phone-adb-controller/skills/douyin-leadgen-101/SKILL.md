@@ -1,8 +1,10 @@
 ---
 name: douyin-leadgen-101
 description: 执行抖音获客101视频发现：按公司关键词和筛选条件取真实视频链接、读取互动指标并交接视频。用于Agent执行或同业务合同的代码异常接手；不做视频资格判断、评论评分或私信。
+changelog:
+  - "0.7.0: 同步显式无工具回合Activity方法与消费者版本"
 metadata:
-  version: 0.6.1
+  version: 0.7.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-101/references/reuse-map.json
@@ -18,9 +20,9 @@ metadata:
 
 本工作流的方法依赖真身见[Activity方法清单](references/activity-methods.json)。执行指定Activity时，按本轮冻结 `activities[].implementations` 的真实name/version/source/digest及execution_path加载对应独立Skill；不能把本工作流Skill当作每个Activity的同一份方法。
 
-- `douyin_video_processing.preflight` → `douyin-leadgen-activity-102-preflight@0.4.1`。
-- `douyin_video_discovery.collect_videos` → `douyin-leadgen-activity-101-collect-videos@0.5.1`（业务合同5.1.1）。
-- `douyin_video_processing.cleanup` → `douyin-leadgen-activity-102-cleanup@0.4.1`。
+- `douyin_video_processing.preflight` → `douyin-leadgen-activity-102-preflight@0.5.0`。
+- `douyin_video_discovery.collect_videos` → `douyin-leadgen-activity-101-collect-videos@0.6.0`（业务合同5.1.1）。
+- `douyin_video_processing.cleanup` → `douyin-leadgen-activity-102-cleanup@0.5.0`。
 
 Activity方法、支持文件或合同改变时，更新对应方法版本、所有消费者清单、本工作流Skill与Commander Skill版本；纯代码内部兼容优化用明确兼容评估绑定前后代码集合。先跑 `npm run leadgen:methods:check`，再做相应独立验收。方法配套完成不表示单Activity执行权交接已经接通。
 
@@ -33,6 +35,9 @@ Activity方法、支持文件或合同改变时，更新对应方法版本、所
 先按 reuse-map 的 `sha256` 核对旧 `SKILL.md` 字节后读取。`path` 只表示当前MMV已核安装位置，不保证其他宿主存在；缺失或不同只能从记录的固定 `repo` / `revision` / `source_path` 读取同字节参考，仍不可读则阻断对应接手。参考说明不等于已部署可执行工具，实际执行仍核本次正式冻结包。
 
 ## 纯 Skill 执行选择
+
+本版同步 Activity 方法新版本：正常执行可由新冻结版本显式选择 `execution_transport=raw-model-v1`，使用官方无工具模型回合与父 Code 原 broker 执行。缺省、旧 run、旧 child 和失败恢复保持原身份及收尾要求；不得原地切换。操作由 Agent 按固定 Skill 决定，顺序、授权、验收和记录由 Runner 负责；未实测不宣称跑通。
+
 
 Starter 在新 run 起跑时可显式设置 `LEADGEN_EXECUTION_MODE=agent`。该选择冻结进运行摘要，中央绑定保存 agent-v1 声明；不能把已冻结 Code run 改成 Agent，或通过伪造失败触发恢复来冒充纯 Skill。Runner 按原文件顺序派发各 Activity 的独立 Skill，Commander 只观察和指导，原独立验收判结果。子 Agent 不调用完整工作流入口或 resume，按各方法的“从第一步执行本 Activity”段使用本次受控原语。当前仍待实机验证，接口缺失或阻断不能报成功。
 

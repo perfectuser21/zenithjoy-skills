@@ -1,6 +1,8 @@
 ---
 name: wf-douyin_video_processing
-version: 0.6.1
+version: 0.7.0
+changelog:
+  - "0.7.0: 同步正常执行无工具回合方法；保留旧child恢复"
 changelog:
   - "0.4.0: 同步活动合同的承诺、来源去向与可判定读回；样本仍待业务核准"
   - "0.3.4: 同步102规范块格式兼容版本，方法合同与授权范围不变"
@@ -31,7 +33,7 @@ description: "抖音视频处理 wf_run 陪跑说明：显式加载本次冻结�
 
 本流程依赖的Activity方法版本由业务Skill的 `references/activity-methods.json` 精确登记。方法变化要同步本陪跑Skill版本与合同 `commander_skill.version`；Commander只使用本run冻结组合。代码内部兼容评估、Skill实机验收和自动handoff能力分别记证据，不从文件存在推定已能接手。
 
-本版依赖 `douyin-leadgen-102@0.6.1` 及 `douyin-leadgen-activity-102-qualification@0.4.1`。仅把明确通知暂态交给该方法有界被动复读；同run/Activity/owner、最多两次只读证和一次原slot resume及原独立verify不变。未知或活跃录制不借陪跑清场，未有实际交接证据仍不宣称Skill救场成功。
+本版依赖 `douyin-leadgen-102@0.7.0` 及 `douyin-leadgen-activity-102-qualification@0.5.0`。仅把明确通知暂态交给该方法有界被动复读；同run/Activity/owner、最多两次只读证和一次原slot resume及原独立verify不变。未知或活跃录制不借陪跑清场，未有实际交接证据仍不宣称Skill救场成功。
 
 
 ## 同run有界Agent恢复合同
@@ -50,3 +52,5 @@ description: "抖音视频处理 wf_run 陪跑说明：显式加载本次冻结�
 ## Agent 从第一步执行的观察职责
 
 当原固定 request.mode 为 execute 时，Agent 从首步执行当前 Activity，不要求先制造 Code 失败，也不要求它 resume 原 handler。仅根据真实事件提供 answer、steer 或 abort；明确指出相关规则或完成标准。执行模式、受控操作、截止及结果验收仍由 Runner 管。不得替 Agent 执行、批准发送或改状态；源/权限/未知停止证明缺口不能用指导越过。Skill 与代码接手的实机结果分别记录。
+
+正常执行采用新方法明确冻结的 `execution_transport=raw-model-v1` 时，只观察父 Code 转发的事件与证据并给纠偏；不自行调用 child/spawn/CLI。父 Code 管理官方无工具回合身份、原 broker 执行和完整终态。旧 child 及失败恢复合同不变，不能将两种收据混用；本版仍待实机验收。
