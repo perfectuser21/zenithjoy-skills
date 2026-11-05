@@ -1,7 +1,7 @@
 ---
 name: engine-pr-watchdog
-version: 3.5.0
-updated: 2026-07-13
+version: 3.5.3
+updated: 2026-11-04
 description: PR 合并守卫。任何 PR 开完后立刻调用，监控所有 repo 的 open PR，阻塞轮询 CI + 合并状态，CI 失败自动修复，直到全部 PR 合并才退出。不使用 ScheduleWakeup，不提前 exit。
 trigger: 任何 PR 开完之后（gh pr create 之后），立刻调用本 skill。engine-ship 完成后也调用。
 ---
@@ -26,16 +26,46 @@ trigger: 任何 PR 开完之后（gh pr create 之后），立刻调用本 skill
 
 ```bash
 WATCH_REPOS="perfectuser21/cecelia perfectuser21/zenithjoy-workspace perfectuser21/zenithjoy-skills"
+TARGETS=""
 for REPO in $WATCH_REPOS; do
-  gh pr list --repo "$REPO" --json number,headRefName,title \
-    --jq '.[] | "\(.number) \(.headRefName)"' 2>/dev/null \
-    | while read num branch; do
-      echo "REPO=$REPO PR=$num BRANCH=$branch"
-    done
+  if ! OPEN_PRS=$(gh pr list --repo "$REPO" --state open --json number,headRefName,title); then
+    echo "CI_UNKNOWN: 无法读取待监控 PR" >&2
+    exit 12
+  fi
+  if ! REPO_TARGETS=$(printf '%s' "$OPEN_PRS" | python3 -c '
+import json, re, sys
+try:
+    rows = json.load(sys.stdin)
+    if not isinstance(rows, list):
+        raise ValueError("PR 列表不是数组")
+    for row in rows:
+        if (not isinstance(row, dict) or type(row.get("number")) is not int
+                or row["number"] <= 0 or not isinstance(row.get("title"), str)
+                or not isinstance(row.get("headRefName"), str)
+                or not re.fullmatch(r"[^\s]+", row["headRefName"])):
+            raise ValueError("PR 条目格式无效")
+    for row in rows:
+        print(str(row["number"]) + " " + row["headRefName"])
+except (ValueError, TypeError):
+    sys.exit(12)
+'); then
+    echo "CI_UNKNOWN: 待监控 PR 列表缺失或格式异常" >&2
+    exit 12
+  fi
+  while read -r num branch; do
+    [ -n "$num" ] || continue
+    TARGETS="${TARGETS}REPO=$REPO PR=$num BRANCH=$branch"$'\n'
+  done <<< "$REPO_TARGETS"
 done
+# 所有仓库均取得合法响应后才交付目标，避免部分读取失败时误继续。
+if [ -n "$TARGETS" ]; then
+  printf '%s' "$TARGETS"
+else
+  echo "无待监控 open PR；未核验指定 PR 终态，不执行清理或任务完成回写"
+fi
 ```
 
-对每个找到的 PR 执行 Step 2。若没有任何 open PR → 直接退出。
+对每个找到的 PR 执行 Step 2。只有所有查询成功且均为合法 JSON `[]` 才表示无待监控 PR；这不是已合并证据，不执行 Step 5 清理、任务完成回写或会话关闭。任何 API 失败、空白或坏 JSON 均返回未知 `12`。
 
 ---
 
@@ -48,12 +78,48 @@ done
 > **禁止 run_in_background**：本 skill 的所有 Bash 调用（包括 git push、git rebase）必须**同步执行**，绝不使用 `run_in_background: true`。后台执行会导致 turn 结束，Stop Hook 触发，轮询循环断裂。
 
 **退出码：**
-- `0` = PR 已合并或关闭 → 执行 Step 5 清理，然后结束
+- `0` = 已读到 PR 合并或关闭 → Step 5 再次验真；MERGED 记 completed/PASS，CLOSED 记 failed/FAIL
 - `10` = CI 失败 → 执行 Step 3 修复，修完后**立刻重新进入 Step 2**
 - `11` = 分支 BEHIND → 执行 Step 4 rebase，完成后**立刻重新进入 Step 2**
+- `12` = 状态未知（API 错误、检查缺失或格式异常）→ 保持任务未完成，恢复状态读取后重新核验；不得当作已合并、CI 测试失败或继续合并的依据
 - 超时（Bash call 到 10 分钟）→ **立刻重新发起 Step 2 的 Bash 调用，不输出任何文字**
 
+执行下列命令前，从**本次实际 Skill 加载上下文**取得本文件的绝对路径并填写 `LOADED_SKILL_MD`。路径未提供时保持未知状态，不执行命令。不要用当前目录、固定安装位置或 Claude 专属变量猜测该路径。安装引用可通过符号链接定位完整中央 release；脚本必须属于解析后的同一物理 release。
+
 ```bash
+LOADED_SKILL_MD='<本次实际加载的SKILL.md绝对路径>'
+if ! CI_POLL_SCRIPT=$(python3 - "$LOADED_SKILL_MD" <<'PYTHON'
+from pathlib import Path
+import re
+import sys
+
+try:
+    loaded = Path(sys.argv[1])
+    if not loaded.is_absolute():
+        raise ValueError("实际加载 Skill 路径必须为绝对路径")
+    skill = loaded.resolve(strict=True)
+    if not skill.is_file() or skill.name != "SKILL.md" or skill.parent.name != "engine-pr-watchdog":
+        raise ValueError("实际路径不是 watchdog 技能正文")
+    frontmatter = skill.read_text(encoding="utf-8").split("---", 2)
+    if len(frontmatter) != 3 or frontmatter[0].strip():
+        raise ValueError("Skill 头部格式无效")
+    header = frontmatter[1]
+    if (re.findall(r"^name:\s*(.+?)\s*$", header, re.M) != ["engine-pr-watchdog"]
+            or re.findall(r"^version:\s*(.+?)\s*$", header, re.M) != ["3.5.3"]):
+        raise ValueError("实际加载 Skill 名称或版本不符")
+    release = skill.parent.parent
+    script = release / "scripts" / "ci-poll.sh"
+    if not script.is_file() or script.resolve(strict=True) != script:
+        raise ValueError("同版本脚本缺失或物理路径越界")
+    print(script)
+except (OSError, ValueError) as error:
+    sys.exit(str(error))
+PYTHON
+); then
+  echo "CI_UNKNOWN: 无法确认本次加载 Skill 的同版本脚本" >&2
+  exit 12
+fi
+printf 'watchdog 固定脚本: %s\n' "$CI_POLL_SCRIPT" >&2
 PR_NUMBER=<PR号>
 REPO=<owner/repo>          # 如 perfectuser21/cecelia
 WORKTREE_PATH=<worktree路径>
@@ -67,8 +133,15 @@ echo "🔍 开始监控 PR #$PR_NUMBER ($REPO)"
 
 while true; do
   # ── 检查是否已合并 ──────────────────────────────
-  STATE=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json state --jq '.state' 2>/dev/null)
-  if [ "$STATE" = "MERGED" ] || [ -z "$STATE" ]; then
+  if ! STATE=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json state --jq '.state' 2>/dev/null); then
+    echo "CI_UNKNOWN: 无法读取 PR 状态，不能判定已合并" >&2
+    exit 12
+  fi
+  case "$STATE" in
+    OPEN|MERGED|CLOSED) ;;
+    *) echo "CI_UNKNOWN: PR 状态缺失或未知" >&2; exit 12 ;;
+  esac
+  if [ "$STATE" = "MERGED" ]; then
     echo "✅ PR #$PR_NUMBER 已合并，退出轮询"
     rm -f "$FIX_COUNT_FILE"
     break
@@ -79,8 +152,8 @@ while true; do
   fi
 
   # ── CI 轮询（共享脚本，sleep 30 在脚本内）───────
-  bash ~/perfect21/zenithjoy-skills/scripts/ci-poll.sh "$PR_NUMBER" "$REPO"
-  POLL_EXIT=$?
+  POLL_EXIT=0
+  bash "$CI_POLL_SCRIPT" "$PR_NUMBER" "$REPO" || POLL_EXIT=$?
 
   if [ "$POLL_EXIT" -eq 10 ]; then
     if [ "$FIX_COUNT" -ge "$MAX_FIXES" ]; then
@@ -97,6 +170,11 @@ while true; do
   if [ "$POLL_EXIT" -eq 11 ]; then
     echo "📦 分支落后 main，需要 rebase"
     exit 11
+  fi
+
+  if [ "$POLL_EXIT" -ne 0 ]; then
+    echo "CI_UNKNOWN: 无法确认检查通过（exit=${POLL_EXIT}），不进入合并" >&2
+    exit "$POLL_EXIT"
   fi
 
   # ── CI 全绿：确认 auto-merge ─────────────────────
@@ -116,9 +194,46 @@ done
 ### 3a. 读取失败日志
 
 ```bash
-RUN_ID=$(gh pr checks "$PR_NUMBER" --repo "$REPO" --json name,conclusion,databaseId 2>/dev/null \
-  | jq -r '[.[] | select(.conclusion=="failure")] | sort_by(.databaseId) | last | .databaseId // empty')
-gh run view "$RUN_ID" --repo "$REPO" --log-failed 2>/dev/null | tail -200
+# gh pr checks 的 JSON 字段是 bucket/link，而非 conclusion/databaseId。
+# 明确失败检查会让 gh 返回1；保留退出状态并校验JSON，不能吞真实API错误。
+CHECKS_EXIT=0
+CHECKS=$(gh pr checks "$PR_NUMBER" --repo "$REPO" --json bucket,link) || CHECKS_EXIT=$?
+case "$CHECKS_EXIT" in
+  0|1) ;;
+  *) echo "CI_UNKNOWN: 失败检查读取异常" >&2; exit 12 ;;
+esac
+if ! RUN_ID=$(printf '%s' "$CHECKS" | python3 -c '
+import json, re, sys
+try:
+    rows = json.load(sys.stdin)
+    if not isinstance(rows, list):
+        raise ValueError("检查不是数组")
+    runs = []
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("检查格式无效")
+        if row.get("bucket") != "fail":
+            continue
+        link = row.get("link")
+        pattern = r"https://github\.com/" + re.escape(sys.argv[1]) + r"/actions/runs/([1-9][0-9]*)(?:/job/[1-9][0-9]*)?/?"
+        match = re.fullmatch(pattern, link) if isinstance(link, str) else None
+        if not match:
+            raise ValueError("失败检查不是本仓 Actions run")
+        runs.append(int(match.group(1)))
+    if not runs:
+        raise ValueError("没有可确认的失败run")
+    print(max(runs))
+except (ValueError, TypeError):
+    sys.exit(12)
+' "$REPO"); then
+  echo "CI_UNKNOWN: 无法确认失败检查所属的本仓 Actions run" >&2
+  exit 12
+fi
+if ! FAILURE_LOG=$(gh run view "$RUN_ID" --repo "$REPO" --log-failed); then
+  echo "CI_UNKNOWN: 无法读取已确认失败run的日志" >&2
+  exit 12
+fi
+printf '%s\n' "$FAILURE_LOG" | tail -200
 ```
 
 ### 3b. 在 worktree 里修复
@@ -162,26 +277,62 @@ push **同步返回**后，**不输出任何文字，立刻发起下一次 Step 
 ## Step 5: 合并后清理
 
 ```bash
+# 清理前再次验真；只有精确终态才可清理或写任务账本。
+if ! FINAL_STATE=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json state --jq '.state' 2>/dev/null); then
+  echo "CI_UNKNOWN: 清理前无法读取 PR 状态" >&2
+  exit 12
+fi
+case "$FINAL_STATE" in
+  MERGED|CLOSED) ;;
+  *) echo "CI_UNKNOWN: PR 尚未到可确认终态，不清理、不回写" >&2; exit 12 ;;
+esac
+
 # 读取 task_id
 TASK_ID=$(grep "^task_id:" "$DEV_MODE_FILE" 2>/dev/null | awk '{print $2}')
+PR_URL="https://github.com/${REPO}/pull/${PR_NUMBER}"
 
-# 清理 worktree
-git -C /Users/administrator/perfect21/cecelia worktree remove "$WORKTREE_PATH" --force 2>/dev/null \
-  && echo "✅ worktree 已清理" || echo "⚠️ worktree 清理失败（可能已不存在）"
-
-# Brain 回写
+# MERGED 才 completed/PASS；关闭未合并只能 failed/FAIL。
 if [ -n "$TASK_ID" ] && [ "$TASK_ID" != "unknown" ]; then
-  PR_URL=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json url -q '.url' 2>/dev/null || echo "")
-  curl -s -X PATCH "localhost:5221/api/brain/tasks/$TASK_ID" \
-    -H "Content-Type: application/json" \
-    -d "{\"status\":\"completed\",\"result\":{\"merged\":true,\"pr_url\":\"$PR_URL\"}}" \
-    | jq -r '"Brain 回写: " + (.status // .error // "unknown")' 2>/dev/null || true
+  if ! PATCH_BODY=$(python3 - "$TASK_ID" "$FINAL_STATE" "$PR_URL" <<'PY'
+import datetime, json, sys
+id, state, url = sys.argv[1:]
+merged = state == "MERGED"
+handoff = {
+    "schema_version": 1, "task_id": id,
+    "initiative_id": None, "journey_id": None,
+    "title": "PR 终态验真", "verdict": "PASS" if merged else "FAIL",
+    "done": ["已独立回读 PR 终态: " + state],
+    "not_done": [] if merged else ["PR 已关闭且未合并，未完成代码交付"],
+    "next_steps": [{"kind": "note", "title": "PR 已合并" if merged else "PR 关闭未合并；保留失败交接"}],
+    "data_sources": [url], "decision_refs": [],
+    "artifacts": {"pr_urls": [url], "docs": []},
+    "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+}
+print(json.dumps({"status": "completed" if merged else "failed", "result": {
+    "actor": "engine-pr-watchdog", "merged": merged, "closed": not merged,
+    "pr_state": state, "pr_url": url, "handoff": handoff,
+}}))
+PY
+  ); then
+    echo "CI_UNKNOWN: 无法生成终态回执" >&2
+    exit 12
+  fi
+  if ! curl -sf -X PATCH "localhost:5221/api/brain/tasks/$TASK_ID" \
+    -H "Content-Type: application/json" -d "$PATCH_BODY"; then
+    echo "CI_UNKNOWN: 任务终态回写失败，保留工作树" >&2
+    exit 12
+  fi
 fi
 
-echo "✅ PR #$PR_NUMBER 合并清理完成"
+# 状态已验真且回执已交付，才清理对应工作树。
+git -C "$WORKTREE_PATH" worktree remove "$WORKTREE_PATH" 2>/dev/null \
+  && echo "✅ worktree 已清理" || echo "⚠️ worktree 清理失败（可能已不存在）"
+echo "PR #${PR_NUMBER} 终态 ${FINAL_STATE} 收尾完成"
 ```
 
-### Step 5.5: 写 handoff 交接单（必做——三入口统一终态）
+### Step 5.5: 补充 handoff 交接单（三入口统一终态）
+
+Step 5 已按验真的终态写入最小 handoff。补充产物与交接时保留该 verdict：关闭未合并必须 FAIL，不得覆盖为 PASS；Step 5 返回 12 时不执行收尾。
 
 > **规矩（Alex 2026-07-06 拍板）**：/dev 三条路径（A Bug / B 小改动 / C Harness）的落尾都必须是
 > handoff。路径 C 由 harness reportNode 自动产；路径 A/B 的公共尾巴就是本 skill——merge 确认后
@@ -274,7 +425,7 @@ fi
 2. **禁止提前 exit 0**：只有合并/关闭/fix_count≥3 才能退出
 3. **Bash timeout 设 600000**：单次轮询最长 10 分钟，超时后立即再发起一次
 4. **无 worktree 也能轮询**：找不到 worktree 时跳过修复步骤，仍持续轮询合并状态
-5. **`gh pr list` 返空 = 已合并**：视为正常退出
+5. **发现列表不等于终态**：`gh pr list` 只有成功返回合法 JSON `[]` 才表示无待监控 PR；API 失败、空白或格式异常均为未知 `12`。不得据此宣称已合并、清理、完成任务或关闭会话；指定 PR 必须经 Step 2/5 精确终态验真。
 
 ---
 

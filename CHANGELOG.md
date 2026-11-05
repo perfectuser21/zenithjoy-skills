@@ -3,6 +3,34 @@
 **根因**: 旧 execute 方法明确绑定 sessions_spawn child；仅改内部代码不满足方法合同。
 **修改**: 八 Activity 方法、三 Workflow 消费者、三陪跑 wrapper 及两 Commander 方法升 minor，明确新冻结 raw-model-v1 身份、Code broker 工具、纠偏与终态；旧 child/恢复、业务合同及 104 保持。状态仍 awaiting-real-run，发布不等于实机通过。
 
+## [2026-11-04] engine-ship — updated
+
+**症状**: 创建PR后仍调用已移除Engine路径、旧快照生成器，并在未验合并时把Task写成completed。
+**根因**: 交付仪式沿用旧目录和本地Markdown台账，将候选提交与真实合并终态混为一谈。
+**修改**: 实际加载Skill绑定同release候选回执helper；校验PR/head/Task，证据要求路径/URL、64位SHA256、非空命令与结果，本地产物真实hash比对；事实写入后精确读回，失败返回未知；终态交watchdog。退休旧completed回调，不创建新Markdown或通知。
+
+## 2026-11-04 · dev 21.14.3
+
+- 裸建单示例明确传入真实目标分支和完整基线 SHA，避免服务端缺 checkout 时推断失败；提醒新请求不得重放回执中的内部路由字段。
+- 发送前核对显式目标仓Git/origin、拟建cp分支与实际基准commit；错误Git、缺分支、假SHA或错仓均零请求拒绝。
+- 有头claim严格使用本次成功JSON响应中的规范UUID；创建HTTP失败、坏响应或claim HTTP失败均非零退出，无头模式仍只交runner认领。
+- 保留仓库/地图归位、有头字符串与立即 claim；实际示例 Bash 通过隔离 HTTP 永久回归。
+
+## [2026-11-04] engine-pr-watchdog — updated
+**症状**: Step1 将 API 失败和空白混同无 PR，规则5错误宣称返空已合并；Step3a 使用本机不支持的检查字段，失败日志读取失效。
+**根因**: 发现列表管道隐藏退出码与 JSON 结构；日志定位混用了 checks 与 runs 的字段合同。
+**修改**: 全部仓库读取及严格 JSON 校验通过后才交付目标；未知返回12，合法空数组只表示无待监控。使用真实 bucket/link 字段定位本仓失败 Actions run，读取失败保留未知。版本3.5.3、同release版本检查及旧版本负例同步；真实命令块回归接入既有CI，不改安装引用。
+
+## [2026-11-04] engine-pr-watchdog — updated
+**症状**: 固定新版 Skill 后仍可能调用共享旧 main 的 ci-poll，正文与实际守卫版本分叉。
+**根因**: Bash 命令写死共享工作树路径，未消费本次实际加载 Skill 的物理来源。
+**修改**: 从加载上下文明确提供的 SKILL.md 绝对路径解析同 release 脚本；错误身份、缺失布局或跨 release 脚本拒绝执行；真实毒化旧 main/CWD 回归接入既有 CI。未更新任何现有安装引用。
+
+## [2026-11-04] engine-pr-watchdog — updated
+**症状**: gh 查询失败或检查缺失时 ci-poll 仍报告绿色，watchdog 可能继续进入合并。
+**根因**: 文本计数把空响应当零失败，消费者只处理 10/11 且把空 PR 状态当已合并。
+**修改**: 解析同次 PR JSON，未知返回 12；真实 pending 继续等待，watchdog 对所有非零拒绝合并，清理前再次读取精确终态，关闭未合并只记 failed/FAIL；在既有 CI 执行真实脚本及命令块回归。
+
 ## [2026-11-04] douyin-leadgen-101/102/103 — updated
 **症状**: Skill 文件已存在，但现入口只允许 Code 失败后接手，不能证明从第一步由 Agent 执行。
 **根因**: 方法只描述恢复 broker，与新 Agent-first 执行入口和受控业务原语不配套。

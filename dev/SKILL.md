@@ -1,7 +1,7 @@
 ---
 name: dev
-version: 21.14.2
-updated: 2026-10-15
+version: 21.14.3
+updated: 2026-11-04
 description: "执行代码开发、Bug 修复或功能改动，按改动范围选择开发路径，完成任务归位、验收与交接。用于 /dev 或明确开发任务；保留 task-id claim、变更隔离与现行部署验收规则。"
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
@@ -701,9 +701,26 @@ node packages/brain/scripts/coding-workflow/new-task.mjs /tmp/cw-plan.json --rep
 
 下例 `F1` 是 Cecelia 地图节点示例；repo / repo_hint / map_scope_hint 必须查真实目标后替换，不能固定为默认。`change_kind` 按实际改动选择，bug 用 `bugfix`；脚本会在请求体显式写 `mutation_intent:"write"`、`repo_hint`，裸 curl 也必须带；gp_anchor 使用已确认的真实 Line/GP 锚点，仅基础设施等获准豁免才用 `none(infra)`，不得为业务功能默认豁免。
 
+裸建单前，显式给出真实目标仓绝对路径、本次已确定的 `cp-*` 分支名（可在建 worktree 前指定，不能盲取当前 main）和该仓真实开发基准 ref/完整 SHA。下例先核对 Git 根目录、origin 仓库身份、分支格式及基准 commit，再把 `branch` / `base_sha` 送入请求；任一失败均不发请求。跨仓时同时替换 `EXPECTED_REPO` 和请求中的 repo/map，不能从当前 cwd 取另一个仓库的基线。显式传入可避免 Brain 依赖服务器本地 checkout 推断基线；不要拿其它仓库或旧任务的身份代填。响应中的 payload 是服务端归一结果，不把 `orchestrator`、`harness_runtime`、`routing_receipt_id` 等内部字段复制到新请求。有头建单取任务 `id` 后立即 claim；无头 `coding_workflow` 仍由 runner 认领。
+
 等价的 curl（不用脚本时，字段照 runner 口径）：
 ```bash
-curl -s -X POST localhost:5221/api/brain/tasks \
+TASK_REPO='<真实目标仓绝对路径>'
+TASK_BRANCH='<当前cp分支>'
+TASK_BASE='<目标仓真实开发基准ref或完整SHA>'
+EXPECTED_REPO='perfectuser21/cecelia'
+[[ "$TASK_REPO" = /* && "$TASK_BRANCH" =~ ^cp-[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] || exit 12
+REPO_ROOT=$(git -C "$TASK_REPO" rev-parse --show-toplevel) || exit 12
+[[ "$REPO_ROOT" = "$(cd "$TASK_REPO" && pwd -P)" ]] || exit 12
+git -C "$TASK_REPO" check-ref-format --branch "$TASK_BRANCH" >/dev/null || exit 12
+REMOTE=$(git -C "$TASK_REPO" remote get-url origin) || exit 12
+case "$REMOTE" in
+  "https://github.com/$EXPECTED_REPO"|"https://github.com/$EXPECTED_REPO.git"|"git@github.com:$EXPECTED_REPO"|"git@github.com:$EXPECTED_REPO.git"|"ssh://git@github.com/$EXPECTED_REPO"|"ssh://git@github.com/$EXPECTED_REPO.git") ;;
+  *) echo 'TASK_UNKNOWN: 目标仓origin身份不符' >&2; exit 12 ;;
+esac
+BASE_SHA=$(git -C "$TASK_REPO" rev-parse --verify --end-of-options "$TASK_BASE^{commit}") || exit 12
+[[ "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 12
+curl -fsS -X POST localhost:5221/api/brain/tasks \
   -H "Content-Type: application/json" \
   -d "{
     \"task_type\": \"coding_workflow\",
@@ -711,6 +728,8 @@ curl -s -X POST localhost:5221/api/brain/tasks \
     \"change_kind\": \"capability_change\",
     \"repo_hint\": \"cecelia\",
     \"map_scope_hint\": [\"F1\"],
+    \"branch\": \"$TASK_BRANCH\",
+    \"base_sha\": \"$BASE_SHA\",
     \"title\": \"<feature_name>\",
     \"description\": \"<thin_prd>\",
     \"priority\": \"P1\",
@@ -721,7 +740,7 @@ curl -s -X POST localhost:5221/api/brain/tasks \
       \"acceptance\": [\"<可验证断言>\"],
       \"gp_anchor\": \"none(infra)\"
     }
-  }"
+  }" || exit 12
 ```
 
 > 旧借壳形状 `task_type=data` + `payload.coding_workflow=true` + `payload.headed_manual="true"`（**字符串**）runner 仍认、Brain 建单时归一成 coding_workflow；新建一律直接用 `coding_workflow`。
@@ -729,11 +748,39 @@ curl -s -X POST localhost:5221/api/brain/tasks \
 **仓库限制**：runner 只认领 `packages/brain/scripts/coding-workflow/repos.json` 里 `enabled=true` 的仓库（以当前配置为准，不从本技能推断仓库是否开闸）。未登记或未启用的仓库无头建单会被 Brain 拒绝（`runner_repo_unsupported`，不会继续留在 queued），改在本 /dev 会话里有头做，账本行必须带字符串 `headed_manual` 并立刻认领：
 
 ```bash
-curl -s -X POST localhost:5221/api/brain/tasks -H "Content-Type: application/json" \
+TASK_REPO='<真实目标仓绝对路径>'
+TASK_BRANCH='<当前cp分支>'
+TASK_BASE='<目标仓真实开发基准ref或完整SHA>'
+EXPECTED_REPO='perfectuser21/zenithjoy-workspace'
+[[ "$TASK_REPO" = /* && "$TASK_BRANCH" =~ ^cp-[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] || exit 12
+REPO_ROOT=$(git -C "$TASK_REPO" rev-parse --show-toplevel) || exit 12
+[[ "$REPO_ROOT" = "$(cd "$TASK_REPO" && pwd -P)" ]] || exit 12
+git -C "$TASK_REPO" check-ref-format --branch "$TASK_BRANCH" >/dev/null || exit 12
+REMOTE=$(git -C "$TASK_REPO" remote get-url origin) || exit 12
+case "$REMOTE" in
+  "https://github.com/$EXPECTED_REPO"|"https://github.com/$EXPECTED_REPO.git"|"git@github.com:$EXPECTED_REPO"|"git@github.com:$EXPECTED_REPO.git"|"ssh://git@github.com/$EXPECTED_REPO"|"ssh://git@github.com/$EXPECTED_REPO.git") ;;
+  *) echo 'TASK_UNKNOWN: 目标仓origin身份不符' >&2; exit 12 ;;
+esac
+BASE_SHA=$(git -C "$TASK_REPO" rev-parse --verify --end-of-options "$TASK_BASE^{commit}") || exit 12
+[[ "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 12
+TASK_CREATED=$(curl -fsS -X POST localhost:5221/api/brain/tasks -H "Content-Type: application/json" \
   -d "{\"title\": \"<PR 标题>\", \"task_type\": \"dev\", \"mutation_intent\": \"write\", \"priority\": \"P1\", \"change_kind\": \"capability_change\",
        \"repo_hint\": \"https://github.com/perfectuser21/zenithjoy-workspace\", \"map_scope_hint\": [\"<格子>\"],
-       \"trigger_source\": \"manual\", \"payload\": {\"headed_manual\": \"true\"}}"
-curl -s -X POST localhost:5221/api/brain/tasks/<id>/claim -H "Content-Type: application/json" -d '{"claimer":"interactive-dev-skill"}'
+       \"branch\": \"$TASK_BRANCH\", \"base_sha\": \"$BASE_SHA\",
+       \"trigger_source\": \"manual\", \"payload\": {\"headed_manual\": \"true\"}}") || exit 12
+TASK_ID=$(printf '%s' "$TASK_CREATED" | python3 -c '
+import json, sys, uuid
+try:
+    response = json.load(sys.stdin)
+    if not isinstance(response, dict): raise ValueError("任务响应必须是对象")
+    value = response.get("id")
+    if not isinstance(value, str) or str(uuid.UUID(value)) != value:
+        raise ValueError("任务id必须是本次响应中的规范UUID")
+    print(value)
+except (ValueError, TypeError, AttributeError):
+    sys.exit(12)
+') || exit 12
+curl -fsS -X POST "localhost:5221/api/brain/tasks/$TASK_ID/claim" -H "Content-Type: application/json" -d '{"claimer":"interactive-dev-skill"}' || exit 12
 ```
 
 进度：`curl localhost:5221/api/brain/tasks/<task_id>`（`result.coding_workflow` 有 runner 写回），MMV 上 `~/Library/Logs/coding-workflow-runner.log`。
