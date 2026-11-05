@@ -1,6 +1,8 @@
 ---
 name: wf-douyin_video_discovery
-version: 0.6.1
+version: 0.7.0
+changelog:
+  - "0.7.0: 同步正常执行无工具回合方法；保留旧child恢复"
 description: "抖音视频发现 wf_run 陪跑说明：显式加载本次冻结业务Skill，保持原合同与安全交接边界。"
 ---
 
@@ -43,3 +45,5 @@ description: "抖音视频发现 wf_run 陪跑说明：显式加载本次冻结�
 ## Agent 从第一步执行的观察职责
 
 当原固定 request.mode 为 execute 时，Agent 从首步执行当前 Activity，不要求先制造 Code 失败，也不要求它 resume 原 handler。仅根据真实事件提供 answer、steer 或 abort；明确指出相关规则或完成标准。执行模式、受控操作、截止及结果验收仍由 Runner 管。不得替 Agent 执行、批准发送或改状态；源/权限/未知停止证明缺口不能用指导越过。Skill 与代码接手的实机结果分别记录。
+
+正常执行采用新方法明确冻结的 `execution_transport=raw-model-v1` 时，只观察父 Code 转发的事件与证据并给纠偏；不自行调用 child/spawn/CLI。父 Code 管理官方无工具回合身份、原 broker 执行和完整终态。旧 child 及失败恢复合同不变，不能将两种收据混用；本版仍待实机验收。

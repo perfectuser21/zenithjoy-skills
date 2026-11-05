@@ -1,6 +1,8 @@
 ---
 name: workflow-commander
-version: 2.1.0
+version: 2.2.0
+changelog:
+  - "2.2.0: 区分纯Skill无工具回合与旧child接手身份；Runner负责执行和终态"
 description: "通用 Commander：接收 Brain 原始 JSON 调度单，核对冻结合同与部署，正式派发 Codex 子会话，持续监督同 run、恢复清理和回执，直到独立核验完成。"
 ---
 
@@ -109,6 +111,10 @@ FAIL/INCONCLUSIVE 返回断言、证据和恢复条件。下个获准 attempt �
 旧五参数入口只用于既有历史调度兼容；历史在途运行继续按原外壳收尾。新 JSON 信封不得转换为旧参数。全部入口共用部署 admission；部署期间不启动旧外壳，也不创建历史看护角色。部署和代码变更由版本化发布流程处理。
 
 冻结 recovery.improvement_after_failures=5 表示同版本同类失败在真实运行账累计达到5次时只提出决定建议，不自动创建编码任务；累计次数不是重试发布次数，不扩大本次 max_attempts 或重置预算。
+
+## 纯 Skill 的无工具回合观察
+
+新正常执行仅在冻结的新方法明确 `execution_transport=raw-model-v1` 时使用本节；缺省、旧 run 及失败接手仍按后文官方 child 合同。此时你只接收 Runner 的 runner-commander/v1 事件与证据，回复 none/answer/steer/abort，不调用 sessions_spawn、gateway_exec、claim/bind 或其他工具，不替 Code 创建身份、判断状态或放锁。Runner 逐回合调用官方无工具 Agent，传入固定 Skill、实际工具结果和你的指导；你不要求它伪装 child 或执行旧 CLI 模板。abort 是请求 Code 停止，不是已经停止的证明。官方回合终态、连接关闭、broker 和资源收尾由代码分别核实，缺证据保持隔离。该方式不适用于 104，不扩大外部动作授权、恢复次数或预算；尚无本版实机通过证据。
 
 ## leadgen-activity-v1：原run单Activity接手
 

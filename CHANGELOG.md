@@ -1,3 +1,8 @@
+## [2026-11-05] leadgen 101–103 / runner-commander — updated（显式无工具回合方法）
+**症状**: 公共 Runner 与 Commander 的纯 Skill 执行链尚未闭合，不能用新 raw run 伪造旧 child 身份。
+**根因**: 旧 execute 方法明确绑定 sessions_spawn child；仅改内部代码不满足方法合同。
+**修改**: 八 Activity 方法、三 Workflow 消费者、三陪跑 wrapper 及两 Commander 方法升 minor，明确新冻结 raw-model-v1 身份、Code broker 工具、纠偏与终态；旧 child/恢复、业务合同及 104 保持。状态仍 awaiting-real-run，发布不等于实机通过。
+
 ## [2026-11-04] engine-ship — updated
 
 **症状**: 创建PR后仍调用已移除Engine路径、旧快照生成器，并在未验合并时把Task写成completed。

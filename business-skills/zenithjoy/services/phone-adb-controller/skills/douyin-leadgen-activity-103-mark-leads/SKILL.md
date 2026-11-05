@@ -1,9 +1,13 @@
 ---
 name: douyin-leadgen-activity-103-mark-leads
 description: 交出原生身份核实的线索与配送状态。用于按评分保留线索、独立资格核对并配送或接手同一标记 Activity；不执行整个工作流。
+changelog:
+  - "0.12.0: 新增显式无工具回合身份与父Code执行；保留旧child与恢复约束"
 metadata:
-  version: 0.11.1
+  version: 0.12.0
   primary_execution: agent-v1
+  execution_transports:
+    - raw-model-v1
   activity_ref: douyin_comment_scoring.mark_leads
   activity_version: 3.8.2
   validation: awaiting-real-run
@@ -25,14 +29,26 @@ metadata:
 
 仓库 YAML 链接仅定位业务合同来源，不要求执行目录具有该仓库。执行时读取本次 `request.method.contract` 中由 Runner 与中央固定 Activity 版本核验过的 `payload`、`sha256` 和版本身份；缺该原件即报告缺失，不从最新仓库、链接不存在或自拟内容补合同。
 
-1. 先核官方 child 绑定与本次私有 request 的 run、task、Activity、来源、方法和截止，调用 `inspect` 读取输入、当前原件、允许操作及 Commander 指导。
+1. 原官方 child 方式：先核官方 child 绑定与本次私有 request 的 run、task、Activity、来源、方法和截止，调用 `inspect` 读取输入、当前原件、允许操作及 Commander 指导。 `execution_transport=raw-model-v1` 时按下节核官方回合绑定，并由父 Code 代调 inspect；不伪造 child。
 2. 只用本 request 给出的 `phone` 和 `business` 工具逐步执行。`phone` 输入为 `{command,args}`，`business` 输入为 `{operation,input}`；操作及字段以服务端本 Activity 当前实际暴露的 schema 为准，不猜操作名或自己扩白名单。锁和资源由 Runner 代码管理，Agent 不能更换 owner、公司、账号、设备、来源、额度或截止。
 3. 按下文业务方法，从新鲜原生证据选择每一步，调用细粒度操作并保存/读回结果。禁止 `resume`、调用原 Activity handler、整段 `collect-comments` 或用整工作流脚本代替本 Activity。资格与评分沿原公司政策及实际授权的判断工具，不自己改阈值或补造证据。
 4. 副作用调用保留原持久操作身份。回执丢失、写入或原生动作结果未知时只读回同一操作，不重新提交、不换 operation ID 重做。确认 0 评论不得入待采队列；无结果、部分成果和真实空结果分别交付。
-5. 进度、问题或错误通过 `inspect` 的结构化事件报告。下一回合读取并处理 `commander_guidance`；收到 `commander_abort` 停止本 child。Commander 不批准外部动作，不改业务顺序、规则或状态。
+5. 进度、问题或错误通过 `inspect` 的结构化事件报告。下一回合读取并处理 `commander_guidance`；收到 `commander_abort` 停止本 child。 无工具回合按下节提交 inspect 意图，由 Code 停止本回合及父循环。Commander 不批准外部动作，不改业务顺序、规则或状态。
 6. 交付本次工具产生的持久结果及证据位置。Agent 的完成文字不是结果，Runner 根据服务端回执、原件、PG 及原独立 verify 判定；无法验证时明确未完成。执行终态未知保留隔离，不能为下一 Activity 清场。
 
 `execute` 不适用于 104；本版正常执行与故障接手均仍需分别留实机证据，状态保持 `awaiting-real-run`。
+
+## 父 Code 管理的无工具回合
+
+仅本方法新版本的正常 `mode=execute` 可使用冻结的 `execution_transport=raw-model-v1`。字段缺省继续原官方 child 方式；旧 run、旧方法、失败接手和 104 不切换。该声明必须与本次固定源码、中央 Activity 方法版本、Task、run、binding、资源及原绝对截止共同核验；Agent 文字或环境临时改值不能选择通道。
+
+此方式由 Runner 的 Code 调用官方 `agent`，固定 `modelRun=true`、`deliver=false`，服务端禁用 Agent 的 shell、子会话、插件及其他工具。Agent 不领 spawn 权、不创建绑定、不用 CLI、SSH、裸 RPC 或队列。身份改核本回合由 Code 独占保存的官方 run/session/request 身份及其 Task/run/slot/source/nonce 绑定；不得把 raw run 伪装成 `sessions_spawn` child，也不套用旧 child 双停回执。父 Code 仍须完成原中央授权、固定 Skill 与合同核验。
+
+父循环每轮传入真实 `inspect`、上次工具回执和未消费的 Commander 指导。自动 inspect 是 Code-owner 的只读上下文读取，仍核本轮授权、身份、epoch 与截止，不消耗模型单意图授权，也不执行 phone/business；Agent 显式 inspect 与其他操作仍经原 broker 的一次性回合授权。只回复一个 JSON 意图，不加 Markdown 或额外字段：`{"type":"inspect","question":"需要澄清的问题"}`（也可仅用 progress 或 error 字段）、`{"type":"phone","command":"当前schema允许的操作","args":[]}`、`{"type":"business","operation":"当前schema允许的操作","input":{}}` 或 `{"type":"finish"}`。inspect 的 question/progress/error 至多一项，也允许无事件。Agent 不能选择模型、身份、资源或额度；phone/business 仍由同一个原私有 broker 核白名单和实际权限后执行。不要自己调用这些工具。
+
+`finish` 只是停止提出操作，不包含 status/result，不证明 Activity 完成。实际业务结果只能来自 broker 的服务端记录、原件、PG 与独立 verify。Code 在前一回合官方终态和连接关闭确认后才执行工具；每回合与操作独占记账，截止、epoch、业务操作身份和 max_turns 计数不重置。`request.max_turns` 必须来自本次正式冻结，为 1..64 的整数；缺失或非法时不启动，无默认加额。该正常回合上限不增加合同允许的恢复次数。回执或副作用未知只读回原身份，不重发同一回合或操作。
+
+收到 Commander abort 或原截止即停止新增回合及工具调用，由 Code 精确中止本回合并核官方终态、本次连接和所有本人工具资源的实际收尾。一个 model 回合结束不等于父循环、工具或 Activity 已停止；缺任一停止证据则保持 needs_review 与原隔离，不释放未知资源。该方式不扩大 Commander 权限，不改独立 Judge、业务政策、零评论规则、恢复次数或原冻结预算；尚未实际验收仍为 awaiting-real-run。
 
 ## 输入输出
 
