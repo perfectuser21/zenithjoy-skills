@@ -1,9 +1,10 @@
 ---
 name: plan
-version: 1.8.0
+version: 1.8.1
 created: 2026-02-17
 updated: 2026-03-21
 changelog:
+  - 1.8.1: 移除旧 PR 产能与层级预算依赖；Suggestion 信息不足时不创建并返回未知。
   - 1.8.0: PR→层级映射修复（1PR=Task 不是 Initiative）；工作量维度引用 capacity-budget API 动态校准；加入 Scope 层；默认 Task 不是 Initiative
   - 1.7.0: 加入 Stage 0.5 领域判断（domain detection）+ owner_role 匹配，输出格式增加 domain/owner_role，路由表按 domain 分流
   - 1.6.0: 层级重命名 Mission/Vision/Area OKR + /architect 加入路由
@@ -83,10 +84,10 @@ description: |
 Mission:    — Alex 级别，唯一，永久的使命（"为什么存在"）
 Vision:     — 每个 Area 的方向性愿景（无具体度量）| 2个可并行
 Area OKR:   — 每个 Area 的季度可量化目标（有度量指标）| 3-5个/Vision
-Project:    — 目标型工作容器，1周 | PR 数量动态（查 capacity-budget）
-Scope:      — 功能边界分组，2-3天 | PR 数量动态
-Initiative: — 串联任务包，0.5-1天 | PR 数量动态
-Task:       — 最小执行单元，1 PR = 1 次 /dev | ~40min
+Project:    — 目标型工作容器，1周
+Scope:      — 功能边界分组，2-3天
+Initiative: — 串联任务包，0.5-1天
+Task:       — 最小执行单元
 ```
 
 ---
@@ -115,19 +116,9 @@ Task:       — 最小执行单元，1 PR = 1 次 /dev | ~40min
 | 需要先拆解规划再执行？ | 需要 | Area OKR/Project |
 | 需要讨论澄清方向？ | 需要 | Mission/Vision |
 
-#### 维度 3：工作量（必须查 capacity-budget API）
+#### 维度 3：工作范围与执行边界
 
-**⚠️ PR 数量→层级映射必须参考动态校准表（`GET /api/brain/capacity-budget` → `layer_budgets`），不要凭感觉。**
-
-| 问题 | 信号 | 倾向层级 |
-|------|------|---------|
-| 多少个 PR？ | 1 个 PR | **Task**（最小执行单元，= 1 次 /dev） |
-| 多少个 PR？ | `layer_budgets.initiative` 范围内 | **Initiative** |
-| 多少个 PR？ | `layer_budgets.scope` 范围内 | **Scope** |
-| 多少个 PR？ | `layer_budgets.project` 范围内 | **Project** |
-| 单人能独立完成？ | 是 | Task/Initiative |
-| 需要多个 Agent 协作？ | 是 | Scope/Project |
-| 包含多个子功能模块？ | 是 | Scope/Project |
+结合具体的交付目标、涉及的模块和协作范围判断；已知信息不足时标明不确定。不要根据 PR 数量或旧的 `capacity-budget` 预测来确定层级。
 
 #### 时间（辅助信号，不是主信号）
 
@@ -147,13 +138,8 @@ Step 1: 先问"涉及多少个 repo/Area/团队？"
     单 Area 且无度量 → Vision
     有度量指标 → Area OKR
     ↓
-Step 2: 如果是具体实现，问"需要几个 PR？"
-    ↓
-    查 capacity-budget API 获取 layer_budgets
-    1 PR → Task（= 1 次 /dev）
-    layer_budgets.initiative 范围 → Initiative
-    layer_budgets.scope 范围 → Scope
-    layer_budgets.project 范围 → Project
+Step 2: 如果是具体实现，结合已有的范围和抽象程度信号判断
+    不依据固定 PR 数量或旧产能预算定级
     ↓
 Step 3: 不确定时，默认 Task，问用户确认
 ```
@@ -168,7 +154,7 @@ Step 3: 不确定时，默认 Task，问用户确认
 | "Cecelia 这个月要更智能" | 单 Area，方向性，无度量 | Vision |
 | "任务成功率要到 85%" | 有度量指标（85%），可量化 | Area OKR |
 | "把质检系统接入所有 14 个 repo" | 跨多仓库，多 PR | Project |
-| "给 cecelia-core 加健康检查 API" | 单 repo，单功能，1 PR | Initiative ★ |
+| "给 cecelia-core 加健康检查 API" | 单 repo，单功能 | Initiative ★ |
 | "修一下这个 null pointer" | 极小，单文件 | Task |
 | "这个季度把 CI 稳定性提到 99%" | 有度量（99%）→ Area OKR，时间是度量周期 | Area OKR |
 
@@ -305,16 +291,7 @@ curl -s http://localhost:5221/api/brain/capabilities | jq
 
 ## 产能感知
 
-识别到 Mission/Vision/Area OKR 时，需考虑当前系统产能：
-
-| 指标 | 数值 | 说明 |
-|------|------|------|
-| 并行 Vision | 2 个 | 系统同时支持 2 个 Vision 并行 |
-| 研发 slot | 10 个 | 美国 VPS，每 Area OKR 约占 1 slot |
-| 月产能 | ~8,600 PR | 基于 10 slot 全速运转估算 |
-
-**提示**：识别到高层级（Mission/Vision/Area OKR）时，查询当前 slot 负载再建议下一步。
-
+识别到高层级目标时，如建议依赖机器资源，先核对当前可用状态；没有可靠数据时注明未知。不要使用固定 slot 数或 PR 产量估算。
 ---
 
 ## 多机路由
@@ -353,7 +330,7 @@ curl -s http://localhost:5221/api/brain/capabilities | jq
 - **时间是辅助信号**：时间长不等于层级高，时间是度量周期而非定级标准
 - **有度量指标 → Area OKR**：无论用户说"这个月"还是"这个季度"
 - **不确定就问**：用"涉及几个仓库？"和"有没有度量指标？"两个问题快速定级
-- **Initiative 是默认**：模糊情况统一判 Initiative，不要过度拆解
+- **信息不足时说明缺失**：无法判定时不要编造层级依据
 - **不要自己做拆解**：/plan 只识别 + 引导，拆解是 /decomp 的工作
 - **Initiative/Project 先走 /architect**：代码改动前先让 /architect 扫描架构，避免盲目开发
 
@@ -397,10 +374,10 @@ curl -s http://localhost:5221/api/brain/projects | jq '.[] | {id, name, type, pa
 重点判断信号：
 - Suggestion 内容是否有度量指标？→ Area OKR
 - 涉及多个 repo 或系统架构？→ Project
-- 单个功能、1-2 个 PR？→ Initiative（**最常见**）
+- 单个功能且交付边界明确？→ 可考虑 Initiative
 - 极小改动，立即能做？→ Task
 
-**默认规则**：不确定时 → Initiative。
+**信息不足时**：不创建结构，按下方失败格式返回 `identified_layer: "unknown"`。
 
 **Step 3: 找挂载点**
 
@@ -453,7 +430,7 @@ curl -s -X POST http://localhost:5221/api/brain/tasks \
   "suggestion_id": "<uuid>",
   "identified_layer": "Initiative",
   "layer_name": "Initiative",
-  "reasoning": "单 repo，单功能，约 1-2 PR 工作量",
+  "reasoning": "单 repo，单功能，目标与完成条件明确",
   "mount_point": {
     "type": "project",
     "id": "<project_id>",
@@ -483,5 +460,5 @@ curl -s -X POST http://localhost:5221/api/brain/tasks \
 
 - **不要等用户确认**：全自动运行，不输出交互式问题
 - **幂等性**：如果同名 Initiative/Task 已存在，跳过创建，返回已有 ID
-- **不确定就选 Initiative**：Initiative 是最安全的默认选择
+- **信息不足时不写入**：找不到层级或挂载点，返回 `status: "failed"`
 - **写完就结束**：输出 JSON 后立即结束，不进入 /dev 流程
