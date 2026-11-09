@@ -2,17 +2,18 @@
 name: douyin-leadgen-activity-102-cleanup
 description: 归位采集现场并释放本人资源。用于采集流程收尾、失败后清理或接手同一收尾 Activity；不执行整个工作流。
 changelog:
+  - "0.7.0: 对齐2.3.0正式Activity预算，保留原工作流总额、完整合同阅读与执行守卫"
   - "0.6.0: 显式兼容冻结official-child-v1内部正式宿主，保留旧运行与恢复边界"
   - "0.5.0: 新增显式无工具回合身份与父Code执行；保留旧child与恢复约束"
 metadata:
-  version: 0.6.0
+  version: 0.7.0
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.cleanup
-  activity_version: 2.2.1
+  activity_version: 2.3.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
@@ -21,7 +22,7 @@ metadata:
 
 # 归位采集现场并释放本人资源
 
-仅执行 `douyin_video_processing.cleanup`。业务合同版本为 `2.2.1`；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_video_processing.cleanup`。业务合同版本为 `2.3.0`；方法版本独立记录，不因生成代码而更换Activity身份。本版Activity预算上限为300秒；实际执行仍取本run冻结Activity与工作流总截止的更早值，预留原owner归还、停止和验收窗口，不延长旧run，不把预留窗口用于新增业务。
 
 先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-102/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_video_processing.yaml)的 `cleanup` 为准；本文件不覆盖该合同或公司政策。
 
