@@ -2,10 +2,13 @@
 name: douyin-leadgen-activity-101-collect-videos
 description: 按关键词交出筛选后的视频链接。用于采集关键词搜索结果或接手同一视频发现 Activity；不执行整个工作流。
 changelog:
+  - "0.7.0: 显式兼容冻结official-child-v1内部正式宿主，保留旧运行与恢复边界"
   - "0.6.0: 新增显式无工具回合身份与父Code执行；保留旧child与恢复约束"
 metadata:
-  version: 0.6.0
+  version: 0.7.0
   primary_execution: agent-v1
+  primary_hosts:
+    - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_discovery.collect_videos
@@ -13,6 +16,7 @@ metadata:
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/leadgen-activity-execution.md
+    - services/phone-adb-controller/skills/leadgen-official-child-host.md
 ---
 
 # 按关键词交出筛选后的视频链接
@@ -25,7 +29,7 @@ metadata:
 
 本版支持 Runner 正式选择的 `mode=execute`，以及原有失败后接手模式；共同执行约束中关于 Code 失败、原 handler 和 resume 的条款只用于失败接手，不用于 `execute`。只执行本次指定的一个 Activity，不自行启动、切换或重启 Workflow。
 
-`execute` 必须由本 run 的冻结 `execution_mode=agent`、中央不可变 `actor=runtime:phone-adb-controller:agent-v1` 声明及原 runtime snapshot、来源、方法和资源绑定共同准入。actor 是运行声明，不是权限或执行成功证明；Agent 不创建绑定、不改 actor、不调用内部 RPC 或裸队列。缺合法工具或准入即报告具体阻断。
+`execute` 的旧入口仍须核本 run 冻结 `execution_mode=agent`、中央不可变 `actor=runtime:phone-adb-controller:agent-v1` 及原 runtime snapshot、来源、方法和资源绑定。只有本方法新版本显式冻结的 `primary_host=official-child-v1` 可采用[内部正式宿主兼容合同](../leadgen-official-child-host.md)，由父进程核实其精确 `common-runner/internal` 绑定；不能按 actor 文本自行选择。actor 不是权限或成功证明；Agent 不创建绑定、不改 actor、不调用内部 RPC 或裸队列。缺合法工具或任一准入证据即报告具体阻断。
 
 仓库 YAML 链接仅定位业务合同来源，不要求执行目录具有该仓库。执行时读取本次 `request.method.contract` 中由 Runner 与中央固定 Activity 版本核验过的 `payload`、`sha256` 和版本身份；缺该原件即报告缺失，不从最新仓库、链接不存在或自拟内容补合同。
 
