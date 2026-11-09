@@ -2,13 +2,14 @@
 name: douyin-leadgen-102
 description: 执行抖音获客102视频处理：验证101来源、领取待处理视频、判断资格并按评论量采集持久化。用于普通、深采或自动策略及代码异常接手；不修改评分标准或执行私信。
 changelog:
+  - "0.9.0: 同步共享预检与清场2.3.0合同及0.7.0方法，保留原工作流总额"
   - "0.8.0: 同步official-child-v1显式宿主方法与冻结消费者版本"
   - "0.7.0: 同步显式无工具回合Activity方法与消费者版本"
   - "0.3.4: 将冻结来源规范块内的v2小标题改为普通段落，兼容严格发布验收解析，交接语义不变"
   - "0.3.3: 声明显式v2单条待判定视频的有限producer交接，保留默认同源与v1"
   - "0.3.1: 绑定collection0.2.1的显式已证零评论合同，正数与未知要求不变"
 metadata:
-  version: 0.8.0
+  version: 0.9.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-102/references/reuse-map.json
@@ -40,11 +41,11 @@ MMV102首个设备动作前把选定profile/serial冻结到本run的company_conf
 
 本工作流的方法依赖真身见[Activity方法清单](references/activity-methods.json)。执行指定Activity时，按本轮冻结 `activities[].implementations` 的真实name/version/source/digest及execution_path加载对应独立Skill；不能把本工作流Skill当作每个Activity的同一份方法。
 
-- `douyin_video_processing.preflight` → `douyin-leadgen-activity-102-preflight@0.6.0`。
+- `douyin_video_processing.preflight` → `douyin-leadgen-activity-102-preflight@0.7.0`。
 - `douyin_video_processing.dedup` → `douyin-leadgen-activity-102-dedup@0.6.0`。
 - `douyin_video_processing.qualification` → `douyin-leadgen-activity-102-qualification@0.6.0`。
 - `douyin_video_processing.collection` → `douyin-leadgen-activity-102-collection@0.7.0`。
-- `douyin_video_processing.cleanup` → `douyin-leadgen-activity-102-cleanup@0.6.0`。
+- `douyin_video_processing.cleanup` → `douyin-leadgen-activity-102-cleanup@0.7.0`。
 
 Activity方法、支持文件或合同改变时，更新对应方法版本、所有消费者清单、本工作流Skill与Commander Skill版本；纯代码内部兼容优化用明确兼容评估绑定前后代码集合。先跑 `npm run leadgen:methods:check`，再做相应独立验收。方法配套完成不表示单Activity执行权交接已经接通。
 

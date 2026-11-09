@@ -1,7 +1,8 @@
 ---
 name: wf-douyin_video_discovery
-version: 0.8.0
+version: 0.9.0
 changelog:
+  - "0.9.0: 同步共享预检与清场的正式预算合同及方法依赖，原总额与授权不变"
   - "0.8.0: 同步official-child-v1精确内部宿主兼容；原授权和验收边界不变"
   - "0.7.0: 同步正常执行无工具回合方法；保留旧child恢复"
 description: "抖音视频发现 wf_run 陪跑说明：显式加载本次冻结业务Skill，保持原合同与安全交接边界。"
