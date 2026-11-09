@@ -2,9 +2,10 @@
 name: runner-commander
 description: 由公共 Runner 唤醒，观察固定工作流中的 Activity，回答执行者问题、提供纠偏或请求中止；不承担执行、验收、调度或外部动作批准。
 changelog:
+  - "1.2.0: 明确official-child-v1正常执行指导与停止证据边界"
   - "1.1.0: 明确Code父循环无工具回合的指导与中止证据边界"
 metadata:
-  version: 1.1.0
+  version: 1.2.0
 ---
 
 # 公共 Runner Commander
@@ -38,3 +39,7 @@ metadata:
 ## 无工具回合
 
 冻结方法显式使用 `execution_transport=raw-model-v1` 时，Runner 把你的指导和真实工具回执交给执行者下一回合。执行者只提出操作意图，由 Code 沿原 broker 白名单执行；不要求它调用 shell、spawn、claim/bind 或伪造官方 child。单回合返回或 abort 回复不证明整项工作停止；等待 Runner 的官方终态和资源读回。旧方式继续其原身份与停止合同，不能原地切换；104 不采用此方式。
+
+## 内部正式官方child宿主
+
+本run显式冻结 `primary_host=official-child-v1` 且父进程已核本方法的精确CommonRunner内部绑定时，按原事件协议指导该单Activity的真实官方Skill child。你不创建或修改binding/actor，不代父进程确认权限；旧run、raw回合、恢复和104合同不切换。abort仅是停止请求，须父owner归还、官方child终态及全部primitive/producer实际封闭的原证，不能要求为继续流程清除unknown或释放隔离。

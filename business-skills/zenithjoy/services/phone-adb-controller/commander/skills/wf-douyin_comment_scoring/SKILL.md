@@ -1,7 +1,8 @@
 ---
 name: wf-douyin_comment_scoring
-version: 0.14.0
+version: 0.15.0
 changelog:
+  - "0.15.0: 同步official-child-v1精确内部宿主兼容；原授权和验收边界不变"
   - "0.14.0: 同步正常执行无工具回合方法；保留旧child恢复"
 description: "抖音评论评分 wf_run 陪跑说明：显式加载本次冻结业务Skill，保持原合同与安全交接边界。"
 ---

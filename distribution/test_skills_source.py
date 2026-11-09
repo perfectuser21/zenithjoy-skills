@@ -62,6 +62,29 @@ class DistributionTests(unittest.TestCase):
         self.assertEqual(self.module.verify(self.workspace, self.source), 1)
         self.assertEqual(self.module.install(self.workspace, self.source), 1)
 
+    def test_official_child_support_is_pinned_materialized_and_tamper_rejected(self):
+        root = Path(__file__).resolve().parents[1]
+        self.catalog = json.loads((root / "distribution/catalog.json").read_text())
+        entries = self.catalog["profiles"]["zenithjoy"]["files"]
+        relative = "services/phone-adb-controller/skills/leadgen-official-child-host.md"
+        support = next(e for e in entries if e["path"] == relative)
+        for entry in entries:
+            target = self.source / entry["source"]
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes((root / entry["source"]).read_bytes())
+        self.write_catalog()
+        self.commit_source()
+        lock = json.loads((self.workspace / ".skills-source.json").read_text())
+        lock["profile"] = "zenithjoy"
+        (self.workspace / ".skills-source.json").write_text(json.dumps(lock))
+        self.module.install(self.workspace, self.source)
+        self.assertEqual((self.workspace / relative).read_bytes(), (root / support["source"]).read_bytes())
+        self.module.verify(self.workspace, self.source)
+        (self.source / support["source"]).write_bytes(b"unapproved actor compatibility")
+        with self.assertRaisesRegex(ValueError, "source checksum mismatch"):
+            self.module.install(self.workspace, self.source)
+        self.assertEqual((self.workspace / relative).read_bytes(), (root / support["source"]).read_bytes())
+
     def test_cecelia_bootstrap_restores_dev_without_reviving_retired_packages(self):
         # Exercise the real catalog, bootstrap and pinned loader in a fresh
         # business workspace. The fixture commit pins candidate bytes without
@@ -386,21 +409,21 @@ class CommanderRecoveryContractTests(unittest.TestCase):
         def version(path):
             return re.search(r"^  ?version: (\S+)$|^version: (\S+)$", path.read_text(), re.M).group(0).split(": ")[1]
         upgraded_methods = {
-            "douyin-leadgen-activity-101-collect-videos": "0.6.0",
-            "douyin-leadgen-activity-102-preflight": "0.5.0",
-            "douyin-leadgen-activity-102-dedup": "0.5.0",
-            "douyin-leadgen-activity-102-qualification": "0.5.0",
-            "douyin-leadgen-activity-102-collection": "0.6.0",
-            "douyin-leadgen-activity-102-cleanup": "0.5.0",
-            "douyin-leadgen-activity-103-scoring": "0.12.0",
-            "douyin-leadgen-activity-103-mark-leads": "0.12.0",
+            "douyin-leadgen-activity-101-collect-videos": "0.7.0",
+            "douyin-leadgen-activity-102-preflight": "0.6.0",
+            "douyin-leadgen-activity-102-dedup": "0.6.0",
+            "douyin-leadgen-activity-102-qualification": "0.6.0",
+            "douyin-leadgen-activity-102-collection": "0.7.0",
+            "douyin-leadgen-activity-102-cleanup": "0.6.0",
+            "douyin-leadgen-activity-103-scoring": "0.13.0",
+            "douyin-leadgen-activity-103-mark-leads": "0.13.0",
         }
         for path in activity:
             expected = "0.11.1" if path.parent.name in {"douyin-leadgen-activity-103-scoring", "douyin-leadgen-activity-103-mark-leads"} else "0.5.1" if path.parent.name == "douyin-leadgen-activity-102-collection" else "0.5.1" if path.parent.name == "douyin-leadgen-activity-101-collect-videos" else "1.2.2" if path.parent.name == "douyin-leadgen-activity-104-send-dm" else "1.0.1" if path.parent.name in {"douyin-leadgen-activity-104-preflight", "douyin-leadgen-activity-104-write-back"} else "0.4.1" if path.parent.name.startswith("douyin-leadgen-activity-102-") else "0.3.1"
             expected = upgraded_methods.get(path.parent.name, expected)
             self.assertEqual(version(path), expected, path.parent.name)
         for path in workflows + wrappers:
-            expected = "0.14.0" if path.parent.name in {"douyin-leadgen-103", "wf-douyin_comment_scoring"} else "0.7.2" if path.parent.name in {"douyin-leadgen-104", "wf-douyin_lead_outreach"} else "0.7.0" if path.parent.name in {"douyin-leadgen-101", "wf-douyin_video_discovery"} else "0.7.0" if path.parent.name in {"douyin-leadgen-102", "wf-douyin_video_processing"} else "0.4.1"
+            expected = "0.15.0" if path.parent.name in {"douyin-leadgen-103", "wf-douyin_comment_scoring"} else "0.7.2" if path.parent.name in {"douyin-leadgen-104", "wf-douyin_lead_outreach"} else "0.8.0" if path.parent.name in {"douyin-leadgen-101", "wf-douyin_video_discovery"} else "0.8.0" if path.parent.name in {"douyin-leadgen-102", "wf-douyin_video_processing"} else "0.4.1"
             self.assertEqual(version(path), expected, path.parent.name)
         self.assertEqual(version(commander), "2.2.0")
         versions = {path.parent.name: version(path) for path in activity + workflows + wrappers + [commander]}
