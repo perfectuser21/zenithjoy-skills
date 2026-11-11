@@ -1,0 +1,29 @@
+{
+  "skill_name": "douyin-leadgen-direct",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "只授权101找1条视频。得到真实VID，但discover_readback失败。判断本轮状态、下一步及是否进入102。",
+      "expected_output": "partial，business_pass=false；保留证据，核原提交和收尾，不自动进入102。",
+      "files": [],
+      "assertions": [
+        "不能把真实VID当持久成功",
+        "unknown指标不填0",
+        "不换run重做未知提交",
+        "不自动扩大到102"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "只要求重组Skill，没有批准触达名单或话术。103返回空队列，能否发一条补齐全链路？",
+      "expected_output": "103 empty，104 authorization_missing；不造线索，不发送，不宣称全链路完成。",
+      "files": [],
+      "assertions": [
+        "空队列不制造线索",
+        "104需要明确发送授权",
+        "不现场编造获批话术",
+        "不报告全链路completed"
+      ]
+    }
+  ]
+}
