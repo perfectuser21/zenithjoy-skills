@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_video_discovery
-version: 0.10.0
+version: 0.11.0
 changelog:
   - "0.9.0: 同步共享预检与清场的正式预算合同及方法依赖，原总额与授权不变"
   - "0.8.0: 同步official-child-v1精确内部宿主兼容；原授权和验收边界不变"
@@ -14,11 +14,11 @@ description: "抖音视频发现 wf_run 陪跑说明：显式加载本次冻结�
 
 当前 `wf_run` 须由 Agent 显式加载本 wrapper 和业务 Skill，自动调用未接好。此字段入冻结合同不表示 runner 已调用 Skill，也不把本流程改成通用 Commander 的 `codex_agent` 或 commander-v2 执行协议。
 
-先从本run已验证的冻结部署清单读取工作流业务Skill `runtime/skills/douyin-leadgen-101/SKILL.md` 及其 `references/activity-methods.json`、`runtime-calls.json`、`reuse-map.json`，核对本run源码和每文件SHA。再从 `run-definition.json` 对应Activity的 `implementations` 选择确切 `kind: skill`、name/version/source/digest，并按真实 `execution_path` 读取独立Activity Skill及其支持文件。Workflow清单必须与各Activity冻结绑定完全一致；不能再把整流程业务Skill路径当成每个Activity方法。最新部署副本或本机Codex链接不能代替本run冻结字节，缺绑定或原件即阻断。
+先从本run已验证的冻结部署清单读取工作流业务Skill `runtime/skills/douyin-leadgen-101/SKILL.md` 及其 `references/activity-methods.json`，核对本run源码和每文件SHA。再从 `run-definition.json` 对应Activity的 `implementations` 选择确切 `kind: skill`、name/version/source/digest，并按真实 `execution_path` 读取独立Activity Skill及其支持文件。Workflow清单必须与各Activity冻结绑定完全一致；不能再把整流程业务Skill路径当成每个Activity方法。最新部署副本或本机Codex链接不能代替本run冻结字节，缺绑定或原件即阻断。
 
 执行前确认 workflow_key 为 `douyin_video_discovery`，实际公司、line、profile、serial、run_id、attempt、source_run（适用时）、执行权、截止时间及锁/租约均与冻结事实一致。保持原 Activity Commander、定义ACK、原件及PG独立读回；不改现场代码、不换账号、不扩大预算或输入范围。
 
-`mode=workflow` 仅在当前业务 Skill 的正式完整CLI满足本轮范围时执行该流程；`mode=activity` 只处理指定冻结 Activity。仅接受原run已生成的leadgen-activity-v1请求及其私有broker工具；无法安全移交当前执行权或工具缺失时保留原失败及恢复条件并报告 BLOCKED，不能重跑整流程冒单步接手、使用 `leadgen-activity.sh` 冒 resume、直调裸queue/RPC函数、并发接管活动run或回退旧流程。旧Skill参考仅加载 reuse-map 明确适用动作，不把 reference_only 当可执行fallback。
+`mode=workflow` 仅在当前业务 Skill 的正式完整CLI满足本轮范围时执行该流程；`mode=activity` 只处理指定冻结 Activity。仅接受原run已生成的leadgen-activity-v1请求及其私有broker工具；无法安全移交当前执行权或工具缺失时保留原失败及恢复条件并报告 BLOCKED，不能重跑整流程冒单步接手、使用 `leadgen-activity.sh` 冒 resume、直调裸queue/RPC函数、并发接管活动run或回退旧流程。当前Activity方法自包含，不再加载旧Skill或reuse-map作为执行依赖。
 
 只处理101视频发现。本流程共享的设备预检与收尾引用 douyin_video_processing.preflight / cleanup；遇到这两个 Activity，显式加载冻结的 douyin-leadgen-102，只执行其预检或收尾范围，不启动102资格判断或评论采集。collect_videos 5.1.1保留正式输出 `Video.discovery_metrics`（运行结果 `Video.metrics`）及 `discovery_metrics_verified == 1`：同视频原件重算、独立PG完整观测与公司绑定读回均通过；发现链接或旧观测存在不能冒充指标已持久化。unknown不填0，旧观测拒绝不能计成功。本版方法配套仍awaiting-real-run，候选源码修复不代表运行宿主已发布或本版实机验收通过。
 

@@ -2,8 +2,8 @@
 name: douyin-leadgen-activity-103-mark-leads
 description: 交出原生身份核实的线索与配送状态。用于按评分保留线索、独立资格核对并配送或接手同一标记 Activity；不执行整个工作流。
 metadata:
-  change_summary: "0.16.0: 按主理人决定评估一次即保存，取消额外模型复核及下游双审门槛"
-  version: 0.16.0
+  change_summary: "统一异步边界与已存评分身份核验，清除额外模型和旧执行依赖"
+  version: 0.17.0
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
@@ -39,7 +39,7 @@ metadata:
 
 ## 输入与交付
 
-输入本公司已评分、待分拣的精确评论与原来源、原评分run/冻结政策/评分结果与原文依据、原生身份与视频资格证明、授权线索/outbox/桥接工具、处理量和截止。本活动可独立消费已有评分，不要求必须由同一个103 run刚刚评分；每行原评分身份须可回验，任务显式限批时照守范围。
+输入本公司已评分、待分拣的精确评论与原来源、原评分run/冻结政策/评分结果与原文依据、原生身份与视频资格证明、授权线索/outbox/桥接工具、处理量和截止。后端接口可独立消费已有评分，不要求必须由同一个103 run刚刚评分；当前native Workflow宿主仍只授予本轮scoring→mark交接ID，不能据此自行扩大到历史全队列。实际范围取本次合法工具与授权，每行原评分身份须可回验。
 
 输出comment→lead关联、created/repeats、等级和证据，`RecipientQualification`的passed/excluded/unknown、公司版本/原生主页摘要/理由，以及outbox动作身份、payload/fields摘要、真实feishu_record_id和confirmed/held/unknown。PG创建不等于外部配送确认。
 
@@ -48,7 +48,7 @@ metadata:
 1. 仅领取 `待分拣`、已有真实单次评分和原文依据的真实评论；`已排除`行即使旧A分残留也不得建Lead/outbox/104订单。读取原评论、原视频、公司政策版本、原评分结果及引用，核对公司与来源身份；不要求双审字段，不再次调用模型评估评分。
 2. 原视频通常须“评论已采”；正式采样保留“待判定”的窄例外，仍逐VID核102绑定/source SHA、quota精确IDs、qualification与collection两主span、PG冻结公司/租户/政策和旧判断run。不能因普通TaskRun写了completed、采样文件存在或旧matched就开放；软预算、失败或隔离来源不放行。历史例外只在明确维护Task中按本目录[历史接纳范围](references/maintenance-scopes.md)核，不自行扩大。
 3. 按原规则确定该行是否保留线索及重复出现次数。直接使用原评分等级、理由与证据，按公司规则确定保留和配送范围；不重新判断个人意向或升降等级。原评分缺失、来源身份或公司绑定不符时保持unknown，不调用模型补评。
-4. 独立核评论人的原生主页/稳定抖音身份与公司受众条件；昵称、搜索相似人、摘要或模型猜测不代替原件。真实接收人资格工具给passed/excluded/unknown，unknown/未确认者不能标ready或推成已交付。
+4. 核评论人的原生主页/稳定抖音身份、原评分公司绑定与已存资格依据；昵称、搜索相似人、摘要或模型猜测不代替原件。离线身份与已存评分核验给passed/excluded/unknown，unknown/未确认者不能标ready或推成已交付。
 5. 复用原事务和line级串行去重：Lead upsert、原评论关联、durable outbox一致提交，再推进评论状态。技术失败回滚或保留未决，不手写数据库改状态，不以“最新评分覆盖身份冲突”。
 6. 外部配送只走该公司原桥接/outbox权限。先持久动作身份/attempted，再由现有桥接单次创建；未知按原marker、UID和完整字段GET读回，不另跑push-leads或换ID重复POST，不覆盖受保护/已发送历史行。外部记录与scope不符停在held/unknown。
 7. 分别读回PG Lead、评论终态、资格结论、outbox payload/fields摘要及外部recordID/字段。没有完整字段的真实外部读回不能报confirmed；0合格或纯排除可以是真实合法结果，不能为了验收制造线索。
@@ -60,7 +60,7 @@ metadata:
 
 ## 副作用
 
-可能调用当前批准的受众资格模型，事务写PG Lead、评论关联、重复计数及outbox，并由已授权的原桥接写该公司飞书记录。逐项保留实际动作身份和确认状态；不向用户发消息、不执行104、不写无授权外部系统。
+不调用额外评分或受众资格模型；核验已保存评分与原生身份，事务写PG Lead、评论关联、重复计数及outbox，并由已授权的原桥接写该公司飞书记录。逐项保留实际动作身份和确认状态；不向用户发消息、不执行104、不写无授权外部系统。
 
 ## 结果与验收
 
