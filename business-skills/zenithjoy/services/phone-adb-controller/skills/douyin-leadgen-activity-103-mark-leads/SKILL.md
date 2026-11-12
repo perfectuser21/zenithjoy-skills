@@ -2,15 +2,15 @@
 name: douyin-leadgen-activity-103-mark-leads
 description: 交出原生身份核实的线索与配送状态。用于按评分保留线索、独立资格核对并配送或接手同一标记 Activity；不执行整个工作流。
 metadata:
-  change_summary: "0.15.0: 按主理人决定评估一次即保存，取消额外模型复核及下游双审门槛"
-  version: 0.15.0
+  change_summary: "0.16.0: 按主理人决定评估一次即保存，取消额外模型复核及下游双审门槛"
+  version: 0.16.0
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_comment_scoring.mark_leads
-  activity_version: 3.8.2
+  activity_version: 3.9.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-activity-103-mark-leads/references/maintenance-scopes.md
@@ -23,7 +23,7 @@ metadata:
 
 # 交出原生身份核实的线索与配送状态
 
-仅执行 `douyin_comment_scoring.mark_leads`，保留业务合同版本 `3.8.2`。方法版本变化不修改Activity身份或公司业务政策。本版按主理人决定 `8331c673-1113-4a04-a5dd-54ec76a916fe` 取消额外模型评分复核；历史合同版本仅标识来源，其双审要求已被本决定替代。若现有宿主仍硬性要求旧双审，报告实现尚未适配，不伪造字段绕过。离线校验不等于实机验收。
+仅执行 `douyin_comment_scoring.mark_leads`，使用业务合同版本 `3.9.0`。方法版本变化不修改Activity身份或公司业务政策。本版按主理人决定 `8331c673-1113-4a04-a5dd-54ec76a916fe` 取消额外模型评分复核；新合同按本决定使用单次评分，不要求额外模型复核。若现有宿主仍硬性要求旧双审，报告实现尚未适配，不伪造字段绕过。离线校验不等于实机验收。
 
 ## 执行上下文与工具边界
 
