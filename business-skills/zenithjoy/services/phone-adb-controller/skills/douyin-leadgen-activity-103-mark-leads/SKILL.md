@@ -2,8 +2,8 @@
 name: douyin-leadgen-activity-103-mark-leads
 description: 交出原生身份核实的线索与配送状态。用于按评分保留线索、独立资格核对并配送或接手同一标记 Activity；不执行整个工作流。
 metadata:
-  change_summary: "0.14.0: 在Activity内整合有效业务步骤，去除母Skill和旧Skill执行依赖，保留原合同与授权边界"
-  version: 0.14.0
+  change_summary: "0.15.0: 按主理人决定评估一次即保存，取消额外模型复核及下游双审门槛"
+  version: 0.15.0
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
@@ -15,6 +15,7 @@ metadata:
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-activity-103-mark-leads/references/maintenance-scopes.md
 
+  decision_ref: 8331c673-1113-4a04-a5dd-54ec76a916fe
   method_role: single-activity
   instruction_dependencies: self-contained
 
@@ -22,7 +23,7 @@ metadata:
 
 # 交出原生身份核实的线索与配送状态
 
-仅执行 `douyin_comment_scoring.mark_leads`，保留业务合同版本 `3.8.2`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
+仅执行 `douyin_comment_scoring.mark_leads`，保留业务合同版本 `3.8.2`。方法版本变化不修改Activity身份或公司业务政策。本版按主理人决定 `8331c673-1113-4a04-a5dd-54ec76a916fe` 取消额外模型评分复核；历史合同版本仅标识来源，其双审要求已被本决定替代。若现有宿主仍硬性要求旧双审，报告实现尚未适配，不伪造字段绕过。离线校验不等于实机验收。
 
 ## 执行上下文与工具边界
 
@@ -38,15 +39,15 @@ metadata:
 
 ## 输入与交付
 
-输入本公司已评分、待分拣的精确评论与原来源、原评分run/冻结政策/双审、原生身份与视频资格证明、授权线索/outbox/桥接工具、处理量和截止。本活动可独立消费已有评分，不要求必须由同一个103 run刚刚评分；每行原评分身份须可回验，任务显式限批时照守范围。
+输入本公司已评分、待分拣的精确评论与原来源、原评分run/冻结政策/评分结果与原文依据、原生身份与视频资格证明、授权线索/outbox/桥接工具、处理量和截止。本活动可独立消费已有评分，不要求必须由同一个103 run刚刚评分；每行原评分身份须可回验，任务显式限批时照守范围。
 
 输出comment→lead关联、created/repeats、等级和证据，`RecipientQualification`的passed/excluded/unknown、公司版本/原生主页摘要/理由，以及outbox动作身份、payload/fields摘要、真实feishu_record_id和confirmed/held/unknown。PG创建不等于外部配送确认。
 
 ## 操作
 
-1. 仅领取 `待分拣`、已有评分且双独立政策证据有效的真实评论；`已排除`行即使旧A分残留也不得建Lead/outbox/104订单。读回原评论/原视频/冻结公司政策、两份不同response_id及原文引用，不因score时pass就跳过本活动复核。
+1. 仅领取 `待分拣`、已有真实单次评分和原文依据的真实评论；`已排除`行即使旧A分残留也不得建Lead/outbox/104订单。读取原评论、原视频、公司政策版本、原评分结果及引用，核对公司与来源身份；不要求双审字段，不再次调用模型评估评分。
 2. 原视频通常须“评论已采”；正式采样保留“待判定”的窄例外，仍逐VID核102绑定/source SHA、quota精确IDs、qualification与collection两主span、PG冻结公司/租户/政策和旧判断run。不能因普通TaskRun写了completed、采样文件存在或旧matched就开放；软预算、失败或隔离来源不放行。历史例外只在明确维护Task中按本目录[历史接纳范围](references/maintenance-scopes.md)核，不自行扩大。
-3. 按原规则确定该行是否保留线索及重复出现次数。若政策含A/B/C，分别核其个人意向、相关讨论或画像内寒暄的原文证据；A语境提问还需同主题视频原文。原文引用、摘要、评分或公司绑定不符保持unknown。本活动不补第三次政策复核或重新改分。
+3. 按原规则确定该行是否保留线索及重复出现次数。直接使用原评分等级、理由与证据，按公司规则确定保留和配送范围；不重新判断个人意向或升降等级。原评分缺失、来源身份或公司绑定不符时保持unknown，不调用模型补评。
 4. 独立核评论人的原生主页/稳定抖音身份与公司受众条件；昵称、搜索相似人、摘要或模型猜测不代替原件。真实接收人资格工具给passed/excluded/unknown，unknown/未确认者不能标ready或推成已交付。
 5. 复用原事务和line级串行去重：Lead upsert、原评论关联、durable outbox一致提交，再推进评论状态。技术失败回滚或保留未决，不手写数据库改状态，不以“最新评分覆盖身份冲突”。
 6. 外部配送只走该公司原桥接/outbox权限。先持久动作身份/attempted，再由现有桥接单次创建；未知按原marker、UID和完整字段GET读回，不另跑push-leads或换ID重复POST，不覆盖受保护/已发送历史行。外部记录与scope不符停在held/unknown。
@@ -55,7 +56,7 @@ metadata:
 
 ## 成功条件
 
-本次消费范围、政策/原生身份复核、PG事务及外部状态均可独立读回。明确区分created/repeated/recipient-excluded/held/unknown。真正空输入记skipped；外部unknown保留原动作，不能以PG已有Lead宣称配送成功。
+本次消费范围、原评分/政策版本与原生身份核对、PG事务及外部状态均可独立读回。明确区分created/repeated/recipient-excluded/held/unknown。真正空输入记skipped；外部unknown保留原动作，不能以PG已有Lead宣称配送成功。
 
 ## 副作用
 

@@ -751,13 +751,13 @@
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-103/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-103/SKILL.md",
-          "sha256": "4bc42a6a16c5008fbcfcb6f32b18e4a5bb9302ca6fc6210a746557067a914be4",
+          "sha256": "abda2607d0abfc793ebbaa0adf96cd28600889c297fed24ed38d3c0fa8f399e3",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-103/references/activity-methods.json",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-103/references/activity-methods.json",
-          "sha256": "bff0d0d9dd860a19afbb22087024155209c53b4f604b11e078dc27de11bc6dcd",
+          "sha256": "d5a7833d394f0c190d06417f29abadbd56870843e2906394ad1d2b10fb4c8412",
           "mode": "100644"
         },
         {
@@ -829,13 +829,13 @@
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-103-mark-leads/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-103-mark-leads/SKILL.md",
-          "sha256": "101250ec3acc57538bca155fb2268416d250358129161a34ff17820f4cda5e7b",
+          "sha256": "f647cf494b58bca6d70c29efdf4482b8d4b9a413cac4b0bb7a43c67a6925aea4",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-103-scoring/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-103-scoring/SKILL.md",
-          "sha256": "f16e6aa2152ebbfb8101bcf7722f9732412876cd27464457272466c7e21180e2",
+          "sha256": "1a4ac57ce32d5a8454c4c8c86ee635407d0a8cd495ae3e103cfeafbf95208d0b",
           "mode": "100644"
         },
         {
@@ -991,7 +991,7 @@
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-103-scoring/references/maintenance-scopes.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-103-scoring/references/maintenance-scopes.md",
-          "sha256": "95edc3a0fb118aeb78c5f726bc60621fd2152c278f69d0ddd18089e9bb4952b0",
+          "sha256": "9d125f245f6145bcc64490b99fad68cd6e89ac2a0646d090f6fd109adb8f7a86",
           "mode": "100644"
         },
         {
