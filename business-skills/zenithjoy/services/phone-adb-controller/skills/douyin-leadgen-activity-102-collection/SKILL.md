@@ -2,8 +2,8 @@
 name: douyin-leadgen-activity-102-collection
 description: 交出持久化且身份可验证的评论。用于从合格视频采集评论并读回或接手同一评论采集 Activity；不执行整个工作流。
 metadata:
-  change_summary: "0.8.0: 在Activity内整合有效业务步骤，去除母Skill和旧Skill执行依赖，保留原合同与授权边界"
-  version: 0.8.0
+  change_summary: "补齐普通API已提交评论的受限凭证认证与精确ID交接，不伪造采尽或正式采样"
+  version: 0.9.0
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
@@ -21,7 +21,7 @@ metadata:
 
 # 交出持久化且身份可验证的评论
 
-仅执行 `douyin_video_processing.collection`，保留业务合同版本 `2.7.2`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
+仅执行 `douyin_video_processing.collection`，保留业务合同版本 `2.7.2`。方法版本变化不修改Activity身份或公司业务政策。本版补充普通API显式交接与凭证补齐方法；离线校验不等于实机验收。
 
 ## 执行上下文与工具边界
 
@@ -50,13 +50,15 @@ metadata:
 5. 一条核验失败不丢弃其他已核条目。组织号、号不可见、身份冲突分别保留原件及 `non_lead_org/identity_partial/identity_unverified` 等当前工具允许状态；是否可入库、排除或交付由当前冻结合同决定。缺稳定身份的对象不得标可触达；旧手册“连同正文都写原始池”不覆盖当前完整字段门禁。
 6. 优先真实评论ID去重；无平台ID用已发布的VID+稳定评论人+完整正文等组合键并说明近似局限。同一人在不同视频的真实评论保留来源，不按人或相同正文一律删掉。历史消费先读PG/URL原生证明，只有同实际VID、完整身份与正文独立核实者计 `history_verified`；不靠标题关联旧评论。
 7. 用当前事务提交每批原生证明及公司绑定，随后独立读回精确PG ID、UID、正文、URL、公司/来源。未知提交先核原动作，失败批不计提交，不换batch重发。保持原公司冻结账号与设备绑定；评论自报company/profile不能授予权限。
+   普通API任务若已通过 `collect_partial` 保存同一行但 `recipient_evidence` 尚未verified，先取得完整真实原生主页、返回评论与同VID配对及原102冻结账号绑定，再使用获授权的 `certify_collected_comment` 补证据：输入原102 `run`、line、VID/规范视频URL、`comment_id`及原评论字段和新完整 `recipientEvidence`。仅原102本人持有matched视频租约、该行仍待分拣且未评分、原UID/昵称/正文/主页/视频来源逐项相等时可认证；接口只升级原非verified凭证，不能覆盖已有verified证据或改其他字段。随后用同run/VID/comment_id调用 `certify_collected_comment_readback`，以真实verified读回交接；unknown、冲突或工具缺失仍保留未决，不手写SQL改状态。
 8. 新增、核实历史、重复和实际覆盖分别累计。配额达标标sampled/quota_reached，不宣称页面评论总量或已采尽。正式102配额抽样保留视频“待判定”等当前合同语义；不能为了103放行手改成“评论已采”。只有明确页尾、时间边界及相应范围才标该范围exhausted；连续几屏没新增只记stalled，不把屏号/累计数当稳定游标。
-9. 正式采样交接交出逐VID精确PG ID集合、规范行摘要、停止原因和新增/历史计数，绑定本run/binding/source SHA；独立比对qualification与collection两个主span的同VID身份收据、冻结公司/租户/政策及旧判断run。回执缺失/歧义、超过原3MB限额或工具只会把5条样本写成已采尽时，保留已确认成果并报工具/交接缺口，不能宣称可供103。
+9. 普通API显式交接只交调用方指定的 `committed_partial_ids`（1～50个精确PG ID）及原ID→102 batch映射，`source_run=null`；每行须有完整verified原件、matched视频和与103一致的冻结公司/租户/line/版本/政策及评分规则。保持视频原状态，不能因已提交或补认证就宣称默认103队列会消费。
+   正式采样交接仍交出逐VID精确PG ID集合、规范行摘要、停止原因和新增/历史计数，绑定本run/binding/source SHA；独立比对qualification与collection两个主span的同VID身份收据、冻结公司/租户/政策及旧判断run。回执缺失/歧义、超过原3MB限额或工具只会把5条样本写成已采尽时，保留已确认成果并报工具/交接缺口，不能宣称可供103。
 10. 截止保存已提交集合、最后成功批与恢复入口，输出partial时也保住成果。不执行103评分、不建Lead/outbox；设备与视频租约交明确的cleanup责任人收尾。
 
 ## 成功条件
 
-当前采样/范围目标满足，完整身份和本轮资格/来源逐条可核，实际PG行与正式交接读回一致。未达配额或缺身份/交接为partial/blocked；真实0评论按正式替代证据单列，不冒采到0条就达成5条配额。
+当前采样/范围目标满足，完整身份和本轮资格/来源逐条可核，实际PG行与本次所选交接模式的读回一致。未达配额或缺身份/交接为partial/blocked；真实0评论按正式替代证据单列，不冒采到0条就达成5条配额。
 
 ## 副作用
 

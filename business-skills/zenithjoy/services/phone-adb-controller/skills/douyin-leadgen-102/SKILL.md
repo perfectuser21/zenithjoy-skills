@@ -2,8 +2,8 @@
 name: douyin-leadgen-102
 description: Workflow 102的活动组织与交接目录；实际执行由各Activity自己的Skill完成，不作为单Activity操作方法。
 metadata:
-  change_summary: "0.10.0: 仅保留Workflow编排目录，Activity方法各自完整，退役旧手册执行引用"
-  version: 0.11.0
+  change_summary: "区分默认队列、显式已提交评论交接与正式采样，保留完整身份及单次评分边界"
+  version: 0.12.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-102/references/activity-methods.json
@@ -25,7 +25,7 @@ metadata:
 | `preflight` | [douyin-leadgen-activity-102-preflight](../douyin-leadgen-activity-102-preflight/SKILL.md) | `0.8.0` |
 | `dedup` | [douyin-leadgen-activity-102-dedup](../douyin-leadgen-activity-102-dedup/SKILL.md) | `0.7.0` |
 | `qualification` | [douyin-leadgen-activity-102-qualification](../douyin-leadgen-activity-102-qualification/SKILL.md) | `0.7.0` |
-| `collection` | [douyin-leadgen-activity-102-collection](../douyin-leadgen-activity-102-collection/SKILL.md) | `0.8.0` |
+| `collection` | [douyin-leadgen-activity-102-collection](../douyin-leadgen-activity-102-collection/SKILL.md) | `0.9.0` |
 | `cleanup` | [douyin-leadgen-activity-102-cleanup](../douyin-leadgen-activity-102-cleanup/SKILL.md) | `0.8.0` |
 
 机器引用真身为[Activity方法清单](references/activity-methods.json)，版本必须与上述方法文件一致。101/102共用同一份preflight与cleanup，不复制。
@@ -41,7 +41,11 @@ metadata:
 
 101持久化视频，102消费已验证视频并采评论；103独立消费本公司合格的已提交评论，104独立消费配送已确认的合格订单。各Workflow内部按Activity顺序执行，Workflow之间通过持久队列解耦，不强制同一run或等整批上游完成。
 
-当前普通103评分通常要求该评论所属视频已核资格且状态为“评论已采”；102的collect_partial虽提交部分评论，但不把视频标完成，这些行不能据此提前评分。正式102采样视频通常保留“待判定”；当前只有明确指定其102 source_run且该run已完成合格的reconciliation/完整spans/qualification与collection精确交接后，103才接纳该批次。无source_run的普通队列不会自动遍历这些采样批次。未完成或失败来源不能靠改状态放行，任务显式限批时保留原来源范围。
+普通103默认队列仍要求评论所属视频已核资格且状态为“评论已采”。`collect_partial`只表示部分评论已提交，不证明身份完整或视频已采尽，也不会自动进入默认评分队列。
+
+普通API活动可由调用者显式交接 `committed_partial_ids` 精确评论ID清单（1～50条，`source_run=null`）：仅接纳原生身份与视频配对证据完整verified、同102来源批次、账号绑定和102/103冻结公司/租户/line/版本/政策及评分规则一致的已提交评论。视频保留“待判定”或原102处理租约；unknown凭证不能评分，具体补证据和操作分别见collection、scoring、mark_leads各自方法。此模式不扩大默认队列。
+
+正式102采样仍须明确指定其102 `source_run`，并核对该run合格的reconciliation、完整spans及qualification/collection精确交接；普通API显式交接不能替代这些正式凭证。未完成或失败来源不能靠改状态放行，任务显式限批时保留原来源范围。
 
 “可独立消费”说明队列关系，不代表已有常驻消费者或自动唤醒；每次由已配置的调度或本次任务实际启动，启动方式与运行证据分别核实。同一手机的101/102/104仍遵守设备锁，103评分和标记不占手机。
 
