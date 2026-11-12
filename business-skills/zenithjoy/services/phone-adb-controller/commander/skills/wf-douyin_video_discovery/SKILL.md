@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_video_discovery
-version: 0.9.0
+version: 0.10.0
 changelog:
   - "0.9.0: 同步共享预检与清场的正式预算合同及方法依赖，原总额与授权不变"
   - "0.8.0: 同步official-child-v1精确内部宿主兼容；原授权和验收边界不变"
