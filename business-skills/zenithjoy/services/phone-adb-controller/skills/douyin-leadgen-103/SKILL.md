@@ -2,8 +2,8 @@
 name: douyin-leadgen-103
 description: Workflow 103的活动组织与交接目录；实际执行由各Activity自己的Skill完成，不作为单Activity操作方法。
 metadata:
-  change_summary: "0.18.0: 每条评论评估一次保存，评分和线索标记均取消双审门槛"
-  version: 0.18.0
+  change_summary: "0.18.1: 每条评论评估一次保存，评分和线索标记均取消双审门槛"
+  version: 0.18.1
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-103/references/activity-methods.json
@@ -22,7 +22,7 @@ metadata:
 
 | Activity | 唯一操作Skill | 方法版本 |
 |---|---|---|
-| `scoring` | [douyin-leadgen-activity-103-scoring](../douyin-leadgen-activity-103-scoring/SKILL.md) | `0.16.0` |
+| `scoring` | [douyin-leadgen-activity-103-scoring](../douyin-leadgen-activity-103-scoring/SKILL.md) | `0.16.1` |
 | `mark_leads` | [douyin-leadgen-activity-103-mark-leads](../douyin-leadgen-activity-103-mark-leads/SKILL.md) | `0.16.0` |
 
 机器引用真身为[Activity方法清单](references/activity-methods.json)，版本必须与上述方法文件一致。101/102共用同一份preflight与cleanup，不复制。
