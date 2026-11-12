@@ -4,7 +4,7 @@
     {
       "activity_ref": "douyin_comment_scoring.scoring",
       "skill_name": "douyin-leadgen-activity-103-scoring",
-      "skill_version": "0.16.0",
+      "skill_version": "0.16.1",
       "skill_path": "services/phone-adb-controller/skills/douyin-leadgen-activity-103-scoring/SKILL.md"
     },
     {
