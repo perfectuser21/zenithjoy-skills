@@ -1,11 +1,9 @@
 ---
 name: douyin-leadgen-activity-102-qualification
 description: 交出有证据的视频资格结论。用于核对目标视频、录音转写并按公司政策判断资格或接手同一 Activity；不执行整个工作流。
-changelog:
-  - "0.6.0: 显式兼容冻结official-child-v1内部正式宿主，保留旧运行与恢复边界"
-  - "0.5.0: 新增显式无工具回合身份与父Code执行；保留旧child与恢复约束"
 metadata:
-  version: 0.6.0
+  change_summary: "0.7.0: 在Activity内整合有效业务步骤，去除母Skill和旧Skill执行依赖，保留原合同与授权边界"
+  version: 0.7.0
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
@@ -15,104 +13,68 @@ metadata:
   activity_version: 3.4.2
   validation: awaiting-real-run
   support_files:
-    - services/phone-adb-controller/skills/leadgen-activity-execution.md
-    - services/phone-adb-controller/skills/leadgen-official-child-host.md
+    - services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification/references/sdk31-capture.md
+
+  method_role: single-activity
+  instruction_dependencies: self-contained
+
 ---
 
 # 交出有证据的视频资格结论
 
-仅执行 `douyin_video_processing.qualification`。业务合同版本为 `3.4.2`；方法版本独立记录，不因生成代码而更换Activity身份。
+仅执行 `douyin_video_processing.qualification`，保留业务合同版本 `3.4.2`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
 
-先读取[共同执行与升级约束](../leadgen-activity-execution.md)，再读本轮冻结的[所属工作流Skill](../douyin-leadgen-102/SKILL.md)中与本活动有关的配置、复用来源和授权。输入输出、验收探针以[正式Activity合同](../../../../product-map/contracts/douyin_video_processing.yaml)的 `qualification` 为准；本文件不覆盖该合同或公司政策。
+## 执行上下文与工具边界
 
-## 从第一步执行本 Activity
+本文件就是本 Activity 的操作方法；不要求加载 Workflow 母 Skill 或旧业务 Skill。Workflow 决定活动顺序，本方法只完成当前输入指定的活动。
 
-本版支持 Runner 正式选择的 `mode=execute`，以及原有失败后接手模式；共同执行约束中关于 Code 失败、原 handler 和 resume 的条款只用于失败接手，不用于 `execute`。只执行本次指定的一个 Activity，不自行启动、切换或重启 Workflow。
+- 输入须明确真实 `task_id`、`run_id/run_tag`、`activity_ref`、公司/租户/业务线、公司配置与政策版本、处理范围、业务及收尾截止、实际工具与授权。已有 Task 只读回，不重复建单；缺身份或范围由调用方补齐，不从示例、最新目录或其他租户借值。
+- 正式 Workflow 宿主给出的合同原件、方法/源码摘要、绑定、资源 owner 和工具 schema 都要核对；校验失败停止。普通 API 单 Activity 任务使用本任务明确授予、来源和作用域已核的工具，不伪造 Workflow ACK、actor、broker request 或冻结合同，也不因缺正式绑定而擅自切为手工模式。
+- 下文是所需能力和已存在的操作名示例，不是新的工具注册或写入授权。用当前真实 schema/已部署签名确定调用；缺少合法单活动工具就报 `tool_unavailable`，不启动整条 Workflow、原 Activity handler 或任意裸 RPC/SQL顶替。保留原运行权限与公司校验。
+- `execution_transport=raw-model-v1` 时不运行 shell、SSH、插件或子会话，只输出宿主 schema 的一个意图：`inspect`、`phone`、`business` 或 `finish`；`phone` 使用 `command,args`，`business` 使用 `operation,input`。不夹带最终 status/result。`finish` 只停止提意图，业务结果由宿主工具记录与独立读回确定。
+- 已绑定 child/失败接手只使用该次交接授予的工具和操作。旧 owner/child、连接或原生操作终态不明就保留隔离；不通过新 run、nonce 或 generation 重置次数。`resume` 仅在原宿主明确授予时按原共享额度执行，不能因为读了本 Skill 新增恢复权。显式额外回合策略仍只接受原合同唯一键 `max_additional_turns=1`；默认无额外回合，raw 回合原冻结上限仍为 1～64，不增加原预算。
+- 原生调用采用已验证的执行超时并受当前剩余预算约束；旧controller可能需要300000ms。工具返回running/session不是失败或已停止，沿同一session等真实返回，不并发重试或换EID；预算不足不启动新动作，未知终态由原owner收尾。
+- 副作用保留同一持久动作身份；回执未知先读回，不换 ID 重交。数据与字段写入走已授权业务接口，凭据只经组织凭据工具/1Password取得，放入工具进程，不进正文、参数回显或日志。到业务截止停止新增业务，保留收尾预算。
 
-`execute` 的旧入口仍须核本 run 冻结 `execution_mode=agent`、中央不可变 `actor=runtime:phone-adb-controller:agent-v1` 及原 runtime snapshot、来源、方法和资源绑定。只有本方法新版本显式冻结的 `primary_host=official-child-v1` 可采用[内部正式宿主兼容合同](../leadgen-official-child-host.md)，由父进程核实其精确 `common-runner/internal` 绑定；不能按 actor 文本自行选择。actor 不是权限或成功证明；Agent 不创建绑定、不改 actor、不调用内部 RPC 或裸队列。缺合法工具或任一准入证据即报告具体阻断。
+## 输入与交付
 
-仓库 YAML 链接仅定位业务合同来源，不要求执行目录具有该仓库。执行时读取本次 `request.method.contract` 中由 Runner 与中央固定 Activity 版本核验过的 `payload`、`sha256` 和版本身份；缺该原件即报告缺失，不从最新仓库、链接不存在或自拟内容补合同。
+输入本人已领取VID/规范链接、来源、公司冻结资格政策及版本、设备与实际账号上下文、录制/ASR/判断/保存工具、本次明确覆盖范围和截止。覆盖是全片还是获授权的前N秒，以本次合同为准；不从旧手册自动套“前5分钟=全文”或默认3倍速。
 
-1. 原官方 child 方式：先核官方 child 绑定与本次私有 request 的 run、task、Activity、来源、方法和截止，调用 `inspect` 读取输入、当前原件、允许操作及 Commander 指导。 `execution_transport=raw-model-v1` 时按下节核官方回合绑定，并由父 Code 代调 inspect；不伪造 child。
-2. 只用本 request 给出的 `phone` 和 `business` 工具逐步执行。`phone` 输入为 `{command,args}`，`business` 输入为 `{operation,input}`；操作及字段以服务端本 Activity 当前实际暴露的 schema 为准，不猜操作名或自己扩白名单。锁和资源由 Runner 代码管理，Agent 不能更换 owner、公司、账号、设备、来源、额度或截止。
-3. 按下文业务方法，从新鲜原生证据选择每一步，调用细粒度操作并保存/读回结果。禁止 `resume`、调用原 Activity handler、整段 `collect-comments` 或用整工作流脚本代替本 Activity。资格与评分沿原公司政策及实际授权的判断工具，不自己改阈值或补造证据。
-4. 副作用调用保留原持久操作身份。回执丢失、写入或原生动作结果未知时只读回同一操作，不重新提交、不换 operation ID 重做。确认 0 评论不得入待采队列；无结果、部分成果和真实空结果分别交付。
-5. 进度、问题或错误通过 `inspect` 的结构化事件报告。下一回合读取并处理 `commander_guidance`；收到 `commander_abort` 停止本 child。 无工具回合按下节提交 inspect 意图，由 Code 停止本回合及父循环。Commander 不批准外部动作，不改业务顺序、规则或状态。
-6. 交付本次工具产生的持久结果及证据位置。Agent 的完成文字不是结果，Runner 根据服务端回执、原件、PG 及原独立 verify 判定；无法验证时明确未完成。执行终态未知保留隔离，不能为下一 Activity 清场。
+输出每VID `matched/rejected/unknown`、真实理由/政策、cached或fresh、原判断run、当前原生身份与音频/转写证据、持久判定读回。只有有效资格结果能交采集。
 
-`execute` 不适用于 104；本版正常执行与故障接手均仍需分别留实机证据，状态保持 `awaiting-real-run`。
+## 操作
 
-## 父 Code 管理的无工具回合
+1. 核当前本人视频租约、设备锁、真实公司和原生账号。按VID/deeplink进入详情并核当前页面/分享解析身份，不重走关键词搜索当成身份核验。存在他人、活跃或无法确定的受管录音时停止；不关应用干扰未知执行者。
+2. 已授权、已确认无在途录制时，可按现有方法同owner关闭抖音再直接打开本VID，清理旧播放现场；之后重新核VID。只做此应用归位，不重启ADB、手机或网络，不为多音轨开例外。
+3. 读取真实SDK。SDK≥33使用本次固定、成对验SHA的3.3.4 playback_dup客户端/server及原参数；SDK31仅用明确选定且已验收的独立5.0.1 output PCM/WAV策略，具体证据见本目录[SDK31捕获核验](references/sdk31-capture.md)。SDK32、未知、缺包或摘要不符记unsupported/unknown，不跨模式回退或自行安装升级。
+4. 保存开始/结束SDK原件、同包UID/前台、唯一started原生音轨、muted原因、client/server固定版本与SHA、本人录制PID和媒体原件。仅“started”、设置回显或UI看起来播放不够；外UID、共享UID、多音轨或解析不明停止。首错、退出码与阶段完整保留。
+5. 播放控件只从当前完整树定位本包唯一“播放视频/暂停视频”且clickable/enabled、bounds有效节点，动作前后核原生音轨。只在原工具授权且同包唯一音轨、无活录制、明确仅stream/port音量静音时，执行其既有一次有界音量恢复；未知读回不循环按键。恢复失败保unknown，不以点击当作录制许可。
+6. 从实际视频时长、已验证播放速度和本次覆盖范围算录制时长。不能只凭 `set-playback-speed` 回显把时长除3；未证实倍速按实际速度。分别核录制工具上限、ASR单请求上限及收尾预算；当前已核ASR单次上限300秒，不设置320秒后把整段盲传。超长只用现有已授权分片方法覆盖本次范围；缺工具/预算记具体缺口，不截短后冒覆盖完成。
+7. 复用原 `record-start/status/stop/extract-audio` 等实际工具，等待原生请求返回。校验容器、轨数/模式、真实媒体/音频时长、采样与声道、首末源身份和音量；恢复了容器也要核真实音轨。捕获近静音、全零PCM、App opt-out或多音轨仅说明捕获无效/未知，不把内容写成rejected。
+8. ASR前核实际文件完整送达、摘要相符、ffprobe时长满足本次覆盖且每请求不超服务上限。分别保存provider/model/request或response ID、原错误码、文本/分片与实际调用；未暴露ID写unknown。`AUDIO_DURATION_TOO_LONG`、401/429、网络或格式错误是技术失败，不是空转写或内容不合格。只有当前工具能区分服务错误且不会误写内容结论时才调用其持久资格入口；已知旧入口混淆时报告 `qualification_tool_incompatible`，不重用其错误缓存。
+9. 正常 `NO_WORDS/no_speech` 与捕获静音分开。缺有效转写时默认unknown，不用标题或旧ASR补成匹配；若当前冻结政策明示无语音分支，按该分支及真实证据执行。转写保留原文与保守校正依据，不凭模型补实词。
+10. 只用公司冻结资格规则和实际授权判断工具，保存真实结论、原文依据及政策身份，再独立读取PG判定、转写、公司与VID。技术失败保持未决，不通过CLI退出0或“拒绝缓存命中”宣称内容已判。技术误写需当前明确授权的修复/重评入口；保留原失败与恢复结果，不直接SQL改分或改政策。
+11. 缓存只复用同真实VID、公司/租户/政策版本匹配且原结论证据有效者。旧matched的原 `judgment_config.run_id`不重写；本轮资格回执另列cached/fresh、旧判断run、本轮原生身份摘要。正式采样交接仍须原run/binding/source SHA/VID的资格主span及原Step/Activity pass，失败或partial不放采集。
 
-仅本方法新版本的正常 `mode=execute` 可使用冻结的 `execution_transport=raw-model-v1`。字段缺省继续原官方 child 方式；旧 run、旧方法、失败接手和 104 不切换。该声明必须与本次固定源码、中央 Activity 方法版本、Task、run、binding、资源及原绝对截止共同核验；Agent 文字或环境临时改值不能选择通道。
+## 成功条件
 
-此方式由 Runner 的 Code 调用官方 `agent`，固定 `modelRun=true`、`deliver=false`，服务端禁用 Agent 的 shell、子会话、插件及其他工具。Agent 不领 spawn 权、不创建绑定、不用 CLI、SSH、裸 RPC 或队列。身份改核本回合由 Code 独占保存的官方 run/session/request 身份及其 Task/run/slot/source/nonce 绑定；不得把 raw run 伪装成 `sessions_spawn` child，也不套用旧 child 双停回执。父 Code 仍须完成原中央授权、固定 Skill 与合同核验。
+本次所有目标VID都有可验证的真实资格结果；真实rejected可以是本活动完成结果，但不产生可采资格。存在捕获、ASR、身份或工具未知则相应VID为unknown并交partial/blocked。不打开评论采集、不评分、不替后续活动报完成。
 
-父循环每轮传入真实 `inspect`、上次工具回执和未消费的 Commander 指导。自动 inspect 是 Code-owner 的只读上下文读取，仍核本轮授权、身份、epoch 与截止，不消耗模型单意图授权，也不执行 phone/business；Agent 显式 inspect 与其他操作仍经原 broker 的一次性回合授权。只回复一个 JSON 意图，不加 Markdown 或额外字段：`{"type":"inspect","question":"需要澄清的问题"}`（也可仅用 progress 或 error 字段）、`{"type":"phone","command":"当前schema允许的操作","args":[]}`、`{"type":"business","operation":"当前schema允许的操作","input":{}}` 或 `{"type":"finish"}`。inspect 的 question/progress/error 至多一项，也允许无事件。Agent 不能选择模型、身份、资源或额度；phone/business 仍由同一个原私有 broker 核白名单和实际权限后执行。不要自己调用这些工具。
+## 副作用
 
-`finish` 只是停止提出操作，不包含 status/result，不证明 Activity 完成。实际业务结果只能来自 broker 的服务端记录、原件、PG 与独立 verify。Code 在前一回合官方终态和连接关闭确认后才执行工具；每回合与操作独占记账，截止、epoch、业务操作身份和 max_turns 计数不重置。`request.max_turns` 必须来自本次正式冻结，为 1..64 的整数；缺失或非法时不启动，无默认加额。该正常回合上限不增加合同允许的恢复次数。回执或副作用未知只读回原身份，不重发同一回合或操作。
+获授权的详情导航、播放/有界音量恢复、本人的录制进程与音视频/转写工件，以及原资格判定持久化是本活动副作用。实际音频送当前批准ASR（现役为DashScope），视频原文/政策送当前批准判断服务（现役含OpenRouter）；记录实际服务/模型，不新增数据接收方。不采评论、发送、切号或改政策。
 
-收到 Commander abort 或原截止即停止新增回合及工具调用，由 Code 精确中止本回合并核官方终态、本次连接和所有本人工具资源的实际收尾。一个 model 回合结束不等于父循环、工具或 Activity 已停止；缺任一停止证据则保持 needs_review 与原隔离，不释放未知资源。该方式不扩大 Commander 权限，不改独立 Judge、业务政策、零评论规则、恢复次数或原冻结预算；尚未实际验收仍为 awaiting-real-run。
+## 结果与验收
 
-## 输入输出
+交付本次 Activity 的实际 `task_id/run_id/activity_ref`、`status`、`stop_reason`、输入对象身份、逐项结果、实际新增/历史/重复/未决计数、持久读回和证据位置、工具/模型实际调用与未知项、资源交接及副作用。工具或模型回执缺失写 unknown，不填 0；明确未调用才填 0。
 
-- 输入 `Video`：`line_key`、`video_id`、`video_url`、`title`、`comment_count`、`judgment_status`。
-- 输入 `Device`：`serial`、`lock_holder`。
-- 输出 `Video`：`judgment_status`、`judgment_reason`、`transcript`。
+`success` 必须满足本活动下文的可观察成功条件；已提交部分成果但未达目标记 `partial`；缺授权、来源或工具记 `blocked`；实际调用失败记 `failed`；真实无输入记 `skipped/empty`。业务上的真实拒绝、无语音、捕获失败、空队列分别记录。Agent文字、脚本退出0、收尾成功都不能替代业务验收，不能据此替下一个 Activity 报成功。
 
-公司、task/run、截止、源码及执行权从本次正式绑定读取。缺字段保持缺失并报告，不从示例或其他租户补。
+## 宿主恢复声明
 
-## 方法
-
-1. 用真实视频ID进入详情，核对当前页面确为本轮目标；前台、包UID和播放器归属均留原证。 MMV显式开启设备执行的qualification，在原预检已核公司与账号后，先续期并精确核当前run锁，确认本profile不存在活跃或无法确定的受管录音，再经同owner关闭抖音并直接打开本VID；随后重新取真实分享链接核本VID。该开页边界不猜SDK，不改变M4、identity或collection路径，也不把多音轨改判成可录。
-2. 先实读Android SDK原件；SDK≥33仅选同版3.3.4日志刷新补丁固定客户端与对应server，保留原playback音源、audio-dup、require-audio、Matroska与原编解码选择；不得使用SDK31包或旧brew录制绕过就绪门禁。两类SDK都须成对验client/server固定SHA、同owner有界无覆盖server准备，首末保存同一runtime原件名与SHA，停止后fresh SDK须与启动原件一致。SDK31仅在本run显式设备owner核验、已验收补丁客户端与server精确SHA校验及有界无覆盖jar准备成功后，使用独立output音源、no-video、raw PCM与WAV；这是已核的显式策略，不是失败后自动回退。SDK32、未知SDK、未安装runtime或校验不符保持unsupported/pending。SDK31必须保存私有runtime原件与SHA，起止client/server/原件名及SHA一致，停止后实解码唯一pcm_s16le音轨且无视频轨，必须decoder退出0、真实样本数/采样率/解码秒数达到本次请求80%、私有解码原件SHA及退出后原生恢复原件供queue/Workflow独立核验；首末原生音轨归属、无其他started媒体和退出恢复仍须成立。模式、SDK、required、实际音轨数量及SDK原件名/SHA必须进入本轮proof，起止两端一致，并由qualification独立核验。复用已部署录制与音轨核验方法，分别核对实际媒体音量、native播放/静音状态、真实录像及音轨。设置回显不能代替实际读回；轨道started但标记muted不能直接放行。
-3. 播放控件仅从本次完整新树定位：本包、唯一“播放视频，按钮”或“暂停视频，按钮”、enabled/clickable及合法屏幕bounds；不依赖混淆resource-id，也不凭文案决定播放阶段，动作前后都须原生音轨核验。仅当本包UID/详情前台、唯一started音轨且静音原因只有streamVolume/portVolume、没有受管活录制时，按键紧前必须fresh核同包唯一stream/port候选；若已started则不按键；除下述明确通知暂态仅允许被动复读外，未知或外来轨道立即拒绝。允许一次已核正数音量→邻近非零档→原档刷新；UP已提交但读回未知/不符时只允许绝对恢复明确非零原档并读回，仍保失败，不起录；每次读回必须成立，恢复后fresh唯一started且muted none才启动录制。未知/外UID/共享UID/解析失败/多音轨不能借恢复放行。录制停止后另存退出后原生恢复证据，持续失败保pending，不重启或kill未知进程。
-4. SDK/模式未知、require-audio缺失、音轨不符或捕获静音属于捕获/合同能力缺口，不以UI点击、音量循环或Skill重试放行。倍速设置、录制启动或停止失败时保留最早stderr、exit code、阶段和已有证据。proof中media_volume=null只表示未记录，不能据此推断音量0，或把native音轨首错改写成音量失败。
-5. 核对真实采集媒体时长、实际播放速度、提取音频和转写证据，只有达到当前正式合同才调用原公司资格政策。缺真实音频/转写记unknown，不伪造合格。playback_dup被App opt-out、缺音轨或录音静音只证明捕获未知，保持pending，不能借此把原视频内容判rejected；不使用标题或旧ASR兜底。
-6. 缓存结论仅在同视频原生身份、同公司和政策版本均相符时复用。若本轮核验旧 matched 结论，原 PG judgment_config.run_id 保持旧批次；本轮资格主 Activity span 发布同一 run/binding/SHA、精确 VID、cached/fresh、旧判断 run 和本轮原生身份核验哈希。该哈希是 102 对私有原件的正式验收收据，103 跨机只核两份官方 span 与 PG 冻结记录，不声称重算本机私有文件。资格 Activity/Step 任一 fail/partial 都不能供采样准入。逐 VID 交付 matched/rejected/unknown 和证据；仅合格视频交给评论采集。
-
-## 显式v2领取边界
-
-本run显式冻结并核验的v2 producer交接沿所属工作流的唯一pending白名单执行：实际领取在同一事务内重验原producer与当前consumer公司／完整政策／已verified启用账号及设备绑定，并以 `pending`、`待判定`、原101 `harvest_batch` 精确CAS，最多1条；已matched、人工、批次漂移或过期处理中不得按普通15分钟规则重领，领取0条不换领、不恢复隔离旁VID。保持原资格步骤、采集1至5条及480秒冻结预算，UI评论总量unknown要原生复核，不能用旧PG默认0或标题判零。默认队列、原v1和原生2秒／UNKNOWN安全边界不变；本v2仍待实机验收。
-
-本固定M4旧快照缺省字段只按所属工作流的已发布精确兼容分支处理，不补旧PG绑定；本run冻结profile／serial和领取前对本run原生预检实际读出抖音号 `44997267357` 的比对仍须通过；不新增第二次account-current读取，显式错误拒、MMV严格绑定不变。
-
-## 明确通知暂态与失败后的原生读证
-
-只有原生完整证据能唯一确定：本包唯一 started AudioTrack、外 UID 的 started MediaPlayer 明确标为 `USAGE_NOTIFICATION`、duck 列表唯一精确匹配本包 UID/piid，且 faded/muted/banned 与未知轨道均为空，才归为明确通知暂态。该次仍是 `unknown`，不是可录或资格通过。每次原生读证先无覆盖保留首次全部原件，再最多四次每次500毫秒被动等待并取新原件；每次调用的2秒只限显式等待；最多两次broker读证的显式等待合计不超过4秒，仍不得越过原run总截止。不点击、不调音量、不重启。仅 fresh 证据重新满足原有唯一未静音本包音轨要求时才能继续；到限仍未知、共享UID、同UID通知、duck不符、外来媒体或解析不完整均保留原失败，不扩大录音或资格准入。
-
-在原run已绑定的 `qualification`、`repair` 接手中，先 `inspect` 核对原request/nonce、冻结绑定和本次 `phone_capabilities`；inspect不提供fresh前台与受管录制判据，不能从缺字段推断通过。只有该次broker实际提供能力时，才能通过 `phone` 提交 `{"command":"native-audio-evidence","args":[]}`，最多两次。该原生入口由原owner在执行紧前强制核当前run锁、目标详情前台及无活跃或不明受管录制，任一核验失败保持blocked，不由子会话补造通过字段。证据名与路径由父进程生成；子会话不提供EID、VID、owner或文件路径。入口仅读证及上述有界等待，不停止或kill任何录制。若存在或无法排除活跃录制则blocked；录音退出取证失败由原Code先停自己的录制并确认PID退出，再报告最早错误，Skill不代清未知执行者。
-
-新证据稳定后只能在剩余截止内 `resume` 原失败slot的成熟Code一次，再由原独立verify及业务持久化读回裁判。无法恢复保持blocked/partial并报告具体原因；读证成功不代替真实录音、转写、资格或评论落库，本方法仍待实机接手验收。
-
-## 代码配套与验收
-
-配套代码取正式合同 `implementation_bindings` 的全部 `kind=code` 项，并按本轮冻结源码校验；由 `leadgen-activity-methods.lock.json` 固定本Skill和代码集合。代码文件存在不代表可由Agent直接调用，公共入口以[当前调用映射](../douyin-leadgen-102/references/runtime-calls.json)为准。
-
-按正式合同的后置探针、原始证据及持久化读回验收；区分Code结果、Skill接手结果和清理结果。单Activity接手入口为原run的 `activity-skill-tool.mjs <broker-request.json> inspect|phone|resume`；只能使用本次持久handoff给出的冻结路径，不能自己建request、换run或直接启动Workflow。源码接线与Skill实机接手验收分别记证据，当前方法仍 awaiting-real-run。
-
-## 本方法的真实接手入口
-
-Code失败、分类与有限安全重试后，由原run的handoff broker持有同一Activity闭包、身份、资源和截止。真实work-commander父会话经官方sessions_spawn派本Skill子会话；先核原request/nonce及自己的绑定。只调用本次给出的工具路径：`inspect`读取实际进度；`phone`经stdin JSON `{command,args}`仅读证或受控归位；必要时 `resume`仅继续当前slot的成熟Code一次。不得构造新Workflow、改源码/策略/账号/暂停或另取/释放锁。
-
-`send_dm`失败一律readback_only，不能resume或点击发送；没有确定发送证据保持unknown。Skill交付不直接写成功，原进程按原verify/Step/PG读回独立裁判。子会话终态未知保留资源，不能清场干扰未知执行者。没有正式已绑定子会话或source/method/预算不符即blocked。
-
-
-## 同run有界Agent恢复合同
-
-以下仅是原冻结Activity合同的显式opt-in形状，不是模型或方法自行授予的执行额度：
+以下仅保留原方法的可选恢复能力声明，不授予本次执行额度；只有原run合同明确且合法选定时生效，仍受上文原owner终态、nonce/generation、共享操作次数和原绝对截止约束。
 
 <!-- agent-recovery-policy -->
 ```json
 {"agent_recovery":{"max_additional_turns":1}}
 ```
-
-从本run对应的 `version.payload.contract.agent_recovery` 核此对象：仅允许唯一键 `max_additional_turns`、值为整数1；字段缺省保持原一次性接手，非法值或多余键阻断。一次额外Agent turn不是新Workflow attempt，不增加业务次数或预算。 `send_dm`不启用额外Agent turn，仍按原单次 `readback_only`；opt-in是恢复上限，不扩大该限制。
-
-Code失败或Code实际产出未过原verify时，首次Skill接手仍走原入口；首次Skill/Agent已确认失败或其实际产出未过原verify时，由唯一work-commander在同一次recover与原broker存活期内决定是否用这一次额外turn。先取得原owner和原child精确官方终态及停止证明，并确认broker无在途操作、原资源授权有效且尚在原Activity执行截止；父CLI或子终态未知、外部写入（含发布/发送）结果未知均不重派、不清pending、不刷新TTL。模型自述、CLI退出0或预览页不能替代这些证明。
-
-保留同run/task/binding/source/Activity、原业务nonce、原handler闭包与已成功VID。每turn只增加不可覆盖的transport generation及官方child绑定，引用原业务nonce；先撤销旧child工具权，再精确授权当前generation，旧child迟到调用/回执不得执行或覆盖新证据。不得删除原launch/binding/closed记录，不能换nonce或重建broker重置额度。
-
-原broker的resume总计最多一次，原生读证总计最多两次，失败调用也消费相应额度。resume前Agent失败且余量合法才可继续使用尚未消耗的resume；resume已预留或业务已执行后，后继turn仅inspect/readback/verify，禁止再resume、受控归位或其他业务动作。资格恢复沿原成功VID集合及每VID次数，不重领、不重录成功项。send_dm始终readback_only；collection partial、能力/权限/来源阻断仍按原规则停止。所有turn共享原截止，不挪用cleanup预算执行业务。
-
-原进程独立verify及真实持久读回通过后才继续后续Activity；无结果不能靠新child文本补成功。额外turn耗尽、剩余预算不足或仍核验失败即准确failed/partial/unknown并保原证，不承诺每种障碍都能救回。本版仍awaiting-real-run，配套源码、发布与实机验收分别留证。

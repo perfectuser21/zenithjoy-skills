@@ -133,5 +133,8 @@
       "未知不重发；父子/原生终态未知保隔离；104不启用"
     ],
     "validation": "awaiting-real-run"
-  }
+  },
+  "applies_to": "existing-managed-workflow-compatibility-only",
+  "not_an_activity_method": true,
+  "usage_note": "保留既有managed工具权限与入口事实，不是普通API单Activity的启动说明；Activity仅消费其真实输入中授予且已校验的工具，不读旧Skill、不伪造绑定或绕过权限。"
 }
