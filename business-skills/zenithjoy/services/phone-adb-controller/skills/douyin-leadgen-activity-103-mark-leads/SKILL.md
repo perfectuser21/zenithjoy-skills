@@ -2,8 +2,8 @@
 name: douyin-leadgen-activity-103-mark-leads
 description: 交出原生身份核实的线索与配送状态。用于按评分保留线索、独立资格核对并配送或接手同一标记 Activity；不执行整个工作流。
 metadata:
-  change_summary: "统一异步边界与已存评分身份核验，清除额外模型和旧执行依赖"
-  version: 0.17.0
+  change_summary: "消费显式已提交评论的已存评分，沿用同一严格身份与政策准入范围"
+  version: 0.18.0
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
@@ -46,7 +46,8 @@ metadata:
 ## 操作
 
 1. 仅领取 `待分拣`、已有真实单次评分和原文依据的真实评论；`已排除`行即使旧A分残留也不得建Lead/outbox/104订单。读取原评论、原视频、公司政策版本、原评分结果及引用，核对公司与来源身份；不要求双审字段，不再次调用模型评估评分。
-2. 原视频通常须“评论已采”；正式采样保留“待判定”的窄例外，仍逐VID核102绑定/source SHA、quota精确IDs、qualification与collection两主span、PG冻结公司/租户/政策和旧判断run。不能因普通TaskRun写了completed、采样文件存在或旧matched就开放；软预算、失败或隔离来源不放行。历史例外只在明确维护Task中按本目录[历史接纳范围](references/maintenance-scopes.md)核，不自行扩大。
+2. 默认队列原视频须“评论已采”。普通API显式交接可保留视频“待判定”或原102处理租约，但调用方必须给出同一 `committed_partial_ids`（1～50条、`source_run=null`），并在 `policy_review`、`score_readback`、`mark_leads`和 `mark_readback`保持精确 `ids`及原ID→102 batch的 `sources`映射。逐行重验完整verified原生主页/返回评论/同VID配对、exact UID/昵称/正文与哈希/视频URL/原batch、真实102账号绑定，以及102/103冻结公司/租户/line/版本/政策和评分规则一致；unknown或超出清单者不放行，不扩大默认队列。outbox及后续桥接沿用已持久的同一显式范围并重验，不另给宽范围或换来源。
+   正式采样保留“待判定”的窄例外仍逐VID核102绑定/source SHA、quota精确IDs、qualification与collection两主span、PG冻结公司/租户/政策和旧判断run。不能因普通TaskRun写了completed、采样文件存在或旧matched就开放；软预算、失败或隔离来源不放行。历史例外只在明确维护Task中按本目录[历史接纳范围](references/maintenance-scopes.md)核，不自行扩大。
 3. 按原规则确定该行是否保留线索及重复出现次数。直接使用原评分等级、理由与证据，按公司规则确定保留和配送范围；不重新判断个人意向或升降等级。原评分缺失、来源身份或公司绑定不符时保持unknown，不调用模型补评。
 4. 核评论人的原生主页/稳定抖音身份、原评分公司绑定与已存资格依据；昵称、搜索相似人、摘要或模型猜测不代替原件。离线身份与已存评分核验给passed/excluded/unknown，unknown/未确认者不能标ready或推成已交付。
 5. 复用原事务和line级串行去重：Lead upsert、原评论关联、durable outbox一致提交，再推进评论状态。技术失败回滚或保留未决，不手写数据库改状态，不以“最新评分覆盖身份冲突”。

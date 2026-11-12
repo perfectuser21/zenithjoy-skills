@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_video_processing
-version: 0.11.0
+version: 0.11.1
 changelog:
   - "0.9.0: 同步共享预检与清场的正式预算合同及方法依赖，原总额与授权不变"
   - "0.8.0: 同步official-child-v1精确内部宿主兼容；原授权和验收边界不变"
@@ -13,6 +13,8 @@ description: "抖音视频处理 wf_run 陪跑说明：显式加载本次冻结�
 ---
 
 # 抖音视频处理陪跑
+
+本wrapper仅说明正式 `wf_run` 的冻结宿主兼容；普通API独立Activity直接使用各Activity方法，不加载本wrapper。
 
 此薄 wrapper 对应 `product-map/contracts/douyin_video_processing.yaml` 的 `commander_skill`；业务真身只有 `services/phone-adb-controller/skills/douyin-leadgen-102/SKILL.md`，不在此复制动作。
 
@@ -34,7 +36,7 @@ description: "抖音视频处理 wf_run 陪跑说明：显式加载本次冻结�
 
 本流程依赖的Activity方法版本由业务Skill的 `references/activity-methods.json` 精确登记。方法变化要同步本陪跑Skill版本与合同 `commander_skill.version`；Commander只使用本run冻结组合。代码内部兼容评估、Skill实机验收和自动handoff能力分别记证据，不从文件存在推定已能接手。
 
-本版依赖 `douyin-leadgen-102@0.11.0` 及 `douyin-leadgen-activity-102-qualification@0.7.0`。仅把明确通知暂态交给该方法有界被动复读；同run/Activity/owner、最多两次只读证和一次原slot resume及原独立verify不变。未知或活跃录制不借陪跑清场，未有实际交接证据仍不宣称Skill救场成功。
+本版依赖 `douyin-leadgen-102@0.12.0` 及 `douyin-leadgen-activity-102-qualification@0.7.0`。仅把明确通知暂态交给该方法有界被动复读；同run/Activity/owner、最多两次只读证和一次原slot resume及原独立verify不变。未知或活跃录制不借陪跑清场，未有实际交接证据仍不宣称Skill救场成功。
 
 
 ## 同run有界Agent恢复合同
