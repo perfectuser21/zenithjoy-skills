@@ -1,104 +1,51 @@
 ---
 name: douyin-leadgen-101
-description: 执行抖音获客101视频发现：按公司关键词和筛选条件取真实视频链接、读取互动指标并交接视频。用于Agent执行或同业务合同的代码异常接手；不做视频资格判断、评论评分或私信。
-changelog:
-  - "0.9.0: 同步共享预检与清场2.3.0合同及0.7.0方法，保留原工作流总额"
-  - "0.8.0: 同步official-child-v1显式宿主方法与冻结消费者版本"
-  - "0.7.0: 同步显式无工具回合Activity方法与消费者版本"
+description: Workflow 101的活动组织与交接目录；实际执行由各Activity自己的Skill完成，不作为单Activity操作方法。
 metadata:
-  version: 0.9.0
+  change_summary: "0.10.0: 仅保留Workflow编排目录，Activity方法各自完整，退役旧手册执行引用"
+  version: 0.10.0
   validation: awaiting-real-run
   support_files:
-    - services/phone-adb-controller/skills/douyin-leadgen-101/references/reuse-map.json
-    - services/phone-adb-controller/skills/douyin-leadgen-101/references/runtime-calls.json
     - services/phone-adb-controller/skills/douyin-leadgen-101/references/activity-methods.json
+
+  document_role: workflow-index
+
 ---
 
-# 101 · 视频发现
+# Workflow 101 · 视频发现
 
-这是可由 Agent 加载的操作 Skill，尚无本版实机验收记录。当前配套 collect_videos 5.1.1 保留强制指标读回，并补齐业务承诺、来源去向与验收断言；候选实现已补不表示运行宿主已发布、Brain已安装或生产已恢复。
+`douyin_video_discovery` 是 Workflow；下表各 Activity 的 Skill 才是具体操作方法。按公司关键词与真实筛选发现视频；输入数量是上限，不能保证搜到。
 
-## Activity 方法配套
+## 活动组织
 
-本工作流的方法依赖真身见[Activity方法清单](references/activity-methods.json)。执行指定Activity时，按本轮冻结 `activities[].implementations` 的真实name/version/source/digest及execution_path加载对应独立Skill；不能把本工作流Skill当作每个Activity的同一份方法。
+`preflight → collect_videos → cleanup`
 
-- `douyin_video_processing.preflight` → `douyin-leadgen-activity-102-preflight@0.7.0`。
-- `douyin_video_discovery.collect_videos` → `douyin-leadgen-activity-101-collect-videos@0.7.0`（业务合同5.1.1）。
-- `douyin_video_processing.cleanup` → `douyin-leadgen-activity-102-cleanup@0.7.0`。
+| Activity | 唯一操作Skill | 方法版本 |
+|---|---|---|
+| `preflight` | [douyin-leadgen-activity-102-preflight](../douyin-leadgen-activity-102-preflight/SKILL.md) | `0.8.0` |
+| `collect_videos` | [douyin-leadgen-activity-101-collect-videos](../douyin-leadgen-activity-101-collect-videos/SKILL.md) | `0.8.0` |
+| `cleanup` | [douyin-leadgen-activity-102-cleanup](../douyin-leadgen-activity-102-cleanup/SKILL.md) | `0.8.0` |
 
-Activity方法、支持文件或合同改变时，更新对应方法版本、所有消费者清单、本工作流Skill与Commander Skill版本；纯代码内部兼容优化用明确兼容评估绑定前后代码集合。先跑 `npm run leadgen:methods:check`，再做相应独立验收。方法配套完成不表示单Activity执行权交接已经接通。
+机器引用真身为[Activity方法清单](references/activity-methods.json)，版本必须与上述方法文件一致。101/102共用同一份preflight与cleanup，不复制。
 
-## 复用已有Skill
+## 输入与交接
 
-读取 [复用来源与校验值](references/reuse-map.json)，按其中路径加载现有 `social-video-discovery` 和 `douyin-phone-runtime` 的适用操作；不重新编写搜索、筛选、截图回传、取链及清理底座。来源校验值只证明读到的版本，不证明本次环境已验收。
+- 由调用者提供真实Task/run、公司/租户/line、冻结公司配置与原政策、处理范围/数量/截止及各Activity获授权工具和资源。Workflow负责组织与交接，不替Activity猜账号、扩大范围或自创工具权限。
+- 每个Activity只读本次明确输入和自己的方法，不回读本目录作操作前提，不再加载旧业务Skill。后继Activity消费前驱真实持久回执；未知或失败不能用文字补pass。cleanup仍按原责任处理，不能把业务失败洗成完成。
+- 视频身份、筛选、同视频指标与来源持久读回。101不做公司业务资格判断、录音或评论采集。
+- 103的队列独立于某次102是否产出；不要从102环境自动继承SOURCE_RUN。任务明确限定批次时照守，未限定则查公司合法队列。资格、采集、评分、标记、配送分别报告；104发送仍需独立授权。
 
-本入口更新原有合同的差异：四独立流程替代旧n8n五阶段；数量由本任务提供，不沿用旧1～10限制；101取筛选后的实际视频链接，不按标题做业务资格排除；读不到评论数字记unknown，不能沿用旧“无数字就是0”；停滞与真实页尾分开；真实指标独立于采集计数。旧Skill的动作说明可以复用，这些旧业务规则不能原样带入。
+## 实现与状态
 
-先按 reuse-map 的 `sha256` 核对旧 `SKILL.md` 字节后读取。`path` 只表示当前MMV已核安装位置，不保证其他宿主存在；缺失或不同只能从记录的固定 `repo` / `revision` / `source_path` 读取同字节参考，仍不可读则阻断对应接手。参考说明不等于已部署可执行工具，实际执行仍核本次正式冻结包。
+Skill与Code是Activity的实现方式，Workflow本身不是一个替代全部Activity的大Skill。正式宿主照原冻结合同/绑定授权，普通API任务照本次明确工具授权，二者不能伪装或互相降级。旧managed工具说明保留为历史兼容资料，不是新的执行前置。
 
-## 纯 Skill 执行选择
+本次仅更新方法说明与引用；未发布新控制器、ASR或评分实现。方法自包含/离线评审与真实实机、工具能力验收分别记录；缺专用指标、双审或正式采样回执时如实报告，不宣称整版通过。
 
-本版同步 Activity 方法新版本：正常执行可由新冻结版本显式选择 `execution_transport=raw-model-v1`，使用官方无工具模型回合与父 Code 原 broker 执行。缺省、旧 run、旧 child 和失败恢复保持原身份及收尾要求；不得原地切换。操作由 Agent 按固定 Skill 决定，顺序、授权、验收和记录由 Runner 负责；未实测不宣称跑通。
+## 历史宿主兼容声明
 
-
-Starter 在新 run 起跑时可显式设置 `LEADGEN_EXECUTION_MODE=agent`。该选择冻结进运行摘要，中央绑定保存 agent-v1 声明；不能把已冻结 Code run 改成 Agent，或通过伪造失败触发恢复来冒充纯 Skill。Runner 按原文件顺序派发各 Activity 的独立 Skill，Commander 只观察和指导，原独立验收判结果。子 Agent 不调用完整工作流入口或 resume，按各方法的“从第一步执行本 Activity”段使用本次受控原语。当前仍待实机验证，接口缺失或阻断不能报成功。
-
-## 调用范围与当前接口
-
-阅读 [当前正式调用映射](references/runtime-calls.json)。`mode=workflow` 执行本流程全部合同；只有现有整段代码满足本轮目标时才使用其中完整入口，不把旧Code成功计成新版新增要求已完成。`mode=activity` 只执行任务指定、已冻结的 Activity；缺合法单步入口、写入授权或执行权交接时报告具体缺口，不用 `leadgen-activity.sh` 冒充单步入口，也不绕过冻结绑定直调裸队列。来源已变更须重新固定与验证，不能沿用旧元数据。
-
-## 输入与交付
-
-接收真实 task_id、run_id、公司/租户/业务线、host/profile/serial/目标账号、关键词、排序/时间/地区筛选、视频数量上限、业务截止及收尾截止、授权范围。关键词可以来自任务输入或该公司的已启用配置，记录实际来源；账号和公司不得从示例或其他租户补齐。未给数量时先从任务/运营配置取，仍缺则确认本轮范围，不能把冒烟样本数当默认产能。
-
-可选的首屏有界模式必须在新任务和本次冻结输入中明确选择，不能事后解释旧运行的额度。`LEADGEN_DISCOVERY_MAX_CANDIDATES=N` 冻结为 schema 1 的 `max_candidates`：首屏实际卡片数超过 N 即停止，零候选点击与落库。`LEADGEN_DISCOVERY_MAX_ATTEMPTS=N` 冻结为 schema 2 的 `max_attempts`：首屏显示更多卡片时仅按原槽位顺序尝试前 N 条；重复、缺身份和失败都消耗额度。两字段互斥，N 为 1..1000，均须唯一关键词、`LEADGEN_MAX_SCREENS=1`，禁止露出、恢复视口、翻屏或同 run 重入补额度。实际显示 `counts.cards` 与 `counts.attempted` 分开；既有 `LEADGEN_LIMIT` 仍只限制成功唯一视频数。
-
-schema 2 无失败或已知缺口且达到尝试上限时，只能交付本次有界采样完成：`stop_reason=attempt_limit_reached`、`all_results_scanned=false`，不得称全部结果搜尽，也不保证新增 N 条。真实失败、未知执行、原生身份缺失或预算不足仍按原流程停止并保留 partial/failed；新模式不扩大锁、预算、政策或发送权。未显式选模式保持现有普通行为，schema 1 旧严格停止语义不变。
-
-输出逐视频的真实 video_id、分享/规范链接、标题、作者、关键词、筛选条件、来源 run_id、真实互动指标及证据；附数据库读回、实际条数、停止原因和清理结果。输入数量是本轮上限，不是保证搜得到的数量。
-
-## 执行
-
-1. 登记并认领任务，读取执行机实际 deployment-manifest、设备/账号注册及本轮 Skill 来源校验值。固定本次组合。部署release、source或运行绑定校验失败必须阻断，不能降成有头试跑继续；只有本Skill尚未完成正式登记、但已部署工具来源及资源授权均核验有效时，才可明确记录为有头Skill首跑，不伪造正式版本回执。
-2. 手机操作前取得该 serial 的 Brain 租约和本地设备锁；已有活动锁不抢。复用 `android-publish` 的通道与账号检查。控制器以执行机 `$HOME/.local/bin/douyin-phone-adb --profile PROFILE help` 的实际命令为准，先确认命令存在；不重启共享 ADB、手机或网络。
-3. 从当前公司关键词开始，按任务指定条件进入视频搜索；用新鲜控件树验证关键词、视频页签和筛选条件。优先复用已部署搜索、取树、取链、链接解析和入库原语。整段代码只有满足本版全部合同才可直接调用。
-4. 逐屏识别真实视频卡片。排除相关搜索词块、广告入口及加载占位；相关搜索词不算视频。记录当前可见卡片，点击前重读树定位，不用历史坐标或标题假定位置。
-5. 点开候选后取得实际分享链接并解析 video_id；复制前后身份、剪贴板结果与当前页面要对应。取不到记失败候选，不把上一条链接记到新卡片。标题相同不能直接判定为同一视频。
-6. 在同一视频现场读取点赞数、页面评论总数，保留原始显示值、观测时间、树/截图证据。解析万、亿等显示单位；无法解析记 unknown，不记 0。按真实评论总数分为 zero、1～100、101～500、超过500、unknown；分档是代码算术，无须逐条模型判断。
-7. 复用本公司的正式入库接口保存视频和正式输出 `Video.discovery_metrics`（运行结果 `Video.metrics`）对应的专用 `discovery_metrics`，经原 `discover_readback` 逐VID独立读回完整观测及公司绑定，与同次详情XML重算结果一致后才满足 `discovery_metrics_verified == 1`。观测绑定原run tag、实际run_id/attempt、profile、line、固定源码及VID/链接；公司/租户由正式接口独立实读，不从视频自报获取。重复VID仅幂等接受相同观测或更新更晚观测，旧观测不能计成功；保留102判定、transcript、comment_count、已采进度、历史来源及已采视频原batch。未发布该接口、缺字段或读回不符，保留原件及 `metrics_persistence_missing`/实际失败原因，不能宣称指标已入库或5.0.0通过；原comment_count不是页面评论总数。
-8. 返回并核对搜索现场，继续当前屏剩余卡片，再翻屏。等待真实加载；单次空树、连续几屏重复只能说明停滞，不能宣称到底。只在明确页尾证据下记 exhausted；数量上限、截止、停滞分别记 limit_reached、deadline、stalled。101 不按标题做历史业务排除；同一真实ID可幂等入库，重复观测另计。
-9. 到业务截止停止新候选，在收尾预算内核对已提交数据、关闭应用、回安全桌面、释放自己持有的锁/租约并读回。释放失败如实保留，不能抢删其他 owner 的锁。
-
-## 原实现的数据外发与调用记录
-
-关键词、视频卡片/链接和活动回执会按原实现送OpenRouter的Commander；正常定位使用原生树，实际触发视觉兜底时才把截图及定位描述送配置的视觉模型。视频结果写原PG，不在101调用评分、ASR或飞书配送。服务/模型以本次冻结代码与已批准配置为准，不在救场中新增外发接收方。密钥不进提示词、正文或回执。逐类保存真实provider/model/response_id、实际调用次数、失败和unknown；以RPC、ASR、视觉及bridge原回执统计，不能用脚本动作数代替模型次数，也不能把缺失回执计为零。
-
-## Commander 与接手
-
-Commander 读输入、活动边界、实际计数和异常摘要，正常定位由控制器完成。代码异常时先确认原执行者已停止或执行权已安全交接，再按本 Skill 从最近真实读回处续接；沿用原任务、截止、公司和动作身份。没有安全交接接口时停止冲突操作，记录 blocked，不启动第二个竞争执行器。运行中不改代码。
-
-## 验收与记录
-
-按本版合同逐项核验实际链接、同视频指标、数据库读回和清理；unknown 指标明确单列。完成本轮数量不等于搜尽。记录 code_success、skill_success、commander_rescue 或 failed/blocked，救场不抹掉原代码失败。正常流程模型用量与采集数量分开记录。
-
-来源：[今日101/102方案](https://app.notion.com/p/3f9c40c2ba6381dea615c39380c78e66)、[Skill/Code配套规则](https://app.notion.com/p/3f5c40c2ba6381acbad0d31ee3215f92)。Activity 是工作边界，Skill 与代码是实现方式。
-
-## 单Activity受控接手
-
-当前源码提供 `leadgen-activity-v1`：仅在原冻结run内Code失败与有限安全重试之后，由真实work-commander父会话派官方Skill child，使用原run私有broker逐Activity接手。`activity-skill-tool.mjs` 不是新任务启动器；inspect/受限phone/一次当前slot resume均受同源方法、绑定、资源和截止约束。子会话终态未知保锁，发送未知只读回。最后仍由原独立verify与持久读回决定成功，不以Agent自述或CLI exit0替代验收。当前源码存在不等于实机接手已验收，具体状态查看当前任务事件与发布观测。
-
-MMV手机执行按[当前调用映射](references/runtime-calls.json)显式设置 `LEADGEN_MMV_DEVICE_RUNTIME=1`，核本机唯一启用的profile/serial和既有ADB端口。随后仍须原公司冻结资料、verified账号/设备绑定及手机当前账号全部通过；公司draft、缺登记或桥未就绪即停，不借金诺或其他租户配置兜底。该设备入口不扩大本轮输入、预算或发送授权。
-
-
-## 同run有界Agent恢复合同
-
-以下仅是原冻结Activity合同的显式opt-in形状，不是模型或方法自行授予的执行额度：
+以下仅保留冻结解析字段；不授予执行权限、不增加本次预算。实际恢复仍由对应Activity合同约束。
 
 <!-- agent-recovery-policy -->
 ```json
 {"agent_recovery":{"max_additional_turns":1}}
 ```
-
-从本run对应的 `version.payload.contract.agent_recovery` 核此对象：仅允许唯一键 `max_additional_turns`、值为整数1；字段缺省保持原一次性接手，非法值或多余键阻断。一次额外Agent turn不是新Workflow attempt，不增加业务次数或预算。 `send_dm`不启用额外Agent turn，仍按原单次 `readback_only`；opt-in是恢复上限，不扩大该限制。
-
-仅对本run已冻结opt-in的Activity执行该方法恢复政策：同一次recover、同broker/原业务nonce内最多额外一个Agent turn，原owner与child官方停止双证和原权限/截止仍是前置。原resume一次、native读证两次累计不重置；resume已用后仅inspect/readback/verify。generation精确授权并撤销旧child；unknown、send_dm只读、collection partial及能力/权限阻断守卫不变。最终仅原独立verify决定继续，不能把额外turn当新业务attempt、发送额度或清场许可。当前配套及实机能力以实际发布/验收为准。

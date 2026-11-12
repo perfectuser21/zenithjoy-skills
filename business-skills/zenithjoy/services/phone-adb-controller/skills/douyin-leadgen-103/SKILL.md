@@ -1,100 +1,50 @@
 ---
 name: douyin-leadgen-103
-description: 执行抖音获客103评论评分与线索标记，独立消费已提交评论并使用公司原评分政策。用于Agent执行、调用成熟评分代码及异常接手；不占手机、不等待整批102结束、不发送私信。
-changelog:
-  - "0.15.0: 同步official-child-v1显式宿主方法与冻结消费者版本"
-  - "0.14.0: 同步显式无工具回合Activity方法与消费者版本"
+description: Workflow 103的活动组织与交接目录；实际执行由各Activity自己的Skill完成，不作为单Activity操作方法。
 metadata:
-  version: 0.15.0
+  change_summary: "0.16.0: 仅保留Workflow编排目录，Activity方法各自完整，退役旧手册执行引用"
+  version: 0.16.0
   validation: awaiting-real-run
   support_files:
-    - services/phone-adb-controller/skills/douyin-leadgen-103/references/reuse-map.json
-    - services/phone-adb-controller/skills/douyin-leadgen-103/references/runtime-calls.json
     - services/phone-adb-controller/skills/douyin-leadgen-103/references/activity-methods.json
+
+  document_role: workflow-index
+
 ---
 
-# 103 · 评论评分与线索交付
+# Workflow 103 · 评论评分与线索标记
 
-首版可加载 Skill，本版实机业务验收待执行。原评分规则继续作为业务真身，编写 Skill 不构成改分标准的授权。
+`douyin_comment_scoring` 是 Workflow；下表各 Activity 的 Skill 才是具体操作方法。独立消费本公司已提交待评/已评队列，不占手机；只有任务显式来源约束才限批。
 
-## 冻结来源绑定
+## 活动组织
 
-带company_binding的评论，按原102 harvest_batch只读原PG冻结来源及选定设备，不能从评论自报profile或当前账号表补授权；来源公司/租户须同当前冻结评分公司，原评分规则保持。103标人、配送与读回沿此来源；云profile的104触达仍未授权，不因103配送成功自动放行。
+`scoring → mark_leads`
 
-## Activity 方法配套
+| Activity | 唯一操作Skill | 方法版本 |
+|---|---|---|
+| `scoring` | [douyin-leadgen-activity-103-scoring](../douyin-leadgen-activity-103-scoring/SKILL.md) | `0.14.0` |
+| `mark_leads` | [douyin-leadgen-activity-103-mark-leads](../douyin-leadgen-activity-103-mark-leads/SKILL.md) | `0.14.0` |
 
-本工作流的方法依赖真身见[Activity方法清单](references/activity-methods.json)。执行指定Activity时，按本轮冻结 `activities[].implementations` 的真实name/version/source/digest及execution_path加载对应独立Skill；不能把本工作流Skill当作每个Activity的同一份方法。
+机器引用真身为[Activity方法清单](references/activity-methods.json)，版本必须与上述方法文件一致。101/102共用同一份preflight与cleanup，不复制。
 
-- `douyin_comment_scoring.scoring` → `douyin-leadgen-activity-103-scoring@0.13.0`。
-- `douyin_comment_scoring.mark_leads` → `douyin-leadgen-activity-103-mark-leads@0.13.0`。
+## 输入与交接
 
-Activity方法、支持文件或合同改变时，更新对应方法版本、所有消费者清单、本工作流Skill与Commander Skill版本；纯代码内部兼容优化用明确兼容评估绑定前后代码集合。先跑 `npm run leadgen:methods:check`，再做相应独立验收。方法配套完成不表示单Activity执行权交接已经接通。
+- 由调用者提供真实Task/run、公司/租户/line、冻结公司配置与原政策、处理范围/数量/截止及各Activity获授权工具和资源。Workflow负责组织与交接，不替Activity猜账号、扩大范围或自创工具权限。
+- 每个Activity只读本次明确输入和自己的方法，不回读本目录作操作前提，不再加载旧业务Skill。后继Activity消费前驱真实持久回执；未知或失败不能用文字补pass。cleanup仍按原责任处理，不能把业务失败洗成完成。
+- 实际评分/排除、原文证据与政策双审、Lead及outbox/外部读回。真正空队列记skipped，不宣称评分成功。
+- 103的队列独立于某次102是否产出；不要从102环境自动继承SOURCE_RUN。任务明确限定批次时照守，未限定则查公司合法队列。资格、采集、评分、标记、配送分别报告；104发送仍需独立授权。
 
-## 复用已有Skill
+## 实现与状态
 
-按 [复用来源与校验值](references/reuse-map.json) 加载 `social-comment-lead-scorer` 的分批读取/逐条证据和 `social-lead-delivery` 的稳定身份、幂等配送及读回方法。原评分与当前PG→飞书桥接代码继续复用。
+Skill与Code是Activity的实现方式，Workflow本身不是一个替代全部Activity的大Skill。正式宿主照原冻结合同/绑定授权，普通API任务照本次明确工具授权，二者不能伪装或互相降级。旧managed工具说明保留为历史兼容资料，不是新的执行前置。
 
-旧评分Skill固定的六类、仅strong/weak放行及重复文本必判spam不能覆盖当前公司原政策2.0.0；业务分类从任务的冻结公司配置读取。旧Skill的本run工件/n8n阶段依赖不用于阻断本版独立PG消费；Task明确限定范围仍需遵守。外部写入走当前持久outbox，不另建旧配送通路或假围栏。
+本次仅更新方法说明与引用；未发布新控制器、ASR或评分实现。方法自包含/离线评审与真实实机、工具能力验收分别记录；缺专用指标、双审或正式采样回执时如实报告，不宣称整版通过。
 
-先按 reuse-map 的 `sha256` 核对旧 `SKILL.md` 字节后读取。`path` 只表示当前MMV已核安装位置，不保证其他宿主存在；缺失或不同只能从记录的固定 `repo` / `revision` / `source_path` 读取同字节参考，仍不可读则阻断对应接手。参考说明不等于已部署可执行工具，实际执行仍核本次正式冻结包。
+## 历史宿主兼容声明
 
-## 纯 Skill 执行选择
-
-本版同步 Activity 方法新版本：正常执行可由新冻结版本显式选择 `execution_transport=raw-model-v1`，使用官方无工具模型回合与父 Code 原 broker 执行。缺省、旧 run、旧 child 和失败恢复保持原身份及收尾要求；不得原地切换。操作由 Agent 按固定 Skill 决定，顺序、授权、验收和记录由 Runner 负责；未实测不宣称跑通。
-
-
-Starter 在新 run 起跑时可显式设置 `LEADGEN_EXECUTION_MODE=agent`。该选择冻结进运行摘要，中央绑定保存 agent-v1 声明；不能把已冻结 Code run 改成 Agent，或通过伪造失败触发恢复来冒充纯 Skill。Runner 按原文件顺序派发各 Activity 的独立 Skill，Commander 只观察和指导，原独立验收判结果。子 Agent 不调用完整工作流入口或 resume，按各方法的“从第一步执行本 Activity”段使用本次受控原语。当前仍待实机验证，接口缺失或阻断不能报成功。
-
-## 调用范围与当前接口
-
-阅读 [当前正式调用映射](references/runtime-calls.json)。`mode=workflow` 执行本流程全部合同；只有现有整段代码满足本轮目标时才使用其中完整入口，不把旧Code成功计成新版新增要求已完成。`mode=activity` 只执行任务指定、已冻结的 Activity；缺合法单步入口、写入授权或执行权交接时报告具体缺口，不用 `leadgen-activity.sh` 冒充单步入口，也不绕过冻结绑定直调裸队列。来源已变更须重新固定与验证，不能沿用旧元数据。
-
-## 输入与输出
-
-输入 task_id/run_id、公司/租户/业务线、已启用配置版本、产品与目标客户、原评分政策、处理数量和截止。默认从该公司已提交待评分队列独立领取；任务明确限定批次时保留该范围，不能任意清除。未限定批次时不继承其他任务的 SOURCE_RUN。当前正式评分执行宿主为MMV，不伪装成手机profile。
-
-输出逐评论实际评分或独立排除终态、安全原因、政策来源与版本、线索标记、真实桥接状态/记录ID、待决原因、原队列读回和执行证据。纯排除批次凭PG独立读回结案；真正空队列记 skipped/empty，不能计作完成了评分样本。
-
-## 执行
-
-1. 登记/认领任务，读取并固定当前已发布实现、原公司政策及本 Skill 校验值。核对公司与业务线唯一映射、产品/客户资料及输入范围；凭据按 `credentials` 从1Password及已核同步镜像加载，不写运行正文。
-2. 使用现有队列事务和有效租约领取已成功提交、属于本公司的待评分评论。无需等待102整轮结束；不占ADB锁、不操作手机，不消费未提交的采集缓存。正式102已验收配额抽样的评论可在视频仍“待判定”时进入103，但先核同SHA或金诺102d固定历史桥、Brain完整 pass/verified、资格与采集两主 span 同绑定同 SHA 逐 VID 身份收据、冻结公司/租户/版本/政策和PG精确评论原生身份；软预算或失败102仍隔离。金诺102g失败来源仍按原受控路径：从正式 `leadgen-run.sh` 显式设置原 `LEADGEN_SOURCE_RUN`、用户决定和维护Task及最多3条预算；Runner核旧执行停止、三份原生身份、v14及无旧outbox，写精确 `db_audit` 回执并独立读回，只供绑定的单一103 run领取。原102失败与视频隔离不变；不得直接调用裸队列入口。
-3. 优先复用已验证的原 `judge-comment`/评分及 `mark_leads` 实现。当前金诺政策为原2.0.0口径；具体版本从任务与公司冻结配置读回，不跨公司复制规则。评分涉及语义模型，不因外层代码成熟就宣称模型调用为零。
-4. 评分只在同一事务内取得两份独立、同等级、不同响应身份且原文可核的政策证据后提交；政策模型总计最多两次，视频引用重试也占额度。两次独立复核一致缺个人意向或受众/话题证据时，自动置评论为 `已排除`，清除旧评分并留安全原因和双审摘要；排除与评分分列计数、共用预算、分别从PG独立读回。模型/HTTP/网络故障、双审分歧、身份复用或其他unknown保留待分拣并可重试，不以人工决定替代自动处理，不猜分填上，也不制造合格线索。
-5. 复用现有线索标记及PG→原飞书桥接，只消费独立核验通过的评分行；已排除评论绝不建Lead、outbox或104订单，纯排除批次可空消费。对真实线索保留评论原生身份来源、资格和事务outbox。分别报告PG线索创建、外部创建/确认、unknown/held；不把PG提交直接当成飞书交付，也不把全部评分行当成可触达行。
-6. 外部写入回执丢失时沿已有持久动作身份读回原记录；未知结果不得再发第二个创建POST。已有幂等/锁保护继续生效，不手工绕过原bridge另推一份。
-7. 到截止停止新领取，保留已提交评分、未完成行及待决outbox，释放自身租约；对任务实际范围做数据读回与收尾。
-
-## 原实现的数据外发与调用记录
-
-评论正文、关联视频信息、冻结公司评分政策及收件人资格证据送OpenRouter的Jev/原疑难兜底与Commander。评分保存原PG，符合原桥接合同的线索字段送该公司原飞书表；103不采集或发送手机截图、音频。服务/模型以本次冻结代码与已批准配置为准，不在救场中新增外发接收方。密钥不进提示词、正文或回执。逐类保存真实provider/model/response_id、实际调用次数、失败和unknown；以RPC、ASR、视觉及bridge原回执统计，不能用脚本动作数代替模型次数，也不能把缺失回执计为零。
-
-## Commander 与Skill接手
-
-Commander 在需要判断和异常时核对冻结政策、原评论、实际执行者、事务/外部写入状态，接手保持同任务、动作身份和期限。代码失败时 Agent 可按原政策调用已发布评分/队列原语并验证结果；没有等价可用方法时记录blocked，不能更换评分标准或回退到不满足当前合同的旧方法。运行救场不现场改代码。
-
-Code独立成功、Skill独立成功、Commander救场分别记录。Agent完成原目标不抹掉代码失败，也不自动证明Code已成熟。
-
-## 验收
-
-独立核对真实评论、评分理由与政策、同租户数据、线索与外部写入读回、unknown隔离及租约释放。103与手机101/102/104独立调度；是否产生104可消费订单按实际资格与交付状态判断，不能用“103跑过”替代。
-
-来源：[今日获客方案](https://app.notion.com/p/3f9c40c2ba6381dea615c39380c78e66)、[Skill/Code配套规则](https://app.notion.com/p/3f5c40c2ba6381acbad0d31ee3215f92)。
-
-## 单Activity受控接手
-
-当前源码提供 `leadgen-activity-v1`：仅在原冻结run内Code失败与有限安全重试之后，由真实work-commander父会话派官方Skill child，使用原run私有broker逐Activity接手。`activity-skill-tool.mjs` 不是新任务启动器；inspect/受限phone/一次当前slot resume均受同源方法、绑定、资源和截止约束。子会话终态未知保锁，发送未知只读回。最后仍由原独立verify与持久读回决定成功，不以Agent自述或CLI exit0替代验收。当前源码存在不等于实机接手已验收，具体状态查看当前任务事件与发布观测。
-
-
-## 同run有界Agent恢复合同
-
-以下仅是原冻结Activity合同的显式opt-in形状，不是模型或方法自行授予的执行额度：
+以下仅保留冻结解析字段；不授予执行权限、不增加本次预算。实际恢复仍由对应Activity合同约束。
 
 <!-- agent-recovery-policy -->
 ```json
 {"agent_recovery":{"max_additional_turns":1}}
 ```
-
-从本run对应的 `version.payload.contract.agent_recovery` 核此对象：仅允许唯一键 `max_additional_turns`、值为整数1；字段缺省保持原一次性接手，非法值或多余键阻断。一次额外Agent turn不是新Workflow attempt，不增加业务次数或预算。 `send_dm`不启用额外Agent turn，仍按原单次 `readback_only`；opt-in是恢复上限，不扩大该限制。
-
-仅对本run已冻结opt-in的Activity执行该方法恢复政策：同一次recover、同broker/原业务nonce内最多额外一个Agent turn，原owner与child官方停止双证和原权限/截止仍是前置。原resume一次、native读证两次累计不重置；resume已用后仅inspect/readback/verify。generation精确授权并撤销旧child；unknown、send_dm只读、collection partial及能力/权限阻断守卫不变。最终仅原独立verify决定继续，不能把额外turn当新业务attempt、发送额度或清场许可。当前配套及实机能力以实际发布/验收为准。

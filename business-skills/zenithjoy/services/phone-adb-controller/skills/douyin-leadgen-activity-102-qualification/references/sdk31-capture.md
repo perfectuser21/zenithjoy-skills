@@ -1,0 +1,7 @@
+# SDK31明确选择的捕获策略
+
+仅当本次实际SDK=31且Task明确选定该策略时读取；不作为SDK≥33失败后的自动回退。业务范围、资源owner、视频身份与预算沿本Activity输入。
+
+先实读Android SDK原件；SDK≥33仅选同版3.3.4日志刷新补丁固定客户端与对应server，保留原playback音源、audio-dup、require-audio、Matroska与原编解码选择；不得使用SDK31包或旧brew录制绕过就绪门禁。两类SDK都须成对验client/server固定SHA、同owner有界无覆盖server准备，首末保存同一runtime原件名与SHA，停止后fresh SDK须与启动原件一致。SDK31仅在本run显式设备owner核验、已验收补丁客户端与server精确SHA校验及有界无覆盖jar准备成功后，使用独立output音源、no-video、raw PCM与WAV；这是已核的显式策略，不是失败后自动回退。SDK32、未知SDK、未安装runtime或校验不符保持unsupported/pending。SDK31必须保存私有runtime原件与SHA，起止client/server/原件名及SHA一致，停止后实解码唯一pcm_s16le音轨且无视频轨，必须decoder退出0、真实样本数/采样率/解码秒数达到本次请求80%、私有解码原件SHA及退出后原生恢复原件供queue/Workflow独立核验；首末原生音轨归属、无其他started媒体和退出恢复仍须成立。模式、SDK、required、实际音轨数量及SDK原件名/SHA必须进入本轮proof，起止两端一致，并由qualification独立核验。复用已部署录制与音轨核验方法，分别核对实际媒体音量、native播放/静音状态、真实录像及音轨。设置回显不能代替实际读回；轨道started但标记muted不能直接放行。
+
+开始与停止固定同一client/server及原件SHA；SDK31必须独立output音源、no-video、raw PCM/WAV，唯一pcm_s16le、无视频轨、decoder退出0、真实样本/采样率/解码秒数达当前请求80%及退出恢复原件。缺实际已授权安装包/工具、SDK变化或核验失败都保持unsupported/unknown，不安装软件、不改守卫、不自己拼成功proof。
