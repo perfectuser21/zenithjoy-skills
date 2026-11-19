@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-104-preflight
 description: 取得已授权触达上下文。用于触达前核对发送账号、批准政策与资源或接手同一预检 Activity；不执行整个工作流。
 metadata:
-  version: 1.3.0
+  version: 1.4.0
   activity_ref: douyin_lead_outreach.preflight
-  activity_version: 5.2.0
+  activity_version: 5.3.0
   validation: awaiting-real-run
   support_files: []
   method_role: single-activity
@@ -13,7 +13,7 @@ metadata:
 
 # 取得已授权触达上下文
 
-仅执行 `douyin_lead_outreach.preflight`，业务合同版本 `5.2.0`。本方法自包含，普通任务不以旧Skill、Workflow母说明或Commander会话作为操作前置。
+仅执行 `douyin_lead_outreach.preflight`，业务合同版本 `5.3.0`。本方法自包含，普通任务不以旧Skill、Workflow母说明或Commander会话作为操作前置。
 
 ## 合同、执行提案与独立验收
 
@@ -36,6 +36,8 @@ metadata:
 
 
 ## 输入与交付
+
+本预检只交宿主已正式分配并持久化的同一 Run 的 `run_tag/profile/serial`。正式派单与 Run 依据宿主冻结身份及独立 Brain 只读核对，不另创建运行账本；同一 run_tag 读回不是重复创建，不因它已存在而拒绝。核对 Task/run、公司、设备、账号和 owner 的完整绑定，身份冲突则停止，不借其他 Run 或换身份补齐。已持锁时只读回同一身份的既有锁，保留实际 acquire receipt，不重复发起领取或释放副作用；尚未取得资源仍按原授权与原精确协议执行，不以本说明新增权限。
 
 开始条件只核配置、冻结身份与截止：确认本任务的公司/租户、设备与目标账号绑定、工具授权、资源 owner 计划和原绝对截止。登录态和取得锁的回执是执行后产物，不把尚未生成的产物当作开始输入；已有资源则核其真实归属，不接管其他 owner。实际登录、设备状态与本人锁/租约仍须在执行中核实，并以本轮原件交独立通用Checker验收。
 

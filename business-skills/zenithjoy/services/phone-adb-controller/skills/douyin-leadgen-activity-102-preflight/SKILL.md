@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-102-preflight
 description: 取得采集设备与账号执行上下文。用于采集预检、确认手机账号或接手同一预检 Activity；不执行整个工作流。
 metadata:
   change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.10.0
+  version: 0.11.0
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.preflight
-  activity_version: 2.5.0
+  activity_version: 2.6.0
   validation: awaiting-real-run
   support_files: []
 
@@ -21,7 +21,7 @@ metadata:
 
 # 取得采集设备与账号执行上下文
 
-仅执行 `douyin_video_processing.preflight`，使用业务合同版本 `2.5.0`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
+仅执行 `douyin_video_processing.preflight`，使用业务合同版本 `2.6.0`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -44,6 +44,8 @@ metadata:
 - 副作用保留同一持久动作身份；回执未知先读回，不换 ID 重交。数据与字段写入走已授权业务接口，凭据只经组织凭据工具/1Password取得，放入工具进程，不进正文、参数回显或日志。到业务截止停止新增业务，保留收尾预算。
 
 ## 输入与交付
+
+本预检只交宿主已正式分配并持久化的同一 Run 的 `run_tag/profile/serial`。正式派单与 Run 依据宿主冻结身份及独立 Brain 只读核对，不另创建运行账本；同一 run_tag 读回不是重复创建，不因它已存在而拒绝。核对 Task/run、公司、设备、账号和 owner 的完整绑定，身份冲突则停止，不借其他 Run 或换身份补齐。已持锁时只读回同一身份的既有锁，保留实际 acquire receipt，不重复发起领取或释放副作用；尚未取得资源仍按原授权与原精确协议执行，不以本说明新增权限。
 
 开始条件只核配置、冻结身份与截止：确认本任务的公司/租户、设备与目标账号绑定、工具授权、资源 owner 计划和原绝对截止。登录态和取得锁的回执是执行后产物，不把尚未生成的产物当作开始输入；已有资源则核其真实归属，不接管其他 owner。实际登录、设备状态与本人锁/租约仍须在执行中核实，并以本轮原件交独立通用Checker验收。
 
