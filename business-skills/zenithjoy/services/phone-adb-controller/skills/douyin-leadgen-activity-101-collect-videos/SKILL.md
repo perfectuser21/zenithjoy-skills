@@ -2,15 +2,15 @@
 name: douyin-leadgen-activity-101-collect-videos
 description: 按关键词交出筛选后的视频链接。用于采集关键词搜索结果或接手同一视频发现 Activity；不执行整个工作流。
 metadata:
-  change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.10.0
+  change_summary: "正式Video逐行内联完整业务字段，原XML以真实证据引用交接；不新增执行授权"
+  version: 0.11.0
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_discovery.collect_videos
-  activity_version: 5.3.0
+  activity_version: 5.4.0
   validation: awaiting-real-run
   support_files: []
 
@@ -21,7 +21,7 @@ metadata:
 
 # 按关键词交出筛选后的视频链接
 
-仅执行 `douyin_video_discovery.collect_videos`，使用业务合同版本 `5.3.0`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
+仅执行 `douyin_video_discovery.collect_videos`，使用业务合同版本 `5.4.0`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -51,7 +51,15 @@ metadata:
 
 ## 逐VID交付与证据索引
 
-完成前按本次冻结输出 schema 逐VID交付 `Video`，不能仅报两条总数或指标片段。持久字段 `line_key/video_id/video_url/title/keyword/comment_count/harvest_batch` 与完整 `discovery_metrics` 取同VID实际PG读回；保留指标对象中的原始显示值、解析值或 null、分档、观测时间、run/profile/来源、公司绑定及原件摘要，不将对象缩成点赞和评论两个数字。`comment_count` 是102已采评论数量，不能将页面 `comment_total` 填入，也不能因旧工具没返回而补默认0。`author` 使用本VID原生卡片与取链绑定证据，不把PG没有的字段冒称持久列。
+完成前按本次冻结输出 schema 逐VID交付 `Video`，不能仅报两条总数或指标片段。持久字段 `line_key/video_id/video_url/title/keyword/comment_count/harvest_batch` 与完整 `discovery_metrics` 的业务字段取同VID实际PG读回；保留指标对象中的原始显示值、解析值或 null、分档、观测时间、run/profile/来源、公司绑定及原件摘要，不将对象缩成点赞和评论两个数字。`comment_count` 是102已采评论数量，不能将页面 `comment_total` 填入，也不能因旧工具没返回而补默认0。`author` 使用本VID原生卡片与取链绑定证据，不把PG没有的字段冒称持久列。
+
+正式 final 执行提案的 `outputs.Video` 每行对象自身必须包含 `line_key/video_id/video_url/title/author/keyword/comment_count/harvest_batch/discovery_metrics`，字段名保持合同原名，链接使用 `video_url`。每行以同VID的实际 `handoff` 读回构成，补入原生证据支持的 `author`；不能只交 `{video_id,author}`，再把其他字段放进证据文件让下游代为拼装。证据索引用于核实字段，不替代这些结构化交付字段。
+
+`discovery_metrics` 沿用原件的层级、键名和值，逐项交出已有业务字段：`version/run/run_id/profile/source_commit/line_key/video_id/video_url/observed_at/evidence_id`，`likes` 和 `comment_total` 各自的 `raw/value`，`comment_tier`，`company_binding` 的 `company_id/tenant_id/line_key/run_id/version`，以及 `digest`、`evidence.kind`、`evidence.sha256`。缺失或原值为 null 如实保留，不换键、不填默认值，也不重新计算一个摘要去替代原 `digest`。
+
+唯一允许省略的是最终提案中的 `discovery_metrics.evidence.xml` 原始大文本，不是省略指标或身份字段。原XML仍须在同VID真实工具回执、持久PG原件中完整可独立读取；在 `proposal.evidence` 按当前schema逐VID引用本run实际可读的 `native/<实际文件名>.xml` 和相应原工具回执，保留原件SHA并核对一致。引用取真实返回位置，不把示例路径或EID猜成文件名。不要求将整段XML重复塞入模型最终回答，但所有原始证据的核对义务不变。
+
+不自行在 `receipts/` 写摘要或另造交付文件，也不把证据文件代替 `outputs.Video` 的完整行。`metrics_evidence_id` 从该VID原取链回执逐字沿用；仅当参数错拼且工具明确返回 ENOENT 时，根据原回执纠正拼写，在同一原件上修正只读调用，不重做手机取链或 discover。若原ID正确仍不可读，保留真实缺口，不编造原件或换动作身份。
 
 逐VID分别引用原 `discover` 写入回执与后续只读回执：`inserted` 区分本次新增和已存在，`judgment_status`（原工具可能返回 `status`）记录实际资格状态；二者是不同维度，matched不是“本次新增”。只读回执固定的 `inserted:false` 不证明原写入是否新增，必须查该VID原写入结果；原结果未知则保留未知，不重放 discover 以重造回执。新增、已存在、重复观测与未决计数须能由逐VID结果回算。
 
