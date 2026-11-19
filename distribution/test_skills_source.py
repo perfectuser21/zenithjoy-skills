@@ -415,7 +415,7 @@ class CommanderRecoveryContractTests(unittest.TestCase):
             self.assertEqual(version(path), expected, path.parent.name)
         for path in workflows + wrappers:
             expected = "0.15.0" if path.parent.name in {"douyin-leadgen-103", "wf-douyin_comment_scoring"} else "0.7.2" if path.parent.name in {"douyin-leadgen-104", "wf-douyin_lead_outreach"} else "0.9.0" if path.parent.name in {"douyin-leadgen-101", "wf-douyin_video_discovery"} else "0.9.0" if path.parent.name in {"douyin-leadgen-102", "wf-douyin_video_processing"} else "0.4.1"
-            expected = {"douyin-leadgen-101": "0.11.0", "douyin-leadgen-102": "0.12.0", "douyin-leadgen-103": "0.20.0", "wf-douyin_video_processing": "0.11.1", "wf-douyin_video_discovery": "0.11.0", "wf-douyin_comment_scoring": "0.18.0", "douyin-leadgen-104": "0.8.0", "wf-douyin_lead_outreach": "0.8.0"}.get(path.parent.name, expected)
+            expected = {"douyin-leadgen-101": "0.11.0", "douyin-leadgen-102": "0.12.1", "douyin-leadgen-103": "0.20.0", "wf-douyin_video_processing": "0.11.2", "wf-douyin_video_discovery": "0.11.0", "wf-douyin_comment_scoring": "0.18.0", "douyin-leadgen-104": "0.8.0", "wf-douyin_lead_outreach": "0.8.0"}.get(path.parent.name, expected)
             self.assertEqual(version(path), expected, path.parent.name)
         self.assertEqual(version(commander), "2.2.0")
         versions = {path.parent.name: version(path) for path in activity + workflows + wrappers + [commander]}
