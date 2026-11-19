@@ -460,6 +460,13 @@ class CommanderRecoveryContractTests(unittest.TestCase):
         self.assertIn("不能将页面 `comment_total` 填入", body)
         self.assertIn("不重放 discover", body)
 
+    def test_101_final_video_rows_are_inline_with_original_evidence(self):
+        body = (self.base / "skills/douyin-leadgen-activity-101-collect-videos/SKILL.md").read_text()
+        for text in ("`outputs.Video`", "每行对象自身", "`video_url`", "唯一允许省略", "`discovery_metrics.evidence.xml`", "`proposal.evidence`", "不自行在 `receipts/` 写摘要", "`metrics_evidence_id`", "逐字沿用", "ENOENT", "同一原件", "不重做手机取链或 discover"):
+            self.assertIn(text, body)
+        for field in ("company_binding", "source_commit", "evidence_id", "comment_tier", "observed_at", "digest"):
+            self.assertIn(field, body)
+
     def test_103_readback_uses_outbox_ids_and_preserves_single_score(self):
         mark = (self.base / "skills/douyin-leadgen-activity-103-mark-leads/SKILL.md").read_text()
         self.assertIn("bridge_readback", mark)
