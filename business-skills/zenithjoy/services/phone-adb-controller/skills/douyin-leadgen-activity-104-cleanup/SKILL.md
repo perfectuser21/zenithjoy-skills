@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-104-cleanup
 description: 归位触达现场并保留未决发送。用于触达收尾、失败后保护订单或接手同一收尾 Activity；不执行整个工作流。
 metadata:
-  version: 0.6.0
+  version: 0.7.0
   activity_ref: douyin_lead_outreach.cleanup
-  activity_version: 3.4.0
+  activity_version: 3.5.0
   validation: awaiting-real-run
   support_files: []
   method_role: single-activity
@@ -13,7 +13,7 @@ metadata:
 
 # 归位触达现场并保留未决发送
 
-仅执行 `douyin_lead_outreach.cleanup`，业务合同版本 `3.4.0`。本方法自包含，普通任务不以旧Skill、Workflow母说明或Commander会话作为操作前置。
+仅执行 `douyin_lead_outreach.cleanup`，业务合同版本 `3.5.0`。本方法自包含，普通任务不以旧Skill、Workflow母说明或Commander会话作为操作前置。
 
 ## 合同、执行提案与独立验收
 
@@ -37,12 +37,14 @@ metadata:
 
 ## 输入与交付
 
+本 Activity 只交本轮收尾阶段状态，以及本run动作、锁和业务租约的可核验证据；`Run.status` 在此表示收尾阶段的交付状态，不是整条 Workflow 已结束。Workflow 真正终态只能在收尾通过后由宿主生成，不要求先读到尚未生成的 Workflow 终态才允许通过本 Activity。已无本轮动作时须引用可核验账本和锁/租约原件，不能只凭自述；原生在途或资源归属未知时，保留对应本人资源，不强清、不重放；发送结果未知时，保留原发送依据及必要的订单保护，不补发。已独立证明原生停稳且归属明确的设备锁仍按原合同安全归还，不因仅发送结果未知而保留全部设备资源。
+
 收尾开始只需本run冻结身份、原截止和可读取的执行/资源事实入口；不能以尚未生成的锁回执阻止开始收尾核对。若尚未开工，且通过运行账本、动作记录及资源当前读回独立证明本run没有动作、在途请求、锁或租约，则交付无本run资源的证据，不操作手机、不关闭应用、不领取或释放资源，也不触碰其他 owner。缺回执不等于没有动作；不能证明上述事实或存在未知时，未知保留，不重放、不强清。以下停止、归位和释放步骤仅适用于已确认的本人资源。
 
 - 输入 `Device`：冻结 `serial`及资源读回入口；`lock_holder`按实际存在情况读取，不要求未开工run先有持锁回执。
 - 输入 `Run`：`run_tag`。
 - 输出 `Device`：`lock_holder`。
-- 输出 `Run`：`status`。
+- 输出 `Run`：本 Activity 收尾阶段的 `status`。
 
 公司、task/run、截止、源码及执行权从本次已授权任务上下文读取；正式宿主同时核对原冻结绑定。缺字段保持缺失并报告，不从示例或其他租户补。
 
