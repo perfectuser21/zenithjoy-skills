@@ -3,7 +3,7 @@ name: douyin-leadgen-104
 description: Workflow 104的活动组织与交接目录；实际执行由各Activity自己的Skill完成，不作为单Activity操作方法。
 metadata:
   change_summary: "0.8.0: Workflow薄目录与四个自包含Activity，移除旧Skill relay"
-  version: 0.9.0
+  version: 0.9.1
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-104/references/activity-methods.json
@@ -30,10 +30,10 @@ metadata:
 
 | Activity | 唯一操作Skill | 方法版本 |
 |---|---|---|
-| `preflight` | [douyin-leadgen-activity-104-preflight](../douyin-leadgen-activity-104-preflight/SKILL.md) | `1.2.0` |
+| `preflight` | [douyin-leadgen-activity-104-preflight](../douyin-leadgen-activity-104-preflight/SKILL.md) | `1.3.0` |
 | `send_dm` | [douyin-leadgen-activity-104-send-dm](../douyin-leadgen-activity-104-send-dm/SKILL.md) | `1.4.0` |
 | `write_back` | [douyin-leadgen-activity-104-write-back](../douyin-leadgen-activity-104-write-back/SKILL.md) | `1.2.0` |
-| `cleanup` | [douyin-leadgen-activity-104-cleanup](../douyin-leadgen-activity-104-cleanup/SKILL.md) | `0.5.0` |
+| `cleanup` | [douyin-leadgen-activity-104-cleanup](../douyin-leadgen-activity-104-cleanup/SKILL.md) | `0.6.0` |
 
 机器引用真身为[Activity方法清单](references/activity-methods.json)。每个Activity使用自己的完整方法；只消费前驱持久结果，不要求回读本目录或旧手册。
 

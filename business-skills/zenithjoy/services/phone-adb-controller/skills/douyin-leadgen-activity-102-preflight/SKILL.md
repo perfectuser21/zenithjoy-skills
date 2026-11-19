@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-102-preflight
 description: 取得采集设备与账号执行上下文。用于采集预检、确认手机账号或接手同一预检 Activity；不执行整个工作流。
 metadata:
   change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.9.0
+  version: 0.10.0
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.preflight
-  activity_version: 2.4.0
+  activity_version: 2.5.0
   validation: awaiting-real-run
   support_files: []
 
@@ -21,7 +21,7 @@ metadata:
 
 # 取得采集设备与账号执行上下文
 
-仅执行 `douyin_video_processing.preflight`，使用业务合同版本 `2.4.0`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
+仅执行 `douyin_video_processing.preflight`，使用业务合同版本 `2.5.0`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -44,6 +44,8 @@ metadata:
 - 副作用保留同一持久动作身份；回执未知先读回，不换 ID 重交。数据与字段写入走已授权业务接口，凭据只经组织凭据工具/1Password取得，放入工具进程，不进正文、参数回显或日志。到业务截止停止新增业务，保留收尾预算。
 
 ## 输入与交付
+
+开始条件只核配置、冻结身份与截止：确认本任务的公司/租户、设备与目标账号绑定、工具授权、资源 owner 计划和原绝对截止。登录态和取得锁的回执是执行后产物，不把尚未生成的产物当作开始输入；已有资源则核其真实归属，不接管其他 owner。实际登录、设备状态与本人锁/租约仍须在执行中核实，并以本轮原件交独立通用Checker验收。
 
 输入调用者指定的设备类型（实体/云）、`host/profile/serial`、平台、目标原生账号、已启用公司配置及唯一 verified/enabled 账号绑定；还要有设备租约、本地锁和清理责任的实际工具与 owner 信息。101、102共享本方法，不为101复制一份预检。
 

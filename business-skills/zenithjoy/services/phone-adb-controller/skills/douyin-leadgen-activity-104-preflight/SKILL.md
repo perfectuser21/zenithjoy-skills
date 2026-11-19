@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-104-preflight
 description: 取得已授权触达上下文。用于触达前核对发送账号、批准政策与资源或接手同一预检 Activity；不执行整个工作流。
 metadata:
-  version: 1.2.0
+  version: 1.3.0
   activity_ref: douyin_lead_outreach.preflight
-  activity_version: 5.1.0
+  activity_version: 5.2.0
   validation: awaiting-real-run
   support_files: []
   method_role: single-activity
@@ -13,7 +13,7 @@ metadata:
 
 # 取得已授权触达上下文
 
-仅执行 `douyin_lead_outreach.preflight`，业务合同版本 `5.1.0`。本方法自包含，普通任务不以旧Skill、Workflow母说明或Commander会话作为操作前置。
+仅执行 `douyin_lead_outreach.preflight`，业务合同版本 `5.2.0`。本方法自包含，普通任务不以旧Skill、Workflow母说明或Commander会话作为操作前置。
 
 ## 合同、执行提案与独立验收
 
@@ -37,7 +37,9 @@ metadata:
 
 ## 输入与交付
 
-- 输入 `Device`：`serial`、`host`、`lock_holder`。
+开始条件只核配置、冻结身份与截止：确认本任务的公司/租户、设备与目标账号绑定、工具授权、资源 owner 计划和原绝对截止。登录态和取得锁的回执是执行后产物，不把尚未生成的产物当作开始输入；已有资源则核其真实归属，不接管其他 owner。实际登录、设备状态与本人锁/租约仍须在执行中核实，并以本轮原件交独立通用Checker验收。
+
+- 输入 `Device`：`serial`、`host`及冻结的资源授权/owner 计划；已有 `lock_holder` 时提供真实归属，未取得锁不伪造持锁回执。
 - 输入 `Account`：`platform`、`profile`、`sender_id`、`dm_paused`、`daily_cap`。
 - 输出 `Device`：`online`、`call_state`、`lock_holder`。
 - 输出 `Account`：`logged_in`。
