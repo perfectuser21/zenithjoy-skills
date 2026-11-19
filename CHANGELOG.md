@@ -1,3 +1,8 @@
+## [2026-11-19] douyin-leadgen-activity-102-dedup — updated
+**症状**: 普通精确 VID 认领被误套 producer_descriptor 例外，已 matched 且待判定的视频只检查未认领。
+**根因**: 方法未区分101来源证明与认领请求中的受信 producer_descriptor。
+**修改**: 澄清 ordinary 精确认领签名和原接口原子校验；保留 descriptor 的 pending/CAS 限制、公司/VID/租约范围和领取0条不换领。Activity 合同版本不变；验证为静态情景审查和现有 lint，尚不代表真实 Agent 或真机验收。
+
 ## [2026-11-11] douyin-leadgen-direct — created（草稿，待真实运行）
 **症状**: 用户要求直接由 API Codex 执行获客 Skill，现有入口仍依赖 Commander、OpenClaw 和旧 Runner 身份。
 **根因**: 业务方法与旧启动、接手协议混在同一执行合同中；手机 epoch 工具尚无独立 Codex 任务准入。

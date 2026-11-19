@@ -2,8 +2,8 @@
 name: douyin-leadgen-activity-102-dedup
 description: 交出本轮可处理的视频集合。用于核验101来源、筛选与认领视频或接手同一判重 Activity；不执行整个工作流。
 metadata:
-  change_summary: "0.7.0: 在Activity内整合有效业务步骤，去除母Skill和旧Skill执行依赖，保留原合同与授权边界"
-  version: 0.7.0
+  change_summary: "0.7.1: 区分101来源证明与producer_descriptor例外，澄清普通精确VID认领，保留原合同与授权边界"
+  version: 0.7.1
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
@@ -47,9 +47,13 @@ metadata:
 4. 通过当前事务领取精确授权VID，不扩大公司或批次范围。回复丢失先读 owner/VID/租约，不再次竞争领取；原子领取0条是实际空集合，不转领隔离旁VID。运行期间按原协议维护本人租约，不能抢其他owner或重置未知尝试。
 5. 输出每条真实筛选与领取结果、来源和恢复入口；禁止在本活动录音、判视频资格、采评论或评分。
 
-## 明示producer交接
+## 来源证明与认领分支
 
-默认沿当前同源规则。只有本任务真实冻结并校验了producer交接例外，才按其中精确公司、完整政策、verified启用账号/设备、pending/待判定、原101 batch的CAS和单条上限执行；已matched、人工、批次漂移或过期处理中不借普通TTL重领。领取0条不换领，不扩大到其他producer或临时创建快照。旧运行没有该例外就不启用。
+先区分101来源证明与认领接口分支：`producer_key`、`input_provenance` 或逐VID的 `upstream` 只证明已批准的101来源，不等于本次 `claim_videos` 请求带有受信 `producer_descriptor`。
+
+当前宿主明示 ordinary 且未提供 `producer_descriptor` 时，按真实 schema 先 `inspect_videos`，再以 `op:"claim_videos"`、`video_ids:本轮精确授权VID数组`、`limit:本轮冻结上限`、`config_required:true`、`source_run:null` 调用已授权业务接口；run/line沿宿主固定身份。已有 `matched` 且处于 `待判定` 的视频，或当前 `harvest_batch` 不同于101来源批次，不能仅据此判定不可认领；由原接口在事务中校验公司政策、精确VID和可领取状态并原子认领，不在Agent侧改状态或抢其他owner。以实际领取与读回为准，认领不等于本轮资格已通过。
+
+只有本任务真实冻结、校验并向认领接口提供受信 `producer_descriptor` 时，才走producer交接例外：保留其中精确公司、完整政策、verified启用账号/设备、pending/待判定、原101 batch的CAS和单条上限；该分支不接受已matched、人工、批次漂移或过期处理中，不借普通TTL重领。不能自行构造descriptor、借用101 run改普通 `source_run`，或因例外拒绝切换分支。两条路径均保留原VID/公司/租约范围；领取0条不换领、不创建快照，未知回复先读原owner与租约。
 
 ## 成功条件
 
