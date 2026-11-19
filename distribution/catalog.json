@@ -739,7 +739,7 @@
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-102/references/activity-methods.json",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-102/references/activity-methods.json",
-          "sha256": "e1cdbe875ed43d91e194b7bf748c9bf01863764a764f42839b57e0047a88b038",
+          "sha256": "c865b2681753aee8d15ab3d3af14d0a0dd8072ae0d4bef23e059d82b47e811e4",
           "mode": "100644"
         },
         {
@@ -805,7 +805,7 @@
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-dedup/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-102-dedup/SKILL.md",
-          "sha256": "2d086959696b5931da3bd0736a375fce9d74a3274cf86907ee153ed42d3ac556",
+          "sha256": "34a00df159ddae5c5374f1954d70470d3634f3ac8c0466423e527603775345a7",
           "mode": "100644"
         },
         {
