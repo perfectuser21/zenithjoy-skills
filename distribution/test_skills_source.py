@@ -368,8 +368,8 @@ class CommanderRecoveryContractTests(unittest.TestCase):
         return activity, workflows, wrappers, commander
 
     def test_recovery_policy_is_explicit_and_identical_across_frozen_methods(self):
-        # Parse the normative structured example, rather than treating a prose
-        # mention or a dependency's policy as authorization for this method.
+        # Preserve the optional capability declaration; selected runtime repair
+        # authority is checked separately and is never granted by this example.
         import re
         activity, workflows, wrappers, commander = self.skills()
         for path in activity + workflows + wrappers + [commander]:
@@ -395,6 +395,24 @@ class CommanderRecoveryContractTests(unittest.TestCase):
                     self.assertNotIn(obsolete, body)
                 self.assertIn("未知", body)
 
+    def test_parent_methods_keep_activity_and_ordinary_handoff_boundaries(self):
+        discovery = (self.base / "commander/skills/wf-douyin_video_discovery/SKILL.md").read_text()
+        collect = (self.base / "skills/douyin-leadgen-activity-101-collect-videos/SKILL.md").read_text()
+        self.assertNotIn("collect_videos 5.1.1", discovery)
+        self.assertNotIn("显式加载冻结的 douyin-leadgen-102", discovery)
+        self.assertIn("douyin-leadgen-activity-102-preflight", discovery)
+        self.assertIn("douyin-leadgen-activity-102-cleanup", discovery)
+        for body in (discovery, collect):
+            self.assertNotIn("discovery_metrics_verified", body)
+            self.assertIn("PG", body)
+            self.assertIn("原件", body)
+        for rel in ("skills/douyin-leadgen-101/SKILL.md", "commander/skills/wf-douyin_comment_scoring/SKILL.md"):
+            body = (self.base / rel).read_text()
+            self.assertIn("ordinary", body)
+            self.assertIn("committed_partial_ids", body)
+            self.assertIn("formal", body)
+            self.assertNotIn("这些行不能据此提前评分", body)
+
     def test_103_readback_uses_outbox_ids_and_preserves_single_score(self):
         mark = (self.base / "skills/douyin-leadgen-activity-103-mark-leads/SKILL.md").read_text()
         self.assertIn("bridge_readback", mark)
@@ -408,12 +426,7 @@ class CommanderRecoveryContractTests(unittest.TestCase):
     def test_frozen_opt_in_is_bound_to_new_activity_contract_versions(self):
         import re
         activity, _, _, _ = self.skills()
-        expected = {"101-collect-videos": "5.1.1", "102-preflight": "2.3.0",
-                    "102-dedup": "3.2.1", "102-qualification": "3.4.2",
-                    "102-collection": "2.7.2", "102-cleanup": "2.3.0",
-                    "103-scoring": "2.8.0", "103-mark-leads": "3.9.0",
-                    "104-preflight": "5.0.1", "104-send-dm": "6.0.2",
-                    "104-write-back": "4.0.1", "104-cleanup": "3.2.1"}
+        expected = {'101-collect-videos': '5.2.0', '102-preflight': '2.4.0', '102-dedup': '3.3.0', '102-qualification': '3.5.0', '102-collection': '2.8.0', '102-cleanup': '2.4.0', '103-scoring': '2.9.0', '103-mark-leads': '3.10.0', '104-preflight': '5.1.0', '104-send-dm': '6.1.0', '104-write-back': '4.1.0', '104-cleanup': '3.3.0'}
         for path in activity:
             with self.subTest(method=path.parent.name):
                 actual = re.search(r"^  activity_version: (\S+)$", path.read_text(), re.M)[1]
@@ -432,15 +445,9 @@ class CommanderRecoveryContractTests(unittest.TestCase):
         activity, workflows, wrappers, commander = self.skills()
         def version(path):
             return re.search(r"^  ?version: (\S+)$|^version: (\S+)$", path.read_text(), re.M).group(0).split(": ")[1]
-        upgraded_methods = {'douyin-leadgen-activity-102-preflight': '0.8.0', 'douyin-leadgen-activity-101-collect-videos': '0.8.0', 'douyin-leadgen-activity-102-dedup': '0.7.1', 'douyin-leadgen-activity-102-qualification': '0.7.0', 'douyin-leadgen-activity-102-collection': '0.9.0', 'douyin-leadgen-activity-102-cleanup': '0.8.0', 'douyin-leadgen-activity-103-scoring': '0.17.0', 'douyin-leadgen-activity-103-mark-leads': '0.18.0', **{'douyin-leadgen-activity-104-preflight':'1.1.0','douyin-leadgen-activity-104-send-dm':'1.3.0','douyin-leadgen-activity-104-write-back':'1.1.0','douyin-leadgen-activity-104-cleanup':'0.4.0'}}
-        for path in activity:
-            expected = "0.11.1" if path.parent.name in {"douyin-leadgen-activity-103-scoring", "douyin-leadgen-activity-103-mark-leads"} else "0.5.1" if path.parent.name == "douyin-leadgen-activity-102-collection" else "0.5.1" if path.parent.name == "douyin-leadgen-activity-101-collect-videos" else "1.2.2" if path.parent.name == "douyin-leadgen-activity-104-send-dm" else "1.0.1" if path.parent.name in {"douyin-leadgen-activity-104-preflight", "douyin-leadgen-activity-104-write-back"} else "0.4.1" if path.parent.name.startswith("douyin-leadgen-activity-102-") else "0.3.1"
-            expected = upgraded_methods.get(path.parent.name, expected)
-            self.assertEqual(version(path), expected, path.parent.name)
-        for path in workflows + wrappers:
-            expected = "0.15.0" if path.parent.name in {"douyin-leadgen-103", "wf-douyin_comment_scoring"} else "0.7.2" if path.parent.name in {"douyin-leadgen-104", "wf-douyin_lead_outreach"} else "0.9.0" if path.parent.name in {"douyin-leadgen-101", "wf-douyin_video_discovery"} else "0.9.0" if path.parent.name in {"douyin-leadgen-102", "wf-douyin_video_processing"} else "0.4.1"
-            expected = {"douyin-leadgen-101": "0.11.0", "douyin-leadgen-102": "0.12.1", "douyin-leadgen-103": "0.20.0", "wf-douyin_video_processing": "0.11.2", "wf-douyin_video_discovery": "0.11.0", "wf-douyin_comment_scoring": "0.18.0", "douyin-leadgen-104": "0.8.0", "wf-douyin_lead_outreach": "0.8.0"}.get(path.parent.name, expected)
-            self.assertEqual(version(path), expected, path.parent.name)
+        expected_versions = {'douyin-leadgen-activity-101-collect-videos': '0.9.0', 'douyin-leadgen-activity-102-cleanup': '0.9.0', 'douyin-leadgen-activity-102-collection': '0.10.0', 'douyin-leadgen-activity-102-dedup': '0.8.0', 'douyin-leadgen-activity-102-preflight': '0.9.0', 'douyin-leadgen-activity-102-qualification': '0.8.0', 'douyin-leadgen-activity-103-mark-leads': '0.19.0', 'douyin-leadgen-activity-103-scoring': '0.18.0', 'douyin-leadgen-activity-104-cleanup': '0.5.0', 'douyin-leadgen-activity-104-preflight': '1.2.0', 'douyin-leadgen-activity-104-send-dm': '1.4.0', 'douyin-leadgen-activity-104-write-back': '1.2.0', 'douyin-leadgen-101': '0.12.0', 'wf-douyin_video_discovery': '0.12.0', 'douyin-leadgen-102': '0.13.0', 'wf-douyin_video_processing': '0.12.0', 'douyin-leadgen-103': '0.21.0', 'wf-douyin_comment_scoring': '0.19.0', 'douyin-leadgen-104': '0.9.0', 'wf-douyin_lead_outreach': '0.9.0'}
+        for path in activity + workflows + wrappers:
+            self.assertEqual(version(path), expected_versions[path.parent.name], path.parent.name)
         self.assertEqual(version(commander), "2.2.0")
         versions = {path.parent.name: version(path) for path in activity + workflows + wrappers + [commander]}
         for path in activity + workflows + wrappers + [commander]:
