@@ -1,3 +1,8 @@
+## [2026-11-19] 获客 Activity 方法 — updated
+**症状**: 四流程方法与当前合同、通用Checker及实际截止的表述存在冲突，旧恢复示例易被当成本次额度。
+**根因**: 历史宿主specific判据、固定预算和兼容操作混在现行方法中，版本一致未保证语义一致。
+**修改**: 十二Activity对齐当前合同版本与独立通用Checker；预算与返工只引用冻结合同和绝对截止，保未知不重放及原单次授权。同步四Workflow、四Commander、方法目录和分发摘要；补原工具签名与PG写回承诺。未作手机或业务运行验收。
+
 ## [2026-11-19] douyin-leadgen-activity-102-dedup — updated
 **症状**: 普通精确 VID 认领被误套 producer_descriptor 例外，已 matched 且待判定的视频只检查未认领。
 **根因**: 方法未区分101来源证明与认领请求中的受信 producer_descriptor。

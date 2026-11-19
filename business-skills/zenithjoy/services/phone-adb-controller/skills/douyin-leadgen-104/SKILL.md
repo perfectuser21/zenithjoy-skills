@@ -3,7 +3,7 @@ name: douyin-leadgen-104
 description: Workflow 104的活动组织与交接目录；实际执行由各Activity自己的Skill完成，不作为单Activity操作方法。
 metadata:
   change_summary: "0.8.0: Workflow薄目录与四个自包含Activity，移除旧Skill relay"
-  version: 0.8.0
+  version: 0.9.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-104/references/activity-methods.json
@@ -16,16 +16,24 @@ metadata:
 
 `douyin_lead_outreach` 是 Workflow，独立消费本公司资格合格、外部配送已确认且未发送的原订单队列；不要求103运行号，不等待整批103。发送仍以本次任务已有明确授权为前提。
 
+## 合同、执行提案与独立验收
+
+读取本run冻结的完整当前Activity Contract，核对来源、Activity身份、版本与摘要；输入输出、前后条件、DoD及已选公司政策以该合同为准，不从旧specific检查列表另立标准。执行者交付的是执行提案和原始证据，不是验收结论；独立通用Checker读取同一合同并用只读工具核实事实。模型自述、工具verified摘要或退出0不能代替原件，也不能替下一Activity判通过。
+
+预算只引用冻结Activity Contract的 `budget` 与本run原绝对截止：业务受 `run.deadline_ms` 约束，收尾受 `run.cleanup_deadline_ms` 约束，实际可用时间取适用Activity预算和相应绝对截止的更早者。换Activity、恢复或新工具调用不重置剩余时间；不得挪用收尾窗口新增业务。
+
+`agent_recovery` 仅声明方法可选能力，不是本次重试额度。只有本run实际冻结的 `runtime.checker_repair` 明确授权、剩余额度与原截止仍有效时，才按失败原因和证据进行允许的返工；没有该设置不自行增回合。保留原Task/run、动作身份和已成功成果；未知副作用先读回，未知不重做，不能换nonce或generation重放。返工不增加本次批次、评分、录制或发送授权，不重复已成功业务动作。Checker不执行业务写入，也不授予发送权。
+
 ## 活动组织
 
 `preflight → send_dm → write_back → cleanup`
 
 | Activity | 唯一操作Skill | 方法版本 |
 |---|---|---|
-| `preflight` | [douyin-leadgen-activity-104-preflight](../douyin-leadgen-activity-104-preflight/SKILL.md) | `1.1.0` |
-| `send_dm` | [douyin-leadgen-activity-104-send-dm](../douyin-leadgen-activity-104-send-dm/SKILL.md) | `1.3.0` |
-| `write_back` | [douyin-leadgen-activity-104-write-back](../douyin-leadgen-activity-104-write-back/SKILL.md) | `1.1.0` |
-| `cleanup` | [douyin-leadgen-activity-104-cleanup](../douyin-leadgen-activity-104-cleanup/SKILL.md) | `0.4.0` |
+| `preflight` | [douyin-leadgen-activity-104-preflight](../douyin-leadgen-activity-104-preflight/SKILL.md) | `1.2.0` |
+| `send_dm` | [douyin-leadgen-activity-104-send-dm](../douyin-leadgen-activity-104-send-dm/SKILL.md) | `1.4.0` |
+| `write_back` | [douyin-leadgen-activity-104-write-back](../douyin-leadgen-activity-104-write-back/SKILL.md) | `1.2.0` |
+| `cleanup` | [douyin-leadgen-activity-104-cleanup](../douyin-leadgen-activity-104-cleanup/SKILL.md) | `0.5.0` |
 
 机器引用真身为[Activity方法清单](references/activity-methods.json)。每个Activity使用自己的完整方法；只消费前驱持久结果，不要求回读本目录或旧手册。
 
@@ -42,9 +50,9 @@ Workflow Skill只组织活动。实际执行使用各Activity方法和本次明�
 
 正式冻结宿主使用其原合同、绑定、工具和资源权限；普通API任务使用当前任务明确的工具。旧宿主兼容资料不作为新任务执行依赖。本次整理方法与分发，不表示已安装后台调度或完成实体手机发送验收。
 
-## 历史宿主兼容声明
+## 宿主恢复能力声明
 
-以下仅保留原冻结解析字段，不增加本次恢复回合或发送次数。
+以下 `agent_recovery` 只描述可选能力，不能被解释为本次已选额度。实际是否允许返工及其次数只读本run冻结的 `runtime.checker_repair`；原授权、动作累计次数、未知不重做和绝对截止仍约束所有回合。
 
 <!-- agent-recovery-policy -->
 ```json

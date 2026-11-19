@@ -3,7 +3,7 @@ name: douyin-leadgen-102
 description: Workflow 102的活动组织与交接目录；实际执行由各Activity自己的Skill完成，不作为单Activity操作方法。
 metadata:
   change_summary: "区分默认队列、显式已提交评论交接与正式采样，保留完整身份及单次评分边界"
-  version: 0.12.1
+  version: 0.13.0
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-102/references/activity-methods.json
@@ -16,17 +16,25 @@ metadata:
 
 `douyin_video_processing` 是 Workflow；下表各 Activity 的 Skill 才是具体操作方法。消费可验证101来源，原子领取、按原政策判资格，合格才采评论。
 
+## 合同、执行提案与独立验收
+
+读取本run冻结的完整当前Activity Contract，核对来源、Activity身份、版本与摘要；输入输出、前后条件、DoD及已选公司政策以该合同为准，不从旧specific检查列表另立标准。执行者交付的是执行提案和原始证据，不是验收结论；独立通用Checker读取同一合同并用只读工具核实事实。模型自述、工具verified摘要或退出0不能代替原件，也不能替下一Activity判通过。
+
+预算只引用冻结Activity Contract的 `budget` 与本run原绝对截止：业务受 `run.deadline_ms` 约束，收尾受 `run.cleanup_deadline_ms` 约束，实际可用时间取适用Activity预算和相应绝对截止的更早者。换Activity、恢复或新工具调用不重置剩余时间；不得挪用收尾窗口新增业务。
+
+`agent_recovery` 仅声明方法可选能力，不是本次重试额度。只有本run实际冻结的 `runtime.checker_repair` 明确授权、剩余额度与原截止仍有效时，才按失败原因和证据进行允许的返工；没有该设置不自行增回合。保留原Task/run、动作身份和已成功成果；未知副作用先读回，未知不重做，不能换nonce或generation重放。返工不增加本次批次、评分、录制或发送授权，不重复已成功业务动作。Checker不执行业务写入，也不授予发送权。
+
 ## 活动组织
 
 `preflight → dedup → qualification → collection → cleanup`
 
 | Activity | 唯一操作Skill | 方法版本 |
 |---|---|---|
-| `preflight` | [douyin-leadgen-activity-102-preflight](../douyin-leadgen-activity-102-preflight/SKILL.md) | `0.8.0` |
-| `dedup` | [douyin-leadgen-activity-102-dedup](../douyin-leadgen-activity-102-dedup/SKILL.md) | `0.7.1` |
-| `qualification` | [douyin-leadgen-activity-102-qualification](../douyin-leadgen-activity-102-qualification/SKILL.md) | `0.7.0` |
-| `collection` | [douyin-leadgen-activity-102-collection](../douyin-leadgen-activity-102-collection/SKILL.md) | `0.9.0` |
-| `cleanup` | [douyin-leadgen-activity-102-cleanup](../douyin-leadgen-activity-102-cleanup/SKILL.md) | `0.8.0` |
+| `preflight` | [douyin-leadgen-activity-102-preflight](../douyin-leadgen-activity-102-preflight/SKILL.md) | `0.9.0` |
+| `dedup` | [douyin-leadgen-activity-102-dedup](../douyin-leadgen-activity-102-dedup/SKILL.md) | `0.8.0` |
+| `qualification` | [douyin-leadgen-activity-102-qualification](../douyin-leadgen-activity-102-qualification/SKILL.md) | `0.8.0` |
+| `collection` | [douyin-leadgen-activity-102-collection](../douyin-leadgen-activity-102-collection/SKILL.md) | `0.10.0` |
+| `cleanup` | [douyin-leadgen-activity-102-cleanup](../douyin-leadgen-activity-102-cleanup/SKILL.md) | `0.9.0` |
 
 机器引用真身为[Activity方法清单](references/activity-methods.json)，版本必须与上述方法文件一致。101/102共用同一份preflight与cleanup，不复制。
 
@@ -55,9 +63,9 @@ Skill与Code是Activity的实现方式，Workflow本身不是一个替代全部A
 
 本文件说明Workflow组织；具体实现和发布状态按该次Task及固定源码核实。方法自包含/离线评审与真实实机、工具能力验收分别记录；缺专用指标或正式采样回执时如实报告，不宣称整版通过。
 
-## 历史宿主兼容声明
+## 宿主恢复能力声明
 
-以下仅保留冻结解析字段；不授予执行权限、不增加本次预算。实际恢复仍由对应Activity合同约束。
+以下 `agent_recovery` 只描述可选能力，不能被解释为本次已选额度。实际是否允许返工及其次数只读本run冻结的 `runtime.checker_repair`；原授权、动作累计次数、未知不重做和绝对截止仍约束所有回合。
 
 <!-- agent-recovery-policy -->
 ```json
