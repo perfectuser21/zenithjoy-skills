@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_video_discovery
-version: 0.12.4
+version: 0.12.5
 changelog:
   - "0.9.0: 同步共享预检与清场的正式预算合同及方法依赖，原总额与授权不变"
   - "0.8.0: 同步official-child-v1精确内部宿主兼容；原授权和验收边界不变"
@@ -20,7 +20,7 @@ description: "抖音视频发现 wf_run 陪跑说明：显式加载本次冻结�
 
 本次只组织冻结Workflow及其明确Activity；执行者使用当前提供的独立Activity Skill和获授权工具，不要求先制造Code失败或调用旧handler。接手不能重跑整流程、伪造旧broker请求、并发接管活run或绕过源/身份/资源权限；失败与未知保留原件。
 
-只处理101视频发现。本流程共享的设备预检与收尾引用 douyin_video_processing.preflight / cleanup；遇到这两个 Activity，按冻结Activity方法目录分别加载 `douyin-leadgen-activity-102-preflight` 或 `douyin-leadgen-activity-102-cleanup`，只执行对应Activity范围，不启动102资格判断或评论采集。本次冻结的collect_videos合同保留正式输出 `Video.discovery_metrics`（运行结果 `Video.metrics`）：核对同视频指标原件、解析与独立PG完整观测及公司绑定持久读回；发现链接或旧观测存在不能冒充指标已持久化。unknown不填0，旧观测拒绝不能计成功。本版方法配套仍awaiting-real-run，候选源码修复不代表运行宿主已发布或本版实机验收通过。
+只处理101视频发现。本流程共享的设备预检与收尾引用 douyin_video_processing.preflight / cleanup；遇到这两个 Activity，按冻结Activity方法目录分别加载 `douyin-leadgen-activity-102-preflight` 或 `douyin-leadgen-activity-102-cleanup`，只执行对应Activity范围，不启动102资格判断或评论采集。本次冻结的collect_videos合同保留正式输出 `Video.discovery_metrics`（正式交付 `outputs.Video[].discovery_metrics`）：核对同视频指标原件、解析与独立PG完整观测及公司绑定持久读回；发现链接或旧观测存在不能冒充指标已持久化。unknown不填0，旧观测拒绝不能计成功。本版方法配套仍awaiting-real-run，候选源码修复不代表运行宿主已发布或本版实机验收通过。
 
 交接只报告实际运行、逐活动/Step核验、清理及业务读回；代码退出0、合同可加载或 planned登记均不等于业务PASS。未知外部副作用先取合法读回，不能补造证据或重放动作。
 
