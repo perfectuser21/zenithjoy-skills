@@ -381,6 +381,30 @@ class CommanderRecoveryContractTests(unittest.TestCase):
                 self.assertEqual(policy, {"agent_recovery": {"max_additional_turns": 1}})
                 self.assertIs(type(policy["agent_recovery"]["max_additional_turns"]), int)
 
+    def test_leadgen_execution_proposals_use_contract_checker_and_shared_deadlines(self):
+        activity, workflows, wrappers, _ = self.skills()
+        for path in activity + workflows + wrappers:
+            with self.subTest(path=path.relative_to(self.root)):
+                body = path.read_text()
+                # Capability documentation must not become selected retry authority.
+                for required in ("checker_repair", "agent_recovery", "独立通用Checker", "执行提案", "deadline_ms", "cleanup_deadline_ms"):
+                    self.assertIn(required, body)
+                for obsolete in ("raw 回合原冻结上限仍为 1～64", "旧controller可能需要300000ms",
+                                 "当前合同Activity预算上限600秒", "当前合同Activity预算上限300秒",
+                                 "须包含 `out_delivery_result_verified` 硬探针", "最终仅原独立verify决定继续"):
+                    self.assertNotIn(obsolete, body)
+                self.assertIn("未知", body)
+
+    def test_103_readback_uses_outbox_ids_and_preserves_single_score(self):
+        mark = (self.base / "skills/douyin-leadgen-activity-103-mark-leads/SKILL.md").read_text()
+        self.assertIn("bridge_readback", mark)
+        self.assertIn("outbox", mark)
+        self.assertIn("`ids`", mark)
+        self.assertIn("不重新", mark)
+        score = (self.base / "skills/douyin-leadgen-activity-103-scoring/SKILL.md").read_text()
+        self.assertIn("转写", score)
+        self.assertIn("单次评分", score)
+
     def test_frozen_opt_in_is_bound_to_new_activity_contract_versions(self):
         import re
         activity, _, _, _ = self.skills()
