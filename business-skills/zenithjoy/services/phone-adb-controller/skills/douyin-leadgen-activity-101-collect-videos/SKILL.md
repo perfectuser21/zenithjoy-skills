@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-101-collect-videos
 description: 按关键词交出筛选后的视频链接。用于采集关键词搜索结果或接手同一视频发现 Activity；不执行整个工作流。
 metadata:
   change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.9.0
+  version: 0.10.0
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_discovery.collect_videos
-  activity_version: 5.2.0
+  activity_version: 5.3.0
   validation: awaiting-real-run
   support_files: []
 
@@ -21,7 +21,7 @@ metadata:
 
 # 按关键词交出筛选后的视频链接
 
-仅执行 `douyin_video_discovery.collect_videos`，使用业务合同版本 `5.2.0`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
+仅执行 `douyin_video_discovery.collect_videos`，使用业务合同版本 `5.3.0`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -47,7 +47,19 @@ metadata:
 
 输入已通过的设备/账号上下文、公司与 line、关键词及其任务/公司启用配置来源、排序/时间/地区/时长/范围筛选、唯一成功视频上限、尝试/屏数上限和截止。数量缺失先从当前任务或运营配置取，仍缺则由调用方补齐；不把某次1条冒烟当默认产能。
 
-输出逐视频真实 `video_id/video_url/title/author/keyword/harvest_batch` 与 `discovery_metrics`：同视频原始点赞/页面评论显示值、解析值或 null、分档、观测时间、身份与证据摘要。业务字段 `comment_count` 保留102“已采评论数量”语义，不存页面评论总数。另报实际成功唯一VID数、尝试数、重复观测、停止原因和 `all_results_scanned`。
+输出逐视频真实 `line_key/video_id/video_url/title/author/keyword/comment_count/harvest_batch` 与 `discovery_metrics`：同视频原始点赞/页面评论显示值、解析值或 null、分档、观测时间、身份与证据摘要。业务字段 `comment_count` 保留102“已采评论数量”语义，不存页面评论总数。另报实际成功唯一VID数、尝试数、重复观测、停止原因和 `all_results_scanned`。
+
+## 逐VID交付与证据索引
+
+完成前按本次冻结输出 schema 逐VID交付 `Video`，不能仅报两条总数或指标片段。持久字段 `line_key/video_id/video_url/title/keyword/comment_count/harvest_batch` 与完整 `discovery_metrics` 取同VID实际PG读回；保留指标对象中的原始显示值、解析值或 null、分档、观测时间、run/profile/来源、公司绑定及原件摘要，不将对象缩成点赞和评论两个数字。`comment_count` 是102已采评论数量，不能将页面 `comment_total` 填入，也不能因旧工具没返回而补默认0。`author` 使用本VID原生卡片与取链绑定证据，不把PG没有的字段冒称持久列。
+
+逐VID分别引用原 `discover` 写入回执与后续只读回执：`inserted` 区分本次新增和已存在，`judgment_status`（原工具可能返回 `status`）记录实际资格状态；二者是不同维度，matched不是“本次新增”。只读回执固定的 `inserted:false` 不证明原写入是否新增，必须查该VID原写入结果；原结果未知则保留未知，不重放 discover 以重造回执。新增、已存在、重复观测与未决计数须能由逐VID结果回算。
+
+未启用可选字段的 `discover_readback` 返回状态、转写有无、指标一致摘要及digest；`inspect_videos` 的基础返回不包含完整交付字段。只读扩展 `discover_readback` 的 `include_handoff:true`，返回 `handoff={line_key,video_id,video_url,title,keyword,comment_count,harvest_batch,discovery_metrics}` 原持久值；`inspect_videos` 的 `include_discovery_protection:true` 用于同VID discover前与读回后保存过程状态、历史批次、评论计数和转写摘要。只在本run冻结工具明确支持该参数时调用，并核对实际返回；不支持则报告缺口，不自行假定接口可用。只有摘要时保留完整原生观察和原回执，逐项说明缺哪个持久字段/前后原件，结果保持partial/unknown，不用模型补造PG值或把旧verified当完整原件。旧run缺少写前读回不能事后回填。
+
+交付可读证据索引，逐项给真实工具动作名、EID/VID及原件位置；工具返回SHA时保留实际SHA，没有则不编造。索引应能定位本次关键词搜索、视频页签、筛选面板/选中项/结果页、各原槽位卡片、取链与解析、同详情metrics、discover原写入、独立PG读回及可用的写前/写后保护原件。说明哪个VID和哪个输出字段由哪个回执支持，不只写“搜索完成/筛选正确/PG通过”；路径或file-id必须是当前只读工具实际能访问的原件，摘要被截断须取得原件，无法读取则明确证据缺口。
+
+`Run` 同时交真实停止原因和实际扫描范围：冻结模式/关键词/筛选、尝试与唯一VID数、已看屏数和卡片槽位、未检查范围及停止回执。达到首屏候选/尝试/成功上限分别如实说明，不把停止原因写成搜尽；次数、耗时、截止和异常来自原回执，不估算缺失值。只有合同允许且有同范围页尾原件才能声明 `all_results_scanned=true`；首屏有界采样一律 false。沿原预算与原动作结束，不为补字段、换停止理由或满足数量追加未授权扫描/重跑；空集、部分完成、工具失败和未知分别记录。
 
 ## 操作
 
