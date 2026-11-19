@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-102-cleanup
 description: 归位采集现场并释放本人资源。用于采集流程收尾、失败后清理或接手同一收尾 Activity；不执行整个工作流。
 metadata:
   change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.11.0
+  version: 0.11.1
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.cleanup
-  activity_version: 2.6.0
+  activity_version: 2.6.1
   validation: awaiting-real-run
   support_files: []
 
@@ -21,7 +21,7 @@ metadata:
 
 # 归位采集现场并释放本人资源
 
-仅执行 `douyin_video_processing.cleanup`，使用业务合同版本 `2.6.0`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
+仅执行 `douyin_video_processing.cleanup`，使用业务合同版本 `2.6.1`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -50,6 +50,12 @@ metadata:
 收尾开始只需本run冻结身份、原截止和可读取的执行/资源事实入口；不能以尚未生成的锁回执阻止开始收尾核对。若尚未开工，且通过运行账本、动作记录及资源当前读回独立证明本run没有动作、在途请求、锁或租约，则交付无本run资源的证据，不操作手机、不关闭应用、不领取或释放资源，也不触碰其他 owner。缺回执不等于没有动作；不能证明上述事实或存在未知时，未知保留，不重放、不强清。以下停止、归位和释放步骤仅适用于已确认的本人资源。
 
 101、102共用本 Activity。输入本run最后已确认状态、成果/异常、实际资源清单及owner、在途原生请求/录制PID、本人视频租约、清理责任分工与截止。输出逐项停止/归位/释放/读回结果、未决资源、当前已知业务结果和恢复条件。
+
+依据原生关闭、桌面与资源释放读回核实本阶段 `Run.status`，不要求另有收尾成功回执。交实际工具原件与引用，独立 Checker 在执行之后核验。
+
+从本轮宿主调用及同业务行读回确定认领义务。101 仅发现和只读时，若未发出认领且业务行无本轮租约，按业务认领不适用记录，仍核对设备锁；102 实际认领则逐项处理并读回本轮资源。认领义务未知时保留相应资源，不猜测。
+
+根据本轮实际需要的归位快照、实际传输回执和可读工件判断工件是否缺失或不一致。旧 finalize 自检回执不是此 Skill 的产物。工具确实失败或工件确实缺失时保留原结果。
 
 ## 操作
 
