@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-102-collection
 description: 交出持久化且身份可验证的评论。用于从合格视频采集评论并读回或接手同一评论采集 Activity；不执行整个工作流。
 metadata:
   change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.10.0
+  version: 0.10.1
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.collection
-  activity_version: 2.8.0
+  activity_version: 2.8.1
   validation: awaiting-real-run
   support_files: []
 
@@ -21,7 +21,7 @@ metadata:
 
 # 交出持久化且身份可验证的评论
 
-仅执行 `douyin_video_processing.collection`，使用业务合同版本 `2.8.0`。方法版本变化不修改Activity身份或公司业务政策。本版补充普通API显式交接与凭证补齐方法；离线校验不等于实机验收。
+仅执行 `douyin_video_processing.collection`，使用业务合同版本 `2.8.1`。方法版本变化不修改Activity身份或公司业务政策。本版补充普通API显式交接与凭证补齐方法；离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -46,6 +46,8 @@ metadata:
 ## 输入与交付
 
 输入已领且有效matched的VID/链接、公司/政策、当前原生账号与租约、qualification回执、`comment_limit`/策略/范围/预算、原历史评论核验工具和提交/读回工具。采样数量来自当前任务；5条是已有实测任务的授权值，不是所有任务默认上限。
+
+开工前只核本轮已独立验收的资格交付、有效租约、冻结身份和配额。评论正文、原生 UID、主页链接、返回评论页原件、历史命中和真实已提交数由采集执行后交付，再由独立 Checker 核对。
 
 输出完整评论的原文、原显示时间/地区、昵称、稳定 `douyin_id`、主页/视频链接、真实评论ID或明确近似去重键、line、batch、原生关联证据、`recipient_evidence`、PG ID与读回；另列新增、history_verified、duplicates、coverage及最后成功批次。未知身份原件单独留存，不能冒完整可消费行。
 
