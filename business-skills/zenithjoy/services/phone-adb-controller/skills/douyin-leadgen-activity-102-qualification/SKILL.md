@@ -2,15 +2,15 @@
 name: douyin-leadgen-activity-102-qualification
 description: 交出有证据的视频资格结论。用于核对目标视频、录音转写并按公司政策判断资格或接手同一 Activity；不执行整个工作流。
 metadata:
-  change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.8.4
+  change_summary: "同一原录像内补取归零原帧，继续原有覆盖与转写验收"
+  version: 0.8.5
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.qualification
-  activity_version: 3.5.4
+  activity_version: 3.5.5
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification/references/sdk31-capture.md
@@ -46,6 +46,8 @@ metadata:
 
 ## 输入与交付
 
+本轮预检账号原件以本轮 `preflight` 的成功终态 `phone/account-current` 回执定位。核对原始 Task/run、设备与账号，不依赖执行者给回执起的文件名。
+
 输入本人已领取VID/规范链接、来源、公司冻结资格政策及版本、设备与实际账号上下文、录制/ASR/判断/保存工具、本次明确覆盖范围和截止。覆盖是全片还是获授权的前N秒，以本次合同为准；不从旧手册自动套“前5分钟=全文”或默认3倍速。
 
 输出每VID `matched/rejected/unknown`、真实理由/政策、cached或fresh、原判断run、当前原生身份与音频/转写证据、持久判定读回。只有有效资格结果能交采集。
@@ -73,6 +75,7 @@ metadata:
 **全片覆盖证据**
 
 - 本轮新录制结束后，从本轮原录像解码归零、开头、中间、末尾和相同开头再次出现的原帧。完整播放后退出且没有循环时，最后一帧取实际播放完成的原始证据。归零时播放器的起始时间和总片长须完整入图，中间、末尾与再次开头保留足够辨认同一视频内容和进度的画面。单帧、播放器控件回显和容器总时长各自不能证明完整播放。
+- 录制停止并读回原件后，先按本轮归零操作定位 A，再选其后的 B、C、D、E。若初选 A 未显示起始时间与总片长，在转写及提交前对同一原录像的归零时间窗约每 0.25 秒复查一次，绑定同一 Task、run、VID 和原录像 SHA256。选用确实显示归零的原帧和解码 PTS，排除归零前的播放画面。原录像已经覆盖该窗口时沿用这次录制，只有该窗口确实拿不到归零证据才返回未决。
 - 在本轮证据目录交付 `receipts/coverage-five-frames.jpg` 与 `receipts/coverage-five-frames.json`。图中的 A、B、C、D、E 依次对应上述五个观察点，每格标出从原录像取得的 PTS 秒数。JSON 写明 `recording.name`（原录像 basename）、`recording.sha256`、`sheet_sha256` 与 `panels`（每格的标号、PTS 及原帧证据摘要）。从解码输出抄取 PTS，不能用提取命令的请求位置冒充实际 PTS。原帧和解码日志保留在本轮授权证据目录。
 - 用已有 `proof` 回执把单页图和 JSON 与原生 VID、录制启动/停止、音频提取、ASR 和主判回执一起交给 Checker。录制和提取回执分别固定为 `receipts/qual-record-start.json`、`receipts/qual-record-stop.json`、`receipts/qual-extract-audio.json`。从录制启动和停止回执取本轮 `capture_runtime_evidence_file`、SDK 与原生音轨证明文件，用已有工具取回 `native/`，逐份核对回执的 SHA256；在 proof 中引用实际原件。图和 JSON 只记录原件与观察点，最终覆盖判定由 Checker 按契约作出。只有同一媒体、有效原始时间轴和实际终点能组成完整覆盖证据时才提交采集候选；证据不足保留未决。
 
