@@ -3,7 +3,7 @@ name: douyin-leadgen-102
 description: Workflow 102的活动组织与交接目录；实际执行由各Activity自己的Skill完成，不作为单Activity操作方法。
 metadata:
   change_summary: "区分默认队列、显式已提交评论交接与正式采样，保留完整身份及单次评分边界"
-  version: 0.13.5
+  version: 0.13.6
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-102/references/activity-methods.json
@@ -31,7 +31,7 @@ metadata:
 | Activity | 唯一操作Skill | 方法版本 |
 |---|---|---|
 | `preflight` | [douyin-leadgen-activity-102-preflight](../douyin-leadgen-activity-102-preflight/SKILL.md) | `0.11.1` |
-| `dedup` | [douyin-leadgen-activity-102-dedup](../douyin-leadgen-activity-102-dedup/SKILL.md) | `0.8.0` |
+| `dedup` | [douyin-leadgen-activity-102-dedup](../douyin-leadgen-activity-102-dedup/SKILL.md) | `0.8.1` |
 | `qualification` | [douyin-leadgen-activity-102-qualification](../douyin-leadgen-activity-102-qualification/SKILL.md) | `0.8.0` |
 | `collection` | [douyin-leadgen-activity-102-collection](../douyin-leadgen-activity-102-collection/SKILL.md) | `0.10.0` |
 | `cleanup` | [douyin-leadgen-activity-102-cleanup](../douyin-leadgen-activity-102-cleanup/SKILL.md) | `0.11.1` |
