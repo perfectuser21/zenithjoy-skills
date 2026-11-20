@@ -16,7 +16,7 @@
     {
       "activity_ref": "douyin_video_processing.cleanup",
       "skill_name": "douyin-leadgen-activity-102-cleanup",
-      "skill_version": "0.11.1",
+      "skill_version": "0.11.2",
       "skill_path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-cleanup/SKILL.md"
     }
   ]

@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-102-cleanup
 description: 归位采集现场并释放本人资源。用于采集流程收尾、失败后清理或接手同一收尾 Activity；不执行整个工作流。
 metadata:
   change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.11.1
+  version: 0.11.2
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.cleanup
-  activity_version: 2.6.1
+  activity_version: 2.6.2
   validation: awaiting-real-run
   support_files: []
 
@@ -21,7 +21,7 @@ metadata:
 
 # 归位采集现场并释放本人资源
 
-仅执行 `douyin_video_processing.cleanup`，使用业务合同版本 `2.6.1`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
+仅执行 `douyin_video_processing.cleanup`，使用业务合同版本 `2.6.2`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -65,6 +65,8 @@ metadata:
 4. 按实际清理责任释放本人视频租约、本地锁、中央serial租约，逐项使用原协议的精确owner和必要的fresh lease_version/CAS并独立读回；不删除锁目录、按TTL推断free、把Task UUID当manual owner或释放另一任务的锁。
 5. 如果宿主明确保留最终释放权，只交本人资源原件、已停止/归位证明与剩余owner给宿主；不能自己和宿主双重释放，也不能在尚未读回时写“锁已释放”。设备台账在线/心跳由镜像维护，收尾不手改。
 6. owner变化、结果未知、释放失败或超时都按实际保留隔离和恢复条件，不为了下一个Activity硬清。最终报告同时列业务结果与cleanup结果；cleanup成功不把业务failed/partial升级completed。
+
+收尾独立验收使用本轮归位、视频认领和设备锁释放回执。收尾 Activity 的 480 秒包含动作和独立 Checker，优先提交本轮已有原件的引用。已完成的归位与释放不为补验收结果重做。
 
 ## 成功条件
 
