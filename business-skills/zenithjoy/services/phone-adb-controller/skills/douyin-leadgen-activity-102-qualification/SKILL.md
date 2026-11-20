@@ -2,15 +2,15 @@
 name: douyin-leadgen-activity-102-qualification
 description: 交出有证据的视频资格结论。用于核对目标视频、录音转写并按公司政策判断资格或接手同一 Activity；不执行整个工作流。
 metadata:
-  change_summary: "同一原录像内补取归零原帧，继续原有覆盖与转写验收"
-  version: 0.8.5
+  change_summary: "明确交付原生身份、录制、唯一主判与持久读回的实际回执路径"
+  version: 0.8.6
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.qualification
-  activity_version: 3.5.5
+  activity_version: 3.5.6
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification/references/sdk31-capture.md
@@ -88,6 +88,8 @@ metadata:
 获授权的详情导航、播放/有界音量恢复、本人的录制进程与音视频/转写工件，以及原资格判定持久化是本活动副作用。实际音频送当前批准ASR（现役为DashScope），视频原文/政策送当前批准判断服务（现役含OpenRouter）；记录实际服务/模型，不新增数据接收方。不采评论、发送、切号或改政策。
 
 ## 结果与验收
+
+在 `proposal.evidence` 中列出本轮 `proof` 成功操作回执、本轮成功的原生视频链接回执、唯一 `qualify` 操作回执、五帧图和 JSON、持久读回的证据根相对路径。路径来自实际工具回执。把 `qualify` 宿主操作回执和模型 `judge-response.json` 分别列出。记录本轮唯一 VID、实际 ASR 与主判次数及有无触发重复输入。
 
 交付本次 Activity 的实际 `task_id/run_id/activity_ref`、`status`、`stop_reason`、输入对象身份、逐项结果、实际新增/历史/重复/未决计数、持久读回和证据位置、工具/模型实际调用与未知项、资源交接及副作用。工具或模型回执缺失写 unknown，不填 0；明确未调用才填 0。
 
