@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-102-qualification
 description: 交出有证据的视频资格结论。用于核对目标视频、录音转写并按公司政策判断资格或接手同一 Activity；不执行整个工作流。
 metadata:
   change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.8.3
+  version: 0.8.4
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.qualification
-  activity_version: 3.5.3
+  activity_version: 3.5.4
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification/references/sdk31-capture.md
@@ -69,6 +69,12 @@ metadata:
 开工时从当前 Task 的冻结输入核 qualification_input 中的 VID、时长覆盖、录制和 ASR 次数；用判重原生分享回执核同一 VID 和规范链接。核租约时使用同一 PostgreSQL 快照的 snapshot_at 与任务持有行 updated_at，按本 run owner、批次与 15 分钟窗口核对。导航后及录制前再核当前原生 VID，结束后提交本次媒体与覆盖证据。
 
 独立开工验收按配套契约使用只读 args.fields，只取冻结任务输入、设备和锁、同一快照租约及政策身份所需字段。已取得的同一事实跨条复用。执行 Agent 按原取证动作与证据交付方式运行。
+
+## 全片覆盖证据
+
+- 本轮新录制结束后，从本轮原录像解码归零、开头、中间、末尾和相同开头再次出现的原帧。完整播放后退出且没有循环时，最后一帧取实际播放完成的原始证据。归零时播放器的起始时间和总片长须完整入图，中间、末尾与再次开头保留足够辨认同一视频内容和进度的画面。单帧、播放器控件回显和容器总时长各自不能证明完整播放。
+- 在本轮证据目录交付 `receipts/coverage-five-frames.jpg` 与 `receipts/coverage-five-frames.json`。图中的 A、B、C、D、E 依次对应上述五个观察点，每格标出从原录像取得的 PTS 秒数。JSON 写明 `recording.name`（原录像 basename）、`recording.sha256`、`sheet_sha256` 与 `panels`（每格的标号、PTS 及原帧证据摘要）。从解码输出抄取 PTS，不能用提取命令的请求位置冒充实际 PTS。原帧和解码日志保留在本轮授权证据目录。
+- 用已有 `proof` 回执把单页图和 JSON 与原生 VID、录制启动/停止、音频提取、ASR 和主判回执一起交给 Checker。录制和提取回执分别固定为 `receipts/qual-record-start.json`、`receipts/qual-record-stop.json`、`receipts/qual-extract-audio.json`。从录制启动和停止回执取本轮 `capture_runtime_evidence_file`、SDK 与原生音轨证明文件，用已有工具取回 `native/`，逐份核对回执的 SHA256；在 proof 中引用实际原件。图和 JSON 只记录原件与观察点，最终覆盖判定由 Checker 按契约作出。只有同一媒体、有效原始时间轴和实际终点能组成完整覆盖证据时才提交采集候选；证据不足保留未决。
 
 ## 成功条件
 
