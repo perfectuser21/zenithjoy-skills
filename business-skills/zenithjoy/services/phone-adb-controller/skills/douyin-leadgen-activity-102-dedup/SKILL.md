@@ -2,15 +2,15 @@
 name: douyin-leadgen-activity-102-dedup
 description: 交出本轮可处理的视频集合。用于核验101来源、筛选与认领视频或接手同一判重 Activity；不执行整个工作流。
 metadata:
-  change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.8.0
+  change_summary: "按现有判重合同交付作者原生身份和视频租约读回原件"
+  version: 0.8.1
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.dedup
-  activity_version: 3.3.0
+  activity_version: 3.3.1
   validation: awaiting-real-run
   support_files: []
 
@@ -21,7 +21,7 @@ metadata:
 
 # 交出本轮可处理的视频集合
 
-仅执行 `douyin_video_processing.dedup`，使用业务合同版本 `3.3.0`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
+仅执行 `douyin_video_processing.dedup`，使用业务合同版本 `3.3.1`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -52,14 +52,27 @@ metadata:
 1. 按本轮明确输入定位101实际回执与持久记录，核run、VID、规范链接、公司/租户/line和来源证据。不是“最新目录”就可信，不按标题/作者昵称判重。跨批输入只有逐VID原来源、原子认领与当前合同明确支持时接受。
 2. 独立读取队列和原状态，排除合法完成、同公司同政策已确认不合格、人工隔离或别人的有效租约。技术错误造成的未知不是内容拒绝；发现历史错误状态时保留证据，通过当前已授权修复接口处置，不直接改状态。
 3. 按真实页面评论总量选普通（≤500）或深采（>500）；unknown须由当前授权原生复核或交回未决，不能用PG已采数量/默认0替代。确认无评论单列，不录音消耗采集预算。
-4. 通过当前事务领取精确授权VID，不扩大公司或批次范围。回复丢失先读 owner/VID/租约，不再次竞争领取；原子领取0条是实际空集合，不转领隔离旁VID。运行期间按原协议维护本人租约，不能抢其他owner或重置未知尝试。
+4. 先按下节核实待判重候选的作者身份。通过当前事务仅领取已证实为非自家作者且符合其余条件的精确授权VID。回复丢失先读 owner/VID/租约，不再次竞争领取；原子领取0条保留实际筛选原因，不转领隔离旁VID。运行期间按原协议维护本人租约，不能抢其他owner或重置未知尝试。
 5. 输出每条真实筛选与领取结果、来源和恢复入口；禁止在本活动录音、判视频资格、采评论或评分。
+
+## 作者原生身份与自家号过滤
+
+- 先读本轮冻结的101逐VID来源原件。已有可独立核实且能绑定精确VID的原生作者抖音号时直接使用。作者昵称、标题、头像、登录账号或评论者主页均不能作为该视频作者的抖音号。
+- 原件不足且当前设备上下文、工具、授权和业务预算仍有效时，只对仍可处理的精确授权VID补读。用现有签名 `open-video VID EID` 打开原视频，核对原生详情与此VID绑定。若现有原件没有独立VID绑定，按当前工具签名取得 `current-video-link` 的真实原生详情取链原件并核实其VID，不能只用 `open-video` 输出回显的输入值。用 `ui-evidence EID` 读当前原生树定位该视频详情中的作者入口，用 `tap-evidence X Y EID [WAIT_MS]` 留存点击路径，随后读取作者主页的原生XML和可用的截图。EID使用本run前缀，沿工具回执保留关联。核验页面从该视频的作者入口进入，读取页面明确标注的“抖音号”。通过当前工具公开的只读文件获取能力（本宿主已有 `fetch-native`）按原名保留原件并引用可读路径。VID绑定、作者入口、主页账号字段或原件可读性不明时，记录未决并保留现场交接。
+- 与本run冻结的同公司、同租户、抖音平台、已启用且已核验的 `douyin_id` 精确比对，保留配置版本、账号身份类型、比较结果与原件引用。主页短链或 `sec_uid` 可作为导航关联证据。只有已核实同一身份命名空间或有可信映射时，才可用于账号相等性比较。确认自家作者时按原政策排除。身份或配置不可核实时，本VID记 `unknown`，不能认领、进入可处理集合或资格阶段，也不能当成合法空集合的证据。
+- 交付逐VID的101来源引用、原生详情与作者导航回执、作者主页原件及路径和可用摘要、冻结公司政策版本及筛选结果。Checker自行读取原件及本run冻结政策。
+
+## 视频租约原件
+
+- 保留 `claim_videos` 真实动作回执与前后读回，记录精确VID、line、`process_status`、当前批次、原 `judgment_config.run_id`（适用时）、最后认领或续期时间。回复未知时按动作身份和原记录读回，不重领。
+- Checker通过既有只读 `pg.rows` 的 `videos` 关系取得同line、精确VID的原始行及数据库 `connection.snapshot_at`，对照认领回执与本run原始状态。当前冻结队列规则中，普通重领仅在处理中行的 `updated_at` 严格早于数据库时间减15分钟时开放。本run owner为 `处理中:<run_tag>` 且批次匹配时，结合数据库原始快照时间复算 `updated_at + 15分钟` 并核验适用的所有权。若后续冻结实现返回明确到期时间，按实际冻结实现取证。缺时间、所有权不一致或读回时已失效均如实交待。特殊交接仍遵循其冻结CAS规则。
+- 若真实提案协议提供 `evidence` 和 `outputs.Video`，引用实际原件并按合同交付已核集合。`raw-model-v1` 保留宿主可独立读回的原件和回执，完成后按原 `finish` schema 停止，不向 `finish` 增加字段。命令退出0、单独的 `harvest_batch`、模型摘要或当前墙钟不能代替租约读回。
 
 ## 来源证明与认领分支
 
 先区分101来源证明与认领接口分支：`producer_key`、`input_provenance` 或逐VID的 `upstream` 只证明已批准的101来源，不等于本次 `claim_videos` 请求带有受信 `producer_descriptor`。
 
-当前宿主明示 ordinary 且未提供 `producer_descriptor` 时，按真实 schema 先 `inspect_videos`，再以 `op:"claim_videos"`、`video_ids:本轮精确授权VID数组`、`limit:本轮冻结上限`、`config_required:true`、`source_run:null` 调用已授权业务接口；run/line沿宿主固定身份。已有 `matched` 且处于 `待判定` 的视频，或当前 `harvest_batch` 不同于101来源批次，不能仅据此判定不可认领；由原接口在事务中校验公司政策、精确VID和可领取状态并原子认领，不在Agent侧改状态或抢其他owner。以实际领取与读回为准，认领不等于本轮资格已通过。
+当前宿主明示 ordinary 且未提供 `producer_descriptor` 时，按真实 schema 先 `inspect_videos`，完成逐VID筛选后才以 `op:"claim_videos"`、`video_ids:已核为可认领的本轮精确授权VID数组`、`limit:本轮冻结上限`、`config_required:true`、`source_run:null` 调用已授权业务接口；run/line沿宿主固定身份。没有已核可认领VID时，不发起空认领。已有 `matched` 且处于 `待判定` 的视频，或当前 `harvest_batch` 不同于101来源批次，不能仅据此判定不可认领；由原接口在事务中校验公司政策、精确VID和可领取状态并原子认领，不在Agent侧改状态或抢其他owner。以实际领取与读回为准，认领不等于本轮资格已通过。
 
 只有本任务真实冻结、校验并向认领接口提供受信 `producer_descriptor` 时，才走producer交接例外：保留其中精确公司、完整政策、verified启用账号/设备、pending/待判定、原101 batch的CAS和单条上限；该分支不接受已matched、人工、批次漂移或过期处理中，不借普通TTL重领。不能自行构造descriptor、借用101 run改普通 `source_run`，或因例外拒绝切换分支。两条路径均保留原VID/公司/租约范围；领取0条不换领、不创建快照，未知回复先读原owner与租约。
 
@@ -69,7 +82,7 @@ metadata:
 
 ## 副作用
 
-业务读回和事务视频租约领取/续期会改变本轮队列owner；保留原来源和领取回执。默认不操作手机；只有本Activity明确授予的原生指标补读才可使用既有设备上下文，不借此录音、采评论或评分。
+业务读回与事务视频租约领取或续期分别留痕。本Activity明确授权且现有设备锁、精确VID和业务截止均符合要求时，可使用既有设备上下文补读原生指标或作者身份。原生导航只为取证，不录音、采评论、评分、关注、点赞或发送。
 
 ## 结果与验收
 
