@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-102-preflight
 description: 取得采集设备与账号执行上下文。用于采集预检、确认手机账号或接手同一预检 Activity；不执行整个工作流。
 metadata:
   change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.11.0
+  version: 0.11.1
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.preflight
-  activity_version: 2.6.0
+  activity_version: 2.6.1
   validation: awaiting-real-run
   support_files: []
 
@@ -21,7 +21,7 @@ metadata:
 
 # 取得采集设备与账号执行上下文
 
-仅执行 `douyin_video_processing.preflight`，使用业务合同版本 `2.6.0`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
+仅执行 `douyin_video_processing.preflight`，使用业务合同版本 `2.6.1`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -57,7 +57,7 @@ metadata:
 
 1. 读回本 Task、公司配置、设备注册和工具来源。公司、租户、line、profile、serial与目标账号须精确对应；按配置的明确启用/授权字段判断，不靠名字或昵称猜。注册表的在线状态不代替实际设备检查。
 2. 通过实际只读设备通道检查目标 serial、前台与通话状态。已有 controller 的 `preflight`、`status`、`window` 是能力示例；命令、参数及副作用先核当前 schema。不能把会先探测 ADB 的 `help` 当成纯文本查询；不启动/重启共享ADB、手机、网络或代理。
-3. 核中央 serial 租约和本地锁。如果宿主已持有，只读回原 owner，不重复取得或释放；若本任务明确授权直接取得，走现有精确领取协议并读回。被其他 owner 占用、未注册、离线或通话不 idle 时停止。Task记账回写与设备租约分别核验，不能用 queued 或 CLI退出替代真实资源归属。
+3. 核中央 serial 租约和本地锁。如果宿主已持有，只读回原 owner，不重复取得或释放；若本任务明确授权直接取得，走现有精确领取协议并读回。被其他 owner 占用、未注册、离线或通话不 idle 时停止。Task记账回写与设备租约分别核验，不能用 queued 或 CLI退出替代真实资源归属。保留宿主返回的本地与中央取得回执，交出工具回执路径、owner、中央租约版本和独立状态读回。手机网关返回的原始路径仅作来源线索，不把它拼接成运行目录下的附件。
 4. 持有效授权打开抖音。用本轮新鲜前台、截图、控件树及原生账号读取确认实际抖音号；例如实际工具提供 `open-app`、`account-current EID` 时按其签名调用。账号、公司或设备不符、登录挑战、PIN/验证码、风控时停止，不自行切号或换云/实体设备。
 5. 确定后续资源由谁持有、谁收尾。输出真实中央 owner/lease version、本地 owner、资源截止及清理责任；后续 Activity沿用，不把 Task UUID、manual owner、工具 nonce混为同一身份。
 
