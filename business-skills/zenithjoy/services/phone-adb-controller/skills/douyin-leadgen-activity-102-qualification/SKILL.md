@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-102-qualification
 description: 交出有证据的视频资格结论。用于核对目标视频、录音转写并按公司政策判断资格或接手同一 Activity；不执行整个工作流。
 metadata:
   change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.8.2
+  version: 0.8.3
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.qualification
-  activity_version: 3.5.2
+  activity_version: 3.5.3
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification/references/sdk31-capture.md
@@ -22,7 +22,7 @@ metadata:
 
 # 交出有证据的视频资格结论
 
-仅执行 `douyin_video_processing.qualification`，使用业务合同版本 `3.5.2`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
+仅执行 `douyin_video_processing.qualification`，使用业务合同版本 `3.5.3`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -67,6 +67,8 @@ metadata:
 11. 缓存只复用同真实VID、公司/租户/政策版本匹配且原结论证据有效者。旧matched的原 `judgment_config.run_id`不重写；本轮资格回执另列cached/fresh、旧判断run、本轮原生身份摘要。正式采样交接仍须原run/binding/source SHA/VID的资格主span及原Step/Activity pass，失败或partial不放采集。
 
 开工时从当前 Task 的冻结输入核 qualification_input 中的 VID、时长覆盖、录制和 ASR 次数；用判重原生分享回执核同一 VID 和规范链接。核租约时使用同一 PostgreSQL 快照的 snapshot_at 与任务持有行 updated_at，按本 run owner、批次与 15 分钟窗口核对。导航后及录制前再核当前原生 VID，结束后提交本次媒体与覆盖证据。
+
+独立开工验收按配套契约使用只读 args.fields，只取冻结任务输入、设备和锁、同一快照租约及政策身份所需字段。已取得的同一事实跨条复用。执行 Agent 按原取证动作与证据交付方式运行。
 
 ## 成功条件
 
