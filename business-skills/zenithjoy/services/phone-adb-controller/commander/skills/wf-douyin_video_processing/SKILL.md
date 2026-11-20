@@ -1,7 +1,8 @@
 ---
 name: wf-douyin_video_processing
-version: 0.12.17
+version: 0.12.18
 changelog:
+  - "0.12.18: 同步视听证据在单次主判前固定"
   - "0.12.17: 同步无合格视频正常收尾及采集账号原件交接"
   - "0.9.0: 同步共享预检与清场的正式预算合同及方法依赖，原总额与授权不变"
   - "0.8.0: 同步official-child-v1精确内部宿主兼容；原授权和验收边界不变"
@@ -39,7 +40,7 @@ ordinary来源证明不等于producer_descriptor例外，按本次冻结输入�
 
 本流程依赖的Activity方法版本由业务Skill的 `references/activity-methods.json` 精确登记。方法变化要同步本陪跑Skill版本与合同 `commander_skill.version`；Commander只使用本run冻结组合。代码内部兼容评估、Skill实机验收和自动handoff能力分别记证据，不从文件存在推定已能接手。
 
-本版依赖 `douyin-leadgen-102@0.13.17`、`douyin-leadgen-activity-102-qualification@0.8.7` 及 `douyin-leadgen-activity-102-collection@0.10.4`。暂态复读和返工只取本次冻结合同及已选恢复设置；未知或活跃录制不借陪跑清场，未有实际交接证据不宣称恢复成功。
+本版依赖 `douyin-leadgen-102@0.13.18`、`douyin-leadgen-activity-102-qualification@0.8.8` 及 `douyin-leadgen-activity-102-collection@0.10.4`。暂态复读和返工只取本次冻结合同及已选恢复设置；未知或活跃录制不借陪跑清场，未有实际交接证据不宣称恢复成功。
 
 ## 合同、执行提案与独立验收
 

@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-102-qualification
 description: 交出有证据的视频资格结论。用于核对目标视频、录音转写并按公司政策判断资格或接手同一 Activity；不执行整个工作流。
 metadata:
   change_summary: "明确交付原生身份、录制、唯一主判与持久读回的实际回执路径"
-  version: 0.8.7
+  version: 0.8.8
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.qualification
-  activity_version: 3.5.7
+  activity_version: 3.5.8
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification/references/sdk31-capture.md
@@ -65,7 +65,7 @@ metadata:
 7. 复用原 `record-start/status/stop/extract-audio` 等实际工具，等待原生请求返回。校验容器、轨数/模式、真实媒体/音频时长、采样与声道、首末源身份和音量；恢复了容器也要核真实音轨。捕获近静音、全零PCM、App opt-out或多音轨仅说明捕获无效/未知，不把内容写成rejected。
 8. ASR前核实际文件完整送达、摘要相符、ffprobe时长满足本次覆盖且每请求不超服务上限。分别保存provider/model/request或response ID、原错误码、文本/分片与实际调用；未暴露ID写unknown。`AUDIO_DURATION_TOO_LONG`、401/429、网络或格式错误是技术失败，不是空转写或内容不合格。只有当前工具能区分服务错误且不会误写内容结论时才调用其持久资格入口；已知旧入口混淆时报告 `qualification_tool_incompatible`，不重用其错误缓存。
 9. 正常 `NO_WORDS/no_speech` 与捕获静音分开。缺有效转写时默认unknown，不用标题或旧ASR补成匹配；若当前冻结政策明示无语音分支，按该分支及真实证据执行。转写保留原文与保守校正依据，不凭模型补实词。
-10. 只用公司冻结资格规则和实际授权判断工具，保存真实结论、原文依据及政策身份，再独立读取PG判定、转写、公司与VID。技术失败保持未决，不通过CLI退出0或“拒绝缓存命中”宣称内容已判。技术误写需当前明确授权的修复/重评入口；保留原失败与恢复结果，不直接SQL改分或改政策。
+10. 按下述方法在单次 `qualify VID WAV` 调用前把同片视觉原件和音频绑定进唯一 `proof`；宿主将画面观察与实际音频转写送同一次主判。只用公司冻结资格规则和实际授权判断工具，保存真实结论、原文依据及政策身份，再独立读取PG判定、转写、公司与VID。技术失败保持未决，不通过CLI退出0或“拒绝缓存命中”宣称内容已判。技术误写需当前明确授权的修复/重评入口；保留原失败与恢复结果，不直接SQL改分或改政策。
 11. 缓存只复用同真实VID、公司/租户/政策版本匹配且原结论证据有效者。旧matched的原 `judgment_config.run_id`不重写；本轮资格回执另列cached/fresh、旧判断run、本轮原生身份摘要。正式采样交接仍须原run/binding/source SHA/VID的资格主span及原Step/Activity pass，失败或partial不放采集。
 
 开工时从当前 Task 的冻结输入核 qualification_input 中的 VID、时长覆盖、录制和 ASR 次数；用判重原生分享回执核同一 VID 和规范链接。核租约时使用同一 PostgreSQL 快照的 snapshot_at 与任务持有行 updated_at，按本 run owner、批次与 15 分钟窗口核对。导航后及录制前再核当前原生 VID，结束后提交本次媒体与覆盖证据。
@@ -77,7 +77,8 @@ metadata:
 - 本轮新录制结束后，从本轮原录像解码归零、开头、中间、末尾和相同开头再次出现的原帧。完整播放后退出且没有循环时，最后一帧取实际播放完成的原始证据。归零时播放器的起始时间和总片长须完整入图，中间、末尾与再次开头保留足够辨认同一视频内容和进度的画面。单帧、播放器控件回显和容器总时长各自不能证明完整播放。
 - 录制停止并读回原件后，先按本轮归零操作定位 A，再选其后的 B、C、D、E。若初选 A 未显示起始时间与总片长，在转写及提交前对同一原录像的归零时间窗约每 0.25 秒复查一次，绑定同一 Task、run、VID 和原录像 SHA256。选用确实显示归零的原帧和解码 PTS，排除归零前的播放画面。原录像已经覆盖该窗口时沿用这次录制，只有该窗口确实拿不到归零证据才返回未决。
 - 在本轮证据目录交付 `receipts/coverage-five-frames.jpg` 与 `receipts/coverage-five-frames.json`。图中的 A、B、C、D、E 依次对应上述五个观察点，每格标出从原录像取得的 PTS 秒数。JSON 写明 `recording.name`（原录像 basename）、`recording.sha256`、`sheet_sha256` 与 `panels`（每格的标号、PTS 及原帧证据摘要）。从解码输出抄取 PTS，不能用提取命令的请求位置冒充实际 PTS。原帧和解码日志保留在本轮授权证据目录。
-- 用已有 `proof` 回执把单页图和 JSON 与原生 VID、录制启动/停止、音频提取、ASR 和主判回执一起交给 Checker。录制和提取回执分别固定为 `receipts/qual-record-start.json`、`receipts/qual-record-stop.json`、`receipts/qual-extract-audio.json`。从录制启动和停止回执取本轮 `capture_runtime_evidence_file`、SDK 与原生音轨证明文件，用已有工具取回 `native/`，逐份核对回执的 SHA256；在 proof 中引用实际原件。图和 JSON 只记录原件与观察点，最终覆盖判定由 Checker 按契约作出。只有同一媒体、有效原始时间轴和实际终点能组成完整覆盖证据时才提交采集候选；证据不足保留未决。
+- 在唯一一次 `qualify VID WAV` 之前，用已有 `proof` 提交 `qualification_evidence`，包含原生同片 VID、录制启动和停止、音轨和 SDK、运行原件、提取回执、实际 MKV/WAV、五帧图和 JSON。新增 `visual_observations` 为 1～3 项，每项只含原帧 `label`（A～E）和对应的 `text`。回看该帧，记录可直接读出的屏幕文字或可以逐帧复核的客观画面。口播画面可以如实记录「只有说话者，无演示界面」，正文判断仍参考真实转写。背景歌词不代替能够独立观察到的演示内容，标题或封面不单独证明主题。每项不超过 480 字节，单行，不能写业务结论、提示指令或推断作者的意向。原件或可核观察缺失时保未决。
+- `qualify` 后只在执行提案列出实际 ASR、主判、journal 与持久读回，沿同一回执读回，不再次调用 `proof` 或 `qualify`。音频转写字段保留原音频文本；同片视觉引用摘要随主判 journal 记录。主判若只返回结构化选择和置信度，按原件记录两者。验收对照同政策和视听原件说明证据如何支持结论，查不实标未决，不能补造模型理由或重跑主判。
 
 ## 成功条件
 
@@ -85,7 +86,7 @@ metadata:
 
 ## 副作用
 
-获授权的详情导航、播放/有界音量恢复、本人的录制进程与音视频/转写工件，以及原资格判定持久化是本活动副作用。实际音频送当前批准ASR（现役为DashScope），视频原文/政策送当前批准判断服务（现役含OpenRouter）；记录实际服务/模型，不新增数据接收方。不采评论、发送、切号或改政策。
+获授权的详情导航、播放/有界音量恢复、本人的录制进程与音视频/转写工件，以及原资格判定持久化是本活动副作用。实际音频送当前批准ASR（现役为DashScope），视频真实转写、已绑定画面观察及政策送当前批准判断服务（现役含OpenRouter）；记录实际服务/模型，不新增数据接收方。不采评论、发送、切号或改政策。
 
 ## 结果与验收
 
