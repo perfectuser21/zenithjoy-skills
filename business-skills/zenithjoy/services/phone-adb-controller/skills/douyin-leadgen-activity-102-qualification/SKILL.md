@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-102-qualification
 description: 交出有证据的视频资格结论。用于核对目标视频、录音转写并按公司政策判断资格或接手同一 Activity；不执行整个工作流。
 metadata:
   change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.8.0
+  version: 0.8.1
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.qualification
-  activity_version: 3.5.0
+  activity_version: 3.5.1
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification/references/sdk31-capture.md
@@ -22,7 +22,7 @@ metadata:
 
 # 交出有证据的视频资格结论
 
-仅执行 `douyin_video_processing.qualification`，使用业务合同版本 `3.5.0`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
+仅执行 `douyin_video_processing.qualification`，使用业务合同版本 `3.5.1`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -49,6 +49,8 @@ metadata:
 输入本人已领取VID/规范链接、来源、公司冻结资格政策及版本、设备与实际账号上下文、录制/ASR/判断/保存工具、本次明确覆盖范围和截止。覆盖是全片还是获授权的前N秒，以本次合同为准；不从旧手册自动套“前5分钟=全文”或默认3倍速。
 
 输出每VID `matched/rejected/unknown`、真实理由/政策、cached或fresh、原判断run、当前原生身份与音频/转写证据、持久判定读回。只有有效资格结果能交采集。
+
+开工时核冻结政策、覆盖和捕获配置、设备锁及已认领 VID。当前原生视频身份、实际录制路径及媒体原件均在本活动执行时取得，并由后置验收核对。命中旧 matched 时，先核原判断证据与本轮原生身份；原件不可读则保留历史结论并交付未决，不凭旧转写通过，不重写原判断来补缓存证据。
 
 ## 操作
 
