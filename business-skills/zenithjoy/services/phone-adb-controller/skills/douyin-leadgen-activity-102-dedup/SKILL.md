@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-102-dedup
 description: 交出本轮可处理的视频集合。用于核验101来源、筛选与认领视频或接手同一判重 Activity；不执行整个工作流。
 metadata:
   change_summary: "按现有判重合同交付作者原生身份和视频租约读回原件"
-  version: 0.8.2
+  version: 0.8.3
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.dedup
-  activity_version: 3.3.1
+  activity_version: 3.3.2
   validation: awaiting-real-run
   support_files: []
 
@@ -21,7 +21,7 @@ metadata:
 
 # 交出本轮可处理的视频集合
 
-仅执行 `douyin_video_processing.dedup`，使用业务合同版本 `3.3.1`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
+仅执行 `douyin_video_processing.dedup`，使用业务合同版本 `3.3.2`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -46,6 +46,8 @@ metadata:
 ## 输入与交付
 
 输入公司/政策、明确视频范围与101来源回执、真实VID/链接、页面评论指标及 ordinary/deep/auto 策略、领取数量/截止和队列工具。输出逐VID的 received/eligible/claimed/skipped、排除原因、真实 owner/租约期限、原来源及后续资格输入。
+
+正式交付的 `outputs.Video[].comment_count` 取认领后同业务线、同 VID 的数据库实采评论数，有读回原件的 0 是有效值。原生页面评论总数单列为逐 VID 的取证和采集策略依据，不能填进 `comment_count`，实采 0 也不能推断页面评论数为 0。若缺少认领后的数据库读回，则该字段未决。
 
 ## 操作
 
