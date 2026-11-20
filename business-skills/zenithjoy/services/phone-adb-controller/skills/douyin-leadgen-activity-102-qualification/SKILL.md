@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-102-qualification
 description: 交出有证据的视频资格结论。用于核对目标视频、录音转写并按公司政策判断资格或接手同一 Activity；不执行整个工作流。
 metadata:
   change_summary: "明确交付原生身份、录制、唯一主判与持久读回的实际回执路径"
-  version: 0.8.6
+  version: 0.8.7
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.qualification
-  activity_version: 3.5.6
+  activity_version: 3.5.7
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification/references/sdk31-capture.md
@@ -81,7 +81,7 @@ metadata:
 
 ## 成功条件
 
-本次所有目标VID都有可验证的真实资格结果；真实rejected可以是本活动完成结果，但不产生可采资格。存在捕获、ASR、身份或工具未知则相应VID为unknown并交partial/blocked。不打开评论采集、不评分、不替后续活动报完成。
+本次所有目标VID都有可验证的真实资格结果。保留逐VID的真实判断、持久读回和原始证据。如果所有已认领目标均由原政策真实判为 rejected，提交完整执行提案并注明「无合格视频」，由独立 Checker 验完所有条款后给出 empty，流程进 cleanup。只为独立验收通过的 matched 视频提供采集资格。存在捕获、ASR、身份或工具未知则相应VID为unknown并交partial/blocked，不能按无合格视频收尾。不打开评论采集、不评分、不替后续活动报完成。
 
 ## 副作用
 
