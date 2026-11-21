@@ -3,7 +3,7 @@ name: douyin-leadgen-101
 description: Workflow 101的活动组织与交接目录；实际执行由各Activity自己的Skill完成，不作为单Activity操作方法。
 metadata:
   change_summary: "0.10.0: 仅保留Workflow编排目录，Activity方法各自完整，退役旧手册执行引用"
-  version: 0.12.8
+  version: 0.12.9
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-101/references/activity-methods.json
@@ -31,7 +31,7 @@ metadata:
 | Activity | 唯一操作Skill | 方法版本 |
 |---|---|---|
 | `preflight` | [douyin-leadgen-activity-102-preflight](../douyin-leadgen-activity-102-preflight/SKILL.md) | `0.11.1` |
-| `collect_videos` | [douyin-leadgen-activity-101-collect-videos](../douyin-leadgen-activity-101-collect-videos/SKILL.md) | `0.11.0` |
+| `collect_videos` | [douyin-leadgen-activity-101-collect-videos](../douyin-leadgen-activity-101-collect-videos/SKILL.md) | `0.12.0` |
 | `cleanup` | [douyin-leadgen-activity-102-cleanup](../douyin-leadgen-activity-102-cleanup/SKILL.md) | `0.11.2` |
 
 机器引用真身为[Activity方法清单](references/activity-methods.json)，版本必须与上述方法文件一致。101/102共用同一份preflight与cleanup，不复制。

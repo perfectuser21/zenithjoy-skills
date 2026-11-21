@@ -2,15 +2,15 @@
 name: douyin-leadgen-activity-101-collect-videos
 description: 按关键词交出筛选后的视频链接。用于采集关键词搜索结果或接手同一视频发现 Activity；不执行整个工作流。
 metadata:
-  change_summary: "正式Video逐行内联完整业务字段，原XML以真实证据引用交接；不新增执行授权"
-  version: 0.11.0
+  change_summary: "交付按本轮和逐视频组织的原件清单，由底座统一归档"
+  version: 0.12.0
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_discovery.collect_videos
-  activity_version: 5.4.0
+  activity_version: 5.5.0
   validation: awaiting-real-run
   support_files: []
 
@@ -50,6 +50,12 @@ metadata:
 输出逐视频真实 `line_key/video_id/video_url/title/author/keyword/comment_count/harvest_batch` 与 `discovery_metrics`：同视频原始点赞/页面评论显示值、解析值或 null、分档、观测时间、身份与证据摘要。业务字段 `comment_count` 保留102“已采评论数量”语义，不存页面评论总数。另报实际成功唯一VID数、尝试数、重复观测、停止原因和 `all_results_scanned`。
 
 ## 逐VID交付与证据索引
+
+如果冻结契约声明了 `delivery`，在最终提案原有 `outputs` 和 `evidence` 之外，按其 schema 提交 `handoff`。共享原件放在 `handoff.run`，逐视频原件以 `outputs.Video` 中的真实 `video_id` 为键。每个值是本轮工具返回的可读相对文件路径。宿主统一归档，执行者只提交实际原件的路径。
+
+- `handoff.run.video_page_xml` 和 `handoff.run.cards_xml` 取页签切换与卡片采集回执中的原件名，用 `fetch-native` 取回设备存档。分享页的原始 XML 同样从本轮存档取回。
+- `filters_receipt` 填实际筛选回执。 `selected_page` 和 `results_page` 填实际筛选选中项和应用后的结果页截图。
+- 逐视频填 `share_xml`、`link_receipt`、`write_receipt` 和 `readback_receipt`，四个文件须对应同一 VID。真实空结果交 `handoff.run` 的空卡片与筛选原件，逐视频组留空。缺原件如实记录，禁止用截图摘要、猜测路径或另一轮的原件代替。
 
 完成前按本次冻结输出 schema 逐VID交付 `Video`，不能仅报两条总数或指标片段。持久字段 `line_key/video_id/video_url/title/keyword/comment_count/harvest_batch` 与完整 `discovery_metrics` 的业务字段取同VID实际PG读回；保留指标对象中的原始显示值、解析值或 null、分档、观测时间、run/profile/来源、公司绑定及原件摘要，不将对象缩成点赞和评论两个数字。`comment_count` 是102已采评论数量，不能将页面 `comment_total` 填入，也不能因旧工具没返回而补默认0。`author` 使用本VID原生卡片与取链绑定证据，不把PG没有的字段冒称持久列。
 
