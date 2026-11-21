@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-102-collection
 description: 交出持久化且身份可验证的评论。用于从合格视频采集评论并读回或接手同一评论采集 Activity；不执行整个工作流。
 metadata:
   change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.10.4
+  version: 0.10.5
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.collection
-  activity_version: 2.8.4
+  activity_version: 2.8.5
   validation: awaiting-real-run
   support_files: []
 
@@ -21,7 +21,7 @@ metadata:
 
 # 交出持久化且身份可验证的评论
 
-仅执行 `douyin_video_processing.collection`，使用业务合同版本 `2.8.3`。方法版本变化不修改Activity身份或公司业务政策。本版补充普通API显式交接与凭证补齐方法；离线校验不等于实机验收。
+仅执行 `douyin_video_processing.collection`，使用业务合同版本 `2.8.5`。方法版本变化不修改Activity身份或公司业务政策。本版允许连续性可证时复用已验收的视频身份原件，保留普通API显式交接与凭证补齐方法；离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -47,14 +47,16 @@ metadata:
 
 输入已领且有效matched的VID/链接、公司/政策、当前原生账号与租约、qualification回执、`comment_limit`/策略/范围/预算、原历史评论核验工具和提交/读回工具。采样数量来自当前任务；5条是已有实测任务的授权值，不是所有任务默认上限。
 
-开工前只核本轮已独立验收的资格交付、有效租约、冻结身份和配额。本轮判定链接和预检账号原件分别按 `qualification` 的 `phone/current-video-link` 和 `preflight` 的 `phone/account-current` 成功终态查找，并核原始 Task/run、VID 和账号。采集输入 Account 由宿主交接的 sender_id 与同一次预检回执的真实昵称共同组成。复用上述原件，核成功退出、Task/run、操作及 stdout 的 douyin_id= 与 sender_id 一致，然后取同一 stdout 的 nickname=。若宿主也交接昵称，两个值必须相同。原件缺失、昵称为空或身份冲突时报告未决。回执名由执行者生成。评论正文、原生 UID、主页链接、返回评论页原件、历史命中和真实已提交数由采集执行后交付，再由独立 Checker 核对。 用宿主的 context.Video、原生资格链接、同一 PG 快照的行租约及 Task 已冻结的 comment_limit、显式 VID、上游和剩余时间核对开工条件。普通 persisted_run 的 source_run 可为 null，按目标所对应的 scope.upstream 确认真实来源。未提供可选历史输入时不先扫描历史池；若执行中实际命中历史，仍按原规则验收。采集 Agent 启动后再对当前页面重新核原生 VID。
+开工前只核本轮已独立验收的资格交付、有效租约、冻结身份和配额。本轮判定链接和预检账号原件分别按 `qualification` 的 `phone/current-video-link` 和 `preflight` 的 `phone/account-current` 成功终态查找，并核原始 Task/run、VID 和账号。采集输入 Account 由宿主交接的 sender_id 与同一次预检回执的真实昵称共同组成。复用上述原件，核成功退出、Task/run、操作及 stdout 的 douyin_id= 与 sender_id 一致，然后取同一 stdout 的 nickname=。若宿主也交接昵称，两个值必须相同。原件缺失、昵称为空或身份冲突时报告未决。回执名由执行者生成。评论正文、原生 UID、主页链接、返回评论页原件、历史命中和真实已提交数由采集执行后交付，再由独立 Checker 核对。 用宿主的 context.Video、原生资格链接、同一 PG 快照的行租约及 Task 已冻结的 comment_limit、显式 VID、上游和剩余时间核对开工条件。普通 persisted_run 的 source_run 可为 null，按目标所对应的 scope.upstream 确认真实来源。未提供可选历史输入时不先扫描历史池；若执行中实际命中历史，仍按原规则验收。采集入口按下述页面连续性规则核原生身份；不因切换 Activity 会话而重复分享取链。
 
 输出完整评论的原文、原显示时间/地区、昵称、稳定 `douyin_id`、主页/视频链接、真实评论ID或明确近似去重键、line、batch、原生关联证据、`recipient_evidence`、PG ID与读回；另列新增、history_verified、duplicates、coverage及最后成功批次。未知身份原件单独留存，不能冒完整可消费行。
 
 ## 操作
 
 1. 重核本轮VID的有效资格、公司/政策、原生账号和当前租约；失败/unknown资格不采。已证0评论使用当前正式零评论分支及同VID证据；无数字不当0。旧matched缓存须本轮原生身份核实与同公司/政策，并保留旧判断run。
-2. 用已确认VID/deeplink直接回详情（工具可提供 `open-video VID EID`），不重新搜索猜同标题。核前台与当前视频，再用新鲜控件定位评论入口；`open-comments EID` 是已有能力示例，参数以当前schema为准。验评论列表出现、输入框未聚焦、键盘未弹出。
+2. 先核页面连续性，再复用已验收的视频身份原件：同一 Task/run、VID、设备与本轮锁 owner/有效租约均一致；读取资格活动的实际交付及成功原生取链回执，保留原路径及 SHA-256，核真实内容，不复制改名、改 EID 或伪称新回执。检查宿主从该回执后的真实工具序列，并取当前原生 UI/页面原件；确认没有切换视频、外部接管或未知导航，且仍为原视频详情或其评论页。仅同标题、昵称或 Agent 自述不能证明连续性。
+   连续性可证时不重复调用 `current-video-link`，也不重开详情：已经在同视频评论页就直接读列表，仍在详情就用当前新鲜控件打开评论。无法证明页面连续性、身份冲突、原件/摘要缺失或锁曾交接时，按原方法重新定位并取链，取得新鲜同 VID 证据再继续；可用已确认 VID/deeplink 的 `open-video VID EID`，不重新搜索猜同标题。`open-comments EID` 参数以当前 schema 为准；验评论列表出现、输入框未聚焦、键盘未弹出。
+   入口复用不能替代后续逐评论的 UID、完整正文、真实主页与返回同视频的原生配对。已有 `after-card` 配对和主页分享取链仍按各自工具原签名执行，不能拿资格阶段回执冒充采集后的 per-row EID。
 3. 按任务配额和范围逐屏读小批，不把全评论塞给模型。保存完整正文、原始时间/地区、评论列表锚点与当前VID。相关搜索块、广告UI与回复计数不当独立完整评论；未展开回复不能报全量。
 4. 以当前工具返回的评论头像坐标和昵称编码原样进入该人的主页，核显示名、原生抖音号/稳定身份、主页链接及账号类型，再返回同一评论上下文。已有 `commenter-identity X Y B64 EID` 等操作须先核实际签名；不要把昵称当坐标、自己改工具给出的base64或用相似账号补ID。只接受当前PG/schema要求的原生身份字段，不拿昵称哈希代平台ID。
 5. 一条核验失败不丢弃其他已核条目。组织号、号不可见、身份冲突分别保留原件及 `non_lead_org/identity_partial/identity_unverified` 等当前工具允许状态；是否可入库、排除或交付由当前冻结合同决定。缺稳定身份的对象不得标可触达；旧手册“连同正文都写原始池”不覆盖当前完整字段门禁。
