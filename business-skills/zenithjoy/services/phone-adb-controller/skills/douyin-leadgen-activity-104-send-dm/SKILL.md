@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-104-send-dm
 description: 交出一次可核验的批准私信发送结果。用于执行已授权单次私信或接手同一触达 Activity；不执行整个工作流。
 metadata:
-  version: 1.4.0
+  version: 1.4.1
   activity_ref: douyin_lead_outreach.send_dm
-  activity_version: 6.1.0
+  activity_version: 6.1.1
   validation: awaiting-real-run
   support_files: []
   method_role: single-activity
@@ -13,7 +13,7 @@ metadata:
 
 # 交出一次可核验的批准私信发送结果
 
-仅执行 `douyin_lead_outreach.send_dm`，业务合同版本 `6.1.0`。本方法自包含，普通任务不以旧Skill、Workflow母说明或Commander会话作为操作前置。
+仅执行 `douyin_lead_outreach.send_dm`，业务合同版本 `6.1.1`。本方法自包含，普通任务不以旧Skill、Workflow母说明或Commander会话作为操作前置。
 
 ## 合同、执行提案与独立验收
 
@@ -41,7 +41,7 @@ metadata:
 - 输入 `Account`：`profile`、`sender_id`、`dm_paused`、`daily_cap`。
 - 输入 `Device`：`serial`、`lock_holder`。
 - 输入 `OutreachOrder`：原canonical合格未发送订单、批准话术快照及原资格证据。有界测试另输入 `OutreachScope`：本run冻结的唯一飞书 record_id、原comment_id、公司及来源身份。
-- 输入 `RecipientQualification`：原订单关联的公司资格与原生身份快照。
+- 输入 `RecipientQualification`：原订单关联的公司资格、103 评分存档与原生身份快照。
 - 更新 `OutreachOrder`：`lead_record_id`、`douyin_id`、`sender_id`、`script_id`、`message`、`result`。
 
 公司、task/run、截止、源码及执行权从本次已授权任务上下文读取；正式宿主同时核对原冻结绑定。缺字段保持缺失并报告，不从示例或其他租户补。
@@ -49,6 +49,7 @@ metadata:
 ## 操作
 
 1. 只使用本公司原canonical订单及批准正文。普通 `company_queue` 模式按该公司的现行资格与排序领取最多一单；`LEADGEN_OUTREACH_MODE=exact` 有界测试模式必须从 `LEADGEN_OUTREACH_SCOPE_FILE` 私有文件冻结唯一飞书 record_id 与 comment_id、公司及来源身份，交叉核对原出站映射和订单；仅领取完全匹配的订单，不领取旁单。精确范围缺失、未知、重复或未匹配则拒发，不能以 `limit=1` 或全公司排序首单代替精确范围。核对稳定目标UID/主页、发送账号、模板与准确内容；已知范围内订单确实无合格候选才记empty。
+   领取前使用受控宿主读回原订单关联的 103 评分。历史 provider 记录须有其原始响应标识，新 Agent 记录须核对宿主绑定的 scoring 身份、评分输入及答案摘要。两种记录都要匹配同一条原评论和该公司的当前冻结政策。来源或摘要缺失、不符或未知时保持 blocked，保留原单。评分通过后仍要分别核对本次发送授权、发送账号、暂停和额度。
 2. 沿订单原生主页链接进入并核对真实目标。深链降为搜索或返回相似账号时重新核对稳定身份，不能按昵称相似发送。
 3. 发送前必须由正式状态机确认同一持久动作prepared及独占执行权；保存同一目标、账号、内容哈希和发送前会话证据。没有受控单Activity接口时保持blocked，不用裸controller替代业务prepare。
 4. 执行一次真实发送，核对同一会话、准确正文、新气泡增量、前台与风险原件。已存在气泡不算新发，不重复点击。

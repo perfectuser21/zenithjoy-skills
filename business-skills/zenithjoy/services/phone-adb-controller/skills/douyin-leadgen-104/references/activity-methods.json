@@ -10,7 +10,7 @@
     {
       "activity_ref": "douyin_lead_outreach.send_dm",
       "skill_name": "douyin-leadgen-activity-104-send-dm",
-      "skill_version": "1.4.0",
+      "skill_version": "1.4.1",
       "skill_path": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-send-dm/SKILL.md"
     },
     {

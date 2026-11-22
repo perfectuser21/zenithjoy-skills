@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_video_processing
-version: 0.12.20
+version: 0.12.21
 changelog:
   - "0.12.19: 同步采集入口的视频身份交接版本"
   - "0.12.18: 同步视听证据在单次主判前固定"
@@ -41,7 +41,7 @@ ordinary来源证明不等于producer_descriptor例外，按本次冻结输入�
 
 本流程依赖的Activity方法版本由业务Skill的 `references/activity-methods.json` 精确登记。方法变化要同步本陪跑Skill版本与合同 `commander_skill.version`；Commander只使用本run冻结组合。代码内部兼容评估、Skill实机验收和自动handoff能力分别记证据，不从文件存在推定已能接手。
 
-本版依赖 `douyin-leadgen-102@0.13.20`、`douyin-leadgen-activity-102-qualification@0.8.8` 及 `douyin-leadgen-activity-102-collection@0.10.6`。暂态复读和返工只取本次冻结合同及已选恢复设置；未知或活跃录制不借陪跑清场，未有实际交接证据不宣称恢复成功。
+本版依赖 `douyin-leadgen-102@0.13.21`、`douyin-leadgen-activity-102-qualification@0.9.0` 及 `douyin-leadgen-activity-102-collection@0.10.6`。暂态复读和返工只取本次冻结合同及已选恢复设置；未知或活跃录制不借陪跑清场，未有实际交接证据不宣称恢复成功。
 
 ## 合同、执行提案与独立验收
 
