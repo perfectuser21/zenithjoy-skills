@@ -32,7 +32,7 @@
       "cleanup只释放未prepare的本run claimed订单；prepared或发后未知保持保留",
       "delivery_verified=false：不推断送达/已读"
     ],
-    "independence": "不需要103 tag或同轮score；ready空队列记send_dm/write_back skipped，不能算发送1。",
+    "independence": "无需启动103或同轮评分。领取只读核对订单关联的原103评分存档与现行冻结政策，兼容历史provider响应标识和宿主绑定的Agent scoring身份及证据摘要。独立核对本次发送授权和额度。已证无合格候选时send_dm/write_back记skipped。",
     "mmv_device_runtime": {
       "flag": "LEADGEN_MMV_DEVICE_RUNTIME=1",
       "registry": "DOUYIN_PHONE_REGISTRY指向本机实读登记表；profile与serial各唯一、精确匹配且enabled=true",

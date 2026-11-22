@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_lead_outreach
-version: 0.9.2
+version: 0.9.3
 description: "抖音线索触达 wf_run 陪跑说明：显式加载本次冻结业务Skill，保持原合同与安全交接边界。"
 ---
 
@@ -10,7 +10,7 @@ description: "抖音线索触达 wf_run 陪跑说明：显式加载本次冻结�
 
 使用本run实际冻结的执行入口、方法及工具；本wrapper只组织和交接，不赋予另开旧CLI、重派执行者或改变协议的权限。
 
-`send_dm` 只按当前Activity合同核真实发送结果；没有原生发送证据保持失败或未知，不以旧specific探针名字或执行者自述替代证据。
+`send_dm` 按本轮冻结方法核验原订单的评分来源，再按当前Activity合同核真实发送结果；没有原生发送证据保持失败或未知，不以旧specific探针名字或执行者自述替代证据。
 
 先从本run已验证的冻结部署清单读取工作流业务Skill `runtime/skills/douyin-leadgen-104/SKILL.md` 及其 `references/activity-methods.json`，核对本run源码和每文件SHA。再从 `run-definition.json` 对应Activity的 `implementations` 选择确切 `kind: skill`、name/version/source/digest，并按真实 `execution_path` 读取独立Activity Skill及其支持文件。Workflow清单必须与各Activity冻结绑定完全一致；不能再把整流程业务Skill路径当成每个Activity方法。最新部署副本或本机Codex链接不能代替本run冻结字节，缺绑定或原件即阻断。
 

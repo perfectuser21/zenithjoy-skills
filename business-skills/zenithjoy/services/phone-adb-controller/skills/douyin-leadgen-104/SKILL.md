@@ -2,8 +2,8 @@
 name: douyin-leadgen-104
 description: Workflow 104的活动组织与交接目录；实际执行由各Activity自己的Skill完成，不作为单Activity操作方法。
 metadata:
-  change_summary: "0.8.0: Workflow薄目录与四个自包含Activity，移除旧Skill relay"
-  version: 0.9.2
+  change_summary: "0.9.3: 说明104对原订单两种评分存档的读回"
+  version: 0.9.3
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-104/references/activity-methods.json
@@ -14,7 +14,7 @@ metadata:
 
 # Workflow 104 · 线索触达与写回
 
-`douyin_lead_outreach` 是 Workflow，独立消费本公司资格合格、外部配送已确认且未发送的原订单队列；不要求103运行号，不等待整批103。发送仍以本次任务已有明确授权为前提。
+`douyin_lead_outreach` 是 Workflow，独立消费本公司资格合格、外部配送已确认且未发送的原订单队列；沿订单读取已提交的103评分来源，无需启动或等待整批103。发送仍以本次任务已有明确授权为前提。
 
 ## 合同、执行提案与独立验收
 
@@ -31,7 +31,7 @@ metadata:
 | Activity | 唯一操作Skill | 方法版本 |
 |---|---|---|
 | `preflight` | [douyin-leadgen-activity-104-preflight](../douyin-leadgen-activity-104-preflight/SKILL.md) | `1.4.0` |
-| `send_dm` | [douyin-leadgen-activity-104-send-dm](../douyin-leadgen-activity-104-send-dm/SKILL.md) | `1.4.0` |
+| `send_dm` | [douyin-leadgen-activity-104-send-dm](../douyin-leadgen-activity-104-send-dm/SKILL.md) | `1.4.1` |
 | `write_back` | [douyin-leadgen-activity-104-write-back](../douyin-leadgen-activity-104-write-back/SKILL.md) | `1.2.0` |
 | `cleanup` | [douyin-leadgen-activity-104-cleanup](../douyin-leadgen-activity-104-cleanup/SKILL.md) | `0.7.0` |
 
@@ -40,7 +40,7 @@ metadata:
 ## 输入与交接
 
 - 调用者提供真实Task/run、公司/租户/line、公司政策与批准话术、实际发送账号/profile/serial、目标范围、数量、截止及各Activity已授权工具。沿用会话已有授权，不自行扩大目标、内容或次数。
-- 104异步消费合格订单，不由103标记成功自动推定发送授权。来源、资格、配送、发送分别记账；空队列记skipped，未决不记成功。
+- 104异步消费合格订单，按原订单核验历史 provider 或受权 Agent 的评分存档。本次触达另核正文、权限与额度。来源、资格、配送、发送分别记账；空队列记skipped，未决不记成功。
 - send_dm保持原canonical claim→prepared→一次发送协议；同一目标、账号和批准正文绑定同一持久动作。未知结果只读回，不换run/ID重复发送；已发未写回只补write_back。
 - 每个Activity交出原订单身份、真实结果、证据与持久读回。cleanup保留prepared/已发/unknown保护，不能把归位完成当发送完成。
 
