@@ -490,7 +490,7 @@ class CommanderRecoveryContractTests(unittest.TestCase):
     def test_frozen_opt_in_is_bound_to_new_activity_contract_versions(self):
         import re
         activity, _, _, _ = self.skills()
-        expected = {'101-collect-videos': '5.5.0', '102-preflight': '2.6.1', '102-dedup': '3.3.3', '102-qualification': '3.5.8', '102-collection': '2.8.5', '102-cleanup': '2.6.2', '103-scoring': '2.9.0', '103-mark-leads': '3.10.0', '104-preflight': '5.3.0', '104-send-dm': '6.1.0', '104-write-back': '4.1.0', '104-cleanup': '3.5.0'}
+        expected = {'101-collect-videos': '5.6.0', '102-preflight': '2.6.1', '102-dedup': '3.3.3', '102-qualification': '3.5.8', '102-collection': '2.8.5', '102-cleanup': '2.6.2', '103-scoring': '2.9.0', '103-mark-leads': '3.10.0', '104-preflight': '5.3.0', '104-send-dm': '6.1.0', '104-write-back': '4.1.0', '104-cleanup': '3.5.0'}
         for path in activity:
             with self.subTest(method=path.parent.name):
                 actual = re.search(r"^  activity_version: (\S+)$", path.read_text(), re.M)[1]
@@ -516,12 +516,23 @@ class CommanderRecoveryContractTests(unittest.TestCase):
         self.assertIn("同一视频详情", body[start:call])
         self.assertIn("同一视频详情", body[finish:after])
 
+    def test_discovery_screenshot_path_uses_observation_and_one_tap(self):
+        path = self.base / "skills/douyin-leadgen-activity-101-collect-videos/SKILL.md"
+        body = path.read_text()
+        for field in ("video_page_screenshot", "cards_screenshot", "video_page_xml", "cards_xml"):
+            self.assertIn(field, body)
+        self.assertIn("若「视频」已选中就直接继续", body)
+        self.assertIn("不根据控件树缺失推断还在综合页", body)
+        self.assertIn("截图交付路径不调用 `search-video-tab`", body)
+        self.assertIn("保留它们的原槽位，不补位或重新编号", body)
+        self.assertIn("截图交付路径不调用会自行切换页签的 `search-video-cards`", body)
+
     def test_method_versions_and_all_workflow_dependency_rows_are_upgraded_together(self):
         import re
         activity, workflows, wrappers, commander = self.skills()
         def version(path):
             return re.search(r"^  ?version: (\S+)$|^version: (\S+)$", path.read_text(), re.M).group(0).split(": ")[1]
-        expected_versions = {'douyin-leadgen-activity-101-collect-videos': '0.12.0', 'douyin-leadgen-activity-102-cleanup': '0.11.2', 'douyin-leadgen-activity-102-collection': '0.10.6', 'douyin-leadgen-activity-102-dedup': '0.8.4', 'douyin-leadgen-activity-102-preflight': '0.11.1', 'douyin-leadgen-activity-102-qualification': '0.8.8', 'douyin-leadgen-activity-103-mark-leads': '0.19.0', 'douyin-leadgen-activity-103-scoring': '0.18.0', 'douyin-leadgen-activity-104-cleanup': '0.7.0', 'douyin-leadgen-activity-104-preflight': '1.4.0', 'douyin-leadgen-activity-104-send-dm': '1.4.0', 'douyin-leadgen-activity-104-write-back': '1.2.0', 'douyin-leadgen-101': '0.12.9', 'wf-douyin_video_discovery': '0.12.9', 'douyin-leadgen-102': '0.13.20', 'wf-douyin_video_processing': '0.12.20', 'douyin-leadgen-103': '0.21.0', 'wf-douyin_comment_scoring': '0.19.0', 'douyin-leadgen-104': '0.9.2', 'wf-douyin_lead_outreach': '0.9.2'}
+        expected_versions = {'douyin-leadgen-activity-101-collect-videos': '0.13.0', 'douyin-leadgen-activity-102-cleanup': '0.11.2', 'douyin-leadgen-activity-102-collection': '0.10.6', 'douyin-leadgen-activity-102-dedup': '0.8.4', 'douyin-leadgen-activity-102-preflight': '0.11.1', 'douyin-leadgen-activity-102-qualification': '0.8.8', 'douyin-leadgen-activity-103-mark-leads': '0.19.0', 'douyin-leadgen-activity-103-scoring': '0.18.0', 'douyin-leadgen-activity-104-cleanup': '0.7.0', 'douyin-leadgen-activity-104-preflight': '1.4.0', 'douyin-leadgen-activity-104-send-dm': '1.4.0', 'douyin-leadgen-activity-104-write-back': '1.2.0', 'douyin-leadgen-101': '0.12.10', 'wf-douyin_video_discovery': '0.12.10', 'douyin-leadgen-102': '0.13.20', 'wf-douyin_video_processing': '0.12.20', 'douyin-leadgen-103': '0.21.0', 'wf-douyin_comment_scoring': '0.19.0', 'douyin-leadgen-104': '0.9.2', 'wf-douyin_lead_outreach': '0.9.2'}
         for path in activity + workflows + wrappers:
             self.assertEqual(version(path), expected_versions[path.parent.name], path.parent.name)
         self.assertEqual(version(commander), "2.2.0")
