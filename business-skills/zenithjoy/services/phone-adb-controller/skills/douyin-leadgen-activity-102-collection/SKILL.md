@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-102-collection
 description: 交出持久化且身份可验证的评论。用于从合格视频采集评论并读回或接手同一评论采集 Activity；不执行整个工作流。
 metadata:
   change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.10.6
+  version: 0.10.7
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.collection
-  activity_version: 2.8.5
+  activity_version: 2.8.6
   validation: awaiting-real-run
   support_files: []
 
@@ -21,7 +21,7 @@ metadata:
 
 # 交出持久化且身份可验证的评论
 
-仅执行 `douyin_video_processing.collection`，使用业务合同版本 `2.8.5`。方法版本变化不修改Activity身份或公司业务政策。本版允许连续性可证时复用已验收的视频身份原件，保留普通API显式交接与凭证补齐方法；离线校验不等于实机验收。
+仅执行 `douyin_video_processing.collection`，使用业务合同版本 `2.8.6`。方法版本变化不修改Activity身份或公司业务政策。本版允许连续性可证时复用已验收的视频身份原件，保留普通API显式交接与凭证补齐方法；离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -32,6 +32,8 @@ metadata:
 `agent_recovery` 仅声明方法可选能力，不是本次重试额度。只有本run实际冻结的 `runtime.checker_repair` 明确授权、剩余额度与原截止仍有效时，才按失败原因和证据进行允许的返工；没有该设置不自行增回合。保留原Task/run、动作身份和已成功成果；未知副作用先读回，未知不重做，不能换nonce或generation重放。返工不增加本次批次、评分、录制或发送授权，不重复已成功业务动作。Checker不执行业务写入，也不授予发送权。
 
 ## 执行上下文与工具边界
+
+本活动所需的宿主能力以当前合同的 `required_host_tools` 为准，沿用运行器提供的统一工具入口和回执格式。
 
 本文件就是本 Activity 的操作方法；不要求加载 Workflow 母 Skill 或旧业务 Skill。Workflow 决定活动顺序，本方法只完成当前输入指定的活动。
 
@@ -80,6 +82,8 @@ metadata:
 会导航评论区与原生评论人主页，写本次取证/批次工件、经授权的评论行/历史消费和采样回执。只收集证据，不执行意向评分；不点赞、关注、回复、私信或发布。缺失的原显示时间/地区保留unknown，不能推测填值；字段合同不接受缺失时留未决原件，不报完整行。
 
 ## 结果与验收
+
+按当前合同的 `delivery` 交件：业务值写入 `outputs`，把工具实际返回、可独立读回的原件相对路径放入 `handoff`，按本轮或对象标识和证据用途归组。较大的媒体交带原件摘要的回执，由原媒体读回工具复核。旧文中的证据要求由这些实际引用满足。
 
 交付本次 Activity 的实际 `task_id/run_id/activity_ref`、`status`、`stop_reason`、输入对象身份、逐项结果、实际新增/历史/重复/未决计数、持久读回和证据位置、工具/模型实际调用与未知项、资源交接及副作用。工具或模型回执缺失写 unknown，不填 0；明确未调用才填 0。
 

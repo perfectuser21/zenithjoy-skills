@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-101-collect-videos
 description: 按关键词交出筛选后的视频链接。用于采集关键词搜索结果或接手同一视频发现 Activity；不执行整个工作流。
 metadata:
   change_summary: "按现场截图由 Agent 判断视频页签与首屏原槽位，兼容原 XML 交付"
-  version: 0.13.1
+  version: 0.13.2
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_discovery.collect_videos
-  activity_version: 5.6.0
+  activity_version: 5.6.1
   validation: awaiting-real-run
   support_files: []
 
@@ -32,6 +32,8 @@ metadata:
 `agent_recovery` 仅声明方法可选能力，不是本次重试额度。只有本run实际冻结的 `runtime.checker_repair` 明确授权、剩余额度与原截止仍有效时，才按失败原因和证据进行允许的返工；没有该设置不自行增回合。保留原Task/run、动作身份和已成功成果；未知副作用先读回，未知不重做，不能换nonce或generation重放。返工不增加本次批次、评分、录制或发送授权，不重复已成功业务动作。Checker不执行业务写入，也不授予发送权。
 
 ## 执行上下文与工具边界
+
+本活动所需的宿主能力以当前合同的 `required_host_tools` 为准，沿用运行器提供的统一工具入口和回执格式。
 
 本文件就是本 Activity 的操作方法；不要求加载 Workflow 母 Skill 或旧业务 Skill。Workflow 决定活动顺序，本方法只完成当前输入指定的活动。
 
