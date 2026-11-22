@@ -3,7 +3,7 @@ name: douyin-leadgen-activity-101-collect-videos
 description: 按关键词交出筛选后的视频链接。用于采集关键词搜索结果或接手同一视频发现 Activity；不执行整个工作流。
 metadata:
   change_summary: "按现场截图由 Agent 判断视频页签与首屏原槽位，兼容原 XML 交付"
-  version: 0.13.0
+  version: 0.13.1
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
@@ -82,7 +82,7 @@ metadata:
 2. 按真实工具签名执行 `open-search ENCODED_KEYWORD`。冻结契约支持截图交付时，先用 `foreground` 和 `snapshot-evidence EID` 结合当前图确认前台是抖音、搜索词正确。若「视频」已选中就直接继续，否则从当前截图定位「视频」，调用一次 `tap-evidence X Y EID`，检查同一次点击的回执和新截图。从新图确认关键词正确、「视频」已选中且结果已加载；即使控件树不可用，只要这三点清楚就继续。图上仅显示加载或页签不明确时，只观察当前页，不根据控件树缺失推断还在综合页，也不重复点击。截图交付路径不调用 `search-video-tab`。仅恢复至要求 XML 的旧冻结契约时，遵循该版本的页签操作与取证。
 3. 在结果页直接调用现有筛选操作，不先手点一次再让复合动作点第二次。已部署形式示例：`search-time-layer TIME EID SORT DURATION SCOPE LOCATION`；六项均来自本次输入。保存面板、选中项、结果三份原件，核各实际选项；参数合法不等于原生UI已支持。
 4. 截图交付路径用 `snapshot-evidence EID` 读取应用筛选后的原首屏。确认关键词和已选视频页签，按屏幕阅读顺序记录原始槽位、可见标题、时长和当前坐标。相关搜索词、广告入口、占位和无法确认的卡片不作为视频候选，保留它们的原槽位，不补位或重新编号。每次点击前用新鲜截图确认仍是同一原槽位，再调用 `tap-evidence X Y EID`。视口或卡片身份不确定时停止该候选，不按旧坐标盲点。截图交付路径不调用会自行切换页签的 `search-video-cards`；仅恢复至要求 XML 的旧冻结契约时使用它。标题只用于定位，视频身份仍取真实链接。
-5. 对每个实际详情调用一次当前取链能力（如 `current-video-link EID [RETURN_KEYWORD]`），保留共享URL、解析URL、规范链接、真实平台ID和当前详情证据。`content_type=note`、`note_id` 只记排除项，绝不改名为video_id。复制失败或结果未知不把上一条剪贴板链接填进本候选。
+5. 对每个实际详情调用一次当前取链能力（如 `current-video-link EID [RETURN_KEYWORD]`），保留共享URL、解析URL、规范链接、真实平台ID和当前详情证据。`content_type=note`、`note_id` 只记排除项，绝不改名为video_id。复制失败或结果未知不把上一条剪贴板链接填进本候选。 发起取链前，用本轮`run_tag`替换`<run>`，用实际候选序号替换`candidate1`，例如`current-video-link <run>-candidate1-link`。指标工具要求回执的`metrics_evidence_id`包含`<run>-candidate`前缀和实际`-link-t1`、`-link-t2`或`-link-t3`后缀，例如由工具生成的`<run>-candidate1-link-t1`。提交指标时逐字使用这个回执值，后缀由工具产生。若收到`METRICS_SCOPE_INVALID`，保留原取链回执并报交接失败，禁止改名、借用其他原件或再次取链来补造证据。
 6. 离开详情前，将同次详情XML/截图与本次解析VID对应。点赞数、页面评论总量保留原文与时间；解析万/亿等单位。缺数字、带+、不精确或越界显示记 `value=null` 并说明原因，不填0；评论分档为 `zero/1_100/101_500/over_500/unknown`。真实0评论可以留发现观察，但不得伪装为有评论的待采输入；持久化工具不能区分观察与待采状态时保留原件并报接口缺口。
 7. 经公司/来源校验的正式写入能力提交，再按同一VID/链接独立读回公司、来源和本轮观测。按当前合同核对同视频指标原件、解析和PG完整持久读回；仅旧 discover ACK、数据库默认0或旧观测不足以通过。新字段未发布时保存带VID的持久指标工件及 `metrics_persistence_missing`，结果为partial/failed，不宣称专用指标已入库。
 8. 同VID重复观测幂等，只有本次同等或更新观测按接口规则接受；保持原资格、transcript、102进度、comment_count、已采视频原batch。新增/重复/历史分别计数；旧行不能冒本轮新增。
