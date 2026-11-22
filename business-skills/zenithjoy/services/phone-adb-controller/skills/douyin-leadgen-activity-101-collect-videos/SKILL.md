@@ -2,15 +2,15 @@
 name: douyin-leadgen-activity-101-collect-videos
 description: 按关键词交出筛选后的视频链接。用于采集关键词搜索结果或接手同一视频发现 Activity；不执行整个工作流。
 metadata:
-  change_summary: "交付按本轮和逐视频组织的原件清单，由底座统一归档"
-  version: 0.12.0
+  change_summary: "按现场截图由 Agent 判断视频页签与首屏原槽位，兼容原 XML 交付"
+  version: 0.13.0
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_discovery.collect_videos
-  activity_version: 5.5.0
+  activity_version: 5.6.0
   validation: awaiting-real-run
   support_files: []
 
@@ -53,7 +53,8 @@ metadata:
 
 如果冻结契约声明了 `delivery`，在最终提案原有 `outputs` 和 `evidence` 之外，按其 schema 提交 `handoff`。共享原件放在 `handoff.run`，逐视频原件以 `outputs.Video` 中的真实 `video_id` 为键。每个值是本轮工具返回的可读相对文件路径。宿主统一归档，执行者只提交实际原件的路径。
 
-- `handoff.run.video_page_xml` 和 `handoff.run.cards_xml` 取页签切换与卡片采集回执中的原件名，用 `fetch-native` 取回设备存档。分享页的原始 XML 同样从本轮存档取回。
+- 新冻结交付 schema 支持 `handoff.run.video_page_screenshot` 和 `handoff.run.cards_screenshot` 时，成对提交本轮点击后所见的视频页签截图和应用筛选后的原首屏截图。引用从当前工具实际回执取得，用 `fetch-native` 取回原件，同时交前台和动作回执。两张图须能辨认搜索词、视频已选中以及原首屏卡片或明确空态。
+- 恢复到只接受 `video_page_xml` 和 `cards_xml` 的既有冻结版本时，继续按其 schema 交付真实 XML；原件缺失如实报告。分享页和逐 VID 指标的 XML 仍从本轮原始存档取回。
 - `filters_receipt` 填实际筛选回执。 `selected_page` 和 `results_page` 填实际筛选选中项和应用后的结果页截图。
 - 逐视频填 `share_xml`、`link_receipt`、`write_receipt` 和 `readback_receipt`，四个文件须对应同一 VID。真实空结果交 `handoff.run` 的空卡片与筛选原件，逐视频组留空。缺原件如实记录，禁止用截图摘要、猜测路径或另一轮的原件代替。
 
@@ -78,9 +79,9 @@ metadata:
 ## 操作
 
 1. 每批手机动作前核当前资源 owner、目标设备与账号上下文。若原生请求仍在途，等待真实返回，不并起第二条操作。controller支持命令和owner参数的范围要逐项核；不为绕过不支持的owner参数而去掉权限检查。
-2. 按当前工具支持的搜索能力打开 URL 编码关键词，进入“视频”页。已有操作示例为 `open-search ENCODED_KEYWORD`、`search-video-tab EID`；不发明 `search` 或 `open-app douyin` 等参数。新鲜树确认关键词、页签及前台。
+2. 按真实工具签名执行 `open-search ENCODED_KEYWORD`。冻结契约支持截图交付时，先用 `foreground` 和 `snapshot-evidence EID` 结合当前图确认前台是抖音、搜索词正确。若「视频」已选中就直接继续，否则从当前截图定位「视频」，调用一次 `tap-evidence X Y EID`，检查同一次点击的回执和新截图。从新图确认关键词正确、「视频」已选中且结果已加载；即使控件树不可用，只要这三点清楚就继续。图上仅显示加载或页签不明确时，只观察当前页，不根据控件树缺失推断还在综合页，也不重复点击。截图交付路径不调用 `search-video-tab`。仅恢复至要求 XML 的旧冻结契约时，遵循该版本的页签操作与取证。
 3. 在结果页直接调用现有筛选操作，不先手点一次再让复合动作点第二次。已部署形式示例：`search-time-layer TIME EID SORT DURATION SCOPE LOCATION`；六项均来自本次输入。保存面板、选中项、结果三份原件，核各实际选项；参数合法不等于原生UI已支持。
-4. 用 `search-video-cards EID` 等能力读当前卡片，排除相关搜索词、广告入口、占位。保留卡片原槽位、标题、时长与新鲜坐标；确认页面仍新鲜后按工具返回坐标打开（如 `tap-evidence X Y EID`）。不按标题做公司业务资格判断，也不用标题相同代替同VID。
+4. 截图交付路径用 `snapshot-evidence EID` 读取应用筛选后的原首屏。确认关键词和已选视频页签，按屏幕阅读顺序记录原始槽位、可见标题、时长和当前坐标。相关搜索词、广告入口、占位和无法确认的卡片不作为视频候选，保留它们的原槽位，不补位或重新编号。每次点击前用新鲜截图确认仍是同一原槽位，再调用 `tap-evidence X Y EID`。视口或卡片身份不确定时停止该候选，不按旧坐标盲点。截图交付路径不调用会自行切换页签的 `search-video-cards`；仅恢复至要求 XML 的旧冻结契约时使用它。标题只用于定位，视频身份仍取真实链接。
 5. 对每个实际详情调用一次当前取链能力（如 `current-video-link EID [RETURN_KEYWORD]`），保留共享URL、解析URL、规范链接、真实平台ID和当前详情证据。`content_type=note`、`note_id` 只记排除项，绝不改名为video_id。复制失败或结果未知不把上一条剪贴板链接填进本候选。
 6. 离开详情前，将同次详情XML/截图与本次解析VID对应。点赞数、页面评论总量保留原文与时间；解析万/亿等单位。缺数字、带+、不精确或越界显示记 `value=null` 并说明原因，不填0；评论分档为 `zero/1_100/101_500/over_500/unknown`。真实0评论可以留发现观察，但不得伪装为有评论的待采输入；持久化工具不能区分观察与待采状态时保留原件并报接口缺口。
 7. 经公司/来源校验的正式写入能力提交，再按同一VID/链接独立读回公司、来源和本轮观测。按当前合同核对同视频指标原件、解析和PG完整持久读回；仅旧 discover ACK、数据库默认0或旧观测不足以通过。新字段未发布时保存带VID的持久指标工件及 `metrics_persistence_missing`，结果为partial/failed，不宣称专用指标已入库。
@@ -91,7 +92,7 @@ metadata:
 
 保留当前正式 `Run.discovery_input`：schema1 的 `max_candidates` 限首屏卡片数，超额零候选动作；schema2 的 `max_attempts` 限实际尝试，只试前N个原槽位。两模式互斥、唯一关键词、单首屏，不翻屏、不恢复视口、不用重入重置额度。重复、缺身份、失败均耗尝试；失败或未知按原安全规则停止，不为凑N补槽。`target_count` 是独立成功唯一VID上限。schema2已知无失败且达到尝试N时，可完成有界采样，但必须 `all_results_scanned=false`，不能声称新增N条或搜尽。
 
-真实 `no_cards` 只在原生空结果证据符合当前合同的empty条件时交付empty，并停止依赖视频产物的后续业务，不凑造视频。
+真实 `no_cards` 只在同一搜索范围内明确的原生空结果证据符合当前合同的empty条件时交付empty，并停止依赖视频产物的后续业务，不凑造视频。
 
 ## 成功条件
 
