@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-103-mark-leads
 description: 交出原生身份核实的线索与配送状态。用于按评分保留线索、独立资格核对并配送或接手同一标记 Activity；不执行整个工作流。
 metadata:
   change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.19.0
+  version: 0.19.1
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_comment_scoring.mark_leads
-  activity_version: 3.10.0
+  activity_version: 3.10.1
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-activity-103-mark-leads/references/maintenance-scopes.md
@@ -23,7 +23,7 @@ metadata:
 
 # 交出原生身份核实的线索与配送状态
 
-仅执行 `douyin_comment_scoring.mark_leads`，使用业务合同版本 `3.10.0`。方法版本变化不修改Activity身份或公司业务政策。本版按主理人决定 `8331c673-1113-4a04-a5dd-54ec76a916fe` 取消额外模型评分复核；新合同按本决定使用单次评分，不要求额外模型复核。若现有宿主仍硬性要求旧双审，报告实现尚未适配，不伪造字段绕过。离线校验不等于实机验收。
+仅执行 `douyin_comment_scoring.mark_leads`，使用业务合同版本 `3.10.1`。方法版本变化不修改Activity身份或公司业务政策。本版按主理人决定 `8331c673-1113-4a04-a5dd-54ec76a916fe` 取消额外模型评分复核；新合同按本决定使用单次评分，不要求额外模型复核。若现有宿主仍硬性要求旧双审，报告实现尚未适配，不伪造字段绕过。离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -34,6 +34,8 @@ metadata:
 `agent_recovery` 仅声明方法可选能力，不是本次重试额度。只有本run实际冻结的 `runtime.checker_repair` 明确授权、剩余额度与原截止仍有效时，才按失败原因和证据进行允许的返工；没有该设置不自行增回合。保留原Task/run、动作身份和已成功成果；未知副作用先读回，未知不重做，不能换nonce或generation重放。返工不增加本次批次、评分、录制或发送授权，不重复已成功业务动作。Checker不执行业务写入，也不授予发送权。
 
 ## 执行上下文与工具边界
+
+本活动所需的宿主能力以当前合同的 `required_host_tools` 为准，沿用运行器提供的统一工具入口和回执格式。
 
 本文件就是本 Activity 的操作方法；不要求加载 Workflow 母 Skill 或旧业务 Skill。Workflow 决定活动顺序，本方法只完成当前输入指定的活动。
 
@@ -72,6 +74,8 @@ metadata:
 不调用额外评分或受众资格模型；核验已保存评分与原生身份，事务写PG Lead、评论关联、重复计数及outbox，并由已授权的原桥接写该公司飞书记录。逐项保留实际动作身份和确认状态；不向用户发消息、不执行104、不写无授权外部系统。
 
 ## 结果与验收
+
+按当前合同的 `delivery` 交件：业务值写入 `outputs`，把工具实际返回、可独立读回的原件相对路径放入 `handoff`，按本轮或对象标识和证据用途归组。较大的媒体交带原件摘要的回执，由原媒体读回工具复核。旧文中的证据要求由这些实际引用满足。
 
 交付本次 Activity 的实际 `task_id/run_id/activity_ref`、`status`、`stop_reason`、输入对象身份、逐项结果、实际新增/历史/重复/未决计数、持久读回和证据位置、工具/模型实际调用与未知项、资源交接及副作用。工具或模型回执缺失写 unknown，不填 0；明确未调用才填 0。
 

@@ -679,25 +679,25 @@
         {
           "path": "services/phone-adb-controller/commander/skills/wf-douyin_comment_scoring/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/wf-douyin_comment_scoring/SKILL.md",
-          "sha256": "56cd988997c4ed2980465e040216c59c25784b81ea97c27bf153f57aee3d9402",
+          "sha256": "80929f323a4910e8254571cf2febcb7e773b5a1ba5d294ca82abc3711e5d7f1c",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/commander/skills/wf-douyin_lead_outreach/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/wf-douyin_lead_outreach/SKILL.md",
-          "sha256": "47d88040c134493ff9ba695375d53776c0e33e9fda17f2cade6363449c224d8c",
+          "sha256": "aaedd167ca5cdd9e14d9020827cffe01b90b75fd404f9b05abc9d3f45cf1020e",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/commander/skills/wf-douyin_video_discovery/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/wf-douyin_video_discovery/SKILL.md",
-          "sha256": "ff127915ee1910511ea957c22c52af70cac8355d431ae8ca759bfa0fa317e97b",
+          "sha256": "60757bb13d38ec284e9399115cce032f3eaf81e45aa9b61e807ae761e211b992",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/commander/skills/wf-douyin_video_processing/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/commander/skills/wf-douyin_video_processing/SKILL.md",
-          "sha256": "149472b20f14a79ded3c8bdde67b6c39c74badcb5f20d5ef7b8331157adc4ef8",
+          "sha256": "1d4e251b296b039dc66eb16076bc7a8a3a87f74a93eae56d61e912f1a2cf945a",
           "mode": "100644"
         },
         {
@@ -715,13 +715,13 @@
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-101/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-101/SKILL.md",
-          "sha256": "d21e9bfa0a6dea2beb47ec73357b24c2aa79e9a683e6c50500a59ab9ff8de080",
+          "sha256": "f2e2e49dadf8f8796bbcb4b9557fff48db6d8e9f118821fc636998cd57d831c0",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-101/references/activity-methods.json",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-101/references/activity-methods.json",
-          "sha256": "3a7ded96907f8c797243d68a96002fc54899508f518117738ff4c70cdb581143",
+          "sha256": "489754bcba37a3fe6183866100ee22501f129e8e36dec12a09b97bd36c5bba5c",
           "mode": "100644"
         },
         {
@@ -733,13 +733,13 @@
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-102/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-102/SKILL.md",
-          "sha256": "a09507774c8b238de6e6e3393e03a1a8c6b96d111a73f5d7b485060078f146b4",
+          "sha256": "7e85cdfe507202ffd9a960c55d197e77c2bebcc2cdac54e4b0c15e456e336981",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-102/references/activity-methods.json",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-102/references/activity-methods.json",
-          "sha256": "21cd614dd9dc365736ed7e5c6bec97fa04e8c88deb96b119ede9d39a4fab3ea8",
+          "sha256": "d1c59e640b3e2170d986e6e9890bcb9df8ebc4424fa3c03bb9089b11f736c2fe",
           "mode": "100644"
         },
         {
@@ -751,13 +751,13 @@
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-103/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-103/SKILL.md",
-          "sha256": "e203cfa991a7eed168986af64cf3db294c1a56163547b9474714fbc7322bbb80",
+          "sha256": "0433b00ac6030f566b62358c78280d668fd61865d428c3aad984cba2f2eef3e8",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-103/references/activity-methods.json",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-103/references/activity-methods.json",
-          "sha256": "ee499fe6d6b09abd1368b6ac5ef639496b6a9fd93cf24bad8876d0f6ece435a4",
+          "sha256": "e454d953e3d2053d534d860752d347b6a199c24b12ba93d18d7d5f33a8e58586",
           "mode": "100644"
         },
         {
@@ -769,13 +769,13 @@
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-104/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-104/SKILL.md",
-          "sha256": "9385105a8abb177a7cefce3ec0e32067f5f71a3e671d122587ff7b8d31a5f48d",
+          "sha256": "7cfb419a3dd8750305b26800194c95acfad576aebb9e6e31a36022278da14317",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-104/references/activity-methods.json",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-104/references/activity-methods.json",
-          "sha256": "a3ba1cd483b8eec8925be2e4dfee71a1c099cb90202d437f51b7a41b826f8e32",
+          "sha256": "8fe388ae5f70ca411e4581c8e940bd237f319d783fb2ae4cc5ef7ac85737d98d",
           "mode": "100644"
         },
         {
@@ -787,73 +787,73 @@
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-101-collect-videos/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-101-collect-videos/SKILL.md",
-          "sha256": "872b30b050f008601b69893895eb717c19a543a36c6d43bbe7af9fff9e88961a",
+          "sha256": "77855b00a38c42e725d3bc68e3d2308724b43ffe916be5ee788d349d3714663f",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-cleanup/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-102-cleanup/SKILL.md",
-          "sha256": "d57b28135f4192242b643899f71b2a20cfc8a08fec9a2421cb786f9df3838e06",
+          "sha256": "2afb2928825c70bbe23a9a0402d61a961a53d288c22d2b1da9e01d3a12d3ddd0",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-collection/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-102-collection/SKILL.md",
-          "sha256": "3ee977eab9a8fc3194eb53c20492d3174f99d63f753a5583ce249aefb54bbbda",
+          "sha256": "46b9d08c756cf62ddbf155dd85b747ffa503b91af3d71c2b167b394c1b3c3e71",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-dedup/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-102-dedup/SKILL.md",
-          "sha256": "54961cb16ddeb956ddcc3035173f6ab9838027f837378c6a7e964ebf7bb8c9ad",
+          "sha256": "8f4c27085f87bc628b44087f4547b4eed6a50afcc2313be112baaa20a88a3135",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-preflight/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-102-preflight/SKILL.md",
-          "sha256": "75fab14f374fc4f1ce37404a4340f83a88ecb05274bb641accfddb6febad268a",
+          "sha256": "f3fccd3643cff03f17a377e0ba99cf7d4c470eca28feb17911b30c2c93f01a5e",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification/SKILL.md",
-          "sha256": "4cf336eb1214bc05d48bd2b86e7ba3ebb5d76560aa845742b681d764c959342d",
+          "sha256": "5120d6970a6c64adc98d1476d981a7877fb6e2510b54dba3203af3ec57a6abf3",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-103-mark-leads/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-103-mark-leads/SKILL.md",
-          "sha256": "24afc41780c93e7f5edbfb774614dd81ab8b170e08ca3bbcbabf20b206d4d168",
+          "sha256": "aadf8639bbc0805f4b61bf3d324c46c9a613a021981243902f54c86619d95253",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-103-scoring/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-103-scoring/SKILL.md",
-          "sha256": "1832d2fc0f24e5a3f42945fce93671364656dd371c15a0e0eea6d8cc9de5fbd2",
+          "sha256": "44ecd62674faf3b0866ba9a74fe0e1e97b177a13e53813d8765827b1d3ef16e3",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-cleanup/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-104-cleanup/SKILL.md",
-          "sha256": "031edefcb428c6556a0e03eea25a692bd95007aa9e7fd39c203f5b2a65605748",
+          "sha256": "3c02a3a2a66618d63b58f84ba9a3a3a42619c60284ad0b7bd6139c7b44027dd9",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-preflight/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-104-preflight/SKILL.md",
-          "sha256": "13f95b96c702024c5f95ae56f8aae3cfbfa391314bc2d4d57f5320bf2af03189",
+          "sha256": "aa2994b4a471bba58f6cfb226765bba4d2949762e8d0b9c6d4be4340a150c5e7",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-send-dm/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-104-send-dm/SKILL.md",
-          "sha256": "cfd4fc636d21802a88ee18772a4f57ff02752371bafa0bedeb6725aa26b5408d",
+          "sha256": "4f8d18b15a429c2df0845097322e57a00282669ddd04b3f713f518a2026dc16d",
           "mode": "100644"
         },
         {
           "path": "services/phone-adb-controller/skills/douyin-leadgen-activity-104-write-back/SKILL.md",
           "source": "business-skills/zenithjoy/services/phone-adb-controller/skills/douyin-leadgen-activity-104-write-back/SKILL.md",
-          "sha256": "cc189fdf8d48482768128388720f2f569bd7b0fb2f3ecc14066e7fc08a0059b0",
+          "sha256": "2b155541c6a0724ea7326fe58c2a0d1829447c2d5292ba2dd0394a7f4c548362",
           "mode": "100644"
         },
         {
