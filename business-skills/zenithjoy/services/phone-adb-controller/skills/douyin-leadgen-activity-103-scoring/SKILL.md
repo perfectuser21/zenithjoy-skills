@@ -3,7 +3,7 @@ name: douyin-leadgen-activity-103-scoring
 description: 交出按公司原政策持久化的评论评分。用于独立消费已提交评论评分或接手同一评分 Activity；不执行整个工作流。
 metadata:
   change_summary: "Activity Agent 读取冻结原文并评一次，提交工具只校验和写库"
-  version: 0.19.1
+  version: 0.19.2
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
@@ -11,7 +11,7 @@ metadata:
     - raw-model-v1
     - codex-cli
   activity_ref: douyin_comment_scoring.scoring
-  activity_version: 2.10.1
+  activity_version: 2.10.2
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-activity-103-scoring/references/maintenance-scopes.md
@@ -24,7 +24,7 @@ metadata:
 
 # 交出按公司原政策持久化的评论评分
 
-仅执行 `douyin_comment_scoring.scoring`，使用业务合同版本 `2.10.1`。方法版本变化不修改Activity身份或公司业务政策。本版按主理人决定 `8331c673-1113-4a04-a5dd-54ec76a916fe` 取消额外模型评分复核；新合同按本决定使用单次评分，不要求额外模型复核。本版以 Activity Agent 作为唯一评分者。若 `score_input` 或 `score_submit` 不可用，报告该宿主尚未接入。离线校验不等于实机验收。
+仅执行 `douyin_comment_scoring.scoring`，使用业务合同版本 `2.10.2`。方法版本变化不修改Activity身份或公司业务政策。本版按主理人决定 `8331c673-1113-4a04-a5dd-54ec76a916fe` 取消额外模型评分复核；新合同按本决定使用单次评分，不要求额外模型复核。本版以 Activity Agent 作为唯一评分者。若 `score_input` 或 `score_submit` 不可用，报告该宿主尚未接入。离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -84,6 +84,8 @@ metadata:
 ## 结果与验收
 
 按当前合同的 `delivery` 交件：业务值写入 `outputs`，把工具实际返回、可独立读回的原件相对路径放入 `handoff`，按本轮或对象标识和证据用途归组。较大的媒体交带原件摘要的回执，由原媒体读回工具复核。旧文中的证据要求由这些实际引用满足。
+
+宿主按冻结的 `delivery.report` 归档本轮适用的原始回执供 Checker 一次读取。交付中保留原路径，不补造未发生分支的原件。
 
 交付本次 Activity 的实际 `task_id/run_id/activity_ref`、`status`、`stop_reason`、输入对象身份、逐项结果、实际新增/历史/重复/未决计数、持久读回和证据位置、工具/模型实际调用与未知项、资源交接及副作用。工具或模型回执缺失写 unknown，不填 0；明确未调用才填 0。
 

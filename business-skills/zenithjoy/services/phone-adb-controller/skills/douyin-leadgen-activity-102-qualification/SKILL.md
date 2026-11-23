@@ -3,7 +3,7 @@ name: douyin-leadgen-activity-102-qualification
 description: 交出有证据的视频资格结论。用于核对目标视频、录音转写并按公司政策判断资格或接手同一 Activity；不执行整个工作流。
 metadata:
   change_summary: "在同一录像中核对每条画面观察的原帧，交付紧凑的资格验收证据"
-  version: 0.9.3
+  version: 0.9.4
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
@@ -11,7 +11,7 @@ metadata:
     - raw-model-v1
     - codex-cli
   activity_ref: douyin_video_processing.qualification
-  activity_version: 3.6.2
+  activity_version: 3.6.3
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification/references/sdk31-capture.md
@@ -103,6 +103,8 @@ metadata:
 ## 结果与验收
 
 按当前合同的 `delivery` 交件：业务值写入 `outputs`，把工具实际返回、可独立读回的原件相对路径放入 `handoff`，按本轮或对象标识和证据用途归组。较大的媒体交带原件摘要的回执，由原媒体读回工具复核。旧文中的证据要求由这些实际引用满足。
+
+按冻结的 `delivery.report.files` 交本轮身份、画面、录音、判定与读回原件的角色和路径。仅交当前判定分支确实产生的原件。
 
 在 `proposal.evidence` 中列出本轮 `proof` 成功操作回执、本轮成功的原生视频链接回执、候选的准备和提交回执（历史方法使用原 `qualify`）、五帧图和 JSON、持久读回的证据根相对路径。路径来自实际工具回执。历史方法分别列出 `qualify` 宿主操作回执与实际模型 `judge-response.json`。记录本轮唯一 VID、实际 ASR 与主判次数及有无触发重复输入。
 

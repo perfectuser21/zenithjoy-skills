@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-102-collection
 description: 交出持久化且身份可验证的评论。用于从合格视频采集评论并读回或接手同一评论采集 Activity；不执行整个工作流。
 metadata:
   change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.10.7
+  version: 0.10.8
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.collection
-  activity_version: 2.8.6
+  activity_version: 2.8.7
   validation: awaiting-real-run
   support_files: []
 
@@ -21,7 +21,7 @@ metadata:
 
 # 交出持久化且身份可验证的评论
 
-仅执行 `douyin_video_processing.collection`，使用业务合同版本 `2.8.6`。方法版本变化不修改Activity身份或公司业务政策。本版允许连续性可证时复用已验收的视频身份原件，保留普通API显式交接与凭证补齐方法；离线校验不等于实机验收。
+仅执行 `douyin_video_processing.collection`，使用业务合同版本 `2.8.7`。方法版本变化不修改Activity身份或公司业务政策。本版允许连续性可证时复用已验收的视频身份原件，保留普通API显式交接与凭证补齐方法；离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -84,6 +84,8 @@ metadata:
 ## 结果与验收
 
 按当前合同的 `delivery` 交件：业务值写入 `outputs`，把工具实际返回、可独立读回的原件相对路径放入 `handoff`，按本轮或对象标识和证据用途归组。较大的媒体交带原件摘要的回执，由原媒体读回工具复核。旧文中的证据要求由这些实际引用满足。
+
+宿主按冻结的 `delivery.report` 归档本轮适用的原始回执供 Checker 一次读取。交付中保留原路径，不补造未发生分支的原件。
 
 交付本次 Activity 的实际 `task_id/run_id/activity_ref`、`status`、`stop_reason`、输入对象身份、逐项结果、实际新增/历史/重复/未决计数、持久读回和证据位置、工具/模型实际调用与未知项、资源交接及副作用。工具或模型回执缺失写 unknown，不填 0；明确未调用才填 0。
 

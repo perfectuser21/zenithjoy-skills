@@ -2,9 +2,9 @@
 name: douyin-leadgen-activity-104-cleanup
 description: 归位触达现场并保留未决发送。用于触达收尾、失败后保护订单或接手同一收尾 Activity；不执行整个工作流。
 metadata:
-  version: 0.7.1
+  version: 0.7.2
   activity_ref: douyin_lead_outreach.cleanup
-  activity_version: 3.5.1
+  activity_version: 3.5.2
   validation: awaiting-real-run
   support_files: []
   method_role: single-activity
@@ -13,7 +13,7 @@ metadata:
 
 # 归位触达现场并保留未决发送
 
-仅执行 `douyin_lead_outreach.cleanup`，业务合同版本 `3.5.1`。本方法自包含，普通任务不以旧Skill、Workflow母说明或Commander会话作为操作前置。
+仅执行 `douyin_lead_outreach.cleanup`，业务合同版本 `3.5.2`。本方法自包含，普通任务不以旧Skill、Workflow母说明或Commander会话作为操作前置。
 
 ## 合同、执行提案与独立验收
 
@@ -70,6 +70,8 @@ metadata:
 ## 结果与验收
 
 按当前合同的 `delivery` 交件：业务值写入 `outputs`，把工具实际返回、可独立读回的原件相对路径放入 `handoff`，按本轮或对象标识和证据用途归组。较大的媒体交带原件摘要的回执，由原媒体读回工具复核。旧文中的证据要求由这些实际引用满足。
+
+宿主按冻结的 `delivery.report` 归档本轮适用的原始回执供 Checker 一次读取。交付中保留原路径，不补造未发生分支的原件。
 
 交付本次 Activity 的实际 `task_id/run_id/activity_ref`、`status`、`stop_reason`、输入对象身份、逐项结果、实际新增/历史/重复/未决计数、持久读回和证据位置、工具/模型实际调用与未知项、资源交接及副作用。工具或模型回执缺失写 unknown，不填 0；明确未调用才填 0。
 
