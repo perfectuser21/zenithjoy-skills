@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-102-preflight
 description: 取得采集设备与账号执行上下文。用于采集预检、确认手机账号或接手同一预检 Activity；不执行整个工作流。
 metadata:
   change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.11.2
+  version: 0.11.3
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.preflight
-  activity_version: 2.6.2
+  activity_version: 2.6.3
   validation: awaiting-real-run
   support_files: []
 
@@ -21,7 +21,7 @@ metadata:
 
 # 取得采集设备与账号执行上下文
 
-仅执行 `douyin_video_processing.preflight`，使用业务合同版本 `2.6.2`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
+仅执行 `douyin_video_processing.preflight`，使用业务合同版本 `2.6.3`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -47,7 +47,7 @@ metadata:
 
 ## 输入与交付
 
-本预检只交宿主已正式分配并持久化的同一 Run 的 `run_tag/profile/serial`。正式派单与 Run 依据宿主冻结身份及独立 Brain 只读核对，不另创建运行账本；同一 run_tag 读回不是重复创建，不因它已存在而拒绝。核对 Task/run、公司、设备、账号和 owner 的完整绑定，身份冲突则停止，不借其他 Run 或换身份补齐。已持锁时只读回同一身份的既有锁，保留实际 acquire receipt，不重复发起领取或释放副作用；尚未取得资源仍按原授权与原精确协议执行，不以本说明新增权限。
+本预检只交宿主已正式分配并持久化的同一 Run 的 `run_tag/profile/serial`。正式派单和 Run 身份由宿主核对，Checker 独立读回本轮 Brain Task，不另创建运行账本；同一 run_tag 读回不是重复创建，不因它已存在而拒绝。核对 Task/run、公司、设备、账号和 owner 的完整绑定，身份冲突则停止，不借其他 Run 或换身份补齐。已持锁时只读回同一身份的既有锁，保留实际 acquire receipt，不重复发起领取或释放副作用；尚未取得资源仍按原授权与原精确协议执行，不以本说明新增权限。
 
 开始条件只核配置、冻结身份与截止：确认本任务的公司/租户、设备与目标账号绑定、工具授权、资源 owner 计划和原绝对截止。登录态和取得锁的回执是执行后产物，不把尚未生成的产物当作开始输入；已有资源则核其真实归属，不接管其他 owner。实际登录、设备状态与本人锁/租约仍须在执行中核实，并以本轮原件交独立通用Checker验收。
 
@@ -57,7 +57,7 @@ metadata:
 
 ## 操作
 
-1. 读回本 Task、公司配置、设备注册和工具来源。公司、租户、line、profile、serial与目标账号须精确对应；按配置的明确启用/授权字段判断，不靠名字或昵称猜。注册表的在线状态不代替实际设备检查。
+1. 从宿主冻结输入取得本次 Task、Run 和设备身份，读回公司配置、设备注册和工具来源。执行 Agent 的 Brain 工具用于设备租约。公司、租户、line、profile、serial与目标账号须精确对应；按配置的明确启用/授权字段判断，不靠名字或昵称猜。注册表的在线状态不代替实际设备检查。
 2. 通过实际只读设备通道检查目标 serial、前台与通话状态。已有 controller 的 `preflight`、`status`、`window` 是能力示例；命令、参数及副作用先核当前 schema。不能把会先探测 ADB 的 `help` 当成纯文本查询；不启动/重启共享ADB、手机、网络或代理。
 3. 核中央 serial 租约和本地锁。如果宿主已持有，只读回原 owner，不重复取得或释放；若本任务明确授权直接取得，走现有精确领取协议并读回。被其他 owner 占用、未注册、离线或通话不 idle 时停止。Task记账回写与设备租约分别核验，不能用 queued 或 CLI退出替代真实资源归属。保留宿主返回的本地与中央取得回执，交出工具回执路径、owner、中央租约版本和独立状态读回。手机网关返回的原始路径仅作来源线索，不把它拼接成运行目录下的附件。
 4. 持有效授权打开抖音。用本轮新鲜前台、截图、控件树及原生账号读取确认实际抖音号；例如实际工具提供 `open-app`、`account-current EID` 时按其签名调用。账号、公司或设备不符、登录挑战、PIN/验证码、风控时停止，不自行切号或换云/实体设备。
@@ -72,6 +72,8 @@ metadata:
 实际副作用限于获授权的设备/账号页面导航、运行取证工件，以及本次明确由本活动领取的设备租约/本地锁。不开搜索、不改账号、不发布；如定位工具需视觉外发，只有当前任务已批准的既有服务可接收必要画面，不新增接收方。
 
 ## 结果与验收
+
+完工报告使用合同声明的角色。冻结身份放在 `identity.frozen`，引用本轮宿主的 `checker-input/identity.json`。公司和政策原件放在 `identity.company`，引用公司配置成功的完整回执。原生账号、取得本地锁和取得中央锁的回执分别放在 `handoff.account`、`handoff.local_acquire` 和 `handoff.central_acquire`。每个角色都用本轮实际工具回执路径，宿主据此生成完工报告。
 
 按当前合同的 `delivery` 交件：业务值写入 `outputs`，把工具实际返回、可独立读回的原件相对路径放入 `handoff`，按本轮或对象标识和证据用途归组。较大的媒体交带原件摘要的回执，由原媒体读回工具复核。旧文中的证据要求由这些实际引用满足。
 
