@@ -1,6 +1,6 @@
 ---
 name: wf-douyin_comment_scoring
-version: 0.20.1
+version: 0.20.2
 changelog:
   - "0.15.0: 同步official-child-v1精确内部宿主兼容；原授权和验收边界不变"
   - "0.14.0: 同步正常执行无工具回合方法；保留旧child恢复"

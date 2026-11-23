@@ -3,14 +3,14 @@ name: douyin-leadgen-activity-101-collect-videos
 description: 按关键词交出筛选后的视频链接。用于采集关键词搜索结果或接手同一视频发现 Activity；不执行整个工作流。
 metadata:
   change_summary: "Agent 逐步点击分享、复制、读回并核对同一视频"
-  version: 0.13.3
+  version: 0.13.4
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_discovery.collect_videos
-  activity_version: 5.6.2
+  activity_version: 5.6.3
   validation: awaiting-real-run
   support_files: []
 
@@ -21,7 +21,7 @@ metadata:
 
 # 按关键词交出筛选后的视频链接
 
-仅执行 `douyin_video_discovery.collect_videos`，使用业务合同版本 `5.6.2`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
+仅执行 `douyin_video_discovery.collect_videos`，使用业务合同版本 `5.6.3`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
 
 ## 合同、执行提案与独立验收
 
@@ -52,6 +52,8 @@ metadata:
 输出逐视频真实 `line_key/video_id/video_url/title/author/keyword/comment_count/harvest_batch` 与 `discovery_metrics`：同视频原始点赞/页面评论显示值、解析值或 null、分档、观测时间、身份与证据摘要。业务字段 `comment_count` 保留102“已采评论数量”语义，不存页面评论总数。另报实际成功唯一VID数、尝试数、重复观测、停止原因和 `all_results_scanned`。
 
 ## 逐VID交付与证据索引
+
+按冻结的 `delivery.report.files` 交各证据角色对应的真实原件，搜索材料归 `run`，逐视频材料归实际 VID。
 
 如果冻结契约声明了 `delivery`，在最终提案原有 `outputs` 和 `evidence` 之外，按其 schema 提交 `handoff`。共享原件放在 `handoff.run`，逐视频原件以 `outputs.Video` 中的真实 `video_id` 为键。每个值是本轮工具返回的可读相对文件路径。宿主统一归档，执行者只提交实际原件的路径。
 
