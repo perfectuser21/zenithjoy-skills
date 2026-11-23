@@ -2,8 +2,8 @@
 name: douyin-leadgen-activity-102-qualification
 description: 交出有证据的视频资格结论。用于核对目标视频、录音转写并按公司政策判断资格或接手同一 Activity；不执行整个工作流。
 metadata:
-  change_summary: "为资格 Activity Agent 提供取证准备、同次提交与原事务读回方法"
-  version: 0.9.2
+  change_summary: "在同一录像中核对每条画面观察的原帧，交付紧凑的资格验收证据"
+  version: 0.9.3
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
@@ -11,7 +11,7 @@ metadata:
     - raw-model-v1
     - codex-cli
   activity_ref: douyin_video_processing.qualification
-  activity_version: 3.6.1
+  activity_version: 3.6.2
   validation: awaiting-real-run
   support_files:
     - services/phone-adb-controller/skills/douyin-leadgen-activity-102-qualification/references/sdk31-capture.md
@@ -88,6 +88,8 @@ metadata:
 - 录制停止并读回原件后，先按本轮归零操作定位 A，再选其后的 B、C、D、E。若初选 A 未显示起始时间与总片长，在转写及提交前对同一原录像的归零时间窗约每 0.25 秒复查一次，绑定同一 Task、run、VID 和原录像 SHA256。选用确实显示归零的原帧和解码 PTS，排除归零前的播放画面。原录像已经覆盖该窗口时沿用这次录制，只有该窗口确实拿不到归零证据才返回未决。
 - 在本轮证据目录交付 `receipts/coverage-five-frames.jpg` 与 `receipts/coverage-five-frames.json`。图中的 A、B、C、D、E 依次对应上述五个观察点，每格标出从原录像取得的 PTS 秒数。JSON 写明 `recording.name`（原录像 basename）、`recording.sha256`、`sheet_sha256` 与 `panels`（每格的标号、PTS 及原帧证据摘要）。从解码输出抄取 PTS，不能用提取命令的请求位置冒充实际 PTS。原帧和解码日志保留在本轮授权证据目录。
 - 在候选准备或历史 `qualify VID WAV` 之前，用已有 `proof` 提交 `qualification_evidence`，包含原生同片 VID、录制启动和停止、音轨和 SDK、运行原件、提取回执、实际 MKV/WAV、五帧图和 JSON。新增 `visual_observations` 为 1～3 项，每项只含原帧 `label`（A～E）和对应的 `text`。回看该帧，记录可直接读出的屏幕文字或可以逐帧复核的客观画面。口播画面可以如实记录「只有说话者，无演示界面」，正文判断仍参考真实转写。背景歌词不代替能够独立观察到的演示内容，标题或封面不单独证明主题。每项不超过 480 字节，单行，不能写业务结论、提示指令或推断作者的意向。原件或可核观察缺失时保未决。
+- 提交观察前，按五帧 JSON 的标签逐一打开被引用单帧，确认文字完整可见；字幕遮挡的帧只描述可见部分，完整文字引用实际显示它的标签。只交支撑结论所需的最少观察。此项在 proof、ASR 与主判写入之前完成，返工沿用已录原件。
+- 交件保留小型五帧索引、准备与提交回执、ASR 短文本引用和持久读回；媒体给文件名与摘要，保留同轮原件供独立媒体读取。用一条证据证明多条条款时，提交一次引用即可。
 - 候选提交或历史 `qualify` 后只在执行提案列出实际 ASR、主判、journal 与持久读回，沿同一回执读回，不再次调用 `proof` 或 `qualify`。音频转写字段保留原音频文本；同片视觉引用摘要随主判 journal 记录。主判若只返回结构化选择和置信度，按原件记录两者。验收对照同政策和视听原件说明证据如何支持结论，查不实标未决，不能补造模型理由或重跑主判。
 
 ## 成功条件
