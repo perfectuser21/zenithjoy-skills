@@ -33,7 +33,7 @@ metadata:
 | Activity | 唯一操作Skill | 方法版本 |
 |---|---|---|
 | `preflight` | [douyin-leadgen-activity-102-preflight](../douyin-leadgen-activity-102-preflight/SKILL.md) | `0.11.3` |
-| `dedup` | [douyin-leadgen-activity-102-dedup](../douyin-leadgen-activity-102-dedup/SKILL.md) | `0.8.6` |
+| `dedup` | [douyin-leadgen-activity-102-dedup](../douyin-leadgen-activity-102-dedup/SKILL.md) | `0.8.7` |
 | `qualification` | [douyin-leadgen-activity-102-qualification](../douyin-leadgen-activity-102-qualification/SKILL.md) | `0.9.4` |
 | `collection` | [douyin-leadgen-activity-102-collection](../douyin-leadgen-activity-102-collection/SKILL.md) | `0.10.8` |
 | `cleanup` | [douyin-leadgen-activity-102-cleanup](../douyin-leadgen-activity-102-cleanup/SKILL.md) | `0.11.4` |
