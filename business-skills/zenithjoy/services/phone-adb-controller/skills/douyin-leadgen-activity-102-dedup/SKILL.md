@@ -2,8 +2,8 @@
 name: douyin-leadgen-activity-102-dedup
 description: 交出本轮可处理的视频集合。用于核验101来源、筛选与认领视频或接手同一判重 Activity；不执行整个工作流。
 metadata:
-  change_summary: "按现有判重合同交付作者原生身份和视频租约读回原件"
-  version: 0.8.6
+  change_summary: "按同 VID 的 101 冻结交接原件交付作者字段"
+  version: 0.8.7
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
@@ -48,6 +48,8 @@ metadata:
 ## 输入与交付
 
 输入公司/政策、明确视频范围与101来源回执、真实VID/链接、页面评论指标及 ordinary/deep/auto 策略、领取数量/截止和队列工具。输出逐VID的 received/eligible/claimed/skipped、排除原因、真实 owner/租约期限、原来源及后续资格输入。
+
+正式交付的 `outputs.Video[].author` 按同一业务线、同一 VID 从本轮冻结的 101 交接 `handoff.video.author` 原样填写。认领事务或 PG 状态投影没有此列时，仍用 101 原件并引用其路径。这里填展示作者，原生主页抖音号只用于身份比对及证据字段。上游没有作者时，先核实同一 VID 的原生作者原件；仍不能核实时按合同交付未决项。提交前逐 VID 确认正式集合的 `author` 已核实且非空。
 
 正式交付的 `outputs.Video[].comment_count` 取本次 `claim_videos` 成功回执内数据库事务 `RETURNING` 的持久行原值。逐 VID 核对返回行的业务线、VID、本轮 owner 和批次，并保留回执。已返回的非负整数含 0，必须原样填进输出。`inspect_videos` 的状态投影不包含该字段，其缺列不影响事务回执中的实采值。独立 Checker 仍逐 VID 查认领后的数据库快照并核对原交付。若真实认领回执缺行、字段缺失或与可用同范围持久证据冲突，则该字段未决。原生页面总数只用于普通或深采策略，不能替代实采数，实采 0 也不能推断页面评论数为 0。
 
