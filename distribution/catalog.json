@@ -895,7 +895,7 @@
         {
           "path": ".skills-runtime/android-bilibili-publish/SKILL.md",
           "source": "android-bilibili-publish/SKILL.md",
-          "sha256": "04b5786b1b872f202b4fd773d2f5bd98fd2e592a477e3adfc3dadee2eedbd7bf",
+          "sha256": "f6bfeec4adb4608db54ea04a2e555b8690444273b03e8dfb579340369444290f",
           "mode": "100644"
         },
         {
@@ -913,7 +913,7 @@
         {
           "path": ".skills-runtime/android-publish/SKILL.md",
           "source": "android-publish/SKILL.md",
-          "sha256": "a31758caa1b0f300dcb62d7062eaa79178893bcde9226cda161e54c869a3aa0a",
+          "sha256": "997c31b0f758e9a1cd0355e4b6212000acdbe8dc86739308081ec4aaea6318a5",
           "mode": "100644"
         },
         {
