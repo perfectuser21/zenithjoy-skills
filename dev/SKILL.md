@@ -1,10 +1,11 @@
 ---
 name: dev
-version: 21.14.3
-updated: 2026-11-04
+version: 21.15.0
+updated: 2026-11-26
 description: "执行代码开发、Bug 修复或功能改动，按改动范围选择开发路径，完成任务归位、验收与交接。用于 /dev 或明确开发任务；保留 task-id claim、变更隔离与现行部署验收规则。"
 trigger: /dev, --task-id <id>, 我想做, 有个 bug, 改一下, 出问题了, walking skeleton, harness, journey, feature
 changelog:
+  - "21.15.0: 退役自主coding编排入口；小改和大功能统一有头/dev隔离开发、PR与真实验收，保留普通codex_dev派发和任务claim。下列旧runner记录仅供历史回溯。"
   - "21.14.2: 六层上下文按tree实查；旧Ability/Feature提案不再作为当前业务树依据。"
   - "21.14.1: 精简发现描述，原触发细节移入按需读取正文；业务步骤与权限不变"
   - "21.14.0: 建单计划显式提供 change_kind/map_scope_hint，curl 对齐 mutation_intent/repo_hint；未启用仓库无头建单会被 Brain 拒绝"
@@ -103,7 +104,7 @@ curl -s -X POST "localhost:5221/api/brain/tasks/<task-id>/claim" \
 用户描述
   ├── 有 bug / 出问题了 / 不对 / 报错 / 崩了    → 【路径 A：Bug】
   ├── 改一下 / 小改动 / 加个字段 / 调一下配置   → 【路径 B：小改动】
-  └── 想做 X / 新功能 / 立项 / 做一个 / 贯穿    → 【路径 C：大功能/coding_workflow】
+  └── 想做 X / 新功能 / 立项 / 做一个 / 贯穿    → 【路径 C：大功能】
 ```
 
 **模糊时（无法区分路径）：只问 1 个问题，不多问。**
@@ -148,8 +149,8 @@ curl -s "localhost:5221/api/brain/journey_features?limit=50"
 # 2: 进行中任务
 curl -s "localhost:5221/api/brain/tasks?status=in_progress&limit=20"
 
-# 3: 当前 coding_workflow 任务；旧 Harness Run 仅在回溯历史任务时另查
-curl -s "localhost:5221/api/brain/tasks?task_type=coding_workflow&limit=20"
+# 3: 普通编码 Agent 任务
+curl -s "localhost:5221/api/brain/tasks?task_type=codex_dev&limit=20"
 
 # 4: 历史决策匹配
 curl -s -X POST "localhost:5221/api/brain/decisions/match" \
@@ -501,7 +502,7 @@ GP-Anchor: none(infra|docs|config|backlog) ← 显式豁免
    ```
 3. 输出确认：`已保存 PrepPRD 到 $SPRINT_DIR/prep-prd.md`
 
-路径 C 点火时，将 PrepPRD 要点及可验证验收项写入 coding_workflow 的 description / acceptance（见下方路径 C 执行部分）；此处 sprint_dir 仅用于保存需求草稿。
+路径 C 将 PrepPRD 要点及可验证验收项写入当前开发任务的 description 与验收记录；此处 sprint_dir 仅用于保存需求草稿。
 
 ---
 
@@ -585,36 +586,11 @@ systematic-debugging → engine-worktree → Superpowers autonomous 接力链 �
 
 ### 路径 B：小改动
 
-#### B0 分档（先判；cecelia 仓默认走 coding workflow）
+#### B0：当前会话开发
 
-**三条全满足 → 走 coding workflow**（MMV 上的 runner 每 5 分钟认领，跑七步链：01-intent → 02-spec → build → 04 独立验收 → 链校验 → 开 PR → 回写 Brain；CI 红自动修复最多 2 次，CI 绿自动合并），Commander 不在会话里写代码：
+小改动在本 /dev 会话中执行下面的 engine-worktree → PR → engine-ship → engine-pr-watchdog 接力链。建单只完成任务登记，继续实现、验证和交付，不能以返回 task id 代替完成。
 
-1. 仓库是 cecelia
-2. 能写出 1–5 条**用命令可验证**的验收（测试命令 / 脚本输出 / curl / psql + 期望结果）——PrepPRD 的「验收标准」原样改写成这几条
-3. 不需要真机、外部账号登录或人工操作
-
-做法（下面的 decision 照写，然后用这一步**代替** engine-worktree 接力链）：
-
-```bash
-cat > /tmp/cw-plan.json <<'EOF'
-{"title":"<修复 Cecelia F1 内的问题>","change_kind":"bugfix","map_scope_hint":["F1"],"description":"<改哪里、为什么、相关文件路径>","acceptance":["<命令> 期望 <结果>","..."]}
-EOF
-# runner 专用 clone 每轮自更新到 origin/main，用它的脚本（主仓 checkout 可能落后）
-node ~/perfect21/cecelia-cw-runner/packages/brain/scripts/coding-workflow/new-task.mjs /tmp/cw-plan.json --repo cecelia
-```
-
-**大改（多个有序步骤）**：拆成批次，每步一条、各自带验收，后一步用 `depends_on` 引用前一步的 key（runner 等前置 PR 合并才认领）；有依赖的批次必须挂 project（Brain 多刀工作闸）：
-
-```json
-{"batch":"<批次名>","change_kind":"capability_change","map_scope_hint":["F1"],"project":{"name":"<项目名>","description":"<目标与范围>"},
- "tasks":[{"key":"a","title":"…","acceptance":["…"]},{"key":"b","title":"…","acceptance":["…"],"depends_on":["a"]}]}
-```
-
-计划必须提供合法 `change_kind` 与非空字符串数组 `map_scope_hint`，可从批次顶层继承；每条可按真实范围覆盖。`F1` 是 Cecelia 节点示例，先查目标仓地图后替换，不能当所有任务的默认值。bug 用 `bugfix`，新能力/能力改动/纯参数分别按事实选 `new_capability`/`capability_change`/`parameter_only`。
-
-建完把 task id 告诉用户即结束本路径。进度：Brain 任务状态 / `~/Library/Logs/coding-workflow-runner.log`；失败原因：任务 `result.coding_workflow_runner`（failed_activity / reason_code），现场保留 7 天在 `~/worktrees/cecelia-cw/`。
-
-**任一条不满足 → 照走下面原流程。**
+旧 coding workflow runner、new-task.mjs 及其自动编排已退役，不再调用。用户授权将编码任务交给 Agent 时仍可使用普通 `codex_dev` 派发；它不启动旧 runner，也不替代任务归位、claim、验收及交接。
 
 ---
 
@@ -661,7 +637,7 @@ Tier 1 固定默认：
 
 ---
 
-### 路径 C：大功能（coding_workflow）
+### 路径 C：大功能（有头 /dev）
 
 PrepPRD 落地后，**立即执行**这条 bash 命令写 decision：
 
@@ -676,76 +652,11 @@ curl -s -X POST localhost:5221/api/brain/strategic-decisions \
 
 业务树先按 `tree` 判层，再按 `db-update` 核实现行实体写入路由；已有实体直接复用。旧 `add-feature.js` / `journey_features` 仅用于明确指定的历史 Ability/Feature 对象维护，不属于路径 C 的建单步骤，也不创建六层 capabilities。
 
-点火 = 建 **coding_workflow** 单（2026-10-12 起；旧 `harness_initiative` 无头 kernel 已退役：派发关闭、建单入口拒无头 harness_initiative，返回 422 `no_executor_for_task_type`）。
-MMV 上的 coding-workflow-runner 认领后执行 intent → spec → spec-review GAN → 实现 → CI 自修 → QA → 独立裁判 → 发布报告。QA 方式与是否自动合并按目标仓库 repos.json 的 preview / automerge 配置执行；automerge=false 时留待人工合并。
+大功能按可验证交付拆成有序子任务，挂同一 project，保留 parent_task_id / sequence_no 与 handoff；每棒完成后读回真实产出再推进。已有 task 直接复用，不能重复建单。
 
-推荐在 Cecelia 仓库根目录运行建单脚本（字段口径与 runner 一致，先整体校验再逐条建；目标仓库与开闸状态先查 `packages/brain/scripts/coding-workflow/repos.json`）：
+本会话经 engine-worktree 建隔离分支，按计划实现与验收，再走 PR → engine-ship → engine-pr-watchdog；只有 CI 与真实效果确认后才写完成。旧自动开发编排不再点火。普通 `codex_dev` 编码 Agent 派发能力保留，执行者仍须遵循同样的任务、分支、PR和验收规则。
 
-```bash
-cat > /tmp/cw-plan.json <<'EOF'
-{
-  "title": "<feature_name>",
-  "change_kind": "capability_change",
-  "map_scope_hint": ["F1"],
-  "description": "<thin_prd + PrepPRD 要点>",
-  "acceptance": ["<可验证断言 1：查库/接口/页面上能看到什么>", "<可验证断言 2>"],
-  "priority": "P1",
-  "gp_anchor": "none(infra)"
-}
-EOF
-node packages/brain/scripts/coding-workflow/new-task.mjs /tmp/cw-plan.json --repo cecelia --dry-run   # 先校验计划及目标仓库
-node packages/brain/scripts/coding-workflow/new-task.mjs /tmp/cw-plan.json --repo cecelia             # 输出 [{key,id,title}]
-```
-
-大改拆成有序小任务：`{"change_kind": "capability_change", "map_scope_hint": ["F1"], "project": {"name": "<功能名>"}, "tasks": [{"key": "a", "title": "...", "acceptance": [...]}, {"key": "b", "title": "...", "acceptance": [...], "depends_on": ["a"]}]}`（有 depends_on 必须给 project 或 project_id；change_kind/map_scope_hint 可从批次顶层继承，或逐条覆盖）。
-
-下例 `F1` 是 Cecelia 地图节点示例；repo / repo_hint / map_scope_hint 必须查真实目标后替换，不能固定为默认。`change_kind` 按实际改动选择，bug 用 `bugfix`；脚本会在请求体显式写 `mutation_intent:"write"`、`repo_hint`，裸 curl 也必须带；gp_anchor 使用已确认的真实 Line/GP 锚点，仅基础设施等获准豁免才用 `none(infra)`，不得为业务功能默认豁免。
-
-裸建单前，显式给出真实目标仓绝对路径、本次已确定的 `cp-*` 分支名（可在建 worktree 前指定，不能盲取当前 main）和该仓真实开发基准 ref/完整 SHA。下例先核对 Git 根目录、origin 仓库身份、分支格式及基准 commit，再把 `branch` / `base_sha` 送入请求；任一失败均不发请求。跨仓时同时替换 `EXPECTED_REPO` 和请求中的 repo/map，不能从当前 cwd 取另一个仓库的基线。显式传入可避免 Brain 依赖服务器本地 checkout 推断基线；不要拿其它仓库或旧任务的身份代填。响应中的 payload 是服务端归一结果，不把 `orchestrator`、`harness_runtime`、`routing_receipt_id` 等内部字段复制到新请求。有头建单取任务 `id` 后立即 claim；无头 `coding_workflow` 仍由 runner 认领。
-
-等价的 curl（不用脚本时，字段照 runner 口径）：
-```bash
-TASK_REPO='<真实目标仓绝对路径>'
-TASK_BRANCH='<当前cp分支>'
-TASK_BASE='<目标仓真实开发基准ref或完整SHA>'
-EXPECTED_REPO='perfectuser21/cecelia'
-[[ "$TASK_REPO" = /* && "$TASK_BRANCH" =~ ^cp-[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] || exit 12
-REPO_ROOT=$(git -C "$TASK_REPO" rev-parse --show-toplevel) || exit 12
-[[ "$REPO_ROOT" = "$(cd "$TASK_REPO" && pwd -P)" ]] || exit 12
-git -C "$TASK_REPO" check-ref-format --branch "$TASK_BRANCH" >/dev/null || exit 12
-REMOTE=$(git -C "$TASK_REPO" remote get-url origin) || exit 12
-case "$REMOTE" in
-  "https://github.com/$EXPECTED_REPO"|"https://github.com/$EXPECTED_REPO.git"|"git@github.com:$EXPECTED_REPO"|"git@github.com:$EXPECTED_REPO.git"|"ssh://git@github.com/$EXPECTED_REPO"|"ssh://git@github.com/$EXPECTED_REPO.git") ;;
-  *) echo 'TASK_UNKNOWN: 目标仓origin身份不符' >&2; exit 12 ;;
-esac
-BASE_SHA=$(git -C "$TASK_REPO" rev-parse --verify --end-of-options "$TASK_BASE^{commit}") || exit 12
-[[ "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 12
-curl -fsS -X POST localhost:5221/api/brain/tasks \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"task_type\": \"coding_workflow\",
-    \"mutation_intent\": \"write\",
-    \"change_kind\": \"capability_change\",
-    \"repo_hint\": \"cecelia\",
-    \"map_scope_hint\": [\"F1\"],
-    \"branch\": \"$TASK_BRANCH\",
-    \"base_sha\": \"$BASE_SHA\",
-    \"title\": \"<feature_name>\",
-    \"description\": \"<thin_prd>\",
-    \"priority\": \"P1\",
-    \"trigger_source\": \"manual\",
-    \"payload\": {
-      \"coding_workflow\": true,
-      \"repo\": \"cecelia\",
-      \"acceptance\": [\"<可验证断言>\"],
-      \"gp_anchor\": \"none(infra)\"
-    }
-  }" || exit 12
-```
-
-> 旧借壳形状 `task_type=data` + `payload.coding_workflow=true` + `payload.headed_manual="true"`（**字符串**）runner 仍认、Brain 建单时归一成 coding_workflow；新建一律直接用 `coding_workflow`。
-
-**仓库限制**：runner 只认领 `packages/brain/scripts/coding-workflow/repos.json` 里 `enabled=true` 的仓库（以当前配置为准，不从本技能推断仓库是否开闸）。未登记或未启用的仓库无头建单会被 Brain 拒绝（`runner_repo_unsupported`，不会继续留在 queued），改在本 /dev 会话里有头做，账本行必须带字符串 `headed_manual` 并立刻认领：
+有头建单前，核对真实目标仓绝对路径、origin、cp-* 分支名和基准完整 SHA。repo_hint / map_scope_hint 必须取目标仓真实地图，change_kind 按事实选择；响应内部路由字段不复制到请求。下面示例保留路由身份校验，创建成功即 claim：
 
 ```bash
 TASK_REPO='<真实目标仓绝对路径>'
@@ -783,7 +694,7 @@ except (ValueError, TypeError, AttributeError):
 curl -fsS -X POST "localhost:5221/api/brain/tasks/$TASK_ID/claim" -H "Content-Type: application/json" -d '{"claimer":"interactive-dev-skill"}' || exit 12
 ```
 
-进度：`curl localhost:5221/api/brain/tasks/<task_id>`（`result.coding_workflow` 有 runner 写回），MMV 上 `~/Library/Logs/coding-workflow-runner.log`。
+进度与回执：`curl localhost:5221/api/brain/tasks/<task_id>`；完成时写入事实、证据、actor 及 handoff，再读回确认。
 
 ---
 
@@ -865,7 +776,7 @@ node ~/.claude/skills/dev/scripts/status.js --area "ZenithJoy"
 
 ## Harness Pipeline 定义
 
-> **已废弃（2026-10-12）**：下述旧 harness 编排（planner → GAN → generator → evaluator → report，task_type=harness_initiative）已不再无头派发，仅留作历史参考；路径 C 改建 coding_workflow 单，由 coding-workflow-runner 执行。有头 /dev 的记账与收尾链保持有效。
+> **已废弃（2026-10-12）**：下述旧 harness 编排（planner → GAN → generator → evaluator → report，task_type=harness_initiative）已不再无头派发，仅留作历史参考；旧 coding_workflow runner 同样已退役；当前路径 C 按上方有头 /dev 执行。有头 /dev 的记账与收尾链保持有效。
 
 ### Run 固定结构
 

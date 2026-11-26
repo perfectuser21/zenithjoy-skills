@@ -15,13 +15,13 @@ FAIL=0
 err() { echo "❌ $1"; FAIL=1; }
 ok()  { echo "✅ $1"; }
 
-# ── 契约 1：编码入口改投 coding_workflow，旧无头 harness 已退役 ──
+# ── 契约 1：编码入口有头接力，旧自主 coding/harness 已退役 ──
 # 来源：cecelia #6356（2026-10-12）。检查当前路径 C 的命令块，
 # 不允许历史 changelog 中的字符串充当点火模板已更新的证据。
 if python3 .github/workflows/scripts/check-coding-workflow-entry.py; then
   ok "编码入口与旧 harness 废弃标注一致"
 else
-  err "编码入口仍引用旧无头 harness，或缺少 runner 必填字段/废弃标注"
+  err "编码入口仍调用退役自动开发，或缺少任务claim/交付约束"
 fi
 
 # ── 契约 2：LangGraph 图编排已废弃，不得再被描述为现行路径 ──

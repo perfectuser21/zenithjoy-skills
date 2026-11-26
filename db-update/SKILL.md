@@ -90,7 +90,7 @@ Notion（展示层，只读）
 
 ### 7. tasks（工作项）
 
-建单后立即通过 `/tasks/:id/claim` 领取并管理状态。代码任务按 dev skill 的现行 coding_workflow 入口登记，不再以退役 harness_initiative 点火。
+建单后立即通过 `/tasks/:id/claim` 领取并管理状态。代码任务按 dev skill 的现行有头 /dev 流程登记并立即 claim；需要 Agent 编码时使用普通 codex_dev 派发。旧 coding_workflow / harness_initiative 自动编排入口已退役。
 
 **API**：`POST /api/brain/tasks`
 
