@@ -37,6 +37,13 @@ description: 1688 安卓真机选品 + 商品素材采集（✅ 2026-09-11 金�
 
 ## 选品与采集
 
+### V5 首页与搜索结果页
+
+2026-11-26 在 M4 小蓝实测：首页 `V5HomeActivity` 的搜索入口可由 `com.alibaba.wireless:id/search_navigator_center_search_character_exp` 定位。点击后可能先进入预填推荐词的 `QuickSearchResultActivity`。用结果页顶部的 `com.alibaba.wireless:id/ll_search_keyword_bg` 打开关键词输入页。起点已在结果页时直接核对这个顶部控件。
+
+每次从当前树取唯一目标的 bounds。等输入框获得焦点，选中并替换已有文字，逐字读回本次关键词后再提交。结果页的顶部关键词栏和画面用于核对本次搜索。卡片在树中缺少标题时，可用本机 OCR 核对同一商品区域的标题和价格，再打开该商品并读回详情页、保存首屏。登录、验证页或目标控件不确定时停止。此次验证了搜索和一张商品详情截图，整套图集仍须逐张核验。
+
+
 `<搜索框>` 每次用 `uiautomator dump` 现场定位坐标，不像登录流程固定——搜索入口位置随进入路径变化，不可写死坐标。`<serial>` 用 `adb devices` 列出的真实设备序列号，与 `android-publish` 底座的设备选择约定一致。
 
 ```bash
@@ -46,10 +53,10 @@ adb shell ime set com.android.adbkeyboard/.AdbIME
 adb shell am broadcast -a ADB_INPUT_B64 --es msg $(printf '关键词' | base64)
 adb shell input keyevent 66
 
-# 进商品详情（DetailActivity），滑图集逐张截图：循环滑动+截图，直到某张截图与上一张视觉重复
+# 验证进入商品详情后，按当前图集边界滑动取图：循环滑动+截图，直到某张截图与上一张视觉重复
 # （判定图集已采完）；单商品按 p<商品ID>_<序号>.png 命名；采集数量优先核对商品页读到的
 # 「图集张数」字段是否达标，达标或判定重复即终止循环
-adb shell input swipe 1000 500 200 500 300
+adb shell input swipe <图集内起点x> <图集内y> <图集内终点x> <图集内y> 300
 adb shell screencap -p /sdcard/s.png
 ```
 
