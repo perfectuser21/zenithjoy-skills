@@ -907,7 +907,7 @@
         {
           "path": ".skills-runtime/android-kuaishou-publish/SKILL.md",
           "source": "android-kuaishou-publish/SKILL.md",
-          "sha256": "fb3967c447fcec7e03381bd84a48db15a8a0f093fda7d74fa9668fdd28b8fdf2",
+          "sha256": "1e79d83bf434fb8528bc87a96a0db452a14b8b117818238e5929977e769410dc",
           "mode": "100644"
         },
         {
@@ -931,7 +931,7 @@
         {
           "path": ".skills-runtime/android-weibo-publish/SKILL.md",
           "source": "android-weibo-publish/SKILL.md",
-          "sha256": "bea69e2de5efefc1aa0806dcd99af90408af7c83729026edc936ba393ce5e4cd",
+          "sha256": "0c21032152501cf75e98b66b891883c8393f36f764947bddb69b3337dbc19702",
           "mode": "100644"
         },
         {
