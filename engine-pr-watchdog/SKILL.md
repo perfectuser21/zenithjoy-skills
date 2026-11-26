@@ -335,7 +335,7 @@ echo "PR #${PR_NUMBER} 终态 ${FINAL_STATE} 收尾完成"
 Step 5 已按验真的终态写入最小 handoff。补充产物与交接时保留该 verdict：关闭未合并必须 FAIL，不得覆盖为 PASS；Step 5 返回 12 时不执行收尾。
 
 > **规矩（Alex 2026-07-06 拍板）**：/dev 三条路径（A Bug / B 小改动 / C Harness）的落尾都必须是
-> handoff。路径 C 由 harness reportNode 自动产；路径 A/B 的公共尾巴就是本 skill——merge 确认后
+> handoff。路径 A/B/C 的公共尾巴都是本 skill——merge 确认后
 > 在这里产。**没有下一步就在 next_steps 写「完成，无下一步」，不要在对话里催用户"现在就改吗"。**
 > 协议 = packages/brain/src/handoff.js + lib/relay-baton.js：tasks.result.handoff（SSOT）+ docs/handoffs/ 镜像。
 >

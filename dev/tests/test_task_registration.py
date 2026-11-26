@@ -50,7 +50,7 @@ class TaskRegistrationTest(unittest.TestCase):
             subprocess.run(git + ['-c', 'user.name=Owned fixture', '-c', 'user.email=owned@example.invalid',
                 'commit', '-q', '--allow-empty', '-m', 'owned routing evidence'], cwd=fixture, check=True)
             head = subprocess.check_output(git + ['rev-parse', 'HEAD'], cwd=fixture, text=True).strip()
-            expected_repo = 'perfectuser21/' + ('cecelia' if task_type == 'coding_workflow' else 'zenithjoy-workspace')
+            expected_repo = 'perfectuser21/zenithjoy-workspace'
             remote = 'https://github.com/' + ('other/wrong' if mode == 'wrong-repo' else expected_repo)
             subprocess.run(git + ['remote', 'add', 'origin', remote], cwd=fixture, check=True)
             subprocess.run(git + ['update-ref', 'refs/remotes/origin/main', head], cwd=fixture, check=True)
@@ -103,10 +103,13 @@ class TaskRegistrationTest(unittest.TestCase):
         self.assertNotIn('routing_receipt_id', payload['payload'])
         return trace
 
-    def test_current_coding_workflow_example_supplies_real_routing_identity(self):
-        trace = self.execute_example('coding_workflow')
-        self.assertEqual(len(trace), 1)
-        self.assertTrue(trace[0]['body']['payload']['coding_workflow'])
+    def test_retired_workflow_has_no_executable_entry(self):
+        body = (ROOT / 'dev/SKILL.md').read_text().split('---', 2)[2]
+        blocks = re.findall(r'```(?:bash|json)\n(.*?)```', body, re.S)
+        for block in blocks:
+            self.assertNotIn('coding-workflow/new-task.mjs', block)
+            self.assertNotIn('coding_workflow', block)
+        self.assertIn('codex_dev', body)
 
     def test_current_headed_example_preserves_manual_string_and_immediate_claim(self):
         trace = self.execute_example('dev')
@@ -117,7 +120,7 @@ class TaskRegistrationTest(unittest.TestCase):
         self.assertEqual(trace[1]['body']['claimer'], 'interactive-dev-skill')
 
     def test_untrusted_routing_context_never_sends_any_request(self):
-        for task_type in ('coding_workflow', 'dev'):
+        for task_type in ('dev',):
             for mode in ('git-error', 'missing-branch', 'fake-sha', 'wrong-repo'):
                 with self.subTest(task_type=task_type, mode=mode):
                     self.execute_example(task_type, mode)
@@ -126,10 +129,6 @@ class TaskRegistrationTest(unittest.TestCase):
     def test_failed_or_unknown_headed_creation_never_claims(self):
         for mode in ('create-error', 'create-forbidden', 'create-bad-json', 'create-missing-id', 'create-invalid-id'):
             with self.subTest(mode=mode): self.execute_example('dev', mode)
-
-    def test_coding_workflow_http_failure_is_nonzero_and_never_claims(self):
-        for mode in ('create-error', 'create-forbidden'):
-            with self.subTest(mode=mode): self.execute_example('coding_workflow', mode)
 
     def test_headed_claim_http_failure_is_nonzero(self):
         self.execute_example('dev', 'claim-error')
