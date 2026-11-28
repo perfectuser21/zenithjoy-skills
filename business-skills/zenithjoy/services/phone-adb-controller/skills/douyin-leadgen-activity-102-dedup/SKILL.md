@@ -2,8 +2,8 @@
 name: douyin-leadgen-activity-102-dedup
 description: 交出本轮可处理的视频集合。用于核验101来源、筛选与认领视频或接手同一判重 Activity；不执行整个工作流。
 metadata:
-  change_summary: "按同 VID 的 101 冻结交接原件交付作者字段"
-  version: 0.8.7
+  change_summary: "宿主支持时合并开页与原生取链，保持 VID 和作者核验"
+  version: 0.8.8
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
@@ -21,7 +21,7 @@ metadata:
 
 # 交出本轮可处理的视频集合
 
-仅执行 `douyin_video_processing.dedup`，使用业务合同版本 `3.3.5`。方法版本变化不修改Activity身份或公司业务政策。本版为说明重写，离线校验不等于实机验收。
+仅执行 `douyin_video_processing.dedup`，使用业务合同版本 `3.3.5`。方法版本变化不修改Activity身份或公司业务政策。实机验收以真实取链和后续业务回执为准。
 
 ## 合同、执行提案与独立验收
 
@@ -64,7 +64,7 @@ metadata:
 **作者原生身份与自家号过滤**
 
 - 先读本轮冻结的101逐VID来源原件。已有可独立核实且能绑定精确VID的原生作者抖音号时直接使用。作者昵称、标题、头像、登录账号或评论者主页均不能作为该视频作者的抖音号。
-- 原件不足且当前设备上下文、工具、授权和业务预算仍有效时，只对仍可处理的精确授权VID补读。用现有签名 `open-video VID EID` 打开原视频，核对原生详情与此VID绑定。若现有原件没有独立VID绑定，按当前工具签名取得 `current-video-link` 的真实原生详情取链原件并核实其VID，不能只用 `open-video` 输出回显的输入值。用 `ui-evidence EID` 读当前原生树定位该视频详情中的作者入口，用 `tap-evidence X Y EID [WAIT_MS]` 留存点击路径，随后读取作者主页的原生XML和可用的截图。EID使用本run前缀，沿工具回执保留关联。核验页面从该视频的作者入口进入，读取页面明确标注的“抖音号”。通过当前工具公开的只读文件获取能力（本宿主已有 `fetch-native`）按原名保留原件并引用可读路径。VID绑定、作者入口、主页账号字段或原件可读性不明时，记录未决并保留现场交接。
+- 原件不足且当前设备上下文、工具、授权和业务预算仍有效时，只对仍可处理的精确授权VID补读。宿主 `inspect` 显示 `capabilities.open_video_resolve_link` 为 true 时，用 `open-video VID EID --resolve-link` 同次开页并取链，核对实际复制读回的精确 VID。未公开该能力时，用 `open-video VID EID` 开页，再用 `current-video-link` 取得真实原生取链原件。开页回显不能代替真实取链。工具交回截图时按返回的下一步及剩余预算处理，截图不能证明视频身份。宿主 `inspect` 公开 `collect_author_read` 时，用该业务操作取得作者主页原件和原生抖音号。其他入口须确认已公开所需能力后，才通过 `ui-evidence EID` 和 `tap-evidence X Y EID [WAIT_MS]` 定位详情页作者入口并读回作者主页。EID使用本run前缀，沿工具回执保留关联。核验页面从该视频的作者入口进入，读取页面明确标注的“抖音号”。通过当前工具公开的只读文件获取能力（本宿主已有 `fetch-native`）按原名保留原件并引用可读路径。VID绑定、作者入口、主页账号字段或原件可读性不明时，记录未决并保留现场交接。
 - 与本run冻结的同公司、同租户、抖音平台、已启用且已核验的 `douyin_id` 精确比对，保留配置版本、账号身份类型、比较结果与原件引用。主页短链或 `sec_uid` 可作为导航关联证据。只有已核实同一身份命名空间或有可信映射时，才可用于账号相等性比较。确认自家作者时按原政策排除。身份或配置不可核实时，本VID记 `unknown`，不能认领、进入可处理集合或资格阶段，也不能当成合法空集合的证据。
 - 交付逐VID的101来源引用、原生详情与作者导航回执、作者主页原件及路径和可用摘要、冻结公司政策版本及筛选结果。Checker自行读取原件及本run冻结政策。
 
