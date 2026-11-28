@@ -2,15 +2,15 @@
 name: douyin-leadgen-activity-102-preflight
 description: 取得采集设备与账号执行上下文。用于采集预检、确认手机账号或接手同一预检 Activity；不执行整个工作流。
 metadata:
-  change_summary: "对齐当前Activity合同、通用Checker与共享截止；不新增执行授权"
-  version: 0.11.3
+  change_summary: "对齐共享预检的 900 秒预算，覆盖界面树无结果后截图和原生账号核实"
+  version: 0.11.4
   primary_execution: agent-v1
   primary_hosts:
     - official-child-v1
   execution_transports:
     - raw-model-v1
   activity_ref: douyin_video_processing.preflight
-  activity_version: 2.6.3
+  activity_version: 2.6.4
   validation: awaiting-real-run
   support_files: []
 
